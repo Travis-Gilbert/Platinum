@@ -586,6 +586,7 @@ impl Serp {
                         div()
                             .font_weight(FontWeight::MEDIUM)
                             .line_clamp(2)
+                            .text_ellipsis()
                             .child(hit.title.clone()),
                     )
                     .child(
@@ -935,6 +936,7 @@ fn result_row(
                             .text_sm()
                             .line_height(rems(1.25))
                             .line_clamp(2)
+                            .text_ellipsis()
                             .child(snippet),
                     ),
             ),
