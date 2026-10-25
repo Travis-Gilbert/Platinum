@@ -8,7 +8,12 @@
 //!
 //! A tab holds at most one page and one results page. Results sit before the
 //! page's own history: Back from a page with nowhere to go shows the results
-//! again, and a result opens in a fresh page so that Back returns to them.
+//! again, and a result opens in a fresh page so that Back returns to them. A
+//! new tab shows Home, and Home's places open in the tab.
+//!
+//! With no tab open, the window shows the native workspace instead of the
+//! tabs (`browser/underlay.rs`): Home, results and the places, beneath the
+//! pages.
 //!
 //! The dock decides where tabs are and which one each group shows; the
 //! browser keeps `tabs` in the dock's order and decides which shown tab is
@@ -16,9 +21,11 @@
 //!
 //! SOURCING: GPUI Kit's base `DockArea` for the tab layout, drag and drop
 //! and splits; GPUI Kit's `TitleBar`, folder `TabBar`/`Tab`, `Toolbar`,
-//! `Button`, `Input`, `Kbd`, `Spinner`, `Popover` and `Progress`; the navigator is GPUI Kit's `Command` (`navigator.rs`).
+//! `Button`, `Input`, `Spinner`, `Popover` and `Progress`; the navigator is
+//! GPUI Kit's `Command` (`navigator.rs`); Home is `home.rs`.
 
 mod dock;
+mod underlay;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -31,7 +38,6 @@ use gpui_kit::base::dock::{
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::command::CommandState;
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
-use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::notification::Notification;
 use gpui_kit::component::popover::Popover;
 use gpui_kit::component::progress::{Progress, ProgressCircle};
@@ -60,21 +66,29 @@ use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
 use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
+use crate::home::{Home, HomeEvent};
 use crate::icons;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
+use crate::places::{Place, PlaceView};
+use crate::recents::{self, Recents};
 use crate::serp::{Serp, SerpEvent, SerpMode};
 use crate::share;
 use crate::theme::{self, Appearance};
+
+use self::underlay::Underlay;
 
 /// The height of a row of tabs, the same as the title bar's.
 const TAB_ROW: f32 = 36.;
 
 #[derive(Clone, Copy, PartialEq)]
 enum Showing {
+    /// Home.
     Start,
     Page,
     Serp,
+    /// One of the places beneath the pages, opened from Home.
+    Place(Place),
 }
 
 struct Tab {
@@ -91,7 +105,8 @@ struct Tab {
     /// A page opened the tab, for a link with a target or `window.open`.
     opened: bool,
     _page_events: Option<Subscription>,
-    _serp_events: Option<Subscription>,
+    /// Shared with the workspace's history while the results came from it.
+    _serp_events: Option<Rc<Subscription>>,
 }
 
 impl Tab {
@@ -125,6 +140,7 @@ impl Tab {
                 .serp
                 .as_ref()
                 .map_or("Search".into(), |serp| serp.read(cx).title()),
+            Showing::Place(place) => place.label().into(),
         }
     }
 
@@ -141,7 +157,7 @@ impl Tab {
     /// What the address bar holds once the person starts typing in it.
     fn address(&self, cx: &App) -> SharedString {
         match self.showing {
-            Showing::Start => SharedString::default(),
+            Showing::Start | Showing::Place(_) => SharedString::default(),
             Showing::Page => self
                 .url(cx)
                 .map_or(SharedString::default(), |url| url.to_string().into()),
@@ -204,6 +220,7 @@ impl Tab {
             Showing::Start => icons::page(),
             Showing::Page => Icon::new(IconName::Globe),
             Showing::Serp => Icon::new(IconName::Search),
+            Showing::Place(place) => place.icon(),
         }
     }
 }
@@ -235,10 +252,13 @@ pub struct Browser {
     /// Where each tab's Share button was last drawn, for the share sheet.
     share_anchors: Rc<RefCell<HashMap<u64, Bounds<Pixels>>>>,
     window_title: SharedString,
+    /// The workspace shown while no tab is open.
+    underlay: Underlay,
     _omnibox_events: Subscription,
     _dock_events: Subscription,
     _downloads_events: Subscription,
     _appearance_events: Subscription,
+    _recents_events: Subscription,
 }
 
 impl Browser {
@@ -261,6 +281,9 @@ impl Browser {
         let appearance_events = cx.observe_window_appearance(window, |_, window, cx| {
             theme::system_changed(window, cx)
         });
+        // Home lists them.
+        let recents_events = cx.observe_global::<Recents>(|_, cx| cx.notify());
+        let underlay = Underlay::new(window, cx);
         let mut browser = Self {
             focus_handle: cx.focus_handle(),
             tabs: vec![Tab::start(0, panel)],
@@ -279,12 +302,17 @@ impl Browser {
             downloads_open: None,
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
+            underlay,
             _omnibox_events: omnibox_events,
             _dock_events: dock_events,
             _downloads_events: downloads_events,
             _appearance_events: appearance_events,
+            _recents_events: recents_events,
         };
         browser.sync_from_dock(cx);
+        // Frame opens on the workspace.
+        browser.window_title = browser.underlay.title(cx);
+        window.set_window_title(&browser.window_title);
         browser.focus_content(window, cx);
         browser
     }
@@ -383,8 +411,13 @@ impl Browser {
         self.tab_index(id).unwrap_or(self.tabs.len() - 1)
     }
 
+    /// From the workspace, the tab behind it; else a new one.
     fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.new_tab_beside(self.active, window, cx);
+        if self.underlay.shown {
+            self.reveal_tab(window, cx);
+        } else {
+            self.new_tab_beside(self.active, window, cx);
+        }
     }
 
     /// A new tab at the end of the group of the tab at `anchor`, ready for an
@@ -459,14 +492,16 @@ impl Browser {
     }
 
     fn close_tab(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
-        if index >= self.tabs.len() {
+        if index >= self.tabs.len() || self.underlay.shown {
             return;
         }
         self.close_navigator(window, cx);
         if self.tabs.len() == 1 {
+            // The last tab: the workspace shows, over a fresh tab.
             let id = self.new_id();
             let panel = self.tabs[0].panel.clone();
             self.tabs[0] = Tab::start(id, panel);
+            self.reset_underlay(window, cx);
         } else {
             let active_id = self.tabs[self.active].id;
             let closing = self.tabs[index].panel_id();
@@ -514,6 +549,10 @@ impl Browser {
     }
 
     fn focus_content(&self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.focus_underlay(window, cx);
+            return;
+        }
         let tab = &self.tabs[self.active];
         match tab.showing {
             Showing::Page if let Some(page) = &tab.page => {
@@ -522,6 +561,8 @@ impl Browser {
             Showing::Serp if let Some(serp) = &tab.serp => {
                 window.focus(&serp.focus_handle(cx), cx);
             }
+            // The window keeps focus, so that Back reaches the browser.
+            Showing::Place(_) => window.focus(&self.focus_handle, cx),
             // With the chrome hidden the address bar is not drawn; the window
             // keeps focus so that shortcuts still reach the browser.
             _ if self.compact && !self.revealed => window.focus(&self.focus_handle, cx),
@@ -581,31 +622,115 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.underlay.shown {
+            self.underlay_search(query, mode, window, cx);
+            return;
+        }
+        recents::record_search(&query, mode == SerpMode::Ask, cx);
         let index = if new_tab {
             self.insert_tab_after_active(window, cx)
         } else {
             self.active
         };
-        let serp = cx.new(|cx| Serp::new(query, mode, window, cx));
-        let id = self.tabs[index].id;
-        let events = cx.subscribe_in(
-            &serp,
-            window,
-            move |browser, _, event: &SerpEvent, window, cx| {
-                let SerpEvent::Open { url, new_tab } = event;
-                if *new_tab {
-                    browser.go(url.clone(), true, true, window, cx);
-                } else if let Some(index) = browser.tab_index(id) {
-                    browser.active = index;
-                    browser.go(url.clone(), false, true, window, cx);
-                }
-            },
-        );
+        let (serp, events) = self.new_serp(query, mode, window, cx);
         let tab = &mut self.tabs[index];
         tab.serp = Some(serp);
         tab._serp_events = Some(events);
         tab.showing = Showing::Serp;
         self.activate(index, window, cx);
+    }
+
+    /// A results page, searching, and the subscription to the results it
+    /// opens. The subscription moves with the page, from the workspace to a
+    /// tab.
+    fn new_serp(
+        &mut self,
+        query: String,
+        mode: SerpMode,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> (Entity<Serp>, Rc<Subscription>) {
+        let serp = cx.new(|cx| Serp::new(query, mode, window, cx));
+        let events = cx.subscribe_in(&serp, window, Self::serp_event);
+        (serp, Rc::new(events))
+    }
+
+    /// A result was opened: in the tab whose results they are, or one after
+    /// it.
+    fn serp_event(
+        &mut self,
+        serp: &Entity<Serp>,
+        event: &SerpEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let SerpEvent::Open { url, new_tab } = event;
+        if self.underlay.shown {
+            self.underlay_opened(serp, url, *new_tab, window, cx);
+            return;
+        }
+        let Some(index) = self
+            .tabs
+            .iter()
+            .position(|tab| tab.serp.as_ref() == Some(serp))
+        else {
+            return;
+        };
+        self.active = index;
+        self.go(url.clone(), *new_tab, true, window, cx);
+    }
+
+    /// A place, in the workspace, in this tab if it shows Home or a place,
+    /// or else in a new one.
+    fn open_place(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_go(underlay::Route::Place(place), window, cx);
+            return;
+        }
+        let index = match self.tabs[self.active].showing {
+            Showing::Start | Showing::Place(_) => self.active,
+            Showing::Page | Showing::Serp => self.insert_tab_after_active(window, cx),
+        };
+        self.tabs[index].showing = Showing::Place(place);
+        self.activate(index, window, cx);
+    }
+
+    /// Home: the workspace's, or this tab's if it shows a place, or a new
+    /// tab's.
+    fn open_home(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_go(underlay::Route::Home, window, cx);
+            return;
+        }
+        match self.tabs[self.active].showing {
+            Showing::Start => self.focus_content(window, cx),
+            Showing::Place(_) => {
+                self.tabs[self.active].showing = Showing::Start;
+                self.after_switch(window, cx);
+            }
+            Showing::Page | Showing::Serp => self.new_tab(window, cx),
+        }
+    }
+
+    /// Something picked on a tab's Home.
+    fn home_event(&mut self, id: u64, event: &HomeEvent, window: &mut Window, cx: &mut Context<Self>) {
+        self.activate_id(id, window, cx);
+        match event {
+            HomeEvent::Place(place) => self.open_place(*place, window, cx),
+            HomeEvent::Page { url, new_tab } => self.go(url.clone(), *new_tab, true, window, cx),
+            HomeEvent::Search {
+                query,
+                ask,
+                new_tab,
+            } => {
+                let mode = if *ask {
+                    SerpMode::Ask
+                } else {
+                    SerpMode::Search
+                };
+                self.search(query.clone(), mode, *new_tab, window, cx);
+            }
+        }
     }
 
     fn set_page(
@@ -638,8 +763,16 @@ impl Browser {
         };
         match event {
             PageEvent::Changed => {
-                if !page.read(cx).is_loading() {
+                let (loading, url, title) = {
+                    let page = page.read(cx);
+                    (page.is_loading(), page.url(), page.title())
+                };
+                if !loading {
                     self.tabs[index].requested = None;
+                    // Home lists it among the recent pages.
+                    if let Some(url) = url {
+                        recents::record_page(&url, &title, cx);
+                    }
                 }
                 self.sync_chrome(window, cx);
             }
@@ -751,6 +884,10 @@ impl Browser {
     }
 
     fn back(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_back(window, cx);
+            return;
+        }
         let tab = &mut self.tabs[self.active];
         match tab.showing {
             Showing::Page => {
@@ -762,11 +899,20 @@ impl Browser {
                     self.after_switch(window, cx);
                 }
             }
+            // A place opened from the tab's Home.
+            Showing::Place(_) => {
+                tab.showing = Showing::Start;
+                self.after_switch(window, cx);
+            }
             Showing::Serp | Showing::Start => {}
         }
     }
 
     fn forward(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_forward(window, cx);
+            return;
+        }
         let tab = &mut self.tabs[self.active];
         match tab.showing {
             Showing::Page => {
@@ -778,15 +924,19 @@ impl Browser {
                 tab.showing = Showing::Page;
                 self.after_switch(window, cx);
             }
-            Showing::Serp | Showing::Start => {}
+            Showing::Serp | Showing::Start | Showing::Place(_) => {}
         }
     }
 
-    fn reload(&mut self, cx: &mut Context<Self>) {
+    fn reload(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_reload(window, cx);
+            return;
+        }
         let tab = &self.tabs[self.active];
         match (tab.showing, &tab.page, &tab.serp) {
             (Showing::Page, Some(page), _) => page.update(cx, |page, _| page.reload()),
-            (Showing::Serp, _, Some(serp)) => serp.update(cx, |serp, cx| serp.reload(cx)),
+            (Showing::Serp, _, Some(serp)) => serp.update(cx, |serp, cx| serp.reload(window, cx)),
             _ => {}
         }
     }
@@ -856,6 +1006,10 @@ impl Browser {
     }
 
     fn focus_address_bar(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.focus_underlay_field(window, cx);
+            return;
+        }
         if self.compact {
             self.revealed = true;
         }
@@ -883,6 +1037,7 @@ impl Browser {
         self.omnibox.update(cx, |input, cx| {
             input.set_placeholder(placeholder, window, cx)
         });
+        self.underlay.set_placeholder(self.ask, window, cx);
         if self.ask {
             self.focus_address_bar(window, cx);
         }
@@ -899,7 +1054,11 @@ impl Browser {
                     .update(cx, |input, cx| input.set_value(summary, window, cx));
             }
         }
-        let title = tab.title(cx);
+        let title = if self.underlay.shown {
+            self.underlay.title(cx)
+        } else {
+            tab.title(cx)
+        };
         if title != self.window_title {
             window.set_window_title(&title);
             self.window_title = title;
@@ -983,10 +1142,13 @@ impl Browser {
                 }
             }
             Pick::Command => {}
+            Pick::Go(url) if self.underlay.shown => self.underlay_open(url, window, cx),
             Pick::Go(url) => {
                 let fresh = self.tabs[self.active].showing != Showing::Page;
                 self.go(url, false, fresh, window, cx);
             }
+            Pick::Home => self.open_home(window, cx),
+            Pick::Place(place) => self.open_place(place, window, cx),
             Pick::Search(query) => self.search(query, SerpMode::Search, false, window, cx),
             Pick::Ask(query) => self.search(query, SerpMode::Ask, false, window, cx),
             Pick::Download(url) => {
@@ -1083,6 +1245,9 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.underlay.shown {
+            return;
+        }
         // ⌘9 is always the last tab.
         let index = if action.index >= 8 {
             self.tabs.len() - 1
@@ -1093,6 +1258,9 @@ impl Browser {
     }
 
     fn cycle(&mut self, step: isize, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            return;
+        }
         let count = self.tabs.len() as isize;
         let index = (self.active as isize + step).rem_euclid(count) as usize;
         self.activate(index, window, cx);
@@ -1298,7 +1466,7 @@ impl Browser {
     fn render_card(
         &mut self,
         panel: PanelId,
-        window: &mut Window,
+        _: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let Some(index) = self.panel_index(panel) else {
@@ -1324,7 +1492,7 @@ impl Browser {
                     .flex_1()
                     .min_h_0()
                     .overflow_hidden()
-                    .child(self.content(index, window, cx))
+                    .child(self.content(index, cx))
                     .children(self.status_bubble(index, cx)),
             )
             .into_any_element()
@@ -1344,9 +1512,10 @@ impl Browser {
                 )
             }
             (Showing::Serp, page) => (false, page.is_some()),
+            (Showing::Place(_), _) => (true, false),
             _ => (false, false),
         };
-        let can_reload = tab.showing != Showing::Start;
+        let can_reload = matches!(tab.showing, Showing::Page | Showing::Serp);
         let ink = Self::chrome_ink(tab, cx);
         h_flex()
             .flex_shrink_0()
@@ -1384,7 +1553,7 @@ impl Browser {
                             .tooltip_with_action("Reload", &Reload, None)
                             .on_click(cx.listener(move |browser, _, window, cx| {
                                 browser.activate_id(id, window, cx);
-                                browser.reload(cx);
+                                browser.reload(window, cx);
                             })),
                     )
                     .content(self.address(index, ink, cx)),
@@ -1813,58 +1982,23 @@ impl Browser {
             )
     }
 
-    fn start_surface(&self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        let theme = cx.theme();
-        let hint = |keys: AnyElement, text: &'static str| {
-            h_flex()
-                .gap_3()
-                .child(h_flex().w(px(96.)).justify_end().child(keys))
-                .child(text)
-        };
-        let binding = |action: &dyn gpui_kit::Action| -> AnyElement {
-            match Kbd::binding_for_action(action, None, window) {
-                Some(kbd) => kbd.into_any_element(),
-                None => div().into_any_element(),
-            }
-        };
-        v_flex()
-            .size_full()
-            .items_center()
-            .justify_center()
-            .gap_6()
-            .bg(theme.background)
-            .text_color(theme.muted_foreground)
-            .child(icons::page().large().text_color(theme.muted_foreground))
-            .child(
-                v_flex()
-                    .gap_2()
-                    .text_sm()
-                    .child(hint(
-                        binding(&OpenPalette),
-                        "Search tabs, commands and the web",
-                    ))
-                    .child(hint(
-                        binding(&FocusAddressBar),
-                        "Type an address or a search",
-                    ))
-                    .child(hint(
-                        div().text_xs().child("Right-click").into_any_element(),
-                        "The same search, wherever the pointer is",
-                    ))
-                    .child(hint(
-                        div().text_xs().child("Drag a tab").into_any_element(),
-                        "Onto a page's edge to see two side by side",
-                    )),
-            )
+    /// A new tab's content: Home, under the tab's own address bar.
+    fn start_surface(&self, id: u64, cx: &mut Context<Self>) -> AnyElement {
+        let browser = cx.weak_entity();
+        Home::new(("home", id))
+            .on_event(move |event, window, cx| {
+                let _ = browser.update(cx, |browser, cx| browser.home_event(id, event, window, cx));
+            })
             .into_any_element()
     }
 
-    fn content(&self, index: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+    fn content(&self, index: usize, cx: &mut Context<Self>) -> AnyElement {
         let tab = &self.tabs[index];
         match tab.showing {
             Showing::Page if let Some(page) = &tab.page => page.clone().into_any_element(),
             Showing::Serp if let Some(serp) = &tab.serp => serp.clone().into_any_element(),
-            _ => self.start_surface(window, cx),
+            Showing::Place(place) => PlaceView::new(place).into_any_element(),
+            _ => self.start_surface(tab.id, cx),
         }
     }
 
@@ -1910,8 +2044,9 @@ impl Render for Browser {
         let theme = cx.theme().clone();
         let browser = cx.entity().downgrade();
         let navigator = self.navigator.as_ref().map(|(navigator, _)| {
-            let tabs: Vec<TabEntry> = self
-                .tabs
+            // The tab behind the workspace is not open, so not listed.
+            let open = if self.underlay.shown { &[][..] } else { &self.tabs[..] };
+            let tabs: Vec<TabEntry> = open
                 .iter()
                 .enumerate()
                 .map(|(index, tab)| TabEntry {
@@ -1963,7 +2098,7 @@ impl Render for Browser {
                 cx.listener(|browser, _: &PreviousTab, window, cx| browser.cycle(-1, window, cx)),
             )
             .on_action(cx.listener(Self::activate_numbered))
-            .on_action(cx.listener(|browser, _: &Reload, _, cx| browser.reload(cx)))
+            .on_action(cx.listener(|browser, _: &Reload, window, cx| browser.reload(window, cx)))
             .on_action(cx.listener(|browser, _: &GoBack, window, cx| browser.back(window, cx)))
             .on_action(
                 cx.listener(|browser, _: &GoForward, window, cx| browser.forward(window, cx)),
@@ -1988,8 +2123,12 @@ impl Render for Browser {
             }))
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
             .on_mouse_down(MouseButton::Right, cx.listener(Self::right_click))
-            .child(div().flex_1().min_h_0().child(self.dock.clone()))
-            .when(self.compact, |this| {
+            .child(div().flex_1().min_h_0().child(if self.underlay.shown {
+                self.render_underlay(window, cx)
+            } else {
+                self.dock.clone().into_any_element()
+            }))
+            .when(self.compact && !self.underlay.shown, |this| {
                 this.child(
                     // Pointing at the top edge brings the chrome back over the page.
                     div()

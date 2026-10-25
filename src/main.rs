@@ -11,10 +11,14 @@ mod controls;
 mod delegate;
 mod downloads;
 mod engine;
+mod home;
 mod icons;
 mod keys;
+mod markup;
 mod navigator;
 mod page;
+mod places;
+mod recents;
 mod scene;
 mod search;
 mod serp;
@@ -54,13 +58,14 @@ fn main() -> anyhow::Result<()> {
     let _ = dotenvy::from_path(data_dir.join(".env"));
 
     gpui_kit::application()
-        .with_assets(gpui_kit::assets::Assets)
+        .with_assets(icons::Assets)
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);
             install_commands(cx);
             Engine::start(&profile_dir, cx);
             search::init(&data_dir, cx);
+            recents::init(Some(data_dir.join("recents.json")), cx);
             if let Err(error) = open_window(cx) {
                 log::error!("{error:#}");
                 cx.quit();

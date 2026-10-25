@@ -3770,6 +3770,7 @@ name = "frame"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "content_disposition",
  "dirs 6.0.0",
  "dotenvy",
@@ -3780,9 +3781,11 @@ dependencies = [
  "glow",
  "gpui-kit",
  "gpui-pre",
+ "html5ever 0.27.0",
  "humansize",
  "image",
  "log",
+ "markup5ever_rcdom",
  "mime_guess",
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
@@ -3796,6 +3799,7 @@ dependencies = [
  "rustls",
  "rustyred-web",
  "sanitize-filename",
+ "serde",
  "serde_json",
  "servo",
  "surfman",

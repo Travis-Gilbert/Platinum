@@ -5,8 +5,9 @@
 //! is on screen.
 //!
 //! The list is local first: the page's own context menu entries, the open
-//! tabs (Switch), Frame's commands, and only then the web (RustyWeb search,
-//! and Ask, which is the one explicit AI entry).
+//! tabs (Switch), Frame's commands, Home and the places beneath the pages,
+//! and only then the web (RustyWeb search, and Ask, which is the one explicit
+//! AI entry).
 //!
 //! SOURCING: GPUI Kit's `Command` (search field, groups, keyboard selection,
 //! filtering, keybinding hints) inside GPUI's `anchored` / `deferred`
@@ -32,6 +33,7 @@ use crate::actions::{
 use crate::address::{Target, classify};
 use crate::icons;
 use crate::page::{Page, PageMenu};
+use crate::places::Place;
 use crate::theme::Appearance;
 
 /// Where the navigator is on screen.
@@ -55,6 +57,8 @@ pub enum Pick {
     Ask(String),
     /// Save the link or image under the pointer.
     Download(Url),
+    Home,
+    Place(Place),
 }
 
 /// One open tab, as the navigator lists it.
@@ -272,6 +276,21 @@ impl Navigator {
         groups.push(group);
         picks.push(group_picks);
         if let Some((group, group_picks)) = tabs {
+            groups.push(group);
+            picks.push(group_picks);
+        }
+
+        // Out of the short right-click menu until the person types. Before
+        // the web, so "mail" opens Mail.
+        if !pointer || typing {
+            let mut group = CommandGroup::new()
+                .label("Places")
+                .item(CommandItem::new().label("Home").icon(gpui_kit::assets::IconName::House));
+            let mut group_picks = vec![Pick::Home];
+            for place in Place::ALL {
+                group = group.item(CommandItem::new().label(place.label()).icon(place.icon()));
+                group_picks.push(Pick::Place(place));
+            }
             groups.push(group);
             picks.push(group_picks);
         }

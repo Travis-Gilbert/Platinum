@@ -26,6 +26,12 @@ rustyred-web = { path = "deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rusty
 tokio = { version = "1", features = ["rt", "time", "net"] }
 
 anyhow = "1"
+# Result dates, as words in the local time zone. Already in Servo's graph.
+chrono = "0.4"
+# Search snippets arrive as HTML fragments; these parse them to text and
+# emphasis (`markup.rs`). The versions GPUI Kit's TextView already builds.
+html5ever = "0.27"
+markup5ever_rcdom = "0.3"
 # Downloads: the server's file name, made safe for the disk.
 content_disposition = "0.4"
 dirs = "6"
@@ -47,8 +53,10 @@ reqwest = { version = "0.12", default-features = false, features = ["http2", "ru
 # Servo's graph links more than one rustls provider; main installs ring.
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 sanitize-filename = "0.6"
+# Home's recent pages and searches, kept as JSON in the app's data folder.
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-url = "2"
+url = { version = "2", features = ["serde"] }
 
 [dev-dependencies]
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).

@@ -1,4 +1,5 @@
-//! Compile and live check for `src/search.rs` and `src/serp.rs`.
+//! Compile and live check for `src/search.rs` and `src/serp.rs` (with the
+//! `src/markup.rs` they read snippets through).
 //!
 //! ```text
 //! cargo build --example serp_check
@@ -13,6 +14,8 @@
 
 extern crate gpui_kit as gpui;
 
+#[path = "../src/markup.rs"]
+mod markup;
 #[path = "../src/search.rs"]
 mod search;
 #[path = "../src/serp.rs"]
@@ -110,8 +113,8 @@ fn print_result(result: &search::SerpResult) {
                 .map(|date| format!("  date: {date}"))
                 .unwrap_or_default()
         );
-        if !hit.snippet.is_empty() {
-            let snippet: String = hit.snippet.chars().take(140).collect();
+        if !hit.snippet.text.is_empty() {
+            let snippet: String = hit.snippet.text.chars().take(140).collect();
             println!("     {snippet}");
         }
     }

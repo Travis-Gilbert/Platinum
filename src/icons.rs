@@ -6,7 +6,34 @@
 //! from the Streamline Ultimate Duotone set (`sd-card-download` from its CC BY
 //! 4.0 free subset). See the README's credits.
 
+use std::borrow::Cow;
+
 use gpui_kit::component::Icon;
+use gpui_kit::{AssetSource, SharedString};
+
+// Lucide icons GPUI Kit's default bundle leaves out, for the native
+// workspace's places and header.
+gpui_kit::assets::icon_assets!(ExtraIcons, [Mail, LibraryBig, LayoutGrid, House]);
+
+/// GPUI Kit's default icons and the extras above.
+pub struct Assets;
+
+impl AssetSource for Assets {
+    fn load(&self, path: &str) -> gpui_kit::Result<Option<Cow<'static, [u8]>>> {
+        if let Some(bytes) = ExtraIcons.load(path)? {
+            return Ok(Some(bytes));
+        }
+        gpui_kit::assets::Assets.load(path)
+    }
+
+    fn list(&self, path: &str) -> gpui_kit::Result<Vec<SharedString>> {
+        let mut paths = gpui_kit::assets::Assets.list(path)?;
+        paths.extend(ExtraIcons.list(path)?);
+        paths.sort();
+        paths.dedup();
+        Ok(paths)
+    }
+}
 
 const ASK: &[u8] = include_bytes!("../assets/icons/ask.svg");
 const ASK_ON: &[u8] = include_bytes!("../assets/icons/ask-on.svg");
