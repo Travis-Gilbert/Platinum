@@ -1,19 +1,20 @@
 //! Liquid Glass under the window's chrome. The window is transparent and an
 //! AppKit glass view lies behind GPUI's one view, so wherever the chrome
 //! leaves its frame clear, the glass, and the desktop through it, show: the
-//! tab row, the frame around the cards, Home and the places. A page's toolbar
-//! and its selected tab take the page's color as a wash over the glass, as
-//! Frame's own panes take theirs, so the glass stays with the chrome while a
-//! page is up. Pages and a results page stay opaque, and so, nearly, does the
-//! address field: text people read never sits on the glass alone.
+//! tab row, the frame around the cards, Home and the places. Pages and a
+//! results page stay opaque, and so do their toolbars and selected tabs,
+//! which take the page's own color; so, nearly, does the address field: text
+//! people read never sits on the glass alone.
 //!
 //! It is AppKit's clear glass, the kind that lets what is behind it through
 //! sharply enough to see; window-sized regular glass frosts it to a flat grey.
 //! Clear glass needs dimming under text, so the glass leans to the theme's
 //! frame color, as its own tint rather than under a layer of paint that would
-//! flatten it, by as much as keeps Home's text readable over a white window or
-//! a black one behind Frame. It takes the chrome's appearance, not the
-//! system's: Frame in Light on a Dark system gets light glass.
+//! flatten it, by as much as keeps Home's text readable over a white window
+//! behind Frame. No tint makes it light over a black one, so the light theme
+//! also lays a coat of the frame's color over it. It takes the chrome's
+//! appearance, not the system's: Frame in Light on a Dark system gets light
+//! glass.
 //!
 //! Without the glass (before macOS 26, or with Reduce Transparency or
 //! Increase Contrast on) the window stays opaque and the frame keeps the
@@ -33,8 +34,13 @@ use gpui_kit::{App, Global, Hsla, Window, WindowBackgroundAppearance};
 const DARK_TINT: f32 = 0.65;
 /// The same for light glass, with a black window behind.
 const LIGHT_TINT: f32 = 0.6;
+/// How much of the frame's color lies over light glass. Clear glass, however
+/// strongly tinted, stays a slate grey over a dark desktop, where the light
+/// theme's text does not read; this much of the frame's own color makes it
+/// light over any desktop and still lets the glass's sheen through.
+const LIGHT_FRAME: f32 = 0.8;
 /// How much of the page's color lies over the frame on Frame's own surfaces
-/// in a tab's card, and of a page's color over its toolbar.
+/// in a tab's card.
 const PANE: f32 = 0.5;
 /// How much of the theme's own color the address field keeps over the glass:
 /// enough that the address reads the same on any page's color.
@@ -60,13 +66,17 @@ pub fn install(window: &mut Window, cx: &mut App) {
     }
 }
 
-/// The color of the window's frame: the theme's title bar, or nothing where
-/// the glass, tinted to it, shows instead.
+/// The color of the window's frame: the theme's title bar, or, over the
+/// glass tinted to it, nothing in the dark theme and a lighter coat of it in
+/// the light one (`LIGHT_FRAME`).
 pub fn frame(cx: &App) -> Hsla {
-    if cx.has_global::<Glass>() {
+    let theme = cx.theme();
+    if !cx.has_global::<Glass>() {
+        theme.title_bar
+    } else if theme.is_dark() {
         gpui_kit::transparent_black()
     } else {
-        cx.theme().title_bar
+        theme.title_bar.opacity(LIGHT_FRAME)
     }
 }
 
@@ -76,16 +86,6 @@ pub fn frame(cx: &App) -> Hsla {
 /// rises out of a color of its own.
 pub fn pane(cx: &App) -> Hsla {
     cx.theme().background.opacity(PANE)
-}
-
-/// A page's color on its toolbar and selected tab: half let through, like a
-/// pane, over the glass; the color itself where there is no glass.
-pub fn wash(color: Hsla, cx: &App) -> Hsla {
-    if cx.has_global::<Glass>() {
-        color.opacity(PANE)
-    } else {
-        color
-    }
 }
 
 /// What a fill over the frame comes to, for the color of text on it. The

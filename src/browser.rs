@@ -1302,13 +1302,14 @@ impl Browser {
     }
 
     /// The color of a tab's toolbar, and of the tab while it is selected: the
-    /// color along the top of its page, as Dia does, else the card's, as a
-    /// wash over the glass.
+    /// color along the top of its page, as Dia does, else the card's. It is
+    /// the page's own color, so the page runs on into its toolbar; the glass
+    /// stays in the frame around them.
     fn chrome_fill(tab: &Tab, cx: &App) -> Hsla {
         if tab.native() {
             return glass::pane(cx);
         }
-        glass::wash(tab.tint(cx).unwrap_or(cx.theme().background), cx)
+        tab.tint(cx).unwrap_or(cx.theme().background)
     }
 
     /// The color of text and icons on a tab's toolbar when the theme's would
