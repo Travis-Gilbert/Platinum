@@ -39,6 +39,7 @@ import hashlib
 import json
 import os
 import platform
+import shlex
 import signal
 import socket
 import subprocess
@@ -130,7 +131,8 @@ def pins_record() -> dict | None:
 def run_row(row: dict, output: Path, timeout_override: int | None, placeholders: dict) -> dict:
     command = row["command"]
     for key, value in placeholders.items():
-        command = command.replace("{" + key + "}", value)
+        # Placeholders can expand to paths with spaces; the row runs under bash.
+        command = command.replace("{" + key + "}", shlex.quote(value))
     log_dir = output / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"{row['id']}.log"
