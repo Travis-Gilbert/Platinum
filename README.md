@@ -45,7 +45,12 @@ page you open is kept in a local index in `~/Library/Application Support/Frame`,
 and search looks there before the web; Ask answers from those kept pages.
 The chrome uses the Asciinema theme in dark mode and GitHub Sharp in light,
 with the frame around each page drawn in the title-bar color (`#e1e4e8` in
-light). As in Dia, the selected tab rises out of its page's toolbar, and both
+light). On macOS 26 and later that frame, the row of tabs included, is
+Liquid Glass: the title-bar color over the glass, at 55% in dark and 30% in
+light, so the desktop shows through it. The glass follows Frame's appearance,
+not the system's. Pages, their toolbars and the selected tab stay opaque.
+With Reduce Transparency on, or on an older macOS, the frame is solid.
+As in Dia, the selected tab rises out of its page's toolbar, and both
 take the color along the top of the page, following it as the page changes;
 on a light page under the dark theme, or the other way round, their text and
 icons turn dark or light to stay readable. A tab shows its site's icon once

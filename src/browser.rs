@@ -43,11 +43,11 @@ use gpui_kit::component::{
     WindowExt as _, h_flex, v_flex,
 };
 use gpui_kit::{
-    Anchor, AnyElement, App, AppContext as _, Bounds, ClickEvent, Context, Div, ElementId, Empty,
-    Entity, FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement as _, IntoElement,
-    MouseButton, MouseDownEvent, ParentElement as _, Pixels, Render, RenderImage, Rgba, SharedString,
-    StatefulInteractiveElement as _, Styled as _, Subscription, Window, div, img, point,
-    prelude::FluentBuilder as _, px, size, transparent_black,
+    Anchor, AnyElement, App, AppContext as _, Bounds, ClickEvent, Context, Corners, Div, ElementId,
+    Empty, Entity, FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement as _, IntoElement,
+    MouseButton, MouseDownEvent, ParentElement as _, Pixels, Render, RenderImage, Rgba,
+    SharedString, StatefulInteractiveElement as _, Styled as _, Subscription, Window, div, img,
+    point, prelude::FluentBuilder as _, px, size, transparent_black,
 };
 use url::Url;
 
@@ -60,6 +60,7 @@ use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
 use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
+use crate::glass;
 use crate::icons;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
@@ -1308,12 +1309,13 @@ impl Browser {
         // A page's color runs on into the toolbar; anything else keeps a rule.
         let tinted = tab.tint(cx).is_some();
         let fill = Self::chrome_fill(tab, cx);
-        let border = cx.theme().border;
+        let (border, radius) = (cx.theme().border, cx.theme().radius_lg);
         v_flex()
             .size_full()
             .when(!self.compact, |card| {
                 card.child(
                     self.toolbar(index, cx)
+                        .rounded_t(radius)
                         .bg(fill)
                         .when(!tinted, |toolbar| toolbar.border_b_1().border_color(border)),
                 )
@@ -1832,7 +1834,6 @@ impl Browser {
             .items_center()
             .justify_center()
             .gap_6()
-            .bg(theme.background)
             .text_color(theme.muted_foreground)
             .child(icons::page().large().text_color(theme.muted_foreground))
             .child(
@@ -1859,10 +1860,24 @@ impl Browser {
             .into_any_element()
     }
 
+    /// What a tab's card shows under its toolbar. The card paints the
+    /// background, rounded, behind it; only a page's own picture has to be
+    /// rounded to the card's corners, its top ones while there is no toolbar.
     fn content(&self, index: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         let tab = &self.tabs[index];
         match tab.showing {
-            Showing::Page if let Some(page) = &tab.page => page.clone().into_any_element(),
+            Showing::Page if let Some(page) = &tab.page => {
+                let radius = cx.theme().radius_lg;
+                let top = if self.compact { radius } else { px(0.) };
+                let corners = Corners {
+                    top_left: top,
+                    top_right: top,
+                    bottom_right: radius,
+                    bottom_left: radius,
+                };
+                page.update(cx, |page, _| page.corners = corners);
+                page.clone().into_any_element()
+            }
             Showing::Serp if let Some(serp) = &tab.serp => serp.clone().into_any_element(),
             _ => self.start_surface(window, cx),
         }
@@ -1952,7 +1967,7 @@ impl Render for Browser {
             .size_full()
             .flex()
             .flex_col()
-            .bg(theme.title_bar)
+            .bg(glass::frame(cx))
             .text_color(theme.foreground)
             .on_action(cx.listener(|browser, _: &NewTab, window, cx| browser.new_tab(window, cx)))
             .on_action(cx.listener(|browser, _: &CloseTab, window, cx| {

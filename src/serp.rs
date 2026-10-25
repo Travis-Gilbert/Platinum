@@ -456,7 +456,6 @@ impl Render for Serp {
         div()
             .id("serp")
             .size_full()
-            .bg(cx.theme().background)
             .text_color(cx.theme().foreground)
             .track_focus(&self.focus)
             .child(
