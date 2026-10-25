@@ -12,6 +12,9 @@ it is not a redistributable application bundle.
   playback state updates from pausing an already-playing video. The Rust binding lacks `SourceBuffer.buffered`, so a small ownership adapter
   calls its native GArray API. DOM range aggregation follows MSE's intersection
   rule using Servo's TimeRanges representation.
+  Inline SVG paint is serialized using Stylo's computed values so CSS colors
+  survive rasterization, including changes to ancestor and descendant styles.
+  This bridges the existing style and SVG engines; it adds no CSS parser.
 - `gstreamer-mse.patch`: GStreamer 1.28.8, revision
   `1b2a95a1b72787cda146b46df9605b168e5b683b`. Repairs removal, completion timing,
   untimed codec-header handling and a lock leak while awaiting the second

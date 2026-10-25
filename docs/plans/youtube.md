@@ -341,3 +341,69 @@ been notarized or tested as a portable distribution, and the full visible
 Frame window still needs acceptance. The media probe uses Frame's actual
 engine and rendering context; all recorded playback results are from that
 native probe, not a replacement browser engine.
+
+
+### Follow-up: visible YouTube window and surrounding rendering
+
+The user confirmed video playback in FrameYouTube and clarified that the earlier
+quit may have been another test Frame instance. The packaged app remained alive
+for more than 17 minutes during inspection; there was no new matching crash
+report. No startup-crash fix is claimed. FrameHome was also running and held the
+search-store lock; the test app logged its existing in-memory fallback.
+
+The user's screenshot showed black header icons and missing recommendation
+thumbnails. A reduced native-rendering fixture reproduces the SVG problem:
+CSS-inherited white and stylesheet-selected green both rasterize black; a blue
+presentation attribute remains blue. Servo's inline SVG serialization clones
+markup without the host document's computed CSS paint. The repair passes Stylo's
+computed paint declarations to the existing SVG renderer and keys the serialized
+cache on those declarations, including descendant style changes. Layout must
+rebuild the replaced SVG box when the serialized paint becomes stale.
+
+`tests/rendering/check_svg_paint.py` uses Pillow to check screenshot pixels before
+and after changing an ancestor's color and a stylesheet rule. A literal blue
+fill and a local red gradient are controls. The previous build fails the CSS
+paint assertions; the final build passes all eight pixel checks, including the
+local gradient before and after restyling. The bridge also avoids empty leading
+CSS declarations rejected by the SVG parser and preserves same-document paint
+server fragments when serializing computed absolute URLs.
+
+Fresh public watch-page probes at 1280x820 do load visible recommendation images,
+including in dark mode. The reported thumbnail issue is not yet reproduced.
+The probe now supports physical viewport dimensions, display scale, and dark
+appearance to match the user's large Retina window without accessing their
+profile. Watch diagnostics wait for DOMContentLoaded and track document loads,
+so they survive YouTube's observed initial document reload without waiting on
+unrelated resources that can keep the load event pending.
+
+Final native validation and delivery:
+
+- The Openprinter watch page at 4992x2672 physical pixels, display scale 2,
+  dark appearance, renders readable SVG header icons and all six visible
+  recommendation thumbnails. This is a fresh profile, not the user's signed-in
+  session; the screenshot's missing thumbnails were not reproduced there.
+- Clicking a recommendation navigates successfully; all six visible thumbnails
+  load before and after the navigation in the Retina probe. This final run has
+  DOM evidence only: its asynchronous screenshot did not finish before exit.
+- Big Buck Bunny identity/no-ad, playback, pause, seek to 60 seconds and 1.5x
+  speed pass again. The measured steady playback ratio was 1.526 over 4.001s.
+- The complete Servo patch applies to its pinned base and reproduces all 28
+  changed/new dependency source files byte-for-byte.
+- FrameYouTube.app was updated atomically and re-signed. Its Info.plist and
+  ad-hoc signature verify, and all 39 plugin links resolve. Bundle version is
+  20261025.2. The running app retains its previous executable until restarted.
+
+Evidence is in `evidence/youtube-2026-10-25/`: `svg-before/`, `svg-after/`,
+`youtube-retina-rendering.*`, `youtube-spa-rendering.json`, `rendering-playback.*`,
+`rendering-patch-check.json`, and `rendering-build-manifest.json`.
+
+Reproduce the pixel check with a Python environment containing Pillow:
+
+```bash
+script/media-env python3 tests/rendering/check_svg_paint.py /path/to/media_check
+FRAME_MEDIA_SCRIPT=tests/rendering/youtube.js script/media-env /path/to/media_check --width 4992 --height 2672 --scale 2 --dark --youtube 'https://www.youtube.com/watch?v=wSV5XT4sl2A'
+```
+
+The next account-specific check is the same page in the user's signed-in window
+after restarting the updated bundle. Chrome parity and the earlier broader
+acceptance gaps remain open. No remote branch was pushed.

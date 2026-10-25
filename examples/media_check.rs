@@ -9,7 +9,7 @@ mod engine;
 #[path = "../src/scene.rs"]
 mod scene;
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -29,10 +29,20 @@ struct Args {
     /// HTTP base URL of Servo WPT media-source fixtures.
     #[arg(long, conflicts_with_all = ["fixture_base", "youtube"])]
     mse: Option<url::Url>,
+    /// Physical viewport size for reproducing desktop rendering issues.
+    #[arg(long, default_value_t = 1280, value_parser = clap::value_parser!(u32).range(1..))]
+    width: u32,
+    #[arg(long, default_value_t = 820, value_parser = clap::value_parser!(u32).range(1..))]
+    height: u32,
+    #[arg(long, default_value_t = 1.0)]
+    scale: f32,
+    /// Match a browser window using the dark system appearance.
+    #[arg(long)]
+    dark: bool,
 }
 
 #[derive(Default)]
-struct Results(RefCell<Option<bool>>);
+struct Results(RefCell<Option<bool>>, Cell<u64>);
 
 fn finish(profile: &std::path::Path, passed: bool) -> ! {
     // AppKit's application termination exits with 0, so an acceptance probe
@@ -42,14 +52,23 @@ fn finish(profile: &std::path::Path, passed: bool) -> ! {
 }
 
 impl WebViewDelegate for Results {
+    fn notify_load_status_changed(&self, _: WebView, status: LoadStatus) {
+        if status == LoadStatus::Started {
+            self.1.set(self.1.get() + 1);
+        }
+        eprintln!("media check: document {} {status:?}", self.1.get());
+    }
+
     fn notify_new_frame_ready(&self, view: WebView) {
         view.paint();
         view.rendering_context().present();
     }
 
     fn show_console_message(&self, view: WebView, _: ConsoleLogLevel, message: String) {
-        if let Some(file @ ("movie_5.mp4" | "movie_5.webm" | "youtube" | "mse")) =
-            message.strip_prefix("FRAME_MEDIA_FRAME ")
+        if let Some(
+            file @ ("movie_5.mp4" | "movie_5.webm" | "youtube" | "mse" | "svg-initial"
+            | "svg-restyled"),
+        ) = message.strip_prefix("FRAME_MEDIA_FRAME ")
         {
             let path = std::env::temp_dir().join(format!("frame-media-{file}.png"));
             view.take_screenshot(None, move |result| match result {
@@ -80,6 +99,10 @@ fn main() -> anyhow::Result<()> {
     // Supply an HTTP base URL ending in /media/ from Servo's WPT fixtures.
     // Without one, only capability reporting is tested.
     let args = Args::parse();
+    anyhow::ensure!(
+        args.scale.is_finite() && args.scale > 0.0,
+        "invalid display scale"
+    );
     let page_url = args
         .youtube
         .clone()
@@ -105,6 +128,13 @@ fn main() -> anyhow::Result<()> {
         Some(path) => std::fs::read_to_string(path)?,
         None => script,
     };
+    let script = if args.youtube.is_some() {
+        format!(
+            "(() => {{ const run = () => {{ {script} }}; if (document.readyState === 'loading') addEventListener('DOMContentLoaded', run, {{once: true}}); else run(); }})()"
+        )
+    } else {
+        script
+    };
     let profile = std::env::temp_dir().join(format!("frame-media-{}", std::process::id()));
     std::fs::create_dir_all(&profile)?;
     let app_profile = profile.clone();
@@ -113,7 +143,10 @@ fn main() -> anyhow::Result<()> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     gpui_kit::application().run(move |cx| {
         engine::Engine::start(&app_profile, cx);
-        let context = match scene::SceneRenderingContext::new(dpi::PhysicalSize::new(640, 480)) {
+        let context = match scene::SceneRenderingContext::new(dpi::PhysicalSize::new(
+            args.width,
+            args.height,
+        )) {
             Ok(context) => Rc::new(context),
             Err(error) => {
                 eprintln!("media check: GPU context failed: {error:?}");
@@ -127,10 +160,14 @@ fn main() -> anyhow::Result<()> {
         let view = WebViewBuilder::new(&servo, context)
             .user_content_manager(user_contents)
             .url(page_url)
+            .hidpi_scale_factor(euclid::Scale::new(args.scale))
             .delegate(app_result.clone())
             .build();
+        if args.dark {
+            view.notify_theme_change(servo::Theme::Dark);
+        }
         view.show();
-        let mut started = false;
+        let mut started = None;
         let pending_result = app_result.clone();
         let pending_profile = app_profile.clone();
         engine::Engine::after_spin(
@@ -138,8 +175,14 @@ fn main() -> anyhow::Result<()> {
                 if let Some(passed) = *pending_result.0.borrow() {
                     finish(&pending_profile, passed);
                 }
-                if !started && view.load_status() == LoadStatus::Complete {
-                    started = true;
+                // Watch pages can keep an unrelated subresource pending even
+                // while the player is usable. Their scripts already wait for
+                // the relevant DOM; don't make diagnostics depend on `load`.
+                let ready = view.load_status() == LoadStatus::Complete
+                    || (args.youtube.is_some() && view.load_status() == LoadStatus::HeadParsed);
+                let document = pending_result.1.get();
+                if started != Some(document) && ready {
+                    started = Some(document);
                     let pending_result = pending_result.clone();
                     view.evaluate_javascript(&script, move |result| {
                         if let Err(error) = result {
