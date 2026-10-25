@@ -1,9 +1,10 @@
 # Frame
 
-A standalone browser. [Servo](https://github.com/Travis-Gilbert/servo/tree/Travis-Gilbert/servo07-browser-20261013)
+A standalone browser. [Servo](https://github.com/Travis-Gilbert/servo/tree/Travis-Gilbert/youtube-mse)
 renders the web, [GPUI Kit](https://gpui-kit.com) draws everything around it,
 and RustyWeb (from Theorem's `codex/rustyweb-programmable-web-2`, plus
-`claude/rustyweb-synthesis-on-request` on top of it) is the
+`claude/rustyweb-synthesis-on-request` and `claude/rustyweb-full-frame` on
+top of it) is the
 default search engine, with its results page drawn natively.
 
 ## Using it
@@ -40,9 +41,13 @@ default search engine, with its results page drawn natively.
   side. Each side keeps its own row of tabs; click a page to make it current.
 - Back from a page that has nowhere to go returns to the search results.
 
-Search is local first and runs no model unless you choose **Ask**. Every web
-page you open is kept in a local index in `~/Library/Application Support/Frame`,
-and search looks there before the web; Ask answers from those kept pages.
+Search is local first. Every web page you open is kept in a local index in
+`~/Library/Application Support/Frame`, and search looks there before the web;
+Ask answers from those kept pages. Queries and pages are embedded on this Mac
+by Google's EmbeddingGemma 2 (about 314 MB, fetched from Hugging Face on first
+run), on the GPU when there is one. A search waits at most four seconds for
+the web, and afterwards Frame fetches the results it has not kept yet, so the
+next search on the topic finds them locally.
 The chrome uses the Asciinema theme in dark mode and GitHub Sharp in light,
 with the frame around each page drawn in the title-bar color (`#e1e4e8` in
 light). On macOS 26 and later that frame, the row of tabs included, is
@@ -60,24 +65,48 @@ the site has one. New Tab is at the right end of the row of tabs.
 
 ## Search providers
 
-Keyless providers (GDELT, Bluesky) are always on. Keyed general-web providers
-are used when their key is present in the environment or in a `.env` file,
-either in the checkout (while developing) or in
-`~/Library/Application Support/Frame/.env`. `RUSTYWEB_SEARCH_PROVIDERS` names
-an explicit list instead. Ask needs `THEOREM_WEB_SYNTHESIS_CONFIG`.
+Bluesky, which needs no key, is always on, ranked below the other providers.
+Keyed general-web providers are used when their key is present in the
+environment or in a `.env` file, either in the checkout (while developing) or
+in `~/Library/Application Support/Frame/.env`. `RUSTYWEB_SEARCH_PROVIDERS`
+names an explicit list instead. Ask needs `THEOREM_WEB_SYNTHESIS_CONFIG`.
+Results are reranked on OpenRouter (Voyage Rerank 3 Lite, then Cohere Rerank
+4 Pro) when an OpenRouter key is in the login Keychain under
+`theorem-openrouter`.
 Never put keys in settings files or shell rc files.
 
 ## Building
 
 macOS only for now.
 
+Media uses Servo's GStreamer backend. Install its development runtime first:
+
+```bash
+brew install gstreamer libnice-gstreamer meson ninja
+```
+
 ```bash
 FRAME_TARGET_DIR="/Volumes/SSD/cargo-targets/frame" script/bootstrap
 ```
 
 ```bash
-cargo run
+script/bootstrap-media
+script/media-env cargo build --locked
+script/setup-media
+script/media-env cargo run --locked
 ```
+
+`script/setup-media` links the plugins required by the pinned Servo version
+beside the development executable and examples. Run it again after changing
+the Cargo target directory; use `--release` for a release build. These links
+depend on the local GStreamer installation and are not a portable app bundle.
+
+YouTube compatibility is tracked in [the media plan](docs/plans/youtube.md).
+`script/bootstrap-media` checks out the pinned Servo commit with the media
+and rendering fixes, then applies `patches/gstreamer-mse.patch` to pinned
+GStreamer sources. `script/media-env` selects the patched
+MSE runtime. This work is under validation; see the plan for exact acceptance
+evidence and remaining YouTube limitations.
 
 `script/bootstrap` checks out the pinned Theorem commit under `deps/` (from a
 sibling `../Theorem` clone when there is one) and can put Cargo's target

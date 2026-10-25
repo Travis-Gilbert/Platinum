@@ -1,0 +1,29 @@
+{
+  "base_frame_commit": "0c6b1934e19d297d963a323843d91bbed07799c1",
+  "bundle_version": "20261025.2",
+  "bundle": "/Volumes/SSD Samsung/frame-deps/FrameYouTube.app",
+  "resolved_plugins": 39,
+  "signature_verified": true,
+  "artifacts": {
+    "signed_app_binary": {
+      "path": "/Volumes/SSD Samsung/frame-deps/FrameYouTube.app/Contents/MacOS/frame",
+      "sha256": "7815a85a2e1f987fcdd0a925ab0b39a44e9f9a6ae0857f13a210cf63b443340a"
+    },
+    "probe": {
+      "path": "/Volumes/SSD Samsung/frame-deps/youtube-render-candidate/media_check",
+      "sha256": "79cf570ba88def7b561aa27148982fe51e875506c6ec63a86a9e61ad160c312e"
+    },
+    "native_mse": {
+      "path": "/Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstmse-frame-1.0.0.dylib",
+      "sha256": "742c29f2e43b78ab546f077b98dabfc141fb20cb696548990e335752bdf10df4"
+    },
+    "servo_patch": {
+      "path": "/Users/travisgilbert/Tech Dev Local/Creative/Frame/patches/servo-mse.patch",
+      "sha256": "bafb3b251210d0ed97cf8ac6fa06b2362083275a0650932e2a527348ea96cd5a"
+    },
+    "rendering_test": {
+      "path": "/Users/travisgilbert/Tech Dev Local/Creative/Frame/tests/rendering/svg-paint.js",
+      "sha256": "08c5dc9207b46757baeb7b4c615ec04c6e5e731e94f76b2957e573e2de74ee7f"
+    }
+  }
+}

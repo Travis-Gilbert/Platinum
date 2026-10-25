@@ -1,0 +1,31 @@
+{
+  "mode": "mse",
+  "steps": [
+    "sourceopen",
+    {
+      "type": "video/webm; codecs=\"vp8\"",
+      "bytes": 39228,
+      "buffered": [
+        0,
+        2.000333333
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"vorbis\"",
+      "bytes": 10735,
+      "buffered": [
+        0,
+        2.036666666
+      ]
+    },
+    {
+      "playing": 1.026775959,
+      "width": 320,
+      "height": 240
+    },
+    {
+      "seekAndResume": 1.235827665
+    }
+  ],
+  "passed": true
+}
