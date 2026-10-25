@@ -1,11 +1,15 @@
 # Experimental MSE integration
 
-`script/bootstrap-media` applies these patches without discarding local work.
+`script/bootstrap-media` checks out Servo commit
+`81d8e2999569a8a496142651a1d129aed22fda77` from `Travis-Gilbert/youtube-mse`
+and applies the GStreamer patch without discarding local work.
 `script/media-env` selects the native pkg-config files and plugin directory.
 The development runtime depends on the installed Homebrew GStreamer libraries;
 it is not a redistributable application bundle.
 
-- `servo-mse.patch`: fork revision `ebc89e684b721f0a8e2407aad20b121a61187779`.
+- `servo-mse.patch`: archival diff against fork revision
+  `ebc89e684b721f0a8e2407aad20b121a61187779`. These changes are included in
+  the pinned Servo commit; bootstrap does not reapply this patch.
   Based on the existing in-tree media abstractions and the approaches in
   Servo PR #40423 and servo/media PR #458. Containers are parsed by GStreamer.
   The patch also roots coalesced JavaScript timers across GC and keeps repeated

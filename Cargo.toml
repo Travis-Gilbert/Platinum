@@ -13,7 +13,7 @@ exclude = ["deps"]
 
 [dependencies]
 gpui-kit = "=0.8.0"
-# Theorem's fork of Servo 0.7, branch Travis-Gilbert/servo07-browser-20261013.
+# Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
 servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by

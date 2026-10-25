@@ -1,6 +1,6 @@
 # Frame
 
-A standalone browser. [Servo](https://github.com/Travis-Gilbert/servo/tree/Travis-Gilbert/servo07-browser-20261013)
+A standalone browser. [Servo](https://github.com/Travis-Gilbert/servo/tree/Travis-Gilbert/youtube-mse)
 renders the web, [GPUI Kit](https://gpui-kit.com) draws everything around it,
 and RustyWeb (from Theorem's `codex/rustyweb-programmable-web-2`, plus
 `claude/rustyweb-synthesis-on-request` on top of it) is the
@@ -92,8 +92,9 @@ the Cargo target directory; use `--release` for a release build. These links
 depend on the local GStreamer installation and are not a portable app bundle.
 
 YouTube compatibility is tracked in [the media plan](docs/plans/youtube.md).
-`script/bootstrap-media` applies the development patches in `patches/`
-to pinned Servo and GStreamer checkouts. `script/media-env` selects the patched
+`script/bootstrap-media` checks out the pinned Servo commit with the media
+and rendering fixes, then applies `patches/gstreamer-mse.patch` to pinned
+GStreamer sources. `script/media-env` selects the patched
 MSE runtime. This work is under validation; see the plan for exact acceptance
 evidence and remaining YouTube limitations.
 

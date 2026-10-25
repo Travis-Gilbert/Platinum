@@ -407,3 +407,19 @@ FRAME_MEDIA_SCRIPT=tests/rendering/youtube.js script/media-env /path/to/media_ch
 The next account-specific check is the same page in the user's signed-in window
 after restarting the updated bundle. Chrome parity and the earlier broader
 acceptance gaps remain open. No remote branch was pushed.
+
+
+## Published Servo pin — 2026-10-25
+
+The validated Servo source is committed and pushed as
+`81d8e2999569a8a496142651a1d129aed22fda77` on
+`Travis-Gilbert/youtube-mse`. Before committing, all 28 changed/new files were
+compared byte-for-byte with the tested `servo-mse.patch` applied to its base.
+Frame's `script/bootstrap-media` now pins that commit directly, without
+reapplying the Servo patch. The patch remains as an archival diff; the native
+GStreamer patch and runtime requirements are unchanged.
+
+The pin changes source provenance only: the delivered FrameYouTube.app already
+contains these exact Servo changes. The rendering/playback evidence and remaining
+acceptance gaps above still apply. Frame changes are published on
+`feat/liquid-glass-chrome`; no default branch is changed.
