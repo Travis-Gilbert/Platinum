@@ -4,9 +4,14 @@
 //! under its own address bar; with every tab closed, the workspace shows it
 //! with a search field of its own.
 //!
+//! It is part of the chrome, not a page: it has no surface of its own and
+//! sits on the window's frame, or on a tab's pane of it, never on a page's
+//! card. Its places are a launcher's row of tiles, a little above the middle,
+//! with the keys to know along the foot.
+//!
 //! Its parts differ by shape, weight and words, never by color alone: places
-//! are outlined tiles, recent items are quiet rows with an icon and a word for
-//! their kind.
+//! are tiles with an icon in a well, recent items are quiet rows with an icon
+//! and a word for their kind.
 //!
 //! SOURCING: GPUI Kit's `Button`, `Icon` and `Kbd`; the record is
 //! `recents.rs`.
@@ -23,7 +28,7 @@ use gpui_kit::component::{
 };
 use gpui_kit::{
     Action, AnyElement, App, ElementId, FontWeight, IntoElement, ParentElement, RenderOnce,
-    SharedString, Styled, Window, div, prelude::FluentBuilder as _, px, rems,
+    SharedString, Styled, Window, div, prelude::FluentBuilder as _, rems,
 };
 use url::Url;
 
@@ -95,28 +100,46 @@ fn emit(handler: &Option<Handler>, event: HomeEvent, window: &mut Window, cx: &m
 
 impl Home {
     fn places(&self, cx: &App) -> impl IntoElement {
-        let muted = cx.theme().muted_foreground;
+        let theme = cx.theme();
+        let (muted, well, border, radius) = (
+            theme.muted_foreground,
+            theme.background,
+            theme.border,
+            theme.radius_lg,
+        );
         v_flex()
+            .items_center()
             .gap_3()
-            .child(heading("Places"))
             .child(
-                div()
-                    .grid()
-                    .grid_cols(Place::ALL.len() as u16)
-                    .gap_3()
+                h_flex()
+                    .justify_center()
+                    .flex_wrap()
+                    .gap_2()
                     .children(Place::ALL.map(|place| {
                         let handler = self.on_event.clone();
                         Button::new(SharedString::from(format!("home-place-{}", place.key())))
-                            .outline()
-                            .w_full()
-                            .h(rems(5.))
+                            .ghost()
+                            .w(rems(6.))
+                            .h(rems(6.5))
                             .accessibility_label(format!("{}, not built yet", place.label()))
                             .tooltip(place.summary())
                             .child(
                                 v_flex()
                                     .items_center()
                                     .gap_2()
-                                    .child(Icon::new(place.icon()).large())
+                                    .child(
+                                        div()
+                                            .size(rems(3.25))
+                                            .flex()
+                                            .items_center()
+                                            .justify_center()
+                                            .rounded(radius)
+                                            .border_1()
+                                            .border_color(border)
+                                            .bg(well)
+                                            .shadow_xs()
+                                            .child(Icon::new(place.icon()).large()),
+                                    )
                                     .child(div().text_sm().child(place.label())),
                             )
                             .on_click(move |_, window, cx| {
@@ -281,6 +304,7 @@ impl Home {
             })
     }
 
+    /// The keys to know, in one line along the foot.
     fn shortcuts(&self, window: &mut Window, cx: &App) -> impl IntoElement {
         let muted = cx.theme().muted_foreground;
         let binding = |action: &dyn Action, window: &mut Window| -> AnyElement {
@@ -289,17 +313,18 @@ impl Home {
                 None => div().into_any_element(),
             }
         };
-        let hint = |keys: AnyElement, text: &'static str| {
-            h_flex()
-                .gap_3()
-                .child(h_flex().w(px(96.)).flex_shrink_0().justify_end().child(keys))
-                .child(text)
-        };
-        v_flex()
-            .gap_2()
-            .text_sm()
+        let hint = |keys: AnyElement, text: &'static str| h_flex().gap_2().child(keys).child(text);
+        let word = |text: &'static str| div().font_weight(FontWeight::MEDIUM).child(text).into_any_element();
+        h_flex()
+            .flex_shrink_0()
+            .flex_wrap()
+            .justify_center()
+            .gap_x_6()
+            .gap_y_2()
+            .py_4()
+            .text_xs()
             .text_color(muted)
-            .child(hint(binding(&NewTab, window), "Open a new tab"))
+            .child(hint(binding(&NewTab, window), "New tab"))
             .child(hint(
                 binding(&OpenPalette, window),
                 "Search tabs, commands and the web",
@@ -308,14 +333,8 @@ impl Home {
                 binding(&FocusAddressBar, window),
                 "Type an address or a search",
             ))
-            .child(hint(
-                div().text_xs().child("Right-click").into_any_element(),
-                "The same search, wherever the pointer is",
-            ))
-            .child(hint(
-                div().text_xs().child("Drag a tab").into_any_element(),
-                "Onto a page's edge to see two side by side",
-            ))
+            .child(hint(word("Right-click"), "The same search, anywhere"))
+            .child(hint(word("Drag a tab"), "To a page's edge, for two side by side"))
     }
 }
 
@@ -326,21 +345,23 @@ impl RenderOnce for Home {
         let shortcuts = self.shortcuts(window, cx).into_any_element();
         v_flex()
             .size_full()
+            .items_center()
+            .px_6()
             .text_color(cx.theme().foreground)
             .overflow_y_scrollbar()
             .id(self.id)
+            .child(div().flex_1().min_h(rems(2.)))
             .child(
                 v_flex()
+                    .flex_shrink_0()
                     .w_full()
                     .max_w(rems(40.))
-                    .mx_auto()
-                    .px_6()
-                    .py(rems(3.))
                     .gap(rems(2.5))
                     .when_some(self.field, |this, field| this.child(field))
                     .child(places)
-                    .child(recent)
-                    .child(shortcuts),
+                    .child(recent),
             )
+            .child(div().flex_1().min_h(rems(2.)))
+            .child(shortcuts)
     }
 }

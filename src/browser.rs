@@ -208,6 +208,11 @@ impl Tab {
         self.page.as_ref()?.read(cx).tint()
     }
 
+    /// Whether the tab shows one of Frame's own surfaces, Home or a place.
+    fn native(&self) -> bool {
+        matches!(self.showing, Showing::Start | Showing::Place(_))
+    }
+
     /// The site's icon, while the tab shows the site.
     fn favicon(&self, cx: &App) -> Option<Arc<RenderImage>> {
         if self.showing != Showing::Page {
@@ -330,6 +335,13 @@ impl Browser {
 
     fn panel_index(&self, panel: PanelId) -> Option<usize> {
         self.tabs.iter().position(|tab| tab.panel_id() == panel)
+    }
+
+    /// Whether the tab with `panel` shows one of Frame's own surfaces, Home
+    /// or a place, rather than a page.
+    fn shows_native(&self, panel: PanelId) -> bool {
+        self.panel_index(panel)
+            .is_some_and(|index| self.tabs[index].native())
     }
 
     // Tabs.
@@ -1283,6 +1295,9 @@ impl Browser {
     /// The color of a tab's toolbar, and of the tab while it is selected: the
     /// color along the top of its page, as Dia does; else the card's.
     fn chrome_fill(tab: &Tab, cx: &App) -> Hsla {
+        if tab.native() {
+            return glass::pane(cx);
+        }
         tab.tint(cx).unwrap_or(cx.theme().background)
     }
 
@@ -1474,8 +1489,10 @@ impl Browser {
             return Empty.into_any_element();
         };
         let tab = &self.tabs[index];
-        // A page's color runs on into the toolbar; anything else keeps a rule.
-        let tinted = tab.tint(cx).is_some();
+        // A page's color runs on into the toolbar, and Home and the places
+        // are one pane with theirs, the card's own; a plain page keeps a rule.
+        let native = tab.native();
+        let ruled = !native && tab.tint(cx).is_none();
         let fill = Self::chrome_fill(tab, cx);
         let (border, radius) = (cx.theme().border, cx.theme().radius_lg);
         v_flex()
@@ -1484,8 +1501,8 @@ impl Browser {
                 card.child(
                     self.toolbar(index, cx)
                         .rounded_t(radius)
-                        .bg(fill)
-                        .when(!tinted, |toolbar| toolbar.border_b_1().border_color(border)),
+                        .when(!native, |toolbar| toolbar.bg(fill))
+                        .when(ruled, |toolbar| toolbar.border_b_1().border_color(border)),
                 )
             })
             .child(

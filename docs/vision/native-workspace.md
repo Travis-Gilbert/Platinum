@@ -68,8 +68,9 @@ Home is a native destination owned by the shell. It holds:
 - Later: installed App Host apps, chosen collections, ongoing agent tasks, and
   a user-arranged layout built from the same components.
 
-A new tab shows the same content inside its card, under the tab's address bar.
-When the last tab closes, Home appears on the chrome itself, full window.
+A new tab shows the same content under the tab's address bar, on a pane of the
+chrome rather than a page's opaque card. When the last tab closes, Home
+appears on the chrome itself, full window.
 
 ### Search
 
@@ -260,7 +261,7 @@ site, nothing may depend on it (principle 7).
 **Structure carries meaning.** Selection is a filled item plus a change of
 structure (a leading mark, a weight change), not a hue. A toggle that is on is
 filled; off is outlined. A local result says "Local" with an icon; a web result
-says "Web". Regions are told apart by spacing, separators and elevation, not by
+is named by its site, as on a search engine's page. Regions are told apart by spacing, separators and elevation, not by
 two shades of the same color. A test for every surface: take a grayscale
 screenshot, and everything a person needs is still there.
 

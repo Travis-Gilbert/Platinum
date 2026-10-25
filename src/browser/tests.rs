@@ -160,7 +160,8 @@ fn right_click_opens_search_at_the_pointer_ready_to_type(cx: &mut TestAppContext
     let (browser, cx) = open_with_tab(cx);
     assert!(cx.debug_bounds("navigator").is_none());
 
-    let pointer = point(px(500.), px(300.));
+    // Beside Home's tiles: right-clicking a button focuses it.
+    let pointer = point(px(40.), px(300.));
     right_click(cx, pointer);
     let placed_at = cx.update(|_, cx| {
         browser

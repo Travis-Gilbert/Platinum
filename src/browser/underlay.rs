@@ -7,8 +7,10 @@
 //! While it shows, the browser keeps one fresh tab behind it, the tab it
 //! stands for: a page opened from here loads there.
 //!
-//! It is a flat surface with a border, where a page's card is raised on a
-//! shadow, so the workspace and the web differ by texture as well as color.
+//! Home and the places are part of the chrome and sit on the window's frame
+//! itself. A results page is a document, so it sits on a flat, opaque card
+//! with a border, where a page's card is raised on a shadow: the workspace and
+//! the web differ by texture as well as color.
 //!
 //! SOURCING: GPUI Kit's `Input`, `Button` and `TitleBar`; Home (`home.rs`),
 //! the results page (`serp.rs`) and the places (`places.rs`).
@@ -381,6 +383,7 @@ impl Browser {
         let id = self.tabs[0].id;
         let route = self.underlay.route.clone();
         let home = matches!(route, Route::Home);
+        let document = matches!(route, Route::Results(..));
         let (can_back, can_forward) = (
             !self.underlay.back.is_empty(),
             !self.underlay.forward.is_empty(),
@@ -465,10 +468,12 @@ impl Browser {
                     .min_h_0()
                     .mx(px(FRAME))
                     .mb(px(FRAME))
-                    .rounded(theme.radius_lg)
-                    .border_1()
-                    .border_color(theme.border)
-                    .bg(theme.background)
+                    .when(document, |card| {
+                        card.rounded(theme.radius_lg)
+                            .border_1()
+                            .border_color(theme.border)
+                            .bg(theme.background)
+                    })
                     .overflow_hidden()
                     .child(body),
             )

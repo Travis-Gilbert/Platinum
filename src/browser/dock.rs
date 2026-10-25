@@ -25,6 +25,7 @@ use gpui_kit::{
 };
 
 use super::Browser;
+use crate::glass;
 
 /// The frame of window chrome around each card.
 pub const FRAME: f32 = 6.;
@@ -208,6 +209,18 @@ impl FrameDock {
             .upgrade()
             .is_some_and(|browser| browser.read(cx).compact)
     }
+
+    /// Whether a group shows one of Frame's own surfaces, Home or a place,
+    /// rather than a page.
+    fn native(&self, group: &TabGroupContext, cx: &App) -> bool {
+        let Some(panel) = group.active_panel() else {
+            return false;
+        };
+        let panel = panel.panel_id(cx);
+        self.browser
+            .upgrade()
+            .is_some_and(|browser| browser.read(cx).shows_native(panel))
+    }
 }
 
 impl DockAreaRenderer for FrameDock {
@@ -244,6 +257,7 @@ impl TabGroupRenderer for FrameDock {
         cx: &mut App,
     ) -> Stateful<Div> {
         let compact = self.compact(cx);
+        let native = self.native(group, cx);
         let theme = cx.theme();
         div()
             .id(("card", group.node().as_u64()))
@@ -252,9 +266,10 @@ impl TabGroupRenderer for FrameDock {
             .mb(px(FRAME))
             .when(compact, |card| card.mt(px(FRAME)))
             .rounded(theme.radius_lg)
-            .bg(theme.background)
-            // The page sits a little above the frame, as in Dia.
-            .shadow_lg()
+            // Frame's own surfaces are a pane of the chrome; a page sits a
+            // little above the frame, as in Dia.
+            .when(native, |card| card.bg(glass::pane(cx)))
+            .when(!native, |card| card.bg(theme.background).shadow_lg())
     }
 
     fn render_tab_bar(
