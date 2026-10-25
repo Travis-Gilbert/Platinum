@@ -65,6 +65,12 @@ fn main() -> anyhow::Result<()> {
             theme::init(cx);
             install_commands(cx);
             Engine::start(&profile_dir, cx);
+            // GPUI's images load from a URL through this, a result's favicon
+            // among them: with Servo's user agent, and without cookies.
+            match reqwest_client::ReqwestClient::user_agent(&Engine::user_agent()) {
+                Ok(client) => cx.set_http_client(std::sync::Arc::new(client)),
+                Err(error) => log::error!("http client: {error:#}"),
+            }
             search::init(&data_dir, cx);
             recents::init(Some(data_dir.join("recents.json")), cx);
             if let Err(error) = open_window(cx) {

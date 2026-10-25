@@ -16,13 +16,16 @@
 //!
 //! Nothing here rests on color alone: the selected row has a fill, the
 //! result under the pointer underlines its title, a site is marked by its
-//! initials, and a local result carries a drive icon and the word Local. A web result carries no word:
-//! the web is what a search finds unless it says otherwise.
+//! favicon, or its initials where it has none, and a local result carries a
+//! drive icon and the word Local. A web result carries no word: the web is
+//! what a search finds unless it says otherwise.
 //!
 //! SOURCING: GPUI Kit's `List`, `TabBar`, `Popover`, `Avatar`,
 //! `DescriptionList`, `Alert`, `Empty`, `Skeleton` and `Button`; sites are
 //! named by Servo's public suffix list (`net_traits::pub_domains`), snippets
-//! are parsed by html5ever (`markup.rs`), dates are chrono's.
+//! are parsed by html5ever (`markup.rs`), dates are chrono's. Favicons load
+//! and decode through GPUI's image loader (`ImageAssetLoader`), which fetches
+//! over the HTTP client `main` installs (`gpui-pre-reqwest-client`).
 
 use chrono::{DateTime, Local, NaiveDate};
 use gpui_kit::assets::IconName as Lucide;
@@ -48,9 +51,9 @@ use gpui_kit::component::{
 };
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClickEvent, Context, Entity, EventEmitter, FocusHandle,
-    Focusable, FontWeight, HighlightStyle, InteractiveElement, IntoElement, ParentElement, Render,
-    Rems, ScrollStrategy, SharedString, Styled, StyledText, Task, WeakEntity, Window, div,
-    prelude::FluentBuilder as _, px, relative, rems,
+    Focusable, FontWeight, HighlightStyle, ImageAssetLoader, InteractiveElement, IntoElement,
+    ParentElement, Render, Rems, Resource, ScrollStrategy, SharedString, Styled, StyledText, Task,
+    WeakEntity, Window, div, img, prelude::FluentBuilder as _, px, relative, rems,
 };
 use percent_encoding::percent_decode_str;
 use url::Url;
@@ -590,11 +593,11 @@ impl ListDelegate for Results {
     fn render_item(
         &mut self,
         ix: IndexPath,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<ListState<Self>>,
     ) -> Option<ListItem> {
         let hit = self.hits.get(ix.row)?;
-        Some(result_row(hit, self.serp.clone(), self.searched_at?, cx))
+        Some(result_row(hit, self.serp.clone(), self.searched_at?, window, cx))
     }
 
     fn render_section_footer(
@@ -652,11 +655,21 @@ fn result_row(
     hit: &SerpHit,
     serp: WeakEntity<Serp>,
     searched_at: DateTime<Local>,
-    cx: &App,
+    window: &mut Window,
+    cx: &mut App,
 ) -> ListItem {
+    let local = search::is_local_lane(&hit.lane);
+    let mark = if local {
+        Avatar::new()
+            .small()
+            .placeholder(IconName::HardDrive)
+            .text_color(cx.theme().muted_foreground)
+            .into_any_element()
+    } else {
+        site_icon(&hit.url, window, cx)
+    };
     let theme = cx.theme();
     let muted = theme.muted_foreground;
-    let local = search::is_local_lane(&hit.lane);
     let site = site(&hit.url);
     let key = element_key(&hit.url);
     let emphasis = HighlightStyle {
@@ -669,14 +682,6 @@ fn result_row(
             .iter()
             .map(|range| (range.clone(), emphasis)),
     );
-    let mark = if local {
-        Avatar::new()
-            .small()
-            .placeholder(IconName::HardDrive)
-            .text_color(muted)
-    } else {
-        Avatar::new().small().name(site_mark(&site))
-    };
     let about = {
         let hit = hit.clone();
         Popover::new("about")
@@ -920,6 +925,46 @@ fn site(url: &Url) -> String {
     }
 }
 
+/// A web result's mark: its site's favicon, on white, the ground favicons
+/// are drawn for, so a dark one still shows in the dark theme; the site's
+/// initials where it has none. The circle stays empty while the icon loads,
+/// so a row never turns from initials to an icon.
+fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
+    let initials = || {
+        Avatar::new()
+            .small()
+            .name(site_mark(&site(url)))
+            .into_any_element()
+    };
+    let Some(favicon) = favicon_url(url) else {
+        return initials();
+    };
+    match window.use_asset::<ImageAssetLoader>(&Resource::Uri(favicon.into()), cx) {
+        Some(Err(_)) => initials(),
+        icon => h_flex()
+            .size_6()
+            .flex_shrink_0()
+            .justify_center()
+            .rounded_full()
+            .border_1()
+            .border_color(cx.theme().border)
+            .bg(gpui_kit::white())
+            .when_some(icon.and_then(Result::ok), |circle, icon| {
+                circle.child(img(icon).size_4())
+            })
+            .into_any_element(),
+    }
+}
+
+/// Where a site keeps its icon when its pages name none:
+/// `https://docs.rs/favicon.ico`. Only the web has one.
+fn favicon_url(url: &Url) -> Option<String> {
+    matches!(url.scheme(), "http" | "https")
+        .then(|| url.join("/favicon.ico").ok())
+        .flatten()
+        .map(String::from)
+}
+
 /// What a site's mark is drawn from: its name without the public suffix,
 /// `rust-lang` for `rust-lang.org`.
 fn site_mark(site: &str) -> String {
@@ -1035,6 +1080,22 @@ pub(crate) mod tests {
         assert_eq!(element_key(&a), "example.com/a/b?x=1");
         let b = Url::parse("https://example.com/a/b").unwrap();
         assert_ne!(element_key(&a), element_key(&b));
+    }
+
+    #[test]
+    fn a_web_result_looks_for_its_sites_icon_at_the_root() {
+        let page = Url::parse("https://docs.rs/gpui-kit/latest/gpui_kit/?q=1").unwrap();
+        assert_eq!(
+            favicon_url(&page).as_deref(),
+            Some("https://docs.rs/favicon.ico")
+        );
+        let port = Url::parse("http://127.0.0.1:8080/a").unwrap();
+        assert_eq!(
+            favicon_url(&port).as_deref(),
+            Some("http://127.0.0.1:8080/favicon.ico")
+        );
+        let file = Url::parse("file:///Users/a/notes.md").unwrap();
+        assert_eq!(favicon_url(&file), None);
     }
 
     #[test]
