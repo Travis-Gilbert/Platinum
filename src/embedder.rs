@@ -13,6 +13,12 @@
 //! indexing) embeds one document at a time and steps aside whenever a query is
 //! waiting, so a query waits for at most one document.
 //!
+//! The model runs on the GPU through ONNX Runtime's WebGPU provider (Dawn on
+//! Metal), which embeds a query about twice as fast as the CPU and a full page
+//! about four times as fast. Without a usable GPU it runs on the CPU. CoreML,
+//! ONNX Runtime's default on macOS, is never used: it rejects the empty media
+//! inputs every text embedding sends.
+//!
 //! SOURCING: `ort` runs the graph, `tokenizers` reads the model's own
 //! `tokenizer.json`, and `hf-hub` fetches and caches the pinned files. fastembed
 //! is not used: its text helper feeds `input_ids`, `attention_mask` and
@@ -31,6 +37,8 @@ use std::{
 use anyhow::{Context as _, anyhow};
 use futures::future::BoxFuture;
 use ort::{
+    environment::Environment,
+    ep,
     session::{Session, builder::AutoDevicePolicy},
     value::{Shape, Tensor, TensorElementType, ValueType},
 };
@@ -45,7 +53,7 @@ const MODEL_DATA_FILE: &str = "onnx/model_quantized.onnx_data";
 const TOKENIZER_FILE: &str = "tokenizer.json";
 const DIMENSION: usize = 768;
 /// Tokens embedded per text. The model reads 8,192; the opening of a page
-/// carries its subject, and a shorter input keeps indexing light on the CPU.
+/// carries its subject, and a shorter input keeps indexing light.
 const MAX_TOKENS: usize = 512;
 /// The graph's pooled, normalized output.
 const OUTPUT: &str = "sentence_embedding";
@@ -108,27 +116,21 @@ impl EmbeddingGemma {
             }))
             .map_err(|error| anyhow!("could not set the embedding tokenizer up: {error}"))?;
 
-        // Half the cores, so indexing leaves room for the page being read.
-        let threads = std::thread::available_parallelism()
-            .map(|cores| (cores.get() / 2).max(1))
-            .unwrap_or(1);
         let environment = ort::init()
             .with_name("frame")
             .build()
             .map_err(|error| anyhow!("could not start ONNX Runtime: {error}"))?;
-        // CPU only: ort registers CoreML on macOS by default, and CoreML
-        // rejects the empty media inputs every text embedding sends.
-        let session = Session::builder(&environment)
-            .and_then(|builder| {
-                builder
-                    .with_auto_device(AutoDevicePolicy::PreferCPU)
-                    .map_err(Into::into)
-            })
-            .and_then(|builder| builder.with_intra_threads(threads).map_err(Into::into))
-            .and_then(|mut builder| builder.commit_from_file(&model_path))
-            .map_err(|error| anyhow!("could not load the embedding model: {error}"))?;
+        let (session, device) = match open_session(&environment, &model_path, true) {
+            Ok(session) => (session, "the GPU"),
+            Err(error) => {
+                log::warn!("embedder: the GPU is unavailable, so the CPU embeds: {error:#}");
+                let session = open_session(&environment, &model_path, false)
+                    .map_err(|error| anyhow!("could not load the embedding model: {error}"))?;
+                (session, "the CPU")
+            }
+        };
         log::info!(
-            "embedder: {MODEL_REPO}@{REVISION} on {threads} threads, inputs {:?}",
+            "embedder: {MODEL_REPO}@{REVISION} on {device}, inputs {:?}",
             session
                 .inputs()
                 .iter()
@@ -255,6 +257,24 @@ impl TextEmbedder for EmbeddingGemma {
                 })
         })
     }
+}
+
+/// A session for the graph at `model`, on the GPU through WebGPU or on the CPU.
+/// CPU-only operators run on half the cores either way, so indexing leaves
+/// room for the page being read.
+fn open_session(environment: &Environment, model: &Path, gpu: bool) -> ort::Result<Session> {
+    let threads = std::thread::available_parallelism()
+        .map(|cores| (cores.get() / 2).max(1))
+        .unwrap_or(1);
+    // PreferCPU keeps ONNX Runtime from registering CoreML by itself.
+    let mut builder = Session::builder(environment)?
+        .with_auto_device(AutoDevicePolicy::PreferCPU)?
+        .with_intra_threads(threads)?;
+    if gpu {
+        builder =
+            builder.with_execution_providers([ep::WebGPU::default().build().error_on_failure()])?;
+    }
+    builder.commit_from_file(model)
 }
 
 /// The model's web search query prefix.

@@ -24,9 +24,10 @@ rustyred-web = { path = "deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rusty
 # reqwest-based search providers need a Tokio runtime; `search.rs` keeps one
 # for every search, off GPUI's executor.
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "time", "net"] }
-# EmbeddingGemma 2 runs in-process: ONNX Runtime does the inference, the
+# EmbeddingGemma 2 runs in-process: ONNX Runtime does the inference (on the
+# GPU through WebGPU, whose Dawn library `build.rs` lets the binary find), the
 # model's own tokenizer.json feeds it, and hf-hub fetches a pinned revision.
-ort = "=2.0.0-rc.15"
+ort = { version = "=2.0.0-rc.15", features = ["webgpu"] }
 tokenizers = { version = "0.23", default-features = false, features = ["onig"] }
 hf-hub = { version = "0.4.3", default-features = false, features = ["ureq"] }
 

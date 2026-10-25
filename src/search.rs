@@ -19,7 +19,9 @@
 //! Each search waits for providers for at most four seconds, or until 100
 //! results are in, whichever comes first. The fused results are reranked on
 //! OpenRouter when its key is in the login Keychain, and Frame's rank profile
-//! weighs Bluesky down.
+//! weighs Bluesky down. Searches for images, video or attachments
+//! (`SearchOpts::media`) are reranked by a model that also reads their
+//! pictures; nothing in Frame searches media yet.
 //!
 //! Providers are passed to the async `programmable_search` explicitly, so the
 //! process environment is only read (never written). They are built once, and
@@ -37,8 +39,8 @@ use std::{
 use anyhow::{Context as _, anyhow};
 use gpui_kit::{App, AppContext as _, Global, Task};
 use rustyred_web::{
-    COHERE_RERANK_4_FAST, OpenRouterReranker, Reranker, SearchOpts, SearchProvider,
-    VOYAGE_RERANK_2_5,
+    COHERE_RERANK_4_PRO, NEMOTRON_RERANK_VL, OpenRouterReranker, Reranker, SearchOpts,
+    SearchProvider, VOYAGE_RERANK_3_LITE,
     programmable::{ProfileRef, ProgrammableQueryOptions, RankProfile, RankRule, SearchSession},
     providers::configured_search_provider_from_env,
     query::EvidenceHit,
@@ -221,10 +223,13 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
         }
     };
     match openrouter_rerankers() {
-        Ok(rerankers) if rerankers.is_empty() => {
+        Ok(None) => {
             log::info!("search: no OpenRouter key in the Keychain, so results are not reranked")
         }
-        Ok(rerankers) => store.set_rerankers(rerankers),
+        Ok(Some((rerankers, media))) => {
+            store.set_rerankers(rerankers);
+            store.set_media_rerankers(media);
+        }
         Err(error) => log::warn!("search: results are not reranked: {error:#}"),
     }
     let store = Arc::new(Mutex::new(store));
@@ -290,20 +295,26 @@ fn frame_profile() -> RankProfile {
     profile
 }
 
-/// OpenRouter rerankers, Cohere first and Voyage when Cohere does not answer.
-/// Empty when the Keychain holds no key.
-fn openrouter_rerankers() -> anyhow::Result<Vec<Arc<dyn Reranker>>> {
+type Rerankers = Vec<Arc<dyn Reranker>>;
+
+/// OpenRouter rerankers: Voyage Rerank 3 Lite first and Cohere Rerank 4 Pro
+/// when Voyage does not answer, then, for media searches only, NVIDIA's
+/// Nemotron Rerank VL, which reads each result's picture. None when the
+/// Keychain holds no key.
+fn openrouter_rerankers() -> anyhow::Result<Option<(Rerankers, Rerankers)>> {
     let Some(key) = keychain_secret(OPENROUTER_KEYCHAIN_SERVICE)? else {
-        return Ok(Vec::new());
+        return Ok(None);
     };
-    [COHERE_RERANK_4_FAST, VOYAGE_RERANK_2_5]
+    let reranker = |model: &str| {
+        OpenRouterReranker::new(key.clone(), model)
+            .map_err(|error| anyhow!("could not set up {model}: {error}"))
+    };
+    let text = [VOYAGE_RERANK_3_LITE, COHERE_RERANK_4_PRO]
         .into_iter()
-        .map(|model| {
-            OpenRouterReranker::new(key.clone(), model)
-                .map(|reranker| Arc::new(reranker) as Arc<dyn Reranker>)
-                .map_err(|error| anyhow!("could not set up {model}: {error}"))
-        })
-        .collect()
+        .map(|model| reranker(model).map(|r| Arc::new(r) as Arc<dyn Reranker>))
+        .collect::<anyhow::Result<_>>()?;
+    let media = vec![Arc::new(reranker(NEMOTRON_RERANK_VL)?.reading_images()) as Arc<dyn Reranker>];
+    Ok(Some((text, media)))
 }
 
 /// A generic password from the login Keychain, read through the `security`
@@ -1122,8 +1133,8 @@ mod tests {
     #[test]
     fn rerank_and_embedding_degradations_read_as_sentences() {
         assert_eq!(
-            describe_degradation("rerank_failed:cohere/rerank-4-fast", &[]),
-            "Results keep their first-pass order because reranking with cohere/rerank-4-fast did not answer."
+            describe_degradation("rerank_failed:voyageai/rerank-3-lite", &[]),
+            "Results keep their first-pass order because reranking with voyageai/rerank-3-lite did not answer."
         );
         assert_eq!(
             describe_degradation("dense_query_embedding_failed:the model stopped", &[]),
