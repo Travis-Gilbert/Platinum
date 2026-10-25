@@ -3802,6 +3802,7 @@ dependencies = [
  "serde",
  "serde_json",
  "servo",
+ "servo-net-traits",
  "surfman",
  "theorem-browser-substrate",
  "tokio",

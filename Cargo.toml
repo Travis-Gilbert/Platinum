@@ -15,6 +15,9 @@ exclude = ["deps"]
 gpui-kit = "=0.8.0"
 # Theorem's fork of Servo 0.7, branch Travis-Gilbert/servo07-browser-20261013.
 servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "ebc89e684b721f0a8e2407aad20b121a61187779", features = ["webcrypto", "webgl", "brotli-compression-stream"] }
+# The site a search result is on, by its registrable domain: Servo's own
+# copy of the public suffix list, from the same build.
+net_traits = { package = "servo-net-traits", git = "https://github.com/Travis-Gilbert/servo", rev = "ebc89e684b721f0a8e2407aad20b121a61187779" }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
