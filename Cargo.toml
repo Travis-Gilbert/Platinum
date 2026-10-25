@@ -21,9 +21,15 @@ servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "ebc89e684b721f
 theorem-browser-substrate = { path = "deps/theorem-rustyweb-pw2/apps/browser-substrate" }
 # The search sessions' query and provider types, from the same branch.
 rustyred-web = { path = "deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-web" }
-# reqwest-based search providers need a Tokio runtime; `search.rs` builds a
-# small one per search, off GPUI's executor.
-tokio = { version = "1", features = ["rt", "time", "net"] }
+# reqwest-based search providers need a Tokio runtime; `search.rs` keeps one
+# for every search, off GPUI's executor.
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "time", "net"] }
+# EmbeddingGemma 2 runs in-process: ONNX Runtime does the inference (on the
+# GPU through WebGPU, whose Dawn library `build.rs` lets the binary find), the
+# model's own tokenizer.json feeds it, and hf-hub fetches a pinned revision.
+ort = { version = "=2.0.0-rc.15", features = ["webgpu"] }
+tokenizers = { version = "0.23", default-features = false, features = ["onig"] }
+hf-hub = { version = "0.4.3", default-features = false, features = ["ureq"] }
 
 anyhow = "1"
 # Downloads: the server's file name, made safe for the disk.
@@ -56,6 +62,8 @@ url = "2"
 # `gpui-fast?/...`, which Cargo still resolves, and gpui-fast's wasm crate
 # pins a `unicode-properties` that conflicts with Servo's.
 gpui-pre = { version = "=0.3.9", features = ["test-support"] }
+# Shows the search workers' logs in `examples/serp_check.rs`.
+env_logger = "0.11"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

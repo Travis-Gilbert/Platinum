@@ -6,31 +6,48 @@
 //! this module's public boundary.
 //!
 //! `capture` adds a page the person finished loading to the same store, so the
-//! local lanes search what they have read; the next search indexes it.
+//! local lanes search what they have read; the next search indexes it. A
+//! worker thread embeds each captured page with the shared EmbeddingGemma 2
+//! model ([`crate::embedder`]), so the dense lane finds pages by meaning too.
+//!
+//! After each search a crawl campaign fetches the results the store holds no
+//! content for, as many as the query's intent warrants, and adds them to the
+//! same store, so the next search on the topic finds them locally. Campaigns
+//! run one at a time on their own thread, with the store unlocked while pages
+//! download.
+//!
+//! Each search waits for providers for at most four seconds, or until 100
+//! results are in, whichever comes first. The fused results are reranked on
+//! OpenRouter when its key is in the login Keychain, and Frame's rank profile
+//! weighs Bluesky down. Searches for images, video or attachments
+//! (`SearchOpts::media`) are reranked by a model that also reads their
+//! pictures; nothing in Frame searches media yet.
 //!
 //! Providers are passed to the async `programmable_search` explicitly, so the
-//! process environment is only read (never written). Each search builds its own
-//! single-threaded tokio runtime, the same way the substrate's blocking entry
-//! point does, because reqwest-based providers need one and GPUI's executor
-//! does not provide it.
+//! process environment is only read (never written). They are built once, and
+//! every search runs on one shared tokio runtime, because reqwest-based
+//! providers need one and GPUI's executor does not provide it. Building a
+//! provider's HTTP client costs up to seconds, and a runtime that outlives each
+//! search keeps provider connections open for the next.
 
 use std::{
     collections::HashSet,
-    sync::{Arc, Mutex},
+    sync::{Arc, LazyLock, Mutex, mpsc},
     time::Instant,
 };
 
 use anyhow::{Context as _, anyhow};
 use gpui_kit::{App, AppContext as _, Global, Task};
 use rustyred_web::{
-    SearchProvider,
-    programmable::{ProgrammableQueryOptions, SearchSession},
+    COHERE_RERANK_4_PRO, NEMOTRON_RERANK_VL, OpenRouterReranker, Reranker, SearchOpts,
+    SearchProvider, VOYAGE_RERANK_3_LITE,
+    programmable::{ProfileRef, ProgrammableQueryOptions, RankProfile, RankRule, SearchSession},
     providers::configured_search_provider_from_env,
     query::EvidenceHit,
 };
 use theorem_browser_substrate::{
-    BrowserCapturePolicy, LoadedPage, RedCoreBrowserSessionStore, durable_browser_session,
-    memory_browser_session,
+    BrowserCapturePolicy, LiveFetchOptions, LoadedPage, RedCoreBrowserSessionStore,
+    durable_browser_session, fetch_campaign_pages, memory_browser_session,
 };
 use url::Url;
 
@@ -39,7 +56,22 @@ const SESSION_ID: &str = "frame";
 
 /// Providers that need no key. They are always on unless the environment names
 /// an explicit list.
-const KEYLESS_PROVIDERS: &[&str] = &["gdelt", "bluesky"];
+const KEYLESS_PROVIDERS: &[&str] = &["bluesky"];
+
+/// How far Frame's rank profile weighs Bluesky down: a post's score is scaled
+/// by 1 - 0.6, so a strong match can still surface.
+const BLUESKY_WEIGHT: f64 = -0.6;
+
+/// Login Keychain item holding the OpenRouter key the rerankers use.
+const OPENROUTER_KEYCHAIN_SERVICE: &str = "theorem-openrouter";
+
+/// Visited pages embedded per store visit. The store is unlocked while they
+/// are embedded.
+const EMBED_BATCH: usize = 8;
+
+/// Searches waiting for their crawl campaign. A search made while this many
+/// are waiting gets none.
+const CAMPAIGN_QUEUE: usize = 4;
 
 /// Keyed providers that search the general web. Each is used only when its key
 /// is present. `github` and `gitlab` are code-search providers and are left out
@@ -141,10 +173,16 @@ pub struct SerpResult {
 #[derive(Clone)]
 struct SearchService {
     store: Arc<Mutex<RedCoreBrowserSessionStore>>,
-    /// Provider names to build for each search (keys already checked at init).
-    providers: Arc<[String]>,
+    /// The providers every search queries.
+    providers: Arc<[Arc<dyn SearchProvider>]>,
     /// Set when the durable store could not be opened and search runs in memory.
     store_note: Option<Arc<str>>,
+    /// Frame's rank profile in the store, when it could be kept there.
+    profile: Option<ProfileRef>,
+    /// Tells the embedding worker a page was captured.
+    embed_wake: Option<mpsc::Sender<()>>,
+    /// Hands finished searches to the crawl campaign worker.
+    campaigns: Option<mpsc::SyncSender<SearchSession>>,
 }
 
 impl Global for SearchService {}
@@ -171,13 +209,266 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
         }
     };
 
+    let mut store = store;
+    store.set_search_opts(search_opts());
+    let profile = match store.adopt_rank_profile(&frame_profile()) {
+        Ok(profile) => Some(profile),
+        Err(error) => {
+            log::warn!(
+                "search: Frame's rank profile could not be kept, so Bluesky is not weighed down: {} ({})",
+                error.message,
+                error.code
+            );
+            None
+        }
+    };
+    match openrouter_rerankers() {
+        Ok(None) => {
+            log::info!("search: no OpenRouter key in the Keychain, so results are not reranked")
+        }
+        Ok(Some((rerankers, media))) => {
+            store.set_rerankers(rerankers);
+            store.set_media_rerankers(media);
+        }
+        Err(error) => log::warn!("search: results are not reranked: {error:#}"),
+    }
+    let store = Arc::new(Mutex::new(store));
+
+    let (embed_wake, woken) = mpsc::channel();
+    let worker_store = store.clone();
+    let embed_wake = std::thread::Builder::new()
+        .name("frame-embedder".into())
+        .spawn(move || embedding_worker(worker_store, woken))
+        .map_err(|error| log::warn!("search: semantic ranking is off: {error}"))
+        .ok()
+        .map(|_| embed_wake);
+
+    let (campaigns, searches) = mpsc::sync_channel(CAMPAIGN_QUEUE);
+    let crawler_store = store.clone();
+    let crawler_wake = embed_wake.clone();
+    let campaigns = std::thread::Builder::new()
+        .name("frame-crawler".into())
+        .spawn(move || campaign_worker(crawler_store, searches, crawler_wake))
+        .map_err(|error| log::warn!("search: results are not crawled: {error}"))
+        .ok()
+        .map(|_| campaigns);
+
     let providers = select_providers();
-    log::info!("search: providers {providers:?}");
+    log::info!(
+        "search: providers {:?}",
+        providers.iter().map(|p| p.name()).collect::<Vec<_>>()
+    );
     cx.set_global(SearchService {
-        store: Arc::new(Mutex::new(store)),
+        store,
         providers: providers.into(),
         store_note,
+        profile,
+        embed_wake,
+        campaigns,
     });
+}
+
+/// Stop waiting for providers at four seconds or once 100 results are in,
+/// whichever comes first, and rank up to 100 of them.
+fn search_opts() -> SearchOpts {
+    SearchOpts {
+        provider_limit: 25,
+        limit: 100,
+        provider_timeout_ms: 4_000,
+        target_candidates: 100,
+        ..SearchOpts::default()
+    }
+}
+
+/// Frame's rank profile: RustyWeb's default, with Bluesky weighed down and
+/// semantic matches allowed to seed graph expansion.
+fn frame_profile() -> RankProfile {
+    let mut profile = RankProfile::builtin("default").expect("RustyWeb ships a default profile");
+    profile.id = "frame".into();
+    profile.name = "Frame".into();
+    profile.rules.push(RankRule::Provider {
+        rule_id: "bluesky-down".into(),
+        provider: "bluesky".into(),
+        weight: BLUESKY_WEIGHT,
+    });
+    profile.graph.allow_dense_seeds = true;
+    profile
+}
+
+type Rerankers = Vec<Arc<dyn Reranker>>;
+
+/// OpenRouter rerankers: Voyage Rerank 3 Lite first and Cohere Rerank 4 Pro
+/// when Voyage does not answer, then, for media searches only, NVIDIA's
+/// Nemotron Rerank VL, which reads each result's picture. None when the
+/// Keychain holds no key.
+fn openrouter_rerankers() -> anyhow::Result<Option<(Rerankers, Rerankers)>> {
+    let Some(key) = keychain_secret(OPENROUTER_KEYCHAIN_SERVICE)? else {
+        return Ok(None);
+    };
+    let reranker = |model: &str| {
+        OpenRouterReranker::new(key.clone(), model)
+            .map_err(|error| anyhow!("could not set up {model}: {error}"))
+    };
+    let text = [VOYAGE_RERANK_3_LITE, COHERE_RERANK_4_PRO]
+        .into_iter()
+        .map(|model| reranker(model).map(|r| Arc::new(r) as Arc<dyn Reranker>))
+        .collect::<anyhow::Result<_>>()?;
+    let media = vec![Arc::new(reranker(NEMOTRON_RERANK_VL)?.reading_images()) as Arc<dyn Reranker>];
+    Ok(Some((text, media)))
+}
+
+/// A generic password from the login Keychain, read through the `security`
+/// tool. The item's access list lets that tool read it without a prompt; a
+/// Security.framework read would be checked against each rebuilt Frame binary.
+fn keychain_secret(service: &str) -> anyhow::Result<Option<String>> {
+    let output = std::process::Command::new("/usr/bin/security")
+        .args(["find-generic-password", "-s", service, "-w"])
+        .output()
+        .context("could not run the security tool")?;
+    if !output.status.success() {
+        return Ok(None);
+    }
+    let secret = String::from_utf8(output.stdout).context("the Keychain item is not text")?;
+    let secret = secret.trim();
+    Ok((!secret.is_empty()).then(|| secret.to_string()))
+}
+
+/// Load the shared embedding model, then keep visited pages embedded: the
+/// whole history first, then each capture as it is reported on `woken`.
+fn embedding_worker(store: Arc<Mutex<RedCoreBrowserSessionStore>>, woken: mpsc::Receiver<()>) {
+    let model = match crate::embedder::load() {
+        Ok(model) => model,
+        Err(error) => {
+            log::warn!("search: semantic ranking is off: {error:#}");
+            return;
+        }
+    };
+    let runtime = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(error) => {
+            log::warn!("search: semantic ranking is off: {error}");
+            return;
+        }
+    };
+    match store.lock() {
+        Ok(mut store) => store.set_text_embedder(model.clone()),
+        Err(_) => return,
+    }
+    loop {
+        if let Err(error) = embed_pending_pages(&store, &model, &runtime) {
+            log::warn!("search: could not embed visited pages: {error:#}");
+        }
+        // Several captures reported while embedding are one more pass.
+        if woken.recv().is_err() {
+            return;
+        }
+        while woken.try_recv().is_ok() {}
+    }
+}
+
+/// Embed every visited page the model has not embedded yet, a batch at a time,
+/// with the store unlocked while the model runs.
+fn embed_pending_pages(
+    store: &Mutex<RedCoreBrowserSessionStore>,
+    model: &crate::embedder::EmbeddingGemma,
+    runtime: &tokio::runtime::Runtime,
+) -> anyhow::Result<()> {
+    let lock = || {
+        store
+            .lock()
+            .map_err(|_| anyhow!("the search store stopped after an earlier failure"))
+    };
+    let mut embedded = 0;
+    loop {
+        let pending = lock()?
+            .pending_page_embeddings(EMBED_BATCH)
+            .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+        let Some(pending) = pending else { break };
+        let vectors = model.embed_background(pending.inputs())?;
+        let published = {
+            let mut store = lock()?;
+            runtime.block_on(store.publish_page_embeddings(pending, vectors))
+        }
+        .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+        // Pages changed while they were embedded; their capture wakes the
+        // worker again.
+        if published == 0 {
+            break;
+        }
+        embedded += published;
+    }
+    if embedded > 0 {
+        log::info!("search: embedded {embedded} visited pages");
+    }
+    Ok(())
+}
+
+/// Run each finished search's crawl campaign, one at a time, and wake the
+/// embedding worker for the pages it adds.
+fn campaign_worker(
+    store: Arc<Mutex<RedCoreBrowserSessionStore>>,
+    searches: mpsc::Receiver<SearchSession>,
+    embed_wake: Option<mpsc::Sender<()>>,
+) {
+    let runtime = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(error) => {
+            log::warn!("search: results are not crawled: {error}");
+            return;
+        }
+    };
+    let options = LiveFetchOptions::default();
+    for session in searches {
+        match run_campaign(&store, &session, &runtime, &options) {
+            Ok(0) => {}
+            Ok(added) => {
+                log::info!(
+                    "search: crawled {added} results for {:?}",
+                    session.request.query
+                );
+                if let Some(wake) = &embed_wake {
+                    let _ = wake.send(());
+                }
+            }
+            Err(error) => log::warn!(
+                "search: could not crawl results for {:?}: {error:#}",
+                session.request.query
+            ),
+        }
+    }
+}
+
+/// Plan, fetch and ingest one search's campaign, with the store unlocked while
+/// pages download. Returns the pages added.
+fn run_campaign(
+    store: &Mutex<RedCoreBrowserSessionStore>,
+    session: &SearchSession,
+    runtime: &tokio::runtime::Runtime,
+    options: &LiveFetchOptions,
+) -> anyhow::Result<usize> {
+    let lock = || {
+        store
+            .lock()
+            .map_err(|_| anyhow!("the search store stopped after an earlier failure"))
+    };
+    let plan = lock()?
+        .plan_search_campaign(session)
+        .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+    let Some(plan) = plan else { return Ok(0) };
+    let fetch = runtime.block_on(fetch_campaign_pages(&plan, options));
+    for (url, reason) in &fetch.failures {
+        log::debug!("search: did not crawl {url}: {reason}");
+    }
+    let receipt = lock()?
+        .ingest_campaign_pages(&plan, &fetch.pages, &options.guard_policy)
+        .map_err(|error| anyhow!("{error}"))?;
+    Ok(receipt.map_or(0, |receipt| receipt.page_count))
 }
 
 /// Run one search off the main thread.
@@ -233,53 +524,85 @@ impl SearchService {
         store
             .capture_loaded_page_with_policy(loaded, &BrowserCapturePolicy::default())
             .map_err(|error| anyhow!("could not keep {}: {error}", page.url))?;
+        drop(store);
+        if let Some(wake) = &self.embed_wake {
+            let _ = wake.send(());
+        }
         Ok(())
     }
 
     fn search(&self, query: &str, ask: bool) -> anyhow::Result<SerpResult> {
         let started = Instant::now();
-        let providers: Vec<Arc<dyn SearchProvider>> = self
+        let used: Vec<String> = self
             .providers
             .iter()
-            .filter_map(|name| configured_search_provider_from_env(name))
+            .map(|p| p.name().to_string())
             .collect();
-        let used: Vec<String> = providers.iter().map(|p| p.name().to_string()).collect();
-
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .context("could not start the search runtime")?;
+        let runtime = SEARCH_RUNTIME
+            .as_ref()
+            .map_err(|error| anyhow!("could not start the search runtime: {error}"))?;
         let mut store = self.store.lock().map_err(|_| {
             anyhow!("The search store stopped after an earlier failure. Restart Frame.")
         })?;
+        let locked = started.elapsed();
         let session = runtime
             .block_on(store.programmable_search(
                 query,
                 // Only Ask runs a model; RustyWeb plans no answer otherwise.
                 ProgrammableQueryOptions {
                     synthesize: ask,
+                    profile: self.profile.clone(),
                     ..Default::default()
                 },
-                &providers,
+                &self.providers,
             ))
             .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
         drop(store);
+        let receipt = &session.response.receipt;
+        let phases = &receipt.phase_latency_ms;
+        log::debug!(
+            "search: {query:?} in {} ms: store wait {} ms, warm {:.0} ms, fresh {:.0} ms, \
+             fuse {:.0} ms, query {:.0} ms, reranker {:?}, lanes {:?}",
+            started.elapsed().as_millis(),
+            locked.as_millis(),
+            phases.warm_ms,
+            phases.fresh_ms,
+            phases.fuse_ms,
+            phases.total_ms,
+            receipt.reranker,
+            receipt.lane_candidate_counts,
+        );
 
         let mut result = map_session(&session, ask, used);
         result
             .notes
             .extend(self.store_note.iter().map(|n| n.to_string()));
         result.elapsed_ms = started.elapsed().as_millis() as u64;
+        if let Some(campaigns) = &self.campaigns
+            && campaigns.try_send(session).is_err()
+        {
+            log::info!("search: the crawler is busy, so results for {query:?} are not crawled");
+        }
         Ok(result)
     }
 }
 
-/// Provider names to build for each search.
+/// One runtime for every search, so provider connections stay pooled between
+/// searches instead of closing with a per-search runtime.
+static SEARCH_RUNTIME: LazyLock<std::io::Result<tokio::runtime::Runtime>> = LazyLock::new(|| {
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .thread_name("frame-search")
+        .enable_all()
+        .build()
+});
+
+/// The providers every search queries.
 ///
 /// An explicit `RUSTYWEB_SEARCH_PROVIDERS` (or `RUSTY_RED_SEARCH_PROVIDERS`)
 /// list wins. Otherwise: the keyless providers plus every keyed general-web
 /// provider whose key is present.
-fn select_providers() -> Vec<String> {
+fn select_providers() -> Vec<Arc<dyn SearchProvider>> {
     let explicit = PROVIDER_ENV_VARS
         .iter()
         .filter_map(|key| std::env::var(key).ok())
@@ -300,17 +623,20 @@ fn select_providers() -> Vec<String> {
     };
 
     let mut seen = HashSet::new();
-    let selected: Vec<String> = candidates
+    let selected: Vec<Arc<dyn SearchProvider>> = candidates
         .into_iter()
         .filter(|name| seen.insert(name.clone()))
-        .filter(|name| configured_search_provider_from_env(name).is_some())
+        .filter_map(|name| configured_search_provider_from_env(&name))
         .collect();
 
     if selected.is_empty() {
         // An explicit list whose providers all lack keys would leave nothing to
-        // search with. Fall back to the keyless pair.
-        log::warn!("search: no configured provider is usable; falling back to gdelt and bluesky");
-        return KEYLESS_PROVIDERS.iter().map(|n| n.to_string()).collect();
+        // search with. Fall back to the keyless providers.
+        log::warn!("search: no configured provider is usable; falling back to bluesky");
+        return KEYLESS_PROVIDERS
+            .iter()
+            .filter_map(|name| configured_search_provider_from_env(name))
+            .collect();
     }
     selected
 }
@@ -329,10 +655,13 @@ fn map_session(session: &SearchSession, ask: bool, providers: Vec<String>) -> Se
         .flat_map(|acquisition| &acquisition.providers)
         .filter_map(|r| Some((r.provider.clone(), r.error.clone()?)))
         .collect();
+    // A reranker that failed over to the next one changed nothing visible.
+    let reranked = receipt.reranker.is_some();
     let degradations = receipt
         .degraded
         .iter()
         .filter(|code| !is_synthesis_code(code))
+        .filter(|code| !(reranked && code.starts_with("rerank_failed:")))
         .map(|code| Degradation {
             code: code.clone(),
             message: describe_degradation(code, &provider_errors),
@@ -535,13 +864,13 @@ fn normalize_date(raw: &str) -> String {
     text.to_string()
 }
 
-/// A note when only news and social sources are searched.
+/// A note when only social and video sources are searched.
 fn weak_web_note(providers: &[String]) -> Option<String> {
     let general = providers
         .iter()
         .any(|name| GENERAL_WEB_PROVIDERS.contains(&name.as_str()));
     (!general).then(|| {
-        "Only news and social sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Frame for general web results.".to_string()
+        "Only social and video sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Frame for general web results.".to_string()
     })
 }
 
@@ -555,6 +884,14 @@ fn describe_degradation(code: &str, provider_errors: &[(String, String)]) -> Str
             "Semantic ranking is off because the embedding model is not configured correctly.".to_string()
         }
         "dense_query_contract_mismatch" => "Semantic ranking is off because the embedding model does not match the index.".to_string(),
+        "dense_query_vector_required" => "Semantic ranking is off until the embedding model has loaded.".to_string(),
+        _ if code.starts_with("dense_query_embedding_failed") => {
+            "Semantic ranking is off for this search because the embedding model failed.".to_string()
+        }
+        _ if code.starts_with("rerank_failed:") => format!(
+            "Results keep their first-pass order because reranking with {} did not answer.",
+            &code["rerank_failed:".len()..]
+        ),
         _ => match code.strip_prefix("provider_").and_then(|rest| rest.split_once(':')) {
             Some((status, provider)) => {
                 match provider_errors.iter().find(|(name, _)| name == provider) {
@@ -602,7 +939,7 @@ mod tests {
             "url": url,
             "title": "A title",
             "snippet": "A  snippet\nwith   gaps",
-            "providers": ["gdelt"],
+            "providers": ["brave"],
             "lane": lane,
             "score": 1.0,
         });
@@ -701,8 +1038,8 @@ mod tests {
         );
         // Another provider's error is not borrowed.
         assert_eq!(
-            describe_degradation("provider_error:gdelt", &errors),
-            "gdelt did not answer (error)."
+            describe_degradation("provider_error:exa", &errors),
+            "exa did not answer (error)."
         );
     }
 
@@ -731,7 +1068,8 @@ mod tests {
     }
 
     const TIDES: &str = "<html><head><title>Why the moon pulls the tides</title></head>\
-        <body><p>The moon's gravity pulls the ocean toward it, raising a bulge of water.</p></body></html>";
+        <body><p>The moon's gravity pulls the ocean toward it, raising a bulge of water.</p>\
+        <a href=\"https://example.com/moon\">More about the moon</a></body></html>";
 
     #[test]
     fn a_visited_page_is_found_by_local_search() {
@@ -739,6 +1077,9 @@ mod tests {
             store: Arc::new(Mutex::new(memory_browser_session(SESSION_ID))),
             providers: Arc::from(Vec::new()),
             store_note: None,
+            profile: None,
+            embed_wake: None,
+            campaigns: None,
         };
         let query = "why the moon pulls the tides";
         let before = service.search(query, false).unwrap();
@@ -785,8 +1126,55 @@ mod tests {
     #[test]
     fn weak_web_note_depends_on_keyed_providers() {
         let names = |n: &[&str]| n.iter().map(|s| s.to_string()).collect::<Vec<_>>();
-        assert!(weak_web_note(&names(&["gdelt", "bluesky"])).is_some());
-        assert!(weak_web_note(&names(&["gdelt", "brave"])).is_none());
+        assert!(weak_web_note(&names(&["bluesky", "youtube"])).is_some());
+        assert!(weak_web_note(&names(&["bluesky", "brave"])).is_none());
+    }
+
+    #[test]
+    fn rerank_and_embedding_degradations_read_as_sentences() {
+        assert_eq!(
+            describe_degradation("rerank_failed:voyageai/rerank-3-lite", &[]),
+            "Results keep their first-pass order because reranking with voyageai/rerank-3-lite did not answer."
+        );
+        assert_eq!(
+            describe_degradation("dense_query_embedding_failed:the model stopped", &[]),
+            "Semantic ranking is off for this search because the embedding model failed."
+        );
+        assert_eq!(
+            describe_degradation("dense_query_vector_required", &[]),
+            "Semantic ranking is off until the embedding model has loaded."
+        );
+    }
+
+    #[test]
+    fn frame_profile_weighs_bluesky_down_and_keeps_the_default_otherwise() {
+        let profile = frame_profile();
+        profile.validate().unwrap();
+        let default = RankProfile::builtin("default").unwrap();
+        assert_eq!(profile.revision, default.revision);
+        assert_eq!(
+            profile.rules,
+            [RankRule::Provider {
+                rule_id: "bluesky-down".into(),
+                provider: "bluesky".into(),
+                weight: -0.6,
+            }]
+        );
+        assert!(profile.graph.allow_dense_seeds);
+    }
+
+    #[test]
+    fn searches_stop_at_four_seconds_or_100_results() {
+        let opts = search_opts();
+        assert_eq!(opts.provider_timeout_ms, 4_000);
+        assert_eq!(opts.target_candidates, 100);
+        assert_eq!(opts.limit, 100);
+    }
+
+    #[test]
+    fn gdelt_is_not_a_default_provider() {
+        assert!(!KEYLESS_PROVIDERS.contains(&"gdelt"));
+        assert!(!KEYED_PROVIDERS.contains(&"gdelt"));
     }
 
     #[test]
