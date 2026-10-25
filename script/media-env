@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Build/run against Frame's patched native MSE implementation.
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+prefix="$(cd "$root/deps" && pwd -P)/gstreamer-mse-runtime"
+if [[ ! -f "$prefix/lib/libgstmse-frame-1.0.dylib" ]]; then
+  echo "Frame's patched MSE runtime is missing; run script/bootstrap-media first." >&2
+  exit 1
+fi
+export PKG_CONFIG_PATH="$prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export GST_PLUGIN_PATH="$prefix/lib/gstreamer-1.0${GST_PLUGIN_PATH:+:$GST_PLUGIN_PATH}"
+exec "$@"

@@ -12,6 +12,7 @@ mod delegate;
 mod downloads;
 mod embedder;
 mod engine;
+mod glass;
 mod icons;
 mod keys;
 mod navigator;
@@ -26,8 +27,8 @@ use anyhow::Context as _;
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
 use gpui_kit::component::{Root, TitleBar};
 use gpui_kit::{
-    App, AppContext as _, KeyBinding, Menu, MenuItem, OsAction, WindowBounds, WindowOptions, point,
-    px, size,
+    App, AppContext as _, KeyBinding, Menu, MenuItem, OsAction, Styled as _, WindowBounds,
+    WindowOptions, point, px, size, transparent_black,
 };
 
 use crate::actions::{
@@ -171,8 +172,10 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
         titlebar.traffic_light_position = Some(point(px(9.), px(10.)));
     }
     cx.open_window(options, |window, cx| {
+        glass::install(window, cx);
         let browser = cx.new(|cx| Browser::new(window, cx));
-        cx.new(|cx| Root::new(browser, window, cx))
+        // The browser paints the frame; the root leaves the glass under it.
+        cx.new(|cx| Root::new(browser, window, cx).bg(transparent_black()))
     })?;
     // One window for now: closing it quits.
     cx.on_window_closed(|cx, _| {

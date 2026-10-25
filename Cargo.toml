@@ -13,8 +13,8 @@ exclude = ["deps"]
 
 [dependencies]
 gpui-kit = "=0.8.0"
-# Theorem's fork of Servo 0.7, branch Travis-Gilbert/servo07-browser-20261013.
-servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "ebc89e684b721f0a8e2407aad20b121a61187779", features = ["webcrypto", "webgl", "brotli-compression-stream"] }
+# Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
+servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
@@ -57,6 +57,8 @@ serde_json = "1"
 url = "2"
 
 [dev-dependencies]
+# Native media acceptance examples use the same CLI parser already in Servo.
+clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).
 # GPUI's own test support: gpui-kit's `test-support` feature names
 # `gpui-fast?/...`, which Cargo still resolves, and gpui-fast's wasm crate
@@ -88,7 +90,10 @@ debug = 0
 [patch.crates-io]
 # See vendor/zed-font-kit/THEOREM-PATCH.md: freetype-sys 0.23 to match Servo.
 zed-font-kit = { path = "vendor/zed-font-kit" }
-# See vendor/gpui-pre-apple/THEOREM-PATCH.md: BGRA surfaces in GPUI's renderer.
+# See vendor/gpui-pre/THEOREM-PATCH.md: a surface's corner radii reach the renderer.
+gpui-pre = { path = "vendor/gpui-pre" }
+# See vendor/gpui-pre-apple/THEOREM-PATCH.md: BGRA surfaces in GPUI's renderer,
+# and rounded surfaces.
 gpui-pre-apple = { path = "vendor/gpui-pre-apple" }
 # See vendor/gpui-component/THEOREM-PATCH.md: a selected folder tab's own fill.
 gpui-component = { path = "vendor/gpui-component" }

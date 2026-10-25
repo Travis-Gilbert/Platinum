@@ -1,0 +1,54 @@
+{
+  "passed": true,
+  "viewport": [
+    2496,
+    1336,
+    2
+  ],
+  "dark": true,
+  "images": [
+    {
+      "x": 1793.6,
+      "y": 68,
+      "width": 429,
+      "height": 241.3,
+      "decoded": true
+    },
+    {
+      "x": 1793.6,
+      "y": 317.3,
+      "width": 429,
+      "height": 241.3,
+      "decoded": true
+    },
+    {
+      "x": 1793.6,
+      "y": 566.6,
+      "width": 429,
+      "height": 241.3,
+      "decoded": true
+    },
+    {
+      "x": 1793.6,
+      "y": 815.9,
+      "width": 429,
+      "height": 241.3,
+      "decoded": true
+    },
+    {
+      "x": 1793.6,
+      "y": 1065.2,
+      "width": 429,
+      "height": 241.3,
+      "decoded": true
+    },
+    {
+      "x": 1793.6,
+      "y": 1314.5,
+      "width": 429,
+      "height": 241.3,
+      "decoded": true
+    }
+  ],
+  "video": true
+}

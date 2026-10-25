@@ -1,0 +1,40 @@
+{
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Servo/0.7.0 Firefox/153.0",
+  "mediaSource": true,
+  "sourceBuffer": true,
+  "codecs": [
+    {
+      "type": "video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"",
+      "canPlayType": "probably",
+      "mse": true
+    },
+    {
+      "type": "video/webm; codecs=\"vp8, vorbis\"",
+      "canPlayType": "probably",
+      "mse": true
+    },
+    {
+      "type": "video/webm; codecs=\"vp9, opus\"",
+      "canPlayType": "probably",
+      "mse": true
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "canPlayType": "probably",
+      "mse": true
+    }
+  ],
+  "playback": [
+    {
+      "file": "movie_5.mp4",
+      "passed": false,
+      "error": "Error: MediaError 4"
+    },
+    {
+      "file": "movie_5.webm",
+      "passed": false,
+      "error": "Error: MediaError 4"
+    }
+  ],
+  "passed": false
+}

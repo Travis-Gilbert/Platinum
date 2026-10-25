@@ -1,0 +1,29 @@
+{
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Servo/0.7.0 Firefox/153.0",
+  "mediaSource": false,
+  "sourceBuffer": false,
+  "codecs": [
+    {
+      "type": "video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"",
+      "canPlayType": "",
+      "mse": false
+    },
+    {
+      "type": "video/webm; codecs=\"vp8, vorbis\"",
+      "canPlayType": "",
+      "mse": false
+    },
+    {
+      "type": "video/webm; codecs=\"vp9, opus\"",
+      "canPlayType": "",
+      "mse": false
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "canPlayType": "",
+      "mse": false
+    }
+  ],
+  "playback": [],
+  "passed": false
+}

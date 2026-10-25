@@ -1,0 +1,35 @@
+{
+  "mode": "mse",
+  "steps": [
+    "sourceopen",
+    {
+      "type": "video/webm; codecs=\"vp8\"",
+      "bytes": 39228,
+      "buffered": [
+        0,
+        2.000333333
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"vorbis\"",
+      "bytes": 10735,
+      "buffered": [
+        0,
+        2.036666666
+      ]
+    },
+    {
+      "playing": 0.5030025,
+      "width": 320,
+      "height": 240
+    }
+  ],
+  "passed": false,
+  "error": "Error: Timeout: repeated play stays playing",
+  "video": {
+    "currentTime": 0.543691667,
+    "readyState": 4,
+    "networkState": 2,
+    "error": null
+  }
+}

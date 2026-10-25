@@ -847,16 +847,38 @@ fragment float4 path_sprite_fragment(
   return intermediate_texture.sample(intermediate_texture_sampler, input.texture_coords);
 }
 
+// THEOREM PATCH: a surface's bounds and corner radii reach its fragments,
+// which `surface_coverage` rounds off.
 struct SurfaceVertexOutput {
   float4 position [[position]];
   float2 texture_position;
+  float4 bounds [[flat]];
+  float4 corner_radii [[flat]];
   float clip_distance [[clip_distance]][4];
 };
 
 struct SurfaceFragmentInput {
   float4 position [[position]];
   float2 texture_position;
+  float4 bounds [[flat]];
+  float4 corner_radii [[flat]];
 };
+
+// THEOREM PATCH: how much of a fragment lies inside the surface's rounded
+// corners, antialiased as a quad's edge is.
+float surface_coverage(SurfaceFragmentInput input) {
+  Bounds_ScaledPixels bounds;
+  bounds.origin.x = input.bounds.x;
+  bounds.origin.y = input.bounds.y;
+  bounds.size.width = input.bounds.z;
+  bounds.size.height = input.bounds.w;
+  Corners_ScaledPixels corner_radii;
+  corner_radii.top_left = input.corner_radii.x;
+  corner_radii.top_right = input.corner_radii.y;
+  corner_radii.bottom_right = input.corner_radii.z;
+  corner_radii.bottom_left = input.corner_radii.w;
+  return saturate(0.5 - quad_sdf(input.position.xy, bounds, corner_radii));
+}
 
 vertex SurfaceVertexOutput surface_vertex(
     uint unit_vertex_id [[vertex_id]], uint surface_id [[instance_id]],
@@ -875,9 +897,16 @@ vertex SurfaceVertexOutput surface_vertex(
   // We are going to copy the whole texture, so the texture position corresponds
   // to the current vertex of the unit triangle.
   float2 texture_position = unit_vertex;
+  float4 bounds = float4(surface.bounds.origin.x, surface.bounds.origin.y,
+                         surface.bounds.size.width, surface.bounds.size.height);
+  float4 corner_radii =
+      float4(surface.corner_radii.top_left, surface.corner_radii.top_right,
+             surface.corner_radii.bottom_right, surface.corner_radii.bottom_left);
   return SurfaceVertexOutput{
       device_position,
       texture_position,
+      bounds,
+      corner_radii,
       {clip_distance.x, clip_distance.y, clip_distance.z, clip_distance.w}};
 }
 
@@ -896,7 +925,8 @@ fragment float4 surface_fragment(SurfaceFragmentInput input [[stage_in]],
       y_texture.sample(texture_sampler, input.texture_position).r,
       cb_cr_texture.sample(texture_sampler, input.texture_position).rg, 1.0);
 
-  return ycbcrToRGBTransform * ycbcr;
+  float4 color = ycbcrToRGBTransform * ycbcr;
+  return float4(color.rgb, color.a * surface_coverage(input));
 }
 
 // THEOREM PATCH: a BGRA surface. Its rows are in OpenGL's order, the first
@@ -909,7 +939,9 @@ fragment float4 surface_bgra_fragment(SurfaceFragmentInput input [[stage_in]],
   float2 position =
       float2(input.texture_position.x, 1.0 - input.texture_position.y);
   float4 color = bgra_texture.sample(texture_sampler, position);
-  return color.a > 0.0 ? float4(color.rgb / color.a, color.a) : float4(0.0);
+  return color.a > 0.0
+             ? float4(color.rgb / color.a, color.a * surface_coverage(input))
+             : float4(0.0);
 }
 
 float4 hsla_to_rgba(Hsla hsla) {

@@ -1,0 +1,202 @@
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline-private.h b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline-private.h
+index c44a344..e6e97cb 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline-private.h
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline-private.h
+@@ -52,6 +52,7 @@ typedef struct
+                                  gpointer              user_data);
+   void (*error)                 (GstAppendPipeline   * self,
+                                  gpointer              user_data);
++  void (*append_complete) (GstAppendPipeline * self, gpointer user_data);
+ } GstAppendPipelineCallbacks;
+ 
+ GST_MSE_PRIVATE
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline.c b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline.c
+index b8fa990..90dd44a 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline.c
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline.c
+@@ -268,6 +268,10 @@ consume_sample_from_track (GstAppendPipeline * self, Track * track)
+     GST_WARNING_OBJECT (self, "got null buffer in sample");
+     goto done;
+   }
++  /* Codec headers are carried in streamheader caps, not timed media frames. */
++  if (GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_HEADER) &&
++      !GST_BUFFER_PTS_IS_VALID (buffer))
++    goto done;
+   sample = patch_missing_pts (self, sample, track->previous_pts);
+   sample = patch_missing_duration (self, sample);
+   sample = patch_missing_dts (self, sample);
+@@ -332,6 +336,8 @@ task_function (gpointer user_data)
+       if (gst_message_has_name (message, END_OF_APPEND)) {
+         GST_TRACE_OBJECT (self, "end of append");
+         consume_all_samples (self);
++        if (self->callbacks.callbacks.append_complete)
++          self->callbacks.callbacks.append_complete (self, self->callbacks.user_data);
+         goto done;
+       }
+       if (gst_message_has_name (message, SHUTDOWN)) {
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstmsesrc.c b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstmsesrc.c
+index 6939514..9d797f3 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstmsesrc.c
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstmsesrc.c
+@@ -908,6 +908,12 @@ gst_mse_src_seek (GstMseSrc * self, GstClockTime start_time, gdouble rate)
+   } else {
+     GST_DEBUG_OBJECT (self, "detached, not seeking on media source");
+   }
++  /* Downstream flushing leaves per-pad flow results at FLUSHING. Clear
++   * them before either pad restarts, otherwise the first resumed pad can
++   * pause permanently because the other pad still has its old result. */
++  FLOW_COMBINER_LOCK (self);
++  gst_flow_combiner_reset (self->flow_combiner);
++  FLOW_COMBINER_UNLOCK (self);
+   MEDIA_SOURCE_UNLOCK (self);
+   resume_all_streams (self);
+ }
+@@ -1360,7 +1366,7 @@ update_ready_state_for_init_segment (GstMseSrc * self)
+     gst_object_unref (buf);
+   }
+   if (!all_received_init_segment) {
+-    return;
++    goto done;
+   }
+   set_ready_state (self, MAX (self->ready_state,
+           GST_MSE_SRC_READY_STATE_HAVE_METADATA));
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstsourcebuffer.c b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstsourcebuffer.c
+index a5c1eee..636a77d 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstsourcebuffer.c
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstsourcebuffer.c
+@@ -154,6 +154,8 @@ struct _GstSourceBuffer
+   gsize size_limit;
+   gsize size;
+   GstBuffer *pending_data;
++  gboolean pending_remove;
++  GstClockTime remove_start, remove_end;
+   GCond pending_data_cond;
+   AppendToBufferTask *append_to_buffer_task;
+   GstAppendPipeline *append_pipeline;
+@@ -247,6 +249,7 @@ static void on_duration_changed (GstAppendPipeline * pipeline,
+ static void on_eos (GstAppendPipeline * pipeline, GstMediaSourceTrack * track,
+     gpointer user_data);
+ static void on_error (GstAppendPipeline * pipeline, gpointer user_data);
++static void on_append_complete (GstAppendPipeline * pipeline, gpointer user_data);
+ static void on_new_sample (GstAppendPipeline * pipeline,
+     GstMediaSourceTrack * track, GstSample * sample, gpointer user_data);
+ static void on_received_init_segment (GstAppendPipeline * pipeline,
+@@ -321,6 +324,7 @@ gst_source_buffer_new (const gchar * content_type, GstObject * parent,
+     .duration_changed = on_duration_changed,
+     .eos = on_eos,
+     .error = on_error,
++    .append_complete = on_append_complete,
+     .new_sample = on_new_sample,
+     .received_init_segment = on_received_init_segment,
+   };
+@@ -1486,6 +1490,31 @@ gst_source_buffer_remove (GstSourceBuffer * self, GstClockTime start,
+     GstClockTime end, GError ** error)
+ {
+   g_return_val_if_fail (GST_IS_SOURCE_BUFFER (self), FALSE);
++  GST_OBJECT_LOCK (self);
++  if (is_removed_unlocked (self) || is_updating (self)) {
++    g_set_error (error, GST_MEDIA_SOURCE_ERROR,
++        GST_MEDIA_SOURCE_ERROR_INVALID_STATE, "source buffer is removed or updating");
++    GST_OBJECT_UNLOCK (self);
++    return FALSE;
++  }
++  GstMediaSource *source = get_media_source_unlocked (self);
++  GstClockTime duration = gst_media_source_get_duration (source);
++  gst_object_unref (source);
++  if (!GST_CLOCK_TIME_IS_VALID (duration) || start > duration || start >= end) {
++    g_set_error (error, GST_MEDIA_SOURCE_ERROR, GST_MEDIA_SOURCE_ERROR_TYPE,
++        "invalid removal interval");
++    GST_OBJECT_UNLOCK (self);
++    return FALSE;
++  }
++  if (is_ended_unlocked (self))
++    open_parent_unlocked (self);
++  self->pending_remove = TRUE;
++  self->remove_start = start;
++  self->remove_end = end;
++  set_updating (self);
++  schedule_event_unlocked (self, ON_UPDATE_START);
++  g_cond_signal (&self->pending_data_cond);
++  GST_OBJECT_UNLOCK (self);
+   return TRUE;
+ }
+ 
+@@ -1678,6 +1707,16 @@ append_successful_unlocked (GstSourceBuffer * self, gboolean ended)
+   schedule_event_unlocked (self, ON_UPDATE_END);
+ }
+ 
++static void
++on_append_complete (GstAppendPipeline * pipeline, gpointer user_data)
++{
++  GstSourceBuffer *self = GST_SOURCE_BUFFER (user_data);
++  GST_OBJECT_LOCK (self);
++  if (is_updating (self) && !self->pending_remove)
++    append_successful_unlocked (self, is_ended_unlocked (self));
++  GST_OBJECT_UNLOCK (self);
++}
++
+ static gboolean
+ encountered_bad_bytes_unlocked (GstSourceBuffer * self)
+ {
+@@ -1687,7 +1726,7 @@ encountered_bad_bytes_unlocked (GstSourceBuffer * self)
+ static GstBuffer *
+ await_pending_data_unlocked (GstSourceBuffer * self)
+ {
+-  if (self->pending_data == NULL) {
++  if (self->pending_data == NULL && !self->pending_remove) {
+     guint64 deadline = g_get_monotonic_time () + G_TIME_SPAN_SECOND;
+     g_cond_wait_until (&self->pending_data_cond, GST_OBJECT_GET_LOCK (self),
+         deadline);
+@@ -1750,6 +1789,21 @@ append_to_buffer_task_func (AppendToBufferTask * task)
+ 
+   GstBuffer *pending_data = await_pending_data_unlocked (self);
+ 
++  if (self->pending_remove) {
++    self->pending_remove = FALSE;
++    TRACKS_LOCK (self);
++    GHashTableIter iter;
++    g_hash_table_iter_init (&iter, self->track_buffers);
++    for (gpointer value; g_hash_table_iter_next (&iter, NULL, &value);) {
++      gst_media_source_track_buffer_remove_range (value,
++          self->remove_start, self->remove_end);
++    }
++    self->size = compute_total_size_unlocked (self);
++    TRACKS_UNLOCK (self);
++    append_successful_unlocked (self, FALSE);
++    goto done;
++  }
++
+   if (is_removed_unlocked (self)) {
+     append_successful_unlocked (self, TRUE);
+     goto done;
+@@ -1762,7 +1816,6 @@ append_to_buffer_task_func (AppendToBufferTask * task)
+ 
+   if (!GST_IS_BUFFER (pending_data)) {
+     GST_TRACE_OBJECT (self, "no pending data");
+-    append_successful_unlocked (self, is_ended_unlocked (self));
+     goto done;
+   }
+ 
+@@ -1775,7 +1828,7 @@ append_to_buffer_task_func (AppendToBufferTask * task)
+     goto done;
+   }
+ 
+-  append_successful_unlocked (self, is_ended_unlocked (self));
++  /* Completion comes from the parser after samples enter the track buffers. */
+ 
+ done:
+   GST_OBJECT_UNLOCK (self);
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/meson.build b/subprojects/gst-plugins-bad/gst-libs/gst/mse/meson.build
+index 9404668..3ab6e2b 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/mse/meson.build
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/mse/meson.build
+@@ -104,7 +104,8 @@ gstmse_private_test_dep = declare_dependency(
+   sources: gstmse_headers_public + [gstmse_enums_h],
+ )
+ 
+-gstmse = library('gstmse-' + api_version,
++# Distinct name prevents linking the system copy ahead of Frame's patched ABI.
++gstmse = library('gstmse-frame-' + api_version,
+   gstmse_sources_all,
+   c_args : gstmse_c_args,
+   include_directories : [configinc, libsinc],

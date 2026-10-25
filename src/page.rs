@@ -20,7 +20,7 @@ use euclid::Scale;
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
 use gpui_kit::component::{ActiveTheme as _, Theme as ChromeTheme};
 use gpui_kit::{
-    App, AppContext as _, Bounds, Context, CursorStyle, ElementInputHandler, Entity,
+    App, AppContext as _, Bounds, Context, Corners, CursorStyle, ElementInputHandler, Entity,
     EntityInputHandler, EventEmitter, FocusHandle, Focusable, Hsla, InteractiveElement as _,
     IntoElement,
     KeyUpEvent, Keystroke, ModifiersChangedEvent, MouseButton as GpuiButton, MouseDownEvent,
@@ -151,6 +151,9 @@ pub struct Page {
     favicon: Option<(String, Arc<RenderImage>)>,
     /// The color along the top of the page, which the toolbar takes.
     tint: Option<Hsla>,
+    /// The corners of the card the page sits in, which round its picture
+    /// (`Browser::content`).
+    pub(crate) corners: Corners<Pixels>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -234,6 +237,7 @@ impl Page {
                 opened: Vec::new(),
                 favicon: None,
                 tint: None,
+                corners: Corners::default(),
                 _subscriptions: subscriptions,
             }
         })
@@ -829,7 +833,6 @@ impl Render for Page {
             .track_focus(&self.focus_handle)
             .relative()
             .size_full()
-            .bg(cx.theme().background)
             .cursor(self.cursor)
             .on_any_mouse_down(cx.listener(Self::mouse_down))
             .capture_any_mouse_up(cx.listener(Self::mouse_up))
@@ -870,10 +873,15 @@ impl Render for Page {
                 .size_full(),
             )
             .children(frame.map(|frame| {
-                div()
-                    .absolute()
-                    .inset_0()
-                    .child(surface(frame).object_fit(ObjectFit::Fill).size_full())
+                div().absolute().inset_0().child(
+                    surface(frame)
+                        .object_fit(ObjectFit::Fill)
+                        .size_full()
+                        .rounded_tl(self.corners.top_left)
+                        .rounded_tr(self.corners.top_right)
+                        .rounded_br(self.corners.bottom_right)
+                        .rounded_bl(self.corners.bottom_left),
+                )
             }))
     }
 }

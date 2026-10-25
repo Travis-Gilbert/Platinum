@@ -3,7 +3,7 @@ use anyhow::{Context as _, Result};
 use block2::RcBlock;
 use core_graphics::geometry::CGSize;
 use gpui::{
-    AtlasTextureId, Background, Bounds, ContentMask, DevicePixels, PaintSurface, Path, Point,
+    AtlasTextureId, Background, Bounds, ContentMask, Corners, DevicePixels, PaintSurface, Path, Point,
     PrimitiveBatch, ScaledPixels, Scene, Size, point, size,
 };
 #[cfg(any(test, feature = "bench-support", feature = "test-support"))]
@@ -1518,6 +1518,7 @@ fn write_instances(scene: &Scene, writer: &mut InstanceBufferWriter) -> Result<I
         surfaces: writer.write_iter(scene.surfaces.iter().map(|surface| SurfaceBounds {
             bounds: surface.bounds,
             content_mask: surface.content_mask,
+            corner_radii: surface.corner_radii,
         }))?,
     })
 }
@@ -1710,6 +1711,8 @@ pub struct PathSprite {
 pub struct SurfaceBounds {
     pub bounds: Bounds<ScaledPixels>,
     pub content_mask: ContentMask<ScaledPixels>,
+    // THEOREM PATCH: the surface's rounded corners.
+    pub corner_radii: Corners<ScaledPixels>,
 }
 
 #[cfg(any(test, feature = "bench-support", feature = "test-support"))]
@@ -1803,6 +1806,7 @@ mod tests {
             order: 0,
             bounds,
             content_mask: ContentMask { bounds },
+            corner_radii: Corners::default(),
             image_buffer: image_buffer.clone(),
         });
         drop(image_buffer);
@@ -1820,10 +1824,8 @@ mod tests {
         }
     }
 
-    // THEOREM PATCH: a BGRA surface in OpenGL's row order, blue below red,
-    // draws upright and in the right colors.
-    #[test]
-    fn render_bgra_surface() {
+    // THEOREM PATCH: a 16 by 16 BGRA buffer, each row in memory `fill(row)`.
+    fn bgra_buffer(fill: impl Fn(usize) -> [u8; 4]) -> CFRetained<objc2_core_video::CVPixelBuffer> {
         use objc2_core_video::{CVPixelBufferGetBaseAddress, CVPixelBufferGetBytesPerRow};
 
         let attributes = CFDictionary::from_slices(
@@ -1854,8 +1856,7 @@ mod tests {
             let bytes = CVPixelBufferGetBaseAddress(&image_buffer).cast::<u8>();
             let stride = CVPixelBufferGetBytesPerRow(&image_buffer);
             for row in 0..16 {
-                // The first rows in memory are the bottom of the picture.
-                let pixel: [u8; 4] = if row < 8 { [255, 0, 0, 255] } else { [0, 0, 255, 255] };
+                let pixel = fill(row);
                 let line = slice::from_raw_parts_mut(bytes.add(row * stride), 16 * 4);
                 for chunk in line.chunks_exact_mut(4) {
                     chunk.copy_from_slice(&pixel);
@@ -1866,7 +1867,16 @@ mod tests {
                 kCVReturnSuccess
             );
         }
+        image_buffer
+    }
 
+    // THEOREM PATCH: a BGRA surface in OpenGL's row order, blue below red,
+    // draws upright and in the right colors.
+    #[test]
+    fn render_bgra_surface() {
+        // The first rows in memory are the bottom of the picture.
+        let image_buffer =
+            bgra_buffer(|row| if row < 8 { [255, 0, 0, 255] } else { [0, 0, 255, 255] });
         let bounds = Bounds {
             origin: Point::default(),
             size: size(ScaledPixels(16.0), ScaledPixels(16.0)),
@@ -1876,6 +1886,7 @@ mod tests {
             order: 0,
             bounds,
             content_mask: ContentMask { bounds },
+            corner_radii: Corners::default(),
             image_buffer,
         });
         scene.finish();
@@ -1892,5 +1903,38 @@ mod tests {
                 _ => {}
             }
         }
+    }
+
+    // THEOREM PATCH: a surface's corner radii round it off, as a quad's do.
+    #[test]
+    fn render_rounded_surface() {
+        let bounds = Bounds {
+            origin: Point::default(),
+            size: size(ScaledPixels(16.0), ScaledPixels(16.0)),
+        };
+        let mut scene = Scene::default();
+        scene.insert_primitive(PaintSurface {
+            order: 0,
+            bounds,
+            content_mask: ContentMask { bounds },
+            corner_radii: Corners {
+                bottom_left: ScaledPixels(8.0),
+                bottom_right: ScaledPixels(8.0),
+                ..Default::default()
+            },
+            image_buffer: bgra_buffer(|_| [0, 0, 255, 255]),
+        });
+        scene.finish();
+
+        let mut renderer = MetalRenderer::new_headless(Arc::new(Mutex::new(Default::default())));
+        let image = renderer
+            .render_scene_to_image(&scene, size(DevicePixels(16), DevicePixels(16)))
+            .unwrap();
+        let red = [255, 0, 0, 255];
+        assert_eq!(image.get_pixel(0, 0).0, red, "a square top corner");
+        assert_eq!(image.get_pixel(15, 0).0, red, "a square top corner");
+        assert_eq!(image.get_pixel(8, 8).0, red, "the middle");
+        assert_ne!(image.get_pixel(0, 15).0, red, "a rounded bottom corner");
+        assert_ne!(image.get_pixel(15, 15).0, red, "a rounded bottom corner");
     }
 }

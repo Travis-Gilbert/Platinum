@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "before": {
+    "count": 6,
+    "loaded": 6
+  },
+  "after": {
+    "count": 6,
+    "loaded": 6
+  },
+  "navigated": true
+}

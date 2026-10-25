@@ -16,7 +16,7 @@ use gpui_kit::base::dock::{
     PaneRef, Panel, PanelEvent, PanelId, TabGroupContext, TabGroupRenderer,
 };
 use gpui_kit::base::{ResizeHandleContext, spring};
-use gpui_kit::component::{ActiveTheme as _, Icon};
+use gpui_kit::component::ActiveTheme as _;
 use gpui_kit::{
     AnyElement, AnyView, App, Axis, Context, Div, Empty, Entity, EventEmitter, FocusHandle,
     Focusable, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _, Pixels,
@@ -192,7 +192,8 @@ pub fn place(
     }
 }
 
-/// The dock's appearance: the window's frame color around rounded cards.
+/// The dock's appearance: rounded cards on the window's frame, which the
+/// browser paints (`glass::frame`).
 pub struct FrameDock {
     browser: WeakEntity<Browser>,
 }
@@ -210,8 +211,8 @@ impl FrameDock {
 }
 
 impl DockAreaRenderer for FrameDock {
-    fn frame(&self, _: &mut Window, cx: &mut App) -> Stateful<Div> {
-        div().id("dock").bg(cx.theme().title_bar)
+    fn frame(&self, _: &mut Window, _: &mut App) -> Stateful<Div> {
+        div().id("dock")
     }
 
     fn render_split_handle(
@@ -232,10 +233,8 @@ impl DockAreaRenderer for FrameDock {
 }
 
 impl TabGroupRenderer for FrameDock {
-    fn frame(&self, group: &TabGroupContext, _: &mut Window, cx: &mut App) -> Stateful<Div> {
-        div()
-            .id(("tab-group", group.node().as_u64()))
-            .bg(cx.theme().title_bar)
+    fn frame(&self, group: &TabGroupContext, _: &mut Window, _: &mut App) -> Stateful<Div> {
+        div().id(("tab-group", group.node().as_u64()))
     }
 
     fn content_frame(
@@ -274,14 +273,13 @@ impl TabGroupRenderer for FrameDock {
         panel: AnyView,
         _: &TabGroupContext,
         _: &mut Window,
-        cx: &mut App,
+        _: &mut App,
     ) -> AnyElement {
         div()
             .relative()
             .flex_1()
             .min_h_0()
             .child(panel)
-            .children(corners(cx))
             .into_any_element()
     }
 
@@ -312,32 +310,6 @@ impl TabGroupRenderer for FrameDock {
                 .into_any_element(),
         )
     }
-}
-
-/// The card's corners, in the frame's color, over its content. GPUI clips to
-/// rectangles, so a web page or a full-bleed surface would otherwise square
-/// off the card's rounded corners.
-fn corners(cx: &App) -> impl Iterator<Item = AnyElement> {
-    // Each covers the part of an 8 by 8 corner outside a radius-8 arc.
-    const CORNERS: [&str; 4] = [
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M0 0H8A8 8 0 0 0 0 8Z"/></svg>"#,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M8 0V8A8 8 0 0 0 0 0Z"/></svg>"#,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M0 8H8A8 8 0 0 1 0 0Z"/></svg>"#,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M8 8V0A8 8 0 0 1 0 8Z"/></svg>"#,
-    ];
-    let theme = cx.theme();
-    let (radius, color) = (theme.radius_lg, theme.title_bar);
-    CORNERS.into_iter().enumerate().map(move |(ix, svg)| {
-        let (top, left) = (ix < 2, ix % 2 == 0);
-        Icon::default()
-            .data(svg.as_bytes())
-            .absolute()
-            .size(radius)
-            .text_color(color)
-            .map(|icon| if top { icon.top_0() } else { icon.bottom_0() })
-            .map(|icon| if left { icon.left_0() } else { icon.right_0() })
-            .into_any_element()
-    })
 }
 
 /// The tab that follows the pointer while a tab is dragged.
