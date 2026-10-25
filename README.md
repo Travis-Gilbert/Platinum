@@ -3,7 +3,8 @@
 A standalone browser. [Servo](https://github.com/Travis-Gilbert/servo/tree/Travis-Gilbert/servo07-browser-20261013)
 renders the web, [GPUI Kit](https://gpui-kit.com) draws everything around it,
 and RustyWeb (from Theorem's `codex/rustyweb-programmable-web-2`, plus
-`claude/rustyweb-synthesis-on-request` on top of it) is the
+`claude/rustyweb-synthesis-on-request` and `claude/rustyweb-full-frame` on
+top of it) is the
 default search engine, with its results page drawn natively.
 
 ## Using it
