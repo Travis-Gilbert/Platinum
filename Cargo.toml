@@ -88,7 +88,10 @@ debug = 0
 [patch.crates-io]
 # See vendor/zed-font-kit/THEOREM-PATCH.md: freetype-sys 0.23 to match Servo.
 zed-font-kit = { path = "vendor/zed-font-kit" }
-# See vendor/gpui-pre-apple/THEOREM-PATCH.md: BGRA surfaces in GPUI's renderer.
+# See vendor/gpui-pre/THEOREM-PATCH.md: a surface's corner radii reach the renderer.
+gpui-pre = { path = "vendor/gpui-pre" }
+# See vendor/gpui-pre-apple/THEOREM-PATCH.md: BGRA surfaces in GPUI's renderer,
+# and rounded surfaces.
 gpui-pre-apple = { path = "vendor/gpui-pre-apple" }
 # See vendor/gpui-component/THEOREM-PATCH.md: a selected folder tab's own fill.
 gpui-component = { path = "vendor/gpui-component" }

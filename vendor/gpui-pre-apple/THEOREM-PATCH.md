@@ -23,6 +23,16 @@ The changes:
     reports no plane sizes;
   - the test `render_bgra_surface`.
 
+Rounded surfaces, with `vendor/gpui-pre`'s patch, which carries a
+`surface()` element's corner radii to `PaintSurface`:
+
+- `src/metal_renderer.rs`: `SurfaceBounds::corner_radii`, filled from the
+  surface; the tests' surfaces have none, and `render_rounded_surface` checks
+  rounded ones.
+- `src/shaders.metal`: `surface_vertex` passes the surface's bounds and corner
+  radii on; `surface_coverage` measures them with `quad_sdf`, and both surface
+  fragments scale their alpha by it.
+
 A BGRA buffer is assumed to be in OpenGL's row order. Nothing else in the app
 paints BGRA surfaces, and a top-down producer would need its own path.
 
@@ -30,5 +40,5 @@ Re-applying it on a GPUI Kit upgrade: copy the new `gpui-pre-apple` from the
 registry, carry the marked changes, and run, in `desktop/`:
 
 ```bash
-cargo test -p gpui-pre-apple --lib render_bgra_surface
+cargo test -p gpui-pre-apple --lib render_
 ```
