@@ -1,0 +1,5 @@
+# Servo and GPUI Kit build in one graph, so this follows Servo's toolchain
+# (deps/servo/rust-toolchain.toml). gpui-kit 0.8 builds on it unchanged.
+[toolchain]
+channel = "1.97.1"
+components = ["clippy", "rustfmt", "rust-src"]

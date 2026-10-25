@@ -1,0 +1,86 @@
+[package]
+name = "frame"
+version = "0.1.0"
+edition = "2024"
+description = "A standalone browser: Servo renders the web, GPUI Kit draws the chrome, RustyWeb is the default search engine."
+license = "MIT"
+publish = false
+
+# Its own workspace: libservo is in this graph. `deps/` holds checkouts that
+# are path dependencies, not members.
+[workspace]
+exclude = ["deps"]
+
+[dependencies]
+gpui-kit = "=0.8.0"
+# Theorem's fork of Servo 0.7, branch Travis-Gilbert/servo07-browser-20261013.
+servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "ebc89e684b721f0a8e2407aad20b121a61187779", features = ["webcrypto", "webgl", "brotli-compression-stream"] }
+# RustyWeb search sessions over the local browser substrate, from Theorem
+# branch codex/rustyweb-programmable-web-2. `deps/` is created by
+# script/bootstrap.
+theorem-browser-substrate = { path = "deps/theorem-rustyweb-pw2/apps/browser-substrate" }
+# The search sessions' query and provider types, from the same branch.
+rustyred-web = { path = "deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-web" }
+# reqwest-based search providers need a Tokio runtime; `search.rs` builds a
+# small one per search, off GPUI's executor.
+tokio = { version = "1", features = ["rt", "time", "net"] }
+
+anyhow = "1"
+# Downloads: the server's file name, made safe for the disk.
+content_disposition = "0.4"
+dirs = "6"
+# Provider keys for RustyWeb live in a gitignored `.env`, never in settings files.
+dotenvy = "0.15"
+dpi = "0.1"
+euclid = "0.22"
+futures = "0.3"
+gleam = "0.15"
+glow = "0.17"
+humansize = "2"
+# Favicons, as the frames GPUI's images are made of.
+image = { version = "0.25", default-features = false }
+log = "0.4"
+mime_guess = "2"
+percent-encoding = "2"
+# Downloads stream through the same reqwest build RustyWeb's providers use.
+reqwest = { version = "0.12", default-features = false, features = ["http2", "rustls-tls-webpki-roots-no-provider"] }
+# Servo's graph links more than one rustls provider; main installs ring.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+sanitize-filename = "0.6"
+serde_json = "1"
+url = "2"
+
+[dev-dependencies]
+# Headless UI integration tests of the chrome (`src/browser/tests.rs`).
+# GPUI's own test support: gpui-kit's `test-support` feature names
+# `gpui-fast?/...`, which Cargo still resolves, and gpui-fast's wasm crate
+# pins a `unicode-properties` that conflicts with Servo's.
+gpui-pre = { version = "=0.3.9", features = ["test-support"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+# AppKit's shared color panel for `<input type=color>`; GPUI Kit already
+# builds this crate with its default features.
+objc2-app-kit = "0.3.2"
+objc2-core-foundation = "0.3.2"
+# The share sheet's page address, and the window's view to show it from.
+objc2-foundation = "0.3.2"
+raw-window-handle = "0.6"
+# Wrapping Servo's IOSurface frames for `gpui::surface()`.
+objc2-core-video = { version = "0.3.2", default-features = false, features = ["std", "CVBuffer", "CVImageBuffer", "CVPixelBuffer", "CVPixelBufferIOSurface", "CVReturn", "objc2-io-surface"] }
+objc2-io-surface = "0.3.2"
+surfman = "0.14"
+
+[profile.dev]
+# Servo is unusably slow unoptimized; optimize dependencies, keep the app debuggable.
+[profile.dev.package."*"]
+opt-level = 2
+debug = 0
+
+[patch.crates-io]
+# See vendor/zed-font-kit/THEOREM-PATCH.md: freetype-sys 0.23 to match Servo.
+zed-font-kit = { path = "vendor/zed-font-kit" }
+# See vendor/gpui-pre-apple/THEOREM-PATCH.md: BGRA surfaces in GPUI's renderer.
+gpui-pre-apple = { path = "vendor/gpui-pre-apple" }
+# See vendor/gpui-component/THEOREM-PATCH.md: a selected folder tab's own fill.
+gpui-component = { path = "vendor/gpui-component" }
