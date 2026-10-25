@@ -14,9 +14,9 @@
 //! itself. Opening emits [`SerpEvent::Open`] and the host decides which tab
 //! loads the page.
 //!
-//! Nothing here rests on color alone: the selected row has a fill and a bar
-//! at its leading edge, a site is marked by its initials, and a local result
-//! carries a drive icon and the word Local. A web result carries no word:
+//! Nothing here rests on color alone: the selected row has a fill, the
+//! result under the pointer underlines its title, a site is marked by its
+//! initials, and a local result carries a drive icon and the word Local. A web result carries no word:
 //! the web is what a search finds unless it says otherwise.
 //!
 //! SOURCING: GPUI Kit's `List`, `TabBar`, `Popover`, `Avatar`,
@@ -594,13 +594,7 @@ impl ListDelegate for Results {
         cx: &mut Context<ListState<Self>>,
     ) -> Option<ListItem> {
         let hit = self.hits.get(ix.row)?;
-        Some(result_row(
-            hit,
-            self.selected == Some(ix.row),
-            self.serp.clone(),
-            self.searched_at?,
-            cx,
-        ))
+        Some(result_row(hit, self.serp.clone(), self.searched_at?, cx))
     }
 
     fn render_section_footer(
@@ -646,21 +640,16 @@ impl ListDelegate for Results {
     }
 }
 
-/// A row's leading edge: its padding and the selection bar's width, so what
-/// is not a result (placeholders, the footer) lines up with the results.
+/// A row's leading edge, so what is not a result (placeholders, the footer)
+/// lines up with the results, and they with the answer's text.
 fn inset() -> gpui_kit::Div {
-    div()
-        .flex()
-        .pl_2()
-        .gap_3()
-        .child(div().w(px(3.)).flex_shrink_0())
+    div().flex().pl_4()
 }
 
 /// A result's row: its site, where it leads, its title and its excerpt.
 /// Clicking it opens the page; its ⋮ button only shows where it came from.
 fn result_row(
     hit: &SerpHit,
-    selected: bool,
     serp: WeakEntity<Serp>,
     searched_at: DateTime<Local>,
     cx: &App,
@@ -706,9 +695,9 @@ fn result_row(
     };
     ListItem::new(SharedString::from(format!("serp-result:{key}")))
         .group("serp-result")
+        .cursor_pointer()
         .h(ROW_HEIGHT)
-        .pl_2()
-        .pr_3()
+        .px_4()
         .py_3()
         .rounded(theme.radius_tokens().lg)
         .accessibility_label(if local {
@@ -717,85 +706,73 @@ fn result_row(
             format!("{}, {site}", hit.title)
         })
         .child(
-            // Not an `h_flex`: rows stretch, so the selection bar spans the row.
-            div()
-                .flex()
-                .w_full()
+            v_flex()
+                .flex_1()
                 .min_w_0()
-                .gap_3()
                 .child(
-                    div()
-                        .w(px(3.))
-                        .flex_shrink_0()
-                        .rounded_full()
-                        .when(selected, |this| this.bg(theme.foreground)),
-                )
-                .child(
-                    v_flex()
-                        .flex_1()
+                    h_flex()
                         .min_w_0()
+                        .gap_3()
+                        .child(mark)
                         .child(
-                            h_flex()
+                            v_flex()
                                 .min_w_0()
-                                .gap_3()
-                                .child(mark)
                                 .child(
-                                    v_flex()
+                                    h_flex()
                                         .min_w_0()
-                                        .child(
-                                            h_flex()
-                                                .min_w_0()
-                                                .gap_1p5()
-                                                .text_sm()
-                                                .line_height(rems(1.25))
-                                                .child(div().min_w_0().truncate().child(site))
-                                                .when(local, |this| {
-                                                    this.child(
-                                                        div()
-                                                            .flex_shrink_0()
-                                                            .text_color(muted)
-                                                            .child("· Local"),
-                                                    )
-                                                }),
-                                        )
-                                        .child(
-                                            div()
-                                                .min_w_0()
-                                                .truncate()
-                                                .text_xs()
-                                                .line_height(rems(1.))
-                                                .text_color(muted)
-                                                .child(breadcrumb(&hit.url)),
-                                        ),
+                                        .gap_1p5()
+                                        .text_sm()
+                                        .line_height(rems(1.25))
+                                        .child(div().min_w_0().truncate().child(site))
+                                        .when(local, |this| {
+                                            this.child(
+                                                div()
+                                                    .flex_shrink_0()
+                                                    .text_color(muted)
+                                                    .child("· Local"),
+                                            )
+                                        }),
                                 )
                                 .child(
                                     div()
-                                        .flex_shrink_0()
-                                        .debug_selector(move || format!("serp-about:{key}"))
-                                        .child(about),
+                                        .min_w_0()
+                                        .truncate()
+                                        .text_xs()
+                                        .line_height(rems(1.))
+                                        .text_color(muted)
+                                        .child(breadcrumb(&hit.url)),
                                 ),
                         )
                         .child(
                             div()
-                                .mt_2()
-                                .min_w_0()
-                                .truncate()
-                                .text_xl()
-                                .line_height(rems(1.75))
-                                .text_color(theme.link)
-                                .group_hover("serp-result", |style| style.underline())
-                                .child(hit.title.clone()),
-                        )
-                        .child(
-                            div()
-                                .mt_1()
-                                .h(rems(2.5))
-                                .text_sm()
-                                .line_height(rems(1.25))
-                                .line_clamp(2)
-                                .text_ellipsis()
-                                .child(snippet),
+                                .flex_shrink_0()
+                                .debug_selector(move || format!("serp-about:{key}"))
+                                .child(about),
                         ),
+                )
+                .child(
+                    // An id keeps the hover state that a group hover's text
+                    // style, the underline, is laid out from.
+                    div()
+                        .id("serp-title")
+                        .mt_2()
+                        .min_w_0()
+                        .truncate()
+                        .text_xl()
+                        .line_height(rems(1.75))
+                        .text_color(theme.link)
+                        .group_hover("serp-result", |style| style.underline())
+                        .child(hit.title.clone()),
+                )
+                .child(
+                    div()
+                        .mt_1()
+                        .h(rems(2.5))
+                        .text_sm()
+                        .line_height(rems(1.25))
+                        .line_clamp(2)
+                        .text_ellipsis()
+                        .child(snippet),
                 ),
         )
 }
