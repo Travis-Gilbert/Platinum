@@ -10,6 +10,7 @@ mod browser;
 mod controls;
 mod delegate;
 mod downloads;
+mod embedder;
 mod engine;
 mod icons;
 mod keys;
