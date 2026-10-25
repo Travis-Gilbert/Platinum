@@ -55,6 +55,7 @@ use gpui_kit::{
 use percent_encoding::percent_decode_str;
 use url::Url;
 
+use crate::icons;
 use crate::search::{self, SerpAnswer, SerpHit, SerpResult, SerpSource, sentence};
 
 /// Every row is this tall: the list measures one and lays out the rest.
@@ -493,7 +494,7 @@ impl Serp {
                             .gap_2()
                             .text_sm()
                             .font_weight(FontWeight::SEMIBOLD)
-                            .child(Icon::new(IconName::Bot).small())
+                            .child(icons::ask().small())
                             .child("Answer")
                             .when_some(
                                 result.answer.as_ref().filter(|a| !a.model.is_empty()),

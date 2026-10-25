@@ -334,7 +334,7 @@ fn dropping_a_tab_on_a_pages_edge_puts_the_two_side_by_side(cx: &mut TestAppCont
 }
 
 #[gpui_kit::test]
-fn ask_button_switches_the_address_bar_between_searching_and_asking(cx: &mut TestAppContext) {
+fn ask_in_the_address_bar_switches_it_between_searching_and_asking(cx: &mut TestAppContext) {
     let (browser, cx) = open_with_tab(cx);
     let id = ids(&browser, cx)[0];
     let state = |cx: &mut VisualTestContext| {
@@ -349,11 +349,14 @@ fn ask_button_switches_the_address_bar_between_searching_and_asking(cx: &mut Tes
             (browser.ask, placeholder)
         })
     };
-    assert_eq!(state(cx), (false, "Search...".to_owned()));
+    assert_eq!(state(cx), (false, "Search or go somewhere".to_owned()));
 
-    // An icon alone, square in the toolbar's row.
+    // An icon alone, square, inside the address bar at its end.
     let ask = bounds_of(cx, format!("ask-{id}"));
-    assert_eq!(ask.size, size(px(24.), px(24.)));
+    assert_eq!(ask.size.width, ask.size.height);
+    let bar = bounds_of(cx, "address-bar".to_owned());
+    assert!(bar.contains(&ask.origin) && bar.contains(&ask.bottom_right()), "{ask:?} in {bar:?}");
+    assert!(ask.center().x > bar.center().x, "at the end: {ask:?} in {bar:?}");
 
     let button = ask.center();
     click(cx, button);
@@ -361,7 +364,7 @@ fn ask_button_switches_the_address_bar_between_searching_and_asking(cx: &mut Tes
     assert!(in_address_bar(&browser, cx), "ready for the question");
 
     click(cx, button);
-    assert_eq!(state(cx), (false, "Search...".to_owned()));
+    assert_eq!(state(cx), (false, "Search or go somewhere".to_owned()));
 }
 
 #[gpui_kit::test]

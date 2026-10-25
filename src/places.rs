@@ -1,9 +1,9 @@
-//! The places Frame keeps beneath its pages: mail, the library, the agent, a
-//! terminal and App Host apps. Each is a native GPUI Kit surface, never a web
+//! The places Frame keeps beneath its pages: mail, the library, notes, a
+//! terminal, the agent and App Host apps. Each is a native GPUI Kit surface, never a web
 //! page (`docs/vision/native-workspace.md`). None is built yet, so each route
 //! shows what it will hold, and the way back.
 //!
-//! SOURCING: GPUI Kit's `Empty` and `Button`; Lucide icons.
+//! SOURCING: GPUI Kit's `Empty` and `Button`; the icons are `icons.rs`.
 
 use gpui_kit::component::{
     ActiveTheme as _, Icon, IconName,
@@ -13,26 +13,28 @@ use gpui_kit::component::{
         EmptyTitle,
     },
 };
-use gpui_kit::assets::IconName as Lucide;
 use gpui_kit::{App, IntoElement, ParentElement, RenderOnce, Styled, Window, div};
 
 use crate::actions::GoBack;
+use crate::icons;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Place {
     Mail,
     Library,
-    Agent,
+    Notes,
     Terminal,
+    Agent,
     Apps,
 }
 
 impl Place {
-    pub const ALL: [Place; 5] = [
+    pub const ALL: [Place; 6] = [
         Place::Mail,
         Place::Library,
-        Place::Agent,
+        Place::Notes,
         Place::Terminal,
+        Place::Agent,
         Place::Apps,
     ];
 
@@ -40,9 +42,10 @@ impl Place {
         match self {
             Place::Mail => "Mail",
             Place::Library => "Library",
-            Place::Agent => "Agent",
+            Place::Notes => "Notes",
             Place::Terminal => "Terminal",
-            Place::Apps => "Apps",
+            Place::Agent => "Agent",
+            Place::Apps => "All apps",
         }
     }
 
@@ -51,20 +54,22 @@ impl Place {
         match self {
             Place::Mail => "mail",
             Place::Library => "library",
-            Place::Agent => "agent",
+            Place::Notes => "notes",
             Place::Terminal => "terminal",
+            Place::Agent => "agent",
             Place::Apps => "apps",
         }
     }
 
     pub fn icon(self) -> Icon {
-        Icon::new(match self {
-            Place::Mail => Lucide::Mail,
-            Place::Library => Lucide::LibraryBig,
-            Place::Agent => Lucide::Bot,
-            Place::Terminal => Lucide::SquareTerminal,
-            Place::Apps => Lucide::LayoutGrid,
-        })
+        match self {
+            Place::Mail => icons::mail(),
+            Place::Library => icons::media(),
+            Place::Notes => icons::notes(),
+            Place::Terminal => icons::terminal(),
+            Place::Agent => icons::agent(),
+            Place::Apps => icons::apps(),
+        }
     }
 
     /// What the place will hold, in a sentence.
@@ -76,10 +81,13 @@ impl Place {
             Place::Library => {
                 "Saved pages, media and files, with their sources, notes and collections."
             }
+            Place::Notes => {
+                "Notes you write as you go, kept with the pages and searches they came from."
+            }
+            Place::Terminal => "A full terminal with your shell, beside your pages.",
             Place::Agent => {
                 "Theorem: conversation, ongoing tasks and memory, working with the pages and places beside it."
             }
-            Place::Terminal => "A full terminal with your shell, beside your pages.",
             Place::Apps => "Apps installed through App Host.",
         }
     }

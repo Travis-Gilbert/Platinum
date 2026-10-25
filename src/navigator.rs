@@ -210,7 +210,7 @@ impl Navigator {
                     "Turn On Ask"
                 }
                 .into(),
-                Icon::new(IconName::Bot),
+                icons::ask(),
                 Box::new(ToggleAsk) as Box<dyn Action>,
                 !pointer,
                 false,
@@ -285,7 +285,7 @@ impl Navigator {
         if !pointer || typing {
             let mut group = CommandGroup::new()
                 .label("Places")
-                .item(CommandItem::new().label("Home").icon(gpui_kit::assets::IconName::House));
+                .item(CommandItem::new().label("Home").icon(icons::home()));
             let mut group_picks = vec![Pick::Home];
             for place in Place::ALL {
                 group = group.item(CommandItem::new().label(place.label()).icon(place.icon()));
@@ -317,7 +317,7 @@ impl Navigator {
             group = group.item(
                 CommandItem::new()
                     .label(format!("Ask “{query}”"))
-                    .icon(IconName::Bot)
+                    .icon(icons::ask())
                     .keywords([query.to_owned()]),
             );
             group_picks.push(Pick::Ask(query.to_owned()));

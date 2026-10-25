@@ -45,7 +45,7 @@ use gpui_kit::component::spinner::Spinner;
 use gpui_kit::component::tab::{Tab as TabItem, TabBar};
 use gpui_kit::component::toolbar::Toolbar;
 use gpui_kit::component::{
-    ActiveTheme as _, Disableable as _, Icon, IconName, Sizable as _, TitleBar,
+    ActiveTheme as _, Disableable as _, Icon, IconName, Selectable as _, Sizable as _, TitleBar,
     WindowExt as _, h_flex, v_flex,
 };
 use gpui_kit::{
@@ -81,6 +81,11 @@ use self::underlay::Underlay;
 
 /// The height of a row of tabs, the same as the title bar's.
 const TAB_ROW: f32 = 36.;
+
+/// What the address bar and Home's field say while they search, and while
+/// they ask.
+const SEARCH_PLACEHOLDER: &str = "Search or go somewhere";
+const ASK_PLACEHOLDER: &str = "Ask...";
 
 #[derive(Clone, Copy, PartialEq)]
 enum Showing {
@@ -269,7 +274,7 @@ pub struct Browser {
 
 impl Browser {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let omnibox = cx.new(|cx| InputState::new(window, cx).placeholder("Search..."));
+        let omnibox = cx.new(|cx| InputState::new(window, cx).placeholder(SEARCH_PLACEHOLDER));
         let omnibox_events = cx.subscribe_in(&omnibox, window, Self::omnibox_event);
         let this = cx.weak_entity();
         let dock = cx.new(|cx| {
@@ -1046,7 +1051,11 @@ impl Browser {
     /// searching, until it is turned off.
     fn toggle_ask(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.ask = !self.ask;
-        let placeholder = if self.ask { "Ask..." } else { "Search..." };
+        let placeholder = if self.ask {
+            ASK_PLACEHOLDER
+        } else {
+            SEARCH_PLACEHOLDER
+        };
         self.omnibox.update(cx, |input, cx| {
             input.set_placeholder(placeholder, window, cx)
         });
@@ -1518,8 +1527,9 @@ impl Browser {
             .into_any_element()
     }
 
-    /// Back, Forward and Reload, the address bar and the Ask button. Each acts
-    /// on its own tab, which a click makes the active one.
+    /// Back, Forward and Reload, the address bar with Ask inside it, and the
+    /// page's own buttons. Each acts on its own tab, which a click makes the
+    /// active one.
     fn toolbar(&self, index: usize, cx: &mut Context<Self>) -> Div {
         let tab = &self.tabs[index];
         let id = tab.id;
@@ -1576,63 +1586,59 @@ impl Browser {
                                 browser.reload(window, cx);
                             })),
                     )
-                    .content(self.address(index, ink, cx)),
+                    .content(self.address(index, cx)),
             )
-            .child(self.ask_button(index, ink, cx))
             .child(self.share_button(index, ink, cx))
             .children(self.downloads_button(id, ink, cx))
             .child(self.appearance_button(id, ink, cx))
     }
 
     /// The active tab's address bar. Another tab's card shows its summary in
-    /// the same place; a click there moves the address bar to it.
-    fn address(&self, index: usize, ink: Option<Hsla>, cx: &mut Context<Self>) -> AnyElement {
+    /// the same place; a click there moves the address bar to it. Either is
+    /// on a surface of its own in the theme's colors, whatever color the
+    /// toolbar takes from the page, with Ask at its end.
+    fn address(&self, index: usize, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
-        let (text, muted) = ink.map_or((theme.foreground, theme.muted_foreground), |ink| {
-            (ink, ink.opacity(0.6))
-        });
+        let (text, muted, border, radius) = (
+            theme.foreground,
+            theme.muted_foreground,
+            theme.input,
+            theme.radius,
+        );
+        let surface = glass::field(cx);
+        let id = self.tabs[index].id;
+        let ask = self
+            .ask_toggle(("ask", id), format!("ask-{id}"))
+            .xsmall()
+            .on_click(cx.listener(move |browser, _, window, cx| {
+                browser.activate_id(id, window, cx);
+                browser.toggle_ask(window, cx);
+            }));
+        let search = Icon::new(IconName::Search).small().text_color(muted);
         if index == self.active {
-            let prefix = if self.ask {
-                icons::ask().small()
-            } else {
-                Icon::new(IconName::Search).small()
-            };
-            // On a page's color the field is drawn here, in that color's ink:
-            // the theme's own field would be a dark box on a light page.
-            let editing = self.editing;
             return div()
                 .debug_selector(|| "address-bar".into())
                 .flex_1()
                 .min_w_0()
                 .on_action(cx.listener(Self::escape_address_bar))
-                .when_some(ink, |field, ink| {
-                    field
-                        .text_color(ink)
-                        .rounded(theme.radius)
-                        .border_1()
-                        .border_color(if editing {
-                            ink.opacity(0.3)
-                        } else {
-                            transparent_black()
-                        })
-                        .when(editing, |field| field.bg(ink.opacity(0.06)))
-                })
                 .child(
                     Input::new(&self.omnibox)
                         .id("omnibox")
-                        .prefix(prefix.when_some(ink, |icon, ink| icon.text_color(ink)))
+                        .prefix(search)
+                        .suffix(ask)
                         .small()
-                        .appearance(editing && ink.is_none())
-                        .when_some(ink, |input, ink| input.foreground(ink)),
+                        .bg(surface),
                 )
                 .into_any_element();
         }
-        let tab = &self.tabs[index];
-        let id = tab.id;
-        let summary = tab.summary(cx);
-        let (text, color) = if summary.is_empty() {
+        let summary = self.tabs[index].summary(cx);
+        let (summary, color) = if summary.is_empty() {
             (
-                SharedString::from(if self.ask { "Ask..." } else { "Search..." }),
+                SharedString::from(if self.ask {
+                    ASK_PLACEHOLDER
+                } else {
+                    SEARCH_PLACEHOLDER
+                }),
                 muted,
             )
         } else {
@@ -1642,16 +1648,20 @@ impl Browser {
             .id(("address", id))
             .flex_1()
             .min_w_0()
-            .h_7()
-            .px_2()
-            .gap_2()
+            .h_6()
+            .pl_2()
+            .pr_1()
+            .gap_1()
+            .rounded(radius)
+            .border_1()
+            .border_color(border)
+            .bg(surface)
             .cursor_text()
             .text_sm()
             .text_color(color)
-            .child(
-                Icon::new(IconName::Search).small().text_color(muted),
-            )
-            .child(div().min_w_0().truncate().child(text))
+            .child(search)
+            .child(div().flex_1().min_w_0().truncate().child(summary))
+            .child(ask)
             .on_click(cx.listener(move |browser, _, window, cx| {
                 browser.activate_id(id, window, cx);
                 browser.focus_address_bar(window, cx);
@@ -1659,42 +1669,26 @@ impl Browser {
             .into_any_element()
     }
 
-    /// Filled while the address bar asks, outlined while it searches. An icon
-    /// alone, at the toolbar's 24 px row; Button draws it at three quarters of
-    /// that, larger than the 14 px of a small button's icon.
-    fn ask_button(&self, index: usize, ink: Option<Hsla>, cx: &mut Context<Self>) -> Button {
-        let id = self.tabs[index].id;
-        let button = Button::new(("ask", id))
-            .debug_selector(move || format!("ask-{id}"))
-            .with_size(px(24.))
-            .accessibility_label("Ask AI")
+    /// Ask, at the end of a search field: an icon alone, filled on a filled
+    /// chip while the field asks, outlined while it searches. The caller
+    /// says what a click does.
+    fn ask_toggle(&self, id: impl Into<ElementId>, selector: String) -> Button {
+        Button::new(id)
+            .debug_selector(move || selector.clone())
+            .ghost()
+            .icon(if self.ask {
+                icons::ask_on()
+            } else {
+                icons::ask()
+            })
+            .selected(self.ask)
             .toggled(self.ask)
+            .accessibility_label("Ask AI")
             .tooltip_with_action(
                 if self.ask { "Turn Off Ask" } else { "Ask AI" },
                 &ToggleAsk,
                 None,
             )
-            .on_click(cx.listener(move |browser, _, window, cx| {
-                browser.activate_id(id, window, cx);
-                browser.toggle_ask(window, cx);
-            }));
-        if self.ask {
-            let (on, text) = match ink {
-                Some(ink) => (ink, Self::chrome_fill(&self.tabs[index], cx)),
-                None => (cx.theme().foreground, cx.theme().background),
-            };
-            button.icon(icons::ask_on()).custom(
-                ButtonCustomVariant::new(cx)
-                    .color(on)
-                    .foreground(text)
-                    .hover(on.opacity(0.9))
-                    .active(on.opacity(0.8)),
-            )
-        } else if ink.is_some() {
-            Self::inked(button, ink, cx).icon(icons::ask())
-        } else {
-            button.icon(icons::ask()).outline()
-        }
     }
 
     /// The system's share sheet for the tab's page. AppKit asks for it on

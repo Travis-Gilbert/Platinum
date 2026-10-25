@@ -4,7 +4,8 @@
 //! tab row, the frame around the cards, Home and the places. A page's toolbar
 //! and its selected tab take the page's color as a wash over the glass, as
 //! Frame's own panes take theirs, so the glass stays with the chrome while a
-//! page is up. Pages and a results page stay opaque.
+//! page is up. Pages and a results page stay opaque, and so, nearly, does the
+//! address field: text people read never sits on the glass alone.
 //!
 //! It is AppKit's clear glass, the kind that lets what is behind it through
 //! sharply enough to see; window-sized regular glass frosts it to a flat grey.
@@ -35,6 +36,9 @@ const LIGHT_TINT: f32 = 0.6;
 /// How much of the page's color lies over the frame on Frame's own surfaces
 /// in a tab's card, and of a page's color over its toolbar.
 const PANE: f32 = 0.5;
+/// How much of the theme's own color the address field keeps over the glass:
+/// enough that the address reads the same on any page's color.
+const FIELD: f32 = 0.85;
 
 /// Present once a window has glass under it.
 struct Glass {
@@ -88,6 +92,17 @@ pub fn wash(color: Hsla, cx: &App) -> Hsla {
 /// glass is tinted to the frame's color enough to stand for it here.
 pub fn seen(fill: Hsla, cx: &App) -> Hsla {
     cx.theme().title_bar.blend(fill)
+}
+
+/// The address field's own surface: the theme's color, nearly opaque over
+/// the glass, so the address keeps the theme's contrast on every page.
+pub fn field(cx: &App) -> Hsla {
+    let background = cx.theme().background;
+    if cx.has_global::<Glass>() {
+        background.opacity(FIELD)
+    } else {
+        background
+    }
 }
 
 #[cfg(target_os = "macos")]

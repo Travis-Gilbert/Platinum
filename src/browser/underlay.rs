@@ -17,7 +17,7 @@
 
 use std::rc::Rc;
 
-use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
+use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
 use gpui_kit::component::{
     ActiveTheme as _, Disableable as _, Icon, IconName, Sizable as _, h_flex, v_flex,
@@ -30,10 +30,11 @@ use gpui_kit::{
 use url::Url;
 
 use super::dock::FRAME;
-use super::{Browser, TAB_ROW};
-use crate::actions::{GoBack, GoForward, NewTab, ToggleAsk};
+use super::{ASK_PLACEHOLDER, Browser, SEARCH_PLACEHOLDER, TAB_ROW};
+use crate::actions::{GoBack, GoForward, NewTab};
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
+use crate::glass;
 use crate::home::{Home, HomeEvent};
 use crate::icons;
 use crate::places::{Place, PlaceView};
@@ -68,9 +69,6 @@ impl Route {
         }
     }
 }
-
-const SEARCH_PLACEHOLDER: &str = "Search or type an address...";
-const ASK_PLACEHOLDER: &str = "Ask...";
 
 impl Underlay {
     pub(super) fn new(window: &mut Window, cx: &mut Context<Browser>) -> Self {
@@ -301,81 +299,47 @@ impl Browser {
         }
     }
 
-    /// Home's field: large, with Ask beside it, labelled so its state reads
-    /// in words as well as fill.
+    /// Ask at the end of the workspace's field, which it switches.
+    fn underlay_ask(&self, cx: &mut Context<Self>) -> Button {
+        self.ask_toggle("underlay-ask", "underlay-ask".into())
+            .on_click(cx.listener(|browser, _, window, cx| browser.toggle_ask(window, cx)))
+    }
+
+    /// Home's field: large, the widest thing on Home, with Ask inside it.
     fn home_field(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
-        let prefix = if self.ask {
-            icons::ask()
-        } else {
-            Icon::new(IconName::Search)
-        };
-        let ask = Button::new("underlay-ask")
-            .debug_selector(|| "underlay-ask".into())
-            .large()
-            .label("Ask")
-            .accessibility_label("Ask AI")
-            .toggled(self.ask)
-            .tooltip_with_action(
-                if self.ask { "Turn Off Ask" } else { "Ask AI" },
-                &ToggleAsk,
-                None,
-            )
-            .on_click(cx.listener(|browser, _, window, cx| browser.toggle_ask(window, cx)));
-        let ask = if self.ask {
-            let (on, text) = (cx.theme().foreground, cx.theme().background);
-            ask.icon(icons::ask_on()).custom(
-                ButtonCustomVariant::new(cx)
-                    .color(on)
-                    .foreground(text)
-                    .hover(on.opacity(0.9))
-                    .active(on.opacity(0.8)),
-            )
-        } else {
-            ask.icon(icons::ask()).outline()
-        };
-        h_flex()
-            .gap_2()
+        let muted = cx.theme().muted_foreground;
+        div()
+            .debug_selector(|| "underlay-field".into())
+            .w_full()
+            .on_action(cx.listener(Self::underlay_escape))
             .child(
-                div()
-                    .debug_selector(|| "underlay-field".into())
-                    .flex_1()
-                    .min_w_0()
-                    .on_action(cx.listener(Self::underlay_escape))
-                    .child(
-                        Input::new(&self.underlay.field)
-                            .id("underlay-field")
-                            .prefix(prefix.small())
-                            .large(),
-                    ),
+                Input::new(&self.underlay.field)
+                    .id("underlay-field")
+                    .prefix(Icon::new(IconName::Search).text_color(muted))
+                    .suffix(self.underlay_ask(cx).small())
+                    .large()
+                    .h(rems(3.375))
+                    .text_base()
+                    .bg(glass::field(cx)),
             )
-            .child(ask)
     }
 
     /// The field in the header, on the routes that are not Home.
     fn header_field(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
-        let prefix = if self.ask {
-            icons::ask()
-        } else {
-            Icon::new(IconName::Search)
-        };
-        h_flex()
-            .gap_1()
+        let muted = cx.theme().muted_foreground;
+        div()
+            .debug_selector(|| "underlay-field".into())
             .w(rems(30.))
             .min_w_0()
+            .on_action(cx.listener(Self::underlay_escape))
             .child(
-                div()
-                    .debug_selector(|| "underlay-field".into())
-                    .flex_1()
-                    .min_w_0()
-                    .on_action(cx.listener(Self::underlay_escape))
-                    .child(
-                        Input::new(&self.underlay.field)
-                            .id("underlay-field")
-                            .prefix(prefix.small())
-                            .small(),
-                    ),
+                Input::new(&self.underlay.field)
+                    .id("underlay-field")
+                    .prefix(Icon::new(IconName::Search).small().text_color(muted))
+                    .suffix(self.underlay_ask(cx).xsmall())
+                    .small()
+                    .bg(glass::field(cx)),
             )
-            .child(self.ask_button(0, None, cx))
     }
 
     pub(super) fn render_underlay(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
@@ -422,7 +386,7 @@ impl Browser {
                 Button::new("underlay-home")
                     .ghost()
                     .small()
-                    .icon(gpui_kit::assets::IconName::House)
+                    .icon(icons::home())
                     .tooltip("Home")
                     .accessibility_label("Home")
                     .on_click(cx.listener(|browser, _, window, cx| {

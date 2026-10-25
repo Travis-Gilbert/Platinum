@@ -1,17 +1,17 @@
 //! Home: what Frame shows before any page, the front door of the native
-//! workspace (`docs/vision/native-workspace.md`). It lists the places beneath
-//! the pages and the pages and searches to get back to. A new tab shows it
+//! workspace (`docs/vision/native-workspace.md`). It shelves the places
+//! beneath the pages and lists what to continue with. A new tab shows it
 //! under its own address bar; with every tab closed, the workspace shows it
-//! with a search field of its own.
+//! with a search field of its own, the widest thing on it.
 //!
 //! It is part of the chrome, not a page: it has no surface of its own and
 //! sits on the window's frame, or on a tab's pane of it, never on a page's
-//! card. Its places are a launcher's row of tiles, a little above the middle,
-//! with the keys to know along the foot.
+//! card. Its places are a launcher's shelf, a little above the middle, with
+//! the keys to know along the foot.
 //!
 //! Its parts differ by shape, weight and words, never by color alone: places
-//! are tiles with an icon in a well, recent items are quiet rows with an icon
-//! and a word for their kind.
+//! are icons on neutral tiles with their names, the things to continue are
+//! rows with a title and one line under it.
 //!
 //! SOURCING: GPUI Kit's `Button`, `Icon` and `Kbd`; the record is
 //! `recents.rs`.
@@ -35,7 +35,7 @@ use url::Url;
 use crate::actions::{FocusAddressBar, NewTab, OpenPalette};
 use crate::icons;
 use crate::places::Place;
-use crate::recents::{self, RecentPage, RecentSearch};
+use crate::recents::{self, Recent, RecentSearch};
 
 /// What the person picked on Home. The host decides where it opens.
 #[derive(Clone, Debug, PartialEq)]
@@ -98,177 +98,164 @@ fn emit(handler: &Option<Handler>, event: HomeEvent, window: &mut Window, cx: &m
     }
 }
 
+/// How many things Continue lists.
+const CONTINUE: usize = 6;
+
 impl Home {
-    fn places(&self, cx: &App) -> impl IntoElement {
+    /// The places, as a launcher's shelf: each an icon on a neutral tile,
+    /// with its name under it.
+    fn shelf(&self, cx: &App) -> impl IntoElement {
         let theme = cx.theme();
-        let (muted, well, border, radius) = (
-            theme.muted_foreground,
-            theme.background,
-            theme.border,
-            theme.radius_lg,
-        );
-        v_flex()
-            .items_center()
-            .gap_3()
-            .child(
-                h_flex()
-                    .justify_center()
-                    .flex_wrap()
-                    .gap_2()
-                    .children(Place::ALL.map(|place| {
-                        let handler = self.on_event.clone();
-                        Button::new(SharedString::from(format!("home-place-{}", place.key())))
-                            .ghost()
-                            .w(rems(6.))
-                            .h(rems(6.5))
-                            .accessibility_label(format!("{}, not built yet", place.label()))
-                            .tooltip(place.summary())
+        let (tile, radius) = (theme.secondary, theme.radius_lg);
+        h_flex()
+            .justify_center()
+            .flex_wrap()
+            .gap_2()
+            .children(Place::ALL.map(|place| {
+                let handler = self.on_event.clone();
+                Button::new(SharedString::from(format!("home-place-{}", place.key())))
+                    .ghost()
+                    .w(rems(5.5))
+                    .h(rems(5.75))
+                    .accessibility_label(format!("{}, not built yet", place.label()))
+                    .tooltip(place.summary())
+                    .child(
+                        v_flex()
+                            .items_center()
+                            .gap_1p5()
                             .child(
-                                v_flex()
+                                div()
+                                    .size(rems(3.))
+                                    .flex()
                                     .items_center()
-                                    .gap_2()
-                                    .child(
-                                        div()
-                                            .size(rems(3.25))
-                                            .flex()
-                                            .items_center()
-                                            .justify_center()
-                                            .rounded(radius)
-                                            .border_1()
-                                            .border_color(border)
-                                            .bg(well)
-                                            .shadow_xs()
-                                            .child(Icon::new(place.icon()).large()),
-                                    )
-                                    .child(div().text_sm().child(place.label())),
+                                    .justify_center()
+                                    .rounded(radius)
+                                    .bg(tile)
+                                    .child(place.icon().size(rems(1.75))),
                             )
-                            .on_click(move |_, window, cx| {
-                                emit(&handler, HomeEvent::Place(place), window, cx)
-                            })
-                    })),
-            )
-            .child(
-                div()
-                    .text_xs()
-                    .text_color(muted)
-                    .child("Not built yet: each place shows what it will hold."),
-            )
+                            .child(div().text_sm().child(place.label())),
+                    )
+                    .on_click(move |_, window, cx| {
+                        emit(&handler, HomeEvent::Place(place), window, cx)
+                    })
+            }))
     }
 
-    fn page_row(&self, page: &RecentPage, cx: &App) -> impl IntoElement {
+    /// One thing to continue: its icon, its title, and one line saying
+    /// where it is or what kind it is.
+    fn continue_row(&self, recent: Recent, cx: &App) -> impl IntoElement {
         let muted = cx.theme().muted_foreground;
-        let host = page.url.host_str().unwrap_or_default();
-        let host = host.strip_prefix("www.").unwrap_or(host).to_string();
-        let title = if page.title.is_empty() {
-            host.clone()
-        } else {
-            page.title.clone()
+        let (id, icon, title, detail, label, event) = match recent {
+            Recent::Page(page) => {
+                let host = page.url.host_str().unwrap_or_default();
+                let host = host.strip_prefix("www.").unwrap_or(host).to_string();
+                let title = if page.title.is_empty() {
+                    host.clone()
+                } else {
+                    page.title.clone()
+                };
+                (
+                    format!("recent-page:{}", page.url),
+                    Icon::new(IconName::Globe),
+                    title.clone(),
+                    host.clone(),
+                    format!("{title}, {host}"),
+                    HomeEvent::Page {
+                        url: page.url.clone(),
+                        new_tab: false,
+                    },
+                )
+            }
+            Recent::Search(RecentSearch { query, ask, .. }) => (
+                format!(
+                    "recent-search:{}:{query}",
+                    if *ask { "ask" } else { "search" }
+                ),
+                if *ask {
+                    icons::ask_on()
+                } else {
+                    Icon::new(IconName::Search)
+                },
+                query.clone(),
+                if *ask { "Asked" } else { "Searched the web" }.to_string(),
+                if *ask {
+                    format!("Ask {query}")
+                } else {
+                    format!("Search {query}")
+                },
+                HomeEvent::Search {
+                    query: query.clone(),
+                    ask: *ask,
+                    new_tab: false,
+                },
+            ),
         };
-        let url = page.url.clone();
         let handler = self.on_event.clone();
-        Button::new(SharedString::from(format!("recent-page:{}", page.url)))
+        Button::new(SharedString::from(id))
             .ghost()
             .w_full()
+            .h(rems(3.25))
             .justify_start()
-            .accessibility_label(format!("{title}, {host}"))
-            .tooltip(page.url.to_string())
+            .accessibility_label(label)
+            .when_some(
+                match &event {
+                    HomeEvent::Page { url, .. } => Some(url.to_string()),
+                    _ => None,
+                },
+                |button, url| button.tooltip(url),
+            )
             .child(
                 h_flex()
                     .w_full()
                     .min_w_0()
-                    .gap_2()
-                    .child(Icon::new(IconName::Globe).small().text_color(muted))
-                    .child(div().flex_1().min_w_0().truncate().child(title))
-                    .child(div().flex_shrink_0().text_xs().text_color(muted).child(host)),
+                    .gap_3()
+                    .child(icon.text_color(muted))
+                    .child(
+                        v_flex()
+                            .flex_1()
+                            .min_w_0()
+                            .items_start()
+                            .child(div().w_full().truncate().child(title))
+                            .child(
+                                div()
+                                    .w_full()
+                                    .truncate()
+                                    .text_xs()
+                                    .text_color(muted)
+                                    .child(detail),
+                            ),
+                    ),
             )
-            .on_click(move |event, window, cx| {
-                let new_tab = event.modifiers().secondary();
-                emit(
-                    &handler,
-                    HomeEvent::Page {
-                        url: url.clone(),
+            .on_click(move |click, window, cx| {
+                // ⌘-click opens it in a new tab.
+                let new_tab = click.modifiers().secondary();
+                let event = match event.clone() {
+                    HomeEvent::Page { url, .. } => HomeEvent::Page { url, new_tab },
+                    HomeEvent::Search { query, ask, .. } => HomeEvent::Search {
+                        query,
+                        ask,
                         new_tab,
                     },
-                    window,
-                    cx,
-                )
+                    event => event,
+                };
+                emit(&handler, event, window, cx)
             })
     }
 
-    fn search_row(&self, search: &RecentSearch, cx: &App) -> impl IntoElement {
+    /// The newest pages and searches together, to pick up again.
+    fn continue_list(&self, cx: &App) -> impl IntoElement {
         let muted = cx.theme().muted_foreground;
-        let RecentSearch { query, ask } = search.clone();
-        let icon = if ask {
-            icons::ask_on()
-        } else {
-            Icon::new(IconName::Search)
-        };
-        let handler = self.on_event.clone();
-        Button::new(SharedString::from(format!(
-            "recent-search:{}:{query}",
-            if ask { "ask" } else { "search" }
-        )))
-        .ghost()
-        .w_full()
-        .justify_start()
-        .accessibility_label(if ask {
-            format!("Ask {query}")
-        } else {
-            format!("Search {query}")
-        })
-        .child(
-            h_flex()
-                .w_full()
-                .min_w_0()
-                .gap_2()
-                .child(icon.small().text_color(muted))
-                .child(div().flex_1().min_w_0().truncate().child(query.clone()))
-                .when(ask, |this| {
-                    this.child(div().flex_shrink_0().text_xs().text_color(muted).child("Ask"))
-                }),
-        )
-        .on_click(move |event, window, cx| {
-            let new_tab = event.modifiers().secondary();
-            emit(
-                &handler,
-                HomeEvent::Search {
-                    query: query.clone(),
-                    ask,
-                    new_tab,
-                },
-                window,
-                cx,
-            )
-        })
-    }
-
-    fn recent(&self, cx: &App) -> impl IntoElement {
-        let muted = cx.theme().muted_foreground;
-        let pages = recents::pages(cx);
-        let searches = recents::searches(cx);
-        let empty = pages.is_empty() && searches.is_empty();
-        let column = |title: &'static str, rows: Vec<AnyElement>| {
-            v_flex()
-                .flex_1()
-                .min_w(rems(14.))
-                .gap_1()
-                .child(div().text_xs().text_color(muted).pb_1().child(title))
-                .children(rows)
-        };
-        let page_rows: Vec<AnyElement> = pages
-            .iter()
-            .map(|page| self.page_row(page, cx).into_any_element())
+        let rows: Vec<AnyElement> = recents::latest(CONTINUE, cx)
+            .into_iter()
+            .map(|recent| self.continue_row(recent, cx).into_any_element())
             .collect();
-        let search_rows: Vec<AnyElement> = searches
-            .iter()
-            .map(|search| self.search_row(search, cx).into_any_element())
-            .collect();
+        let empty = rows.is_empty();
         v_flex()
-            .gap_3()
+            .gap_2()
             .child(
                 h_flex()
                     .justify_between()
-                    .child(heading("Recent"))
+                    .child(heading("Continue"))
                     .when(!empty, |this| {
                         this.child(
                             Button::new("home-clear-recents")
@@ -285,22 +272,11 @@ impl Home {
                     div()
                         .text_sm()
                         .text_color(muted)
-                        .child("Pages you open and searches you run appear here."),
+                        .child("Pages you open and searches you run appear here, to pick up again."),
                 )
             })
             .when(!empty, |this| {
-                this.child(
-                    h_flex()
-                        .items_start()
-                        .flex_wrap()
-                        .gap_6()
-                        .when(!page_rows.is_empty(), |this| {
-                            this.child(column("Pages", page_rows))
-                        })
-                        .when(!search_rows.is_empty(), |this| {
-                            this.child(column("Searches", search_rows))
-                        }),
-                )
+                this.child(div().grid().grid_cols(2).gap_x_4().gap_y_1().children(rows))
             })
     }
 
@@ -340,8 +316,8 @@ impl Home {
 
 impl RenderOnce for Home {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let places = self.places(cx).into_any_element();
-        let recent = self.recent(cx).into_any_element();
+        let shelf = self.shelf(cx).into_any_element();
+        let continue_list = self.continue_list(cx).into_any_element();
         let shortcuts = self.shortcuts(window, cx).into_any_element();
         v_flex()
             .size_full()
@@ -355,11 +331,11 @@ impl RenderOnce for Home {
                 v_flex()
                     .flex_shrink_0()
                     .w_full()
-                    .max_w(rems(40.))
+                    .max_w(rems(46.))
                     .gap(rems(2.5))
                     .when_some(self.field, |this, field| this.child(field))
-                    .child(places)
-                    .child(recent),
+                    .child(shelf)
+                    .child(continue_list),
             )
             .child(div().flex_1().min_h(rems(2.)))
             .child(shortcuts)

@@ -59,7 +59,7 @@ fn main() -> anyhow::Result<()> {
     let _ = dotenvy::from_path(data_dir.join(".env"));
 
     gpui_kit::application()
-        .with_assets(icons::Assets)
+        .with_assets(gpui_kit::assets::Assets)
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);

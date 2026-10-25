@@ -2,38 +2,14 @@
 //! SVGs are masks, so their lighter fill (`fill-opacity`) gives each one a
 //! duotone in the current theme.
 //!
-//! The Ask glyphs are Streamline's "design file AI"; the rest are redrawn
-//! from the Streamline Ultimate Duotone set (`sd-card-download` from its CC BY
-//! 4.0 free subset). See the README's credits.
-
-use std::borrow::Cow;
+//! The Ask glyphs are Streamline's "design file AI". Home and the appearance
+//! glyphs are redrawn from the Streamline Ultimate Duotone set, as are the
+//! page, share and downloads glyphs (`sd-card-download` from its CC BY 4.0
+//! free subset). The places' glyphs are redrawn from Streamline Ultimate
+//! Light, on its 48-point grid; All apps is drawn to match them. See the
+//! README's credits.
 
 use gpui_kit::component::Icon;
-use gpui_kit::{AssetSource, SharedString};
-
-// Lucide icons GPUI Kit's default bundle leaves out, for the native
-// workspace's places and header.
-gpui_kit::assets::icon_assets!(ExtraIcons, [Mail, LibraryBig, LayoutGrid, House]);
-
-/// GPUI Kit's default icons and the extras above.
-pub struct Assets;
-
-impl AssetSource for Assets {
-    fn load(&self, path: &str) -> gpui_kit::Result<Option<Cow<'static, [u8]>>> {
-        if let Some(bytes) = ExtraIcons.load(path)? {
-            return Ok(Some(bytes));
-        }
-        gpui_kit::assets::Assets.load(path)
-    }
-
-    fn list(&self, path: &str) -> gpui_kit::Result<Vec<SharedString>> {
-        let mut paths = gpui_kit::assets::Assets.list(path)?;
-        paths.extend(ExtraIcons.list(path)?);
-        paths.sort();
-        paths.dedup();
-        Ok(paths)
-    }
-}
 
 const ASK: &[u8] = include_bytes!("../assets/icons/ask.svg");
 const ASK_ON: &[u8] = include_bytes!("../assets/icons/ask-on.svg");
@@ -43,6 +19,13 @@ const DOWNLOADS: &[u8] = include_bytes!("../assets/icons/downloads.svg");
 const LIGHT: &[u8] = include_bytes!("../assets/icons/theme-light.svg");
 const DARK: &[u8] = include_bytes!("../assets/icons/theme-dark.svg");
 const SYSTEM: &[u8] = include_bytes!("../assets/icons/theme-system.svg");
+const HOME: &[u8] = include_bytes!("../assets/icons/home.svg");
+const MAIL: &[u8] = include_bytes!("../assets/icons/mail.svg");
+const MEDIA: &[u8] = include_bytes!("../assets/icons/media.svg");
+const NOTES: &[u8] = include_bytes!("../assets/icons/notes.svg");
+const TERMINAL: &[u8] = include_bytes!("../assets/icons/terminal.svg");
+const AGENT: &[u8] = include_bytes!("../assets/icons/agent.svg");
+const APPS: &[u8] = include_bytes!("../assets/icons/apps.svg");
 
 /// Ask, outlined: the address bar searches.
 pub fn ask() -> Icon {
@@ -78,4 +61,33 @@ pub fn dark() -> Icon {
 /// Light or dark, as the system is.
 pub fn system() -> Icon {
     Icon::default().data(SYSTEM)
+}
+
+pub fn home() -> Icon {
+    Icon::default().data(HOME)
+}
+
+pub fn mail() -> Icon {
+    Icon::default().data(MAIL)
+}
+
+/// The library: saved pages, media and files.
+pub fn media() -> Icon {
+    Icon::default().data(MEDIA)
+}
+
+pub fn notes() -> Icon {
+    Icon::default().data(NOTES)
+}
+
+pub fn terminal() -> Icon {
+    Icon::default().data(TERMINAL)
+}
+
+pub fn agent() -> Icon {
+    Icon::default().data(AGENT)
+}
+
+pub fn apps() -> Icon {
+    Icon::default().data(APPS)
 }

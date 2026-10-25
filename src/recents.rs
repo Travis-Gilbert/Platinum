@@ -1,11 +1,11 @@
-//! What Home lists under Recent: the last pages the person opened and the
+//! What Home lists under Continue: the last pages the person opened and the
 //! last searches they ran, newest first. It is Frame's own short list for
 //! getting back to things, kept in `recents.json` in Frame's data folder, not
 //! a history: RustyWeb's store keeps the pages themselves (`search::capture`)
 //! and has no recency listing to read back.
 
 use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use gpui_kit::{App, AppContext as _, Global, Task};
 use serde::{Deserialize, Serialize};
@@ -22,12 +22,35 @@ pub struct RecentPage {
     pub url: Url,
     /// Empty when the page had none; Home shows the host instead.
     pub title: String,
+    /// When it was opened, in seconds since 1970; 0 in a record from before
+    /// Frame kept the time.
+    #[serde(default)]
+    pub at: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RecentSearch {
     pub query: String,
     pub ask: bool,
+    /// When it was run, as [`RecentPage::at`].
+    #[serde(default)]
+    pub at: u64,
+}
+
+/// A page or a search, for one list of both.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Recent<'a> {
+    Page(&'a RecentPage),
+    Search(&'a RecentSearch),
+}
+
+impl Recent<'_> {
+    fn at(self) -> u64 {
+        match self {
+            Recent::Page(page) => page.at,
+            Recent::Search(search) => search.at,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -67,6 +90,30 @@ pub fn searches(cx: &App) -> &[RecentSearch] {
         .map_or(&[], |recents| &recents.record.searches)
 }
 
+/// The newest `count` pages and searches together, newest first. Those from
+/// before Frame kept the time come last, pages before searches.
+pub fn latest(count: usize, cx: &App) -> Vec<Recent<'_>> {
+    merge(pages(cx), searches(cx), count)
+}
+
+fn merge<'a>(pages: &'a [RecentPage], searches: &'a [RecentSearch], count: usize) -> Vec<Recent<'a>> {
+    let mut all: Vec<Recent> = pages
+        .iter()
+        .map(Recent::Page)
+        .chain(searches.iter().map(Recent::Search))
+        .collect();
+    // Stable: each list is already newest first.
+    all.sort_by_key(|recent| std::cmp::Reverse(recent.at()));
+    all.truncate(count);
+    all
+}
+
+fn now() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map_or(0, |since| since.as_secs())
+}
+
 /// A web page finished loading. Files and `about:` pages are not kept.
 pub fn record_page(url: &Url, title: &str, cx: &mut App) {
     if !crate::search::capturable(url) {
@@ -75,6 +122,7 @@ pub fn record_page(url: &Url, title: &str, cx: &mut App) {
     let page = RecentPage {
         url: url.clone(),
         title: title.trim().to_string(),
+        at: now(),
     };
     update(cx, |record| {
         remember(&mut record.pages, page, |a, b| a.url == b.url)
@@ -89,8 +137,13 @@ pub fn record_search(query: &str, ask: bool, cx: &mut App) {
     let search = RecentSearch {
         query: query.to_string(),
         ask,
+        at: now(),
     };
-    update(cx, |record| remember(&mut record.searches, search, |a, b| a == b));
+    update(cx, |record| {
+        remember(&mut record.searches, search, |a, b| {
+            a.query == b.query && a.ask == b.ask
+        })
+    });
 }
 
 pub fn clear(cx: &mut App) {
@@ -190,10 +243,46 @@ mod tests {
         let page = |title: &str| RecentPage {
             url: url.clone(),
             title: title.into(),
+            at: 0,
         };
         let mut list = vec![page("Loading")];
         assert!(remember(&mut list, page("Example"), |a, b| a.url == b.url));
         assert_eq!(list, [page("Example")]);
+    }
+
+    #[test]
+    fn pages_and_searches_come_newest_first_together() {
+        let page = |path: &str, at| RecentPage {
+            url: Url::parse(&format!("https://example.com/{path}")).unwrap(),
+            title: String::new(),
+            at,
+        };
+        let search = |query: &str, at| RecentSearch {
+            query: query.into(),
+            ask: false,
+            at,
+        };
+        // Newest first in each, as the record keeps them; the old ones have no time.
+        let pages = [page("b", 30), page("a", 10), page("old", 0)];
+        let searches = [search("y", 20), search("old", 0)];
+        let order: Vec<String> = merge(&pages, &searches, 4)
+            .into_iter()
+            .map(|recent| match recent {
+                Recent::Page(page) => page.url.path().to_owned(),
+                Recent::Search(search) => search.query.clone(),
+            })
+            .collect();
+        assert_eq!(order, ["/b", "y", "/a", "/old"]);
+    }
+
+    #[test]
+    fn a_record_from_before_times_still_reads() {
+        let record: Record = serde_json::from_str(
+            r#"{"pages":[{"url":"https://example.com/","title":"E"}],"searches":[{"query":"q","ask":false}]}"#,
+        )
+        .unwrap();
+        assert_eq!(record.pages[0].at, 0);
+        assert_eq!(record.searches[0].at, 0);
     }
 
     #[test]
@@ -206,10 +295,12 @@ mod tests {
             pages: vec![RecentPage {
                 url: Url::parse("https://example.com/a").unwrap(),
                 title: "A".into(),
+                at: 1,
             }],
             searches: vec![RecentSearch {
                 query: "servo".into(),
                 ask: true,
+                at: 2,
             }],
         };
         save(&path, &record).unwrap();
