@@ -1,8 +1,10 @@
 //! Liquid Glass under the window's chrome. The window is transparent and an
 //! AppKit glass view lies behind GPUI's one view, so wherever the chrome
 //! leaves its frame clear, the glass, and the desktop through it, show: the
-//! tab row, the frame around the cards, Home and the places. Pages, their
-//! toolbars and a results page stay opaque, so a page reads exactly as it did.
+//! tab row, the frame around the cards, Home and the places. A page's toolbar
+//! and its selected tab take the page's color as a wash over the glass, as
+//! Frame's own panes take theirs, so the glass stays with the chrome while a
+//! page is up. Pages and a results page stay opaque.
 //!
 //! It is AppKit's clear glass, the kind that lets what is behind it through
 //! sharply enough to see; window-sized regular glass frosts it to a flat grey.
@@ -31,7 +33,7 @@ const DARK_TINT: f32 = 0.65;
 /// The same for light glass, with a black window behind.
 const LIGHT_TINT: f32 = 0.6;
 /// How much of the page's color lies over the frame on Frame's own surfaces
-/// in a tab's card.
+/// in a tab's card, and of a page's color over its toolbar.
 const PANE: f32 = 0.5;
 
 /// Present once a window has glass under it.
@@ -70,6 +72,22 @@ pub fn frame(cx: &App) -> Hsla {
 /// rises out of a color of its own.
 pub fn pane(cx: &App) -> Hsla {
     cx.theme().background.opacity(PANE)
+}
+
+/// A page's color on its toolbar and selected tab: half let through, like a
+/// pane, over the glass; the color itself where there is no glass.
+pub fn wash(color: Hsla, cx: &App) -> Hsla {
+    if cx.has_global::<Glass>() {
+        color.opacity(PANE)
+    } else {
+        color
+    }
+}
+
+/// What a fill over the frame comes to, for the color of text on it. The
+/// glass is tinted to the frame's color enough to stand for it here.
+pub fn seen(fill: Hsla, cx: &App) -> Hsla {
+    cx.theme().title_bar.blend(fill)
 }
 
 #[cfg(target_os = "macos")]

@@ -1293,12 +1293,13 @@ impl Browser {
     }
 
     /// The color of a tab's toolbar, and of the tab while it is selected: the
-    /// color along the top of its page, as Dia does; else the card's.
+    /// color along the top of its page, as Dia does, else the card's, as a
+    /// wash over the glass.
     fn chrome_fill(tab: &Tab, cx: &App) -> Hsla {
         if tab.native() {
             return glass::pane(cx);
         }
-        tab.tint(cx).unwrap_or(cx.theme().background)
+        glass::wash(tab.tint(cx).unwrap_or(cx.theme().background), cx)
     }
 
     /// The color of text and icons on a tab's toolbar when the theme's would
@@ -1306,7 +1307,7 @@ impl Browser {
     /// the light one. The theme's background is the color furthest from its
     /// text, so it reads where the text would not.
     fn chrome_ink(tab: &Tab, cx: &App) -> Option<Hsla> {
-        let Rgba { r, g, b, .. } = Self::chrome_fill(tab, cx).to_rgb();
+        let Rgba { r, g, b, .. } = glass::seen(Self::chrome_fill(tab, cx), cx).to_rgb();
         let light = 0.299 * r + 0.587 * g + 0.114 * b > 0.5;
         let theme = cx.theme();
         (light == theme.is_dark()).then_some(theme.background)
