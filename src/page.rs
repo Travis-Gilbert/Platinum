@@ -22,22 +22,18 @@ use gpui_kit::component::{ActiveTheme as _, Theme as ChromeTheme};
 use gpui_kit::{
     App, AppContext as _, Bounds, Context, Corners, CursorStyle, ElementInputHandler, Entity,
     EntityInputHandler, EventEmitter, FocusHandle, Focusable, Hsla, InteractiveElement as _,
-    IntoElement,
-    KeyUpEvent, Keystroke, ModifiersChangedEvent, MouseButton as GpuiButton, MouseDownEvent,
-    MouseExitEvent, MouseMoveEvent, MouseUpEvent, NavigationDirection, ObjectFit,
+    IntoElement, KeyUpEvent, Keystroke, ModifiersChangedEvent, MouseButton as GpuiButton,
+    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, NavigationDirection, ObjectFit,
     ParentElement as _, PinchEvent, Pixels, Point, Render, RenderImage, Rgba, ScrollDelta,
-    ScrollWheelEvent,
-    SharedString, Styled as _, Subscription, UTF16Selection, Window, canvas, div, point, px, size,
-    surface,
+    ScrollWheelEvent, SharedString, Styled as _, Subscription, UTF16Selection, Window, canvas, div,
+    point, px, size, surface,
 };
 use servo::{
     ClipboardAction, CompositionEvent, CompositionState, ContextMenuAction, Cursor, DevicePoint,
     Image, ImeEvent, InputEvent, InputEventId, InputEventResult, InputMethodControl, JSValue,
-    KeyState,
-    LoadStatus, MouseButton as ServoButton, MouseButtonAction, MouseButtonEvent,
+    KeyState, LoadStatus, MouseButton as ServoButton, MouseButtonAction, MouseButtonEvent,
     MouseLeftViewportEvent, MouseMoveEvent as ServoMouseMove, PixelFormat, RenderingContext as _,
-    Theme,
-    WebView, WebViewBuilder, WheelDelta, WheelEvent, WheelMode,
+    Theme, WebView, WebViewBuilder, WheelDelta, WheelEvent, WheelMode,
 };
 use url::Url;
 
@@ -54,8 +50,9 @@ pub const CONTEXT: &str = "Page";
 /// The current document's address, type and rendered markup, read together so
 /// they always describe the same document: for the local search index, and
 /// to notice Servo's placeholder for a file it cannot show.
-const READ_DOCUMENT: &str = "[document.URL, document.contentType, \
-    document.documentElement ? document.documentElement.outerHTML : '']";
+// A login form is never serialized into local search/model context. This also
+// excludes a site's own reflected password attributes after a fill.
+const READ_DOCUMENT: &str = include_str!("scripts/read_document.js");
 
 /// servoshell's line height for wheels that scroll by lines.
 const LINE_HEIGHT: f64 = 38.0;
@@ -63,6 +60,9 @@ const LINE_HEIGHT: f64 = 38.0;
 /// Browser shortcuts the page never sees, so no site can take them.
 const RESERVED: &[&str] = &[
     "cmd-k",
+    "cmd-d",
+    "cmd-y",
+    "cmd-shift-p",
     "cmd-t",
     "cmd-w",
     "cmd-l",
@@ -91,6 +91,11 @@ const RESERVED: &[&str] = &[
 pub enum PageEvent {
     /// The title, address, load state or history changed.
     Changed,
+    Visited,
+    PasswordFilled(bool),
+    FormFilled(bool),
+    PasswordRead(frame_profile::credentials::Login),
+    PasswordUnavailable,
     /// The page opened new windows; `Page::take_opened` hands them over.
     Opened,
     /// The page's own context menu, which Frame shows as its search menu.
@@ -349,7 +354,16 @@ impl Page {
                     cx.emit(PageEvent::Changed);
                     cx.notify();
                 }
-                ServoEvent::Loaded => self.read_document(),
+                ServoEvent::Loaded => {
+                    self.read_document();
+                    cx.emit(PageEvent::Visited);
+                }
+                ServoEvent::FormFilled(filled) => cx.emit(PageEvent::FormFilled(filled)),
+                ServoEvent::PasswordFilled(filled) => cx.emit(PageEvent::PasswordFilled(filled)),
+                ServoEvent::PasswordRead(login) => match login {
+                    Some(login) => cx.emit(PageEvent::PasswordRead(login)),
+                    None => cx.emit(PageEvent::PasswordUnavailable),
+                },
                 ServoEvent::Document(page) => search::capture(page, cx),
                 ServoEvent::Crashed(reason) => self.crashed(&reason, window, cx),
                 ServoEvent::OpenExternally(url) => cx.open_url(url.as_str()),
@@ -361,6 +375,57 @@ impl Page {
                 ServoEvent::Download(url) => cx.emit(PageEvent::Download(url)),
             }
         }
+    }
+
+    pub fn fill_form_info(&self, script: &str) {
+        let delegate = self.delegate.clone();
+        self.webview.evaluate_javascript(script, move |r| {
+            delegate.push(ServoEvent::FormFilled(matches!(
+                r,
+                Ok(JSValue::Boolean(true))
+            )))
+        });
+    }
+    pub fn fill_password(&self, script: &str) {
+        let delegate = self.delegate.clone();
+        self.webview.evaluate_javascript(script, move |result| {
+            delegate.push(ServoEvent::PasswordFilled(matches!(
+                result,
+                Ok(JSValue::Boolean(true))
+            )));
+        });
+    }
+
+    pub fn read_password(&self) -> anyhow::Result<()> {
+        let url = self.url().ok_or_else(|| anyhow!("No login page"))?;
+        let script = frame_profile::credentials::read_script(url.as_str())?;
+        let expected = url.origin().ascii_serialization();
+        let delegate = self.delegate.clone();
+        self.webview.evaluate_javascript(script, move |result| {
+            let login = (|| {
+                let JSValue::Array(values) = result.ok()? else {
+                    return None;
+                };
+                let [
+                    JSValue::String(origin),
+                    JSValue::String(username),
+                    JSValue::String(password),
+                ] = <[JSValue; 3]>::try_from(values).ok()?
+                else {
+                    return None;
+                };
+                if origin != expected || password.is_empty() {
+                    return None;
+                }
+                Some(frame_profile::credentials::Login {
+                    origin,
+                    username,
+                    password: zeroize::Zeroizing::new(password),
+                })
+            })();
+            delegate.push(ServoEvent::PasswordRead(login));
+        });
+        Ok(())
     }
 
     /// Read the finished document back: for the local search index, or, when

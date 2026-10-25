@@ -72,6 +72,16 @@ impl Engine {
             servo,
             after_spin: Vec::new(),
         });
+        // GPUI releases windows before polling quit futures. Drop the final
+        // engine handle then, after Page/WebView handles are gone, so Servo's
+        // normal shutdown flushes cookies and website storage to this profile.
+        cx.on_app_quit(|cx| {
+            let engine = cx.remove_global::<Engine>();
+            async move {
+                drop(engine);
+            }
+        })
+        .detach();
         cx.spawn(async move |cx| spin(receiver, pending, cx).await)
             .detach();
     }
@@ -112,11 +122,17 @@ async fn spin(mut wakes: UnboundedReceiver<()>, pending: Arc<AtomicBool>, cx: &m
     while wakes.next().await.is_some() {
         pending.store(false, Ordering::Release);
         cx.update(|cx| {
-            let servo = Engine::servo(cx);
+            let Some(engine) = cx.try_global::<Engine>() else {
+                return;
+            };
+            let servo = engine.servo.clone();
             servo.spin_event_loop();
             // Take the callbacks out so they can reach `cx` mutably.
             let mut callbacks = std::mem::take(&mut cx.global_mut::<Engine>().after_spin);
             callbacks.retain_mut(|callback| callback(cx));
+            if cx.try_global::<Engine>().is_none() {
+                return;
+            }
             let engine = cx.global_mut::<Engine>();
             callbacks.append(&mut engine.after_spin);
             engine.after_spin = callbacks;

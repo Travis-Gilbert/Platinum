@@ -9,6 +9,7 @@ publish = false
 # Its own workspace: libservo is in this graph. `deps/` holds checkouts that
 # are path dependencies, not members.
 [workspace]
+members = ["crates/profile"]
 exclude = ["deps"]
 
 [dependencies]
@@ -48,9 +49,12 @@ reqwest = { version = "0.12", default-features = false, features = ["http2", "ru
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 sanitize-filename = "0.6"
 serde_json = "1"
+zeroize = "1"
+frame-profile = { path = "crates/profile" }
 url = "2"
 
 [dev-dependencies]
+tempfile = "3"
 # Native media acceptance examples use the same CLI parser already in Servo.
 clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).
@@ -58,6 +62,10 @@ clap = { version = "4", features = ["derive"] }
 # `gpui-fast?/...`, which Cargo still resolves, and gpui-fast's wasm crate
 # pins a `unicode-properties` that conflicts with Servo's.
 gpui-pre = { version = "=0.3.9", features = ["test-support"] }
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+# Opt into the native backend's existing render-to-image test support.
+gpui-pre-macos = { version = "=0.3.9", features = ["test-support"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

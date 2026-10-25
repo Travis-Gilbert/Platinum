@@ -28,6 +28,9 @@ use crate::search::VisitedPage;
 pub enum ServoEvent {
     /// Servo painted and presented a frame.
     Frame,
+    PasswordFilled(bool),
+    FormFilled(bool),
+    PasswordRead(Option<frame_profile::credentials::Login>),
     Cursor(Cursor),
     InputHandled(InputEventId, InputEventResult),
     ShowControl(EmbedderControl),
@@ -88,7 +91,7 @@ impl Delegate {
         self.push(ServoEvent::Download(url));
     }
 
-    fn push(&self, event: ServoEvent) {
+    pub(crate) fn push(&self, event: ServoEvent) {
         self.events.borrow_mut().push_back(event);
     }
 }
@@ -109,8 +112,8 @@ pub enum Verdict {
 /// Anything else Servo cannot show is caught after it loads (`page.rs`).
 const DOWNLOADS: &[&str] = &[
     "7z", "apk", "bz2", "csv", "deb", "dmg", "doc", "docx", "epub", "exe", "gz", "ics", "ipa",
-    "iso", "jar", "mobi", "msi", "numbers", "odp", "ods", "odt", "pages", "pdf", "pkg",
-    "ppt", "pptx", "rar", "rpm", "tar", "tgz", "torrent", "vcf", "xls", "xlsx", "xz", "zip", "zst",
+    "iso", "jar", "mobi", "msi", "numbers", "odp", "ods", "odt", "pages", "pdf", "pkg", "ppt",
+    "pptx", "rar", "rpm", "tar", "tgz", "torrent", "vcf", "xls", "xlsx", "xz", "zip", "zst",
 ];
 
 pub fn verdict(url: &Url) -> Verdict {
@@ -124,7 +127,10 @@ pub fn verdict(url: &Url) -> Verdict {
 
 /// Whether the address names a file of a type that is always saved.
 fn is_download(url: &Url) -> bool {
-    let Some(name) = url.path_segments().and_then(|mut segments| segments.next_back()) else {
+    let Some(name) = url
+        .path_segments()
+        .and_then(|mut segments| segments.next_back())
+    else {
         return false;
     };
     let Some((_, extension)) = name.rsplit_once('.') else {
@@ -277,9 +283,15 @@ mod tests {
             verdict_for("https://example.com/a/b.TAR.GZ?token=1"),
             Verdict::Download
         );
-        assert_eq!(verdict_for("http://example.com/paper.pdf"), Verdict::Download);
+        assert_eq!(
+            verdict_for("http://example.com/paper.pdf"),
+            Verdict::Download
+        );
         // Pages, and files Servo shows, are not.
-        assert_eq!(verdict_for("https://example.com/download.php?id=3"), Verdict::Allow);
+        assert_eq!(
+            verdict_for("https://example.com/download.php?id=3"),
+            Verdict::Allow
+        );
         assert_eq!(verdict_for("https://example.com/photo.png"), Verdict::Allow);
         assert_eq!(verdict_for("https://example.com/zip"), Verdict::Allow);
         assert_eq!(verdict_for("file:///Users/me/a.zip"), Verdict::Allow);

@@ -16,6 +16,7 @@ mod icons;
 mod keys;
 mod navigator;
 mod page;
+mod profile_ui;
 mod scene;
 mod search;
 mod serp;
@@ -31,8 +32,10 @@ use gpui_kit::{
 };
 
 use crate::actions::{
-    ActivateTab, CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, NextTab, OpenPalette,
-    PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowDownloads, ToggleAsk, ToggleCompact,
+    ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
+    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PreviousTab, Quit, Reload,
+    SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowDownloads, ShowHistory,
+    ShowProfiles, ToggleAsk, ToggleCompact,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
@@ -47,8 +50,9 @@ fn main() -> anyhow::Result<()> {
     let data_dir = dirs::data_dir()
         .context("no application data directory")?
         .join("Frame");
-    let profile_dir = data_dir.join("profile");
-    std::fs::create_dir_all(&profile_dir)?;
+    let profile = frame_profile::ProfileStore::open(&data_dir)?;
+    let profile_dir = profile.directory();
+    let search_dir = profile.search_directory();
     // RustyWeb's provider keys: a checkout's `.env` while developing, then
     // the app's own. Neither overrides what the environment already sets.
     let _ = dotenvy::dotenv();
@@ -61,7 +65,8 @@ fn main() -> anyhow::Result<()> {
             theme::init(cx);
             install_commands(cx);
             Engine::start(&profile_dir, cx);
-            search::init(&data_dir, cx);
+            cx.set_global(profile_ui::ActiveProfile(profile));
+            search::init(&search_dir, cx);
             if let Err(error) = open_window(cx) {
                 log::error!("{error:#}");
                 cx.quit();
@@ -92,6 +97,9 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("cmd-]", GoForward, None),
         KeyBinding::new("cmd-l", FocusAddressBar, None),
         KeyBinding::new("cmd-k", OpenPalette, None),
+        KeyBinding::new("cmd-d", BookmarkPage, None),
+        KeyBinding::new("cmd-y", ShowHistory, None),
+        KeyBinding::new("cmd-shift-p", FillPassword, None),
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
         KeyBinding::new("cmd-q", Quit, None),
@@ -126,6 +134,8 @@ fn install_menus(cx: &mut App) {
             MenuItem::action("Open Location", FocusAddressBar),
             MenuItem::action("Search", OpenPalette),
             MenuItem::separator(),
+            MenuItem::action("Import Browser Data…", ImportBrowserData),
+            MenuItem::action("Profiles…", ShowProfiles),
             MenuItem::action("Share...", SharePage),
             MenuItem::separator(),
             MenuItem::action("Close Tab", CloseTab),
@@ -138,6 +148,8 @@ fn install_menus(cx: &mut App) {
             MenuItem::os_action("Copy", Copy, OsAction::Copy),
             MenuItem::os_action("Paste", Paste, OsAction::Paste),
             MenuItem::os_action("Select All", SelectAll, OsAction::SelectAll),
+            MenuItem::separator(),
+            MenuItem::action("Fill Form Information…", FillForm),
         ]),
         Menu::new("View").items([
             MenuItem::action("Reload Page", Reload),
@@ -152,6 +164,15 @@ fn install_menus(cx: &mut App) {
         Menu::new("History").items([
             MenuItem::action("Back", GoBack),
             MenuItem::action("Forward", GoForward),
+            MenuItem::action("Show History…", ShowHistory),
+        ]),
+        Menu::new("Bookmarks").items([
+            MenuItem::action("Bookmark This Page", BookmarkPage),
+            MenuItem::action("Show Bookmarks…", ShowBookmarks),
+        ]),
+        Menu::new("Passwords").items([
+            MenuItem::action("Fill Saved Password…", FillPassword),
+            MenuItem::action("Save or Update Password…", SavePassword),
         ]),
         Menu::new("Window").items([
             MenuItem::action("Next Tab", NextTab),

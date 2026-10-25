@@ -56,6 +56,78 @@ on a light page under the dark theme, or the other way round, their text and
 icons turn dark or light to stay readable. A tab shows its site's icon once
 the site has one. New Tab is at the right end of the row of tabs.
 
+## Browser profiles and migration
+
+Choose **File > Import Browser Data…**, or the import icon at the bottom left of a new tab’s status bar.
+The status bar appears only on the home page. Select a local Dia, Firefox, Chrome,
+Chrome Beta, Brave, Edge or Chromium profile and the
+categories to import. Profile names and account email labels are preserved in
+separate destinations. Select **Open [profile] and restart** when the report is
+ready. **File > Profiles…** also creates and switches profiles.
+
+- Bookmarks include folders and account bookmarks. **Bookmarks > Show
+  Bookmarks…** opens the library; **⌘D** saves the current page.
+- **⌘Y** opens history. Typing a familiar title or address in the address bar
+  suggests imported bookmarks and history; Down moves into the suggestions.
+- Password import is opt-in and may prompt for macOS Keychain access. Passwords
+  go into this application's own Keychain entries, separately for each profile.
+  A Chrome-style password CSV and bookmarks HTML can also be imported into the
+  **current** profile from the same sheet. No plaintext password copy is retained
+  in application data. Remove an exported CSV yourself after import.
+  Firefox passwords use Mozilla's installed NSS library. If the source has a
+  Primary Password, unlock/export them in Firefox and use CSV import instead.
+  Quit Firefox before importing if it locks its bookmark/history databases.
+- On a secure login page, **Passwords > Fill Saved Password…** (**⇧⌘P**) lets
+  you choose an account. Filling checks the exact origin and form destination;
+  it never submits the form. Login forms are excluded from the local search index.
+  Username-only steps are supported. Enter credentials
+  and choose **Passwords > Save or Update Password…** to save a new or changed
+  login after reviewing the account and site.
+- Basic form information is optional and excludes passwords and payment fields.
+  **Edit > Fill Form Information…** lets you choose one imported name, email,
+  city or country value for a visible field on the current secure page.
+- Open-tab import supports complete SNSS v3 session files and Firefox's
+  compressed JSON session files. Only the selected navigation in each open
+  Firefox tab is imported. Source windows are
+  combined into one window. Incomplete, encrypted, unknown or navigation-pruned
+  session files are reported as unsupported. Existing imported tabs are not
+  added twice. Extension import inventories names and versions; it does not run
+  the extensions.
+
+For explicit local migration without opening the app, the profile crate also
+provides `cargo run -p frame-profile --bin profile-import -- --browser dia`
+(or `--browser firefox`). It imports all categories into separate profiles,
+leaves the active profile unchanged, and prints aggregate counts only. Passwords
+use the same Keychain authorization as the native importer.
+`--verify-only` checks destination vault readability without decrypting source passwords.
+
+Each profile has its own Servo storage, history, bookmarks, form values, search
+store and restored session. Tabs, search queries, split layout and selection are
+saved as they change. A restored search uses normal search; it does not start a
+model request. The existing default profile remains in its original location.
+
+Importing an account label does not transfer Google Sync, a Gmail authorization,
+website cookies or passkeys. Websites may ask you to sign in again. Native
+third-party plugins and WebExtension execution need additional integration.
+
+The implementation and acceptance evidence are tracked in
+[the migration plan](docs/plans/profile-migration.md). Engine-independent checks:
+
+```bash
+cargo test -p frame-profile
+cargo clippy -p frame-profile --all-targets -- -D warnings
+```
+
+The explicitly invoked native Keychain tests use synthetic credentials and clean
+up their test items. The Servo acceptance harness uses a temporary profile and a
+local synthetic login server:
+
+```bash
+cargo test -p frame-profile -- --ignored
+script/media-env cargo build --locked --example profile_check
+script/media-env python3 tests/profiles/check_native.py /path/to/target/debug/examples/profile_check
+```
+
 ## Search providers
 
 Keyless providers (GDELT, Bluesky) are always on. Keyed general-web providers
@@ -116,3 +188,7 @@ The Ask icons (`assets/icons/ask.svg`, `ask-on.svg`) are Streamline's
 appearance icons are redrawn from Streamline's Ultimate Duotone set as
 single-color masks, so their duotone takes the theme's text color; the
 downloads glyph is `sd-card-download`, from its CC BY 4.0 free subset.
+
+The home status bar’s import icon is the supplied Streamline Ultimate
+`App-Window-Download` PNG, embedded unchanged in an SVG so GPUI can tint its
+alpha mask with the current theme.

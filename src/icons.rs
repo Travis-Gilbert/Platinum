@@ -12,6 +12,8 @@ const ASK: &[u8] = include_bytes!("../assets/icons/ask.svg");
 const ASK_ON: &[u8] = include_bytes!("../assets/icons/ask-on.svg");
 const PAGE: &[u8] = include_bytes!("../assets/icons/page.svg");
 const SHARE: &[u8] = include_bytes!("../assets/icons/share.svg");
+// The supplied PNG is embedded unchanged; GPUI tints its alpha mask.
+const IMPORT_BROWSER_DATA: &[u8] = include_bytes!("../assets/icons/import-browser-data.svg");
 const DOWNLOADS: &[u8] = include_bytes!("../assets/icons/downloads.svg");
 const LIGHT: &[u8] = include_bytes!("../assets/icons/theme-light.svg");
 const DARK: &[u8] = include_bytes!("../assets/icons/theme-dark.svg");
@@ -34,6 +36,10 @@ pub fn page() -> Icon {
 
 pub fn share() -> Icon {
     Icon::default().data(SHARE)
+}
+
+pub fn import_browser_data() -> Icon {
+    Icon::default().data(IMPORT_BROWSER_DATA)
 }
 
 pub fn downloads() -> Icon {

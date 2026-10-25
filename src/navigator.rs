@@ -26,8 +26,9 @@ use servo::ContextMenuAction;
 use url::Url;
 
 use crate::actions::{
-    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, Quit, Reload, SetAppearance, SharePage,
-    ShowDownloads, ToggleAsk, ToggleCompact,
+    BookmarkPage, CloseTab, FillPassword, FocusAddressBar, GoBack, GoForward, ImportBrowserData,
+    NewTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowDownloads,
+    ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -155,7 +156,13 @@ impl Navigator {
         let pointer = matches!(self.placement, Placement::Pointer(_));
         // (label, icon, action, shown untyped in the right-click menu, checked)
         let mut commands: Vec<(SharedString, Icon, Box<dyn Action>, bool, bool)> = vec![
-            ("New Tab".into(), icons::page(), Box::new(NewTab), true, false),
+            (
+                "New Tab".into(),
+                icons::page(),
+                Box::new(NewTab),
+                true,
+                false,
+            ),
             (
                 if browser.compact {
                     "Show Toolbar"
@@ -189,6 +196,26 @@ impl Navigator {
             !pointer,
             false,
         ));
+        for (label, action) in [
+            (
+                "Import browser data…",
+                Box::new(ImportBrowserData) as Box<dyn Action>,
+            ),
+            ("Profiles…", Box::new(ShowProfiles)),
+            ("History…", Box::new(ShowHistory)),
+            ("Bookmarks…", Box::new(ShowBookmarks)),
+            ("Bookmark this page", Box::new(BookmarkPage)),
+            ("Fill saved password…", Box::new(FillPassword)),
+            ("Save or update password…", Box::new(SavePassword)),
+        ] {
+            commands.push((
+                label.into(),
+                Icon::new(IconName::Globe),
+                action,
+                !pointer,
+                false,
+            ));
+        }
         for appearance in Appearance::ALL {
             commands.push((
                 appearance.command(),
