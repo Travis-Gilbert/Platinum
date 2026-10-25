@@ -23,9 +23,10 @@
 //! SOURCING: GPUI Kit's `List`, `TabBar`, `Popover`, `Avatar`,
 //! `DescriptionList`, `Alert`, `Empty`, `Skeleton` and `Button`; sites are
 //! named by Servo's public suffix list (`net_traits::pub_domains`), snippets
-//! are parsed by html5ever (`markup.rs`), dates are chrono's. Favicons load
-//! and decode through GPUI's image loader (`ImageAssetLoader`), which fetches
-//! over the HTTP client `main` installs (`gpui-pre-reqwest-client`).
+//! are parsed by html5ever (`markup.rs`), dates are chrono's. A site's icon
+//! is found by `favicon.rs`, then loads and decodes through GPUI's image
+//! loader (`ImageAssetLoader`); both fetch over the HTTP client `main`
+//! installs (`gpui-pre-reqwest-client`).
 
 use chrono::{DateTime, Local, NaiveDate};
 use gpui_kit::assets::IconName as Lucide;
@@ -58,6 +59,7 @@ use gpui_kit::{
 use percent_encoding::percent_decode_str;
 use url::Url;
 
+use crate::favicon::SiteIcon;
 use crate::icons;
 use crate::search::{self, SerpAnswer, SerpHit, SerpResult, SerpSource, sentence};
 
@@ -925,8 +927,8 @@ fn site(url: &Url) -> String {
     }
 }
 
-/// A web result's mark: its site's favicon, on white, the ground favicons
-/// are drawn for, so a dark one still shows in the dark theme; the site's
+/// A web result's mark: its site's icon, on white, the ground favicons are
+/// drawn for, so a dark one still shows in the dark theme; the site's
 /// initials where it has none. The circle stays empty while the icon loads,
 /// so a row never turns from initials to an icon.
 fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
@@ -936,10 +938,13 @@ fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
             .name(site_mark(&site(url)))
             .into_any_element()
     };
-    let Some(favicon) = favicon_url(url) else {
+    let Some(root) = site_root(url) else {
         return initials();
     };
-    match window.use_asset::<ImageAssetLoader>(&Resource::Uri(favicon.into()), cx) {
+    let icon = window
+        .use_asset::<SiteIcon>(&root, cx)
+        .and_then(|icon| window.use_asset::<ImageAssetLoader>(&Resource::Uri(icon), cx));
+    match icon {
         Some(Err(_)) => initials(),
         icon => h_flex()
             .size_6()
@@ -956,13 +961,12 @@ fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
     }
 }
 
-/// Where a site keeps its icon when its pages name none:
-/// `https://docs.rs/favicon.ico`. Only the web has one.
-fn favicon_url(url: &Url) -> Option<String> {
+/// The root of the site a result is on, where its icon is named:
+/// `https://docs.rs/`. Only the web has one.
+fn site_root(url: &Url) -> Option<Url> {
     matches!(url.scheme(), "http" | "https")
-        .then(|| url.join("/favicon.ico").ok())
+        .then(|| url.join("/").ok())
         .flatten()
-        .map(String::from)
 }
 
 /// What a site's mark is drawn from: its name without the public suffix,
@@ -1085,17 +1089,14 @@ pub(crate) mod tests {
     #[test]
     fn a_web_result_looks_for_its_sites_icon_at_the_root() {
         let page = Url::parse("https://docs.rs/gpui-kit/latest/gpui_kit/?q=1").unwrap();
-        assert_eq!(
-            favicon_url(&page).as_deref(),
-            Some("https://docs.rs/favicon.ico")
-        );
+        assert_eq!(site_root(&page).map(String::from).as_deref(), Some("https://docs.rs/"));
         let port = Url::parse("http://127.0.0.1:8080/a").unwrap();
         assert_eq!(
-            favicon_url(&port).as_deref(),
-            Some("http://127.0.0.1:8080/favicon.ico")
+            site_root(&port).map(String::from).as_deref(),
+            Some("http://127.0.0.1:8080/")
         );
         let file = Url::parse("file:///Users/a/notes.md").unwrap();
-        assert_eq!(favicon_url(&file), None);
+        assert_eq!(site_root(&file), None);
     }
 
     #[test]

@@ -11,6 +11,7 @@ mod controls;
 mod delegate;
 mod downloads;
 mod engine;
+mod favicon;
 mod glass;
 mod home;
 mod icons;
