@@ -56,6 +56,7 @@ impl Engine {
         // `:has()` is off by default in Servo, and much of the web uses it.
         let preferences = Preferences {
             layout_css_has_selector_enabled: true,
+            dom_media_source_enabled: true,
             ..Preferences::default()
         };
         let servo = ServoBuilder::default()

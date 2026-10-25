@@ -1,0 +1,8 @@
+video/webm; codecs="vp8": before=1 after=1 remove_returned=1 passed=0
+
+(frame-mse-remove:3992): GStreamer-MSE-CRITICAL **: 09:15:51.170: gst_media_source_sample_map_add: assertion 'GST_BUFFER_DTS_IS_VALID (buffer)' failed
+
+(frame-mse-remove:3992): GStreamer-MSE-CRITICAL **: 09:15:51.170: gst_media_source_sample_map_add: assertion 'GST_BUFFER_DTS_IS_VALID (buffer)' failed
+
+(frame-mse-remove:3992): GStreamer-MSE-CRITICAL **: 09:15:51.170: gst_media_source_sample_map_add: assertion 'GST_BUFFER_DTS_IS_VALID (buffer)' failed
+audio/webm; codecs="vorbis": before=1 after=1 remove_returned=1 passed=0

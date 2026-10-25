@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Link development GStreamer plugins where the pinned Servo expects them.
+
+This is for local development, not portable .app distribution. Libraries keep
+their installed paths; a release bundle also needs dependency relocation.
+"""
+import argparse
+import ast
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+
+def output(*args):
+    return subprocess.check_output(args, text=True).strip()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--release", action="store_true")
+    args = parser.parse_args()
+    if sys.platform != "darwin":
+        parser.error("Frame currently supports macOS only")
+    root = Path(__file__).resolve().parent.parent
+    metadata = json.loads(output(
+        "cargo", "metadata", "--locked", "--format-version", "1",
+        "--manifest-path", str(root / "Cargo.toml"),
+    ))
+    servo = next(p for p in metadata["packages"] if p["name"] == "servo")
+    lists = Path(servo["manifest_path"]).parent / "gstreamer_plugin_lists"
+    plugins = []
+    for name in ("common", "macos"):
+        # These are intentionally both Rust include files and Python lists.
+        literal = "\n".join(
+            line for line in (lists / f"{name}.rs.in").read_text().splitlines()
+            if not line.lstrip().startswith("//")
+        )
+        plugins.extend(ast.literal_eval(literal))
+    native_plugins = root / "deps/gstreamer-mse-runtime/lib/gstreamer-1.0"
+    if "gstmse" in plugins and not (native_plugins / "libgstmse.dylib").is_file():
+        raise RuntimeError("Patched MSE plugin is missing; run script/bootstrap-media first")
+    sources = [native_plugins,
+               Path(output("pkg-config", "--variable=pluginsdir", "gstreamer-1.0"))]
+    # Some installations ship the ICE plugin in libnice's prefix.
+    if subprocess.run(["pkg-config", "--exists", "nice"]).returncode == 0:
+        sources.append(Path(output("pkg-config", "--variable=libdir", "nice")) / "gstreamer-1.0")
+    # Homebrew splits it into a separate formula, under libexec.
+    if shutil.which("brew"):
+        nice_prefix = Path(output("brew", "--prefix", "libnice-gstreamer"))
+        sources.append(nice_prefix / "libexec" / "gstreamer-1.0")
+    files = []
+    for name in plugins:
+        candidates = [source / f"lib{name}.dylib" for source in sources]
+        files.append(next((path for path in candidates if path.is_file()), candidates[0]))
+    missing = [str(path) for path in files if not path.is_file()]
+    if missing:
+        raise RuntimeError("Missing GStreamer plugins:\n" + "\n".join(missing))
+    target = Path(metadata["target_directory"]) / ("release" if args.release else "debug")
+    destinations = (target / "lib", target / "examples" / "lib")
+    # Validate everything before creating links; never replace an existing file.
+    for directory in destinations:
+        for path in files:
+            link = directory / path.name
+            if (link.exists() or link.is_symlink()) and link.resolve() != path.resolve():
+                raise RuntimeError(f"Refusing to replace existing plugin: {link}")
+    for directory in destinations:
+        directory.mkdir(parents=True, exist_ok=True)
+        for path in files:
+            link = directory / path.name
+            if not link.is_symlink() and not link.exists():
+                link.symlink_to(path)
+        print(f"Ready: {len(files)} development plugins in {directory}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+        sys.exit(str(error))

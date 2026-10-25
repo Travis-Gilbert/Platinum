@@ -1,0 +1,829 @@
+{
+  "title": "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film - YouTube",
+  "mediaSource": true,
+  "sourceBuffer": true,
+  "passed": true,
+  "initialTime": 0,
+  "currentTime": 10.090354166,
+  "readyState": 4,
+  "networkState": 2,
+  "paused": false,
+  "width": 854,
+  "height": 480,
+  "errorCode": null,
+  "sourceScheme": "blob:",
+  "videoId": "aqz-KE-bpKQ",
+  "adShowing": false,
+  "duration": 634.601,
+  "pause": {
+    "at": 10.2164375,
+    "held": true
+  },
+  "seek": {
+    "target": 60,
+    "resumedAt": 61.003229166
+  },
+  "speed": {
+    "rate": 1.5,
+    "advanced": 6.0955312500000005,
+    "elapsed": 4.00166,
+    "observedRate": 1.523250663474658
+  },
+  "trace": [
+    {
+      "event": "sourceopen",
+      "state": "open"
+    },
+    {
+      "call": "addSourceBuffer",
+      "type": "audio/webm; codecs=\"opus\""
+    },
+    {
+      "call": "addSourceBuffer",
+      "type": "video/mp4; codecs=\"av01.0.04M.08\""
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        700
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        259
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": []
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        27622
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        160742
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          9.991166666
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          9.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        91603
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        168044
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          8.366666666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          8.366666666
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        242909
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          13.233333333
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          13.233333333
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          13.233333333
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        381705
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        131072
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        167738
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          60.2
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          59.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        46698
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          60.2
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        164859
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          60.2
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          59.991166666
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          59.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        171056
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          68.2
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          68.2
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          69.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        213785
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        165849
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          72.366666666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          72.366666666
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          79.991166666
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          79.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        113602
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          72.366666666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          72.366666666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        182544
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          75.7
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          75.7
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          79.366666666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        16384
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          79.4
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        245760
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        32768
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          79.4
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          81.766666666
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          82.031166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        129307
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          82.031166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        97047
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          83.411166666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          84.366666666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          84.366666666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          84.366666666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        180406
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        144816
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          99.991166666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          91.333333333
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          99.991166666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.04M.08\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          20.133333333
+        ],
+        [
+          59.1,
+          91.333333333
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          19.991166666
+        ],
+        [
+          49.9945,
+          99.991166666
+        ]
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "state": "open",
+      "duration": 634.601,
+      "buffers": 2,
+      "active": 2
+    }
+  ]
+}

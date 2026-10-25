@@ -1,0 +1,224 @@
+{
+  "title": "Me at the zoo - YouTube",
+  "mediaSource": true,
+  "sourceBuffer": true,
+  "passed": true,
+  "initialTime": 0,
+  "currentTime": 9.610770833,
+  "readyState": 4,
+  "networkState": 2,
+  "paused": false,
+  "width": 320,
+  "height": 240,
+  "errorCode": null,
+  "sourceScheme": "blob:",
+  "videoId": "jNQXAC9IVRw",
+  "adShowing": false,
+  "duration": 19.021,
+  "pause": {
+    "at": 10.090541666,
+    "held": true
+  },
+  "seek": {
+    "target": 9.5105,
+    "resumedAt": 11.0154375
+  },
+  "speed": {
+    "rate": 1.5,
+    "advanced": 6.096562499999999,
+    "elapsed": 4.00167,
+    "observedRate": 1.5235045618454295
+  },
+  "trace": [
+    {
+      "event": "sourceopen",
+      "state": "open"
+    },
+    {
+      "call": "addSourceBuffer",
+      "type": "audio/webm; codecs=\"opus\""
+    },
+    {
+      "call": "addSourceBuffer",
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\""
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        700
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        259
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": []
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        70335
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        133349
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": []
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          9.991166666
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        68447
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        121785
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updateend",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          5.4
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          11.2
+        ]
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          19.011166666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          11.2
+        ]
+      ]
+    },
+    {
+      "call": "appendBuffer",
+      "args": [
+        84229
+      ]
+    },
+    {
+      "type": "audio/webm; codecs=\"opus\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          19.011166666
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updatestart",
+      "updating": true,
+      "buffered": [
+        [
+          0,
+          18.933333333
+        ]
+      ]
+    },
+    {
+      "type": "video/mp4; codecs=\"av01.0.00M.08.0.110.05.01.06.0\"",
+      "event": "updateend",
+      "updating": false,
+      "buffered": [
+        [
+          0,
+          18.933333333
+        ]
+      ]
+    },
+    {
+      "event": "sourceended",
+      "state": "ended"
+    }
+  ],
+  "sources": [
+    {
+      "state": "ended",
+      "duration": 19.021,
+      "buffers": 2,
+      "active": 2
+    }
+  ]
+}

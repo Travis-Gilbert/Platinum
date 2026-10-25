@@ -14,7 +14,7 @@ exclude = ["deps"]
 [dependencies]
 gpui-kit = "=0.8.0"
 # Theorem's fork of Servo 0.7, branch Travis-Gilbert/servo07-browser-20261013.
-servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "ebc89e684b721f0a8e2407aad20b121a61187779", features = ["webcrypto", "webgl", "brotli-compression-stream"] }
+servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
@@ -51,6 +51,8 @@ serde_json = "1"
 url = "2"
 
 [dev-dependencies]
+# Native media acceptance examples use the same CLI parser already in Servo.
+clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).
 # GPUI's own test support: gpui-kit's `test-support` feature names
 # `gpui-fast?/...`, which Cargo still resolves, and gpui-fast's wasm crate

@@ -1,0 +1,6 @@
+{
+  "mode": "timer-gc",
+  "passed": false,
+  "exitCode": 139,
+  "failure": "SIGSEGV before rooting the coalesced callback batch"
+}

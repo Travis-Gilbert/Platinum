@@ -796,7 +796,7 @@ dependencies = [
  "log",
  "num-rational",
  "num-traits",
- "pastey",
+ "pastey 0.1.1",
  "rayon",
  "thiserror 2.0.21",
  "v_frame",
@@ -1495,6 +1495,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766"
 dependencies = [
  "nom 7.1.3",
+]
+
+[[package]]
+name = "cfg-expr"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ba9e9ec16c447027685b1f897b720e18e9a8afd00bd7332c483537e38086c9f"
+dependencies = [
+ "smallvec",
+ "target-lexicon",
 ]
 
 [[package]]
@@ -3770,6 +3780,7 @@ name = "frame"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap",
  "content_disposition",
  "dirs 6.0.0",
  "dotenvy",
@@ -4123,6 +4134,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e629b9b98ef3dd8afe6ca2bd0f89306cec16d43d907889945bc5d6687f2f13c7"
 
 [[package]]
+name = "gio-sys"
+version = "0.22.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c28739f914c15b87a9856000bed9cbd5b3a8afbca5e982d9a299e1601422cb5"
+dependencies = [
+ "glib-sys",
+ "gobject-sys",
+ "libc",
+ "system-deps",
+ "windows-sys 0.52.0",
+]
+
+[[package]]
 name = "gl_generator"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4140,6 +4164,49 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8647cc2e2ffde598ce5ca2809452e722dd8dc127885ab8aba2fa8b469cd3ed94"
 dependencies = [
  "gl_generator",
+]
+
+[[package]]
+name = "glib"
+version = "0.22.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4cf9e5bd8713f1990a92c422998826e0fb34824277b46bc59757373483c6694"
+dependencies = [
+ "bitflags 2.13.2",
+ "futures-channel",
+ "futures-core",
+ "futures-executor",
+ "futures-task",
+ "futures-util",
+ "gio-sys",
+ "glib-macros",
+ "glib-sys",
+ "gobject-sys",
+ "libc",
+ "memchr",
+ "smallvec",
+]
+
+[[package]]
+name = "glib-macros"
+version = "0.22.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9597c68fa7bdf4154a3079642cd21c4dccac0b0bdd2897d82861523bf91e7b9"
+dependencies = [
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
+]
+
+[[package]]
+name = "glib-sys"
+version = "0.22.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99b38907e67e40dec9b60f858bcada952598719cb512a13eb13d6cdcd16f8295"
+dependencies = [
+ "libc",
+ "system-deps",
 ]
 
 [[package]]
@@ -4217,6 +4284,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c4ee00b289aba7a9e5306d57c2d05499b2e5dc427f84ac708bd2c090212cf3e"
 dependencies = [
  "gl_generator",
+]
+
+[[package]]
+name = "gobject-sys"
+version = "0.22.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07595c9ba696bd9819cb6a8df39f08078f3dd679508fe052dd558492c2053834"
+dependencies = [
+ "glib-sys",
+ "libc",
+ "system-deps",
 ]
 
 [[package]]
@@ -4874,6 +4952,311 @@ dependencies = [
  "ff",
  "rand_core 0.10.1",
  "subtle",
+]
+
+[[package]]
+name = "gstreamer"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4237e2066a25ecb7e54be6c066409e30615920265b9799b8d560ef8ac9857c6"
+dependencies = [
+ "cfg-if",
+ "futures-channel",
+ "futures-core",
+ "futures-util",
+ "glib",
+ "gstreamer-sys",
+ "itertools 0.15.0",
+ "kstring",
+ "libc",
+ "muldiv",
+ "num-integer",
+ "num-rational",
+ "option-operations",
+ "pastey 0.2.3",
+ "pin-project-lite",
+ "smallvec",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "gstreamer-app"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97f8ae9238c2352398dcc084de28df3f7099af216ac6c160b52318d23f25c010"
+dependencies = [
+ "futures-core",
+ "futures-sink",
+ "glib",
+ "gstreamer",
+ "gstreamer-app-sys",
+ "gstreamer-base",
+ "libc",
+]
+
+[[package]]
+name = "gstreamer-app-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0798b8aef6694341d40bb81edc759f8979b896b59f9f0f45d8cfa3bb7bf2e743"
+dependencies = [
+ "glib-sys",
+ "gstreamer-base-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-audio"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "544f14e19e3b7221845be0e5c2f2cf284576b7baa16835ac16def6e734bfa866"
+dependencies = [
+ "cfg-if",
+ "glib",
+ "gstreamer",
+ "gstreamer-audio-sys",
+ "gstreamer-base",
+ "libc",
+ "smallvec",
+]
+
+[[package]]
+name = "gstreamer-audio-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09a010deb715bc29953a07c6714249132e736b3daf3a529e70586b58a7063888"
+dependencies = [
+ "glib-sys",
+ "gobject-sys",
+ "gstreamer-base-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-base"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17cbd8f59586a369c40d4b0d2f3a61cf9e9287b3cf5503cdcd8e7c5faa99265e"
+dependencies = [
+ "atomic_refcell",
+ "cfg-if",
+ "glib",
+ "gstreamer",
+ "gstreamer-base-sys",
+ "libc",
+]
+
+[[package]]
+name = "gstreamer-base-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b05f77bfd76b5afee6b29c27dae19eaf5018b5cf8d0d17520f3de44c6385c32"
+dependencies = [
+ "glib-sys",
+ "gobject-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-gl"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "653f035dde811c0c63d0f6b180f30213614d870732848f93c53203a2f3baffb8"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-base",
+ "gstreamer-gl-sys",
+ "gstreamer-video",
+ "libc",
+]
+
+[[package]]
+name = "gstreamer-gl-egl"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff3c29e6d4b92ef22b0bacc2cff02902d40516942fead63c656d7fccc75221e8"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-gl",
+ "gstreamer-gl-egl-sys",
+ "libc",
+]
+
+[[package]]
+name = "gstreamer-gl-egl-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ed05197968a7377c9ca94bf53a24915c9d763d16e7a264044627d3a74b93b7e"
+dependencies = [
+ "glib-sys",
+ "gstreamer-gl-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-gl-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f533eaf84f0155f105cadddc61e4191e933bd9cf784dcb121dc503ecefc0bc9e"
+dependencies = [
+ "glib-sys",
+ "gobject-sys",
+ "gstreamer-base-sys",
+ "gstreamer-sys",
+ "gstreamer-video-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-mse"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7ca9904b80a0688047407ee2ef6373645e0ecf1f8b6a185b55fce6aec106a97"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-mse-sys",
+]
+
+[[package]]
+name = "gstreamer-mse-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38a61799981f19ed14d3761dc88896f824834d8a2560fa746d219777b20e5f86"
+dependencies = [
+ "glib-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-play"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3355c2c37bfd824cbd974bf0b8c004d71ca3755f825065957bc16356d79e6e34"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-play-sys",
+ "gstreamer-video",
+ "libc",
+]
+
+[[package]]
+name = "gstreamer-play-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4545c131079772ebbb3343761bf6f83672b2cf9dbae575a667f4a41a1fd26786"
+dependencies = [
+ "glib-sys",
+ "gobject-sys",
+ "gstreamer-sys",
+ "gstreamer-video-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-sdp"
+version = "0.25.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a7859290ba340f1bd45d4bc0ada958700e9d3b1a522b456fd7ee88da468cd13"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-sdp-sys",
+]
+
+[[package]]
+name = "gstreamer-sdp-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e5afafebe4a135392ec2455144cec78821681e007cb9b19c071a4c86b218f64"
+dependencies = [
+ "glib-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "436d9532847489a8285d57b8c3670762c12a18f777fdc2ab159b52e0e6f521b9"
+dependencies = [
+ "cfg-if",
+ "glib-sys",
+ "gobject-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-video"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffe4d77b2a5e679973d9c6b6c052da8cda86b83f5c268872f8691fde693fde84"
+dependencies = [
+ "cfg-if",
+ "futures-channel",
+ "glib",
+ "gstreamer",
+ "gstreamer-base",
+ "gstreamer-video-sys",
+ "libc",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "gstreamer-video-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef455da22edca97ac9299d682b868227f3d9217b303748ce0161b31ae82dc106"
+dependencies = [
+ "glib-sys",
+ "gobject-sys",
+ "gstreamer-base-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
+]
+
+[[package]]
+name = "gstreamer-webrtc"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de524e63b32f3f478b9f718ef6895bd50a1bb1d1d4d7c2134f0a30f36d046157"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-sdp",
+ "gstreamer-webrtc-sys",
+ "libc",
+]
+
+[[package]]
+name = "gstreamer-webrtc-sys"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf77b07fd279bf060d938c7024c8a152a566b4b5e9ff401c7ba890d278a47d1b"
+dependencies = [
+ "glib-sys",
+ "gstreamer-sdp-sys",
+ "gstreamer-sys",
+ "libc",
+ "system-deps",
 ]
 
 [[package]]
@@ -6382,6 +6765,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "kstring"
+version = "2.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a09b82a7f771ed02dc0dd9b27130a0fa5499fa15ed3027116c1e5e4e591bd9e"
+dependencies = [
+ "static_assertions",
+]
+
+[[package]]
 name = "kurbo"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7210,6 +7602,12 @@ checksum = "587d6436f6eeef749e281d49cf401343707354c916e92505cd26ae2a0da9b638"
 dependencies = [
  "mozjs_icu_collections",
 ]
+
+[[package]]
+name = "muldiv"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "956787520e75e9bd233246045d19f42fb73242759cc57fba9611d940ae96d4b0"
 
 [[package]]
 name = "multiversion_no_op"
@@ -8108,6 +8506,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
+name = "option-operations"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aca39cf52b03268400c16eeb9b56382ea3c3353409309b63f5c8f0b1faf42754"
+dependencies = [
+ "pastey 0.2.3",
+]
+
+[[package]]
 name = "ordered-channel"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8254,6 +8661,12 @@ name = "pastey"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
+
+[[package]]
+name = "pastey"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
 name = "pathfinder_geometry"
@@ -10868,7 +11281,6 @@ dependencies = [
 [[package]]
 name = "servo"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "arboard",
@@ -10879,6 +11291,7 @@ dependencies = [
  "env_logger 0.11.11",
  "euclid",
  "gaol",
+ "gstreamer",
  "http",
  "image",
  "ipc-channel",
@@ -10904,6 +11317,7 @@ dependencies = [
  "servo-layout-api",
  "servo-media",
  "servo-media-dummy",
+ "servo-media-gstreamer",
  "servo-media-ohos",
  "servo-media-thread",
  "servo-net",
@@ -10932,7 +11346,6 @@ dependencies = [
 [[package]]
 name = "servo-allocator"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
@@ -10941,7 +11354,6 @@ dependencies = [
 [[package]]
 name = "servo-background-hang-monitor"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "backtrace",
  "crossbeam-channel",
@@ -10956,7 +11368,6 @@ dependencies = [
 [[package]]
 name = "servo-background-hang-monitor-api"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "serde",
  "servo-base",
@@ -10965,7 +11376,6 @@ dependencies = [
 [[package]]
 name = "servo-base"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "crossbeam-channel",
@@ -10991,7 +11401,6 @@ dependencies = [
 [[package]]
 name = "servo-canvas"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "bytemuck",
  "crossbeam-channel",
@@ -11017,7 +11426,6 @@ dependencies = [
 [[package]]
 name = "servo-canvas-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "crossbeam-channel",
  "euclid",
@@ -11040,7 +11448,6 @@ dependencies = [
 [[package]]
 name = "servo-config"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "num_enum",
  "serde",
@@ -11053,7 +11460,6 @@ dependencies = [
 [[package]]
 name = "servo-config-macro"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11064,7 +11470,6 @@ dependencies = [
 [[package]]
 name = "servo-constellation"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "backtrace",
@@ -11108,7 +11513,6 @@ dependencies = [
 [[package]]
 name = "servo-constellation-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "base64 0.23.1",
@@ -11143,7 +11547,6 @@ dependencies = [
 [[package]]
 name = "servo-default-resources"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "servo-embedder-traits",
 ]
@@ -11151,7 +11554,6 @@ dependencies = [
 [[package]]
 name = "servo-deny-public-fields"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -11161,7 +11563,6 @@ dependencies = [
 [[package]]
 name = "servo-devtools"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "atomic_refcell",
  "base64 0.23.1",
@@ -11191,7 +11592,6 @@ dependencies = [
 [[package]]
 name = "servo-devtools-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "bytes",
  "http",
@@ -11209,7 +11609,6 @@ dependencies = [
 [[package]]
 name = "servo-dom-struct"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "prettyplease",
  "proc-macro2",
@@ -11220,7 +11619,6 @@ dependencies = [
 [[package]]
 name = "servo-embedder-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "bitflags 2.13.2",
@@ -11254,7 +11652,6 @@ dependencies = [
 [[package]]
 name = "servo-fonts"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -11313,7 +11710,6 @@ dependencies = [
 [[package]]
 name = "servo-fonts-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "atomic_refcell",
  "dwrote",
@@ -11338,7 +11734,6 @@ dependencies = [
 [[package]]
 name = "servo-geometry"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "app_units",
  "euclid",
@@ -11351,7 +11746,6 @@ dependencies = [
 [[package]]
 name = "servo-hyper-serde"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "cookie 0.18.2",
  "headers",
@@ -11365,7 +11759,6 @@ dependencies = [
 [[package]]
 name = "servo-jstraceable-derive"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -11375,7 +11768,6 @@ dependencies = [
 [[package]]
 name = "servo-layout"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "app_units",
@@ -11436,7 +11828,6 @@ dependencies = [
 [[package]]
 name = "servo-layout-api"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "app_units",
@@ -11471,7 +11862,6 @@ dependencies = [
 [[package]]
 name = "servo-malloc-size-of"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -11518,7 +11908,6 @@ dependencies = [
 [[package]]
 name = "servo-media"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "servo-base",
  "servo-media-audio",
@@ -11531,7 +11920,6 @@ dependencies = [
 [[package]]
 name = "servo-media-audio"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "byte-slice-cast",
  "euclid",
@@ -11556,7 +11944,6 @@ dependencies = [
 [[package]]
 name = "servo-media-derive"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11566,7 +11953,6 @@ dependencies = [
 [[package]]
 name = "servo-media-dummy"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "servo-base",
  "servo-media",
@@ -11578,9 +11964,74 @@ dependencies = [
 ]
 
 [[package]]
+name = "servo-media-gstreamer"
+version = "0.7.0"
+dependencies = [
+ "byte-slice-cast",
+ "data-url",
+ "glib",
+ "glib-sys",
+ "gstreamer",
+ "gstreamer-app",
+ "gstreamer-audio",
+ "gstreamer-base",
+ "gstreamer-mse",
+ "gstreamer-play",
+ "gstreamer-sdp",
+ "gstreamer-sys",
+ "gstreamer-video",
+ "gstreamer-webrtc",
+ "log",
+ "servo-base",
+ "servo-media",
+ "servo-media-audio",
+ "servo-media-gstreamer-render",
+ "servo-media-gstreamer-render-android",
+ "servo-media-gstreamer-render-unix",
+ "servo-media-player",
+ "servo-media-streams",
+ "servo-media-traits",
+ "servo-media-webrtc",
+ "url",
+]
+
+[[package]]
+name = "servo-media-gstreamer-render"
+version = "0.7.0"
+dependencies = [
+ "gstreamer",
+ "servo-media-player",
+]
+
+[[package]]
+name = "servo-media-gstreamer-render-android"
+version = "0.7.0"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-gl",
+ "gstreamer-gl-egl",
+ "gstreamer-video",
+ "servo-media-gstreamer-render",
+ "servo-media-player",
+]
+
+[[package]]
+name = "servo-media-gstreamer-render-unix"
+version = "0.7.0"
+dependencies = [
+ "glib",
+ "gstreamer",
+ "gstreamer-gl",
+ "gstreamer-gl-egl",
+ "gstreamer-video",
+ "servo-media-gstreamer-render",
+ "servo-media-player",
+]
+
+[[package]]
 name = "servo-media-ohos"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "crossbeam-channel",
  "libc",
@@ -11603,7 +12054,6 @@ dependencies = [
 [[package]]
 name = "servo-media-player"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "malloc_size_of_derive",
  "serde",
@@ -11616,7 +12066,6 @@ dependencies = [
 [[package]]
 name = "servo-media-streams"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "malloc_size_of_derive",
  "servo-malloc-size-of",
@@ -11626,7 +12075,6 @@ dependencies = [
 [[package]]
 name = "servo-media-thread"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "euclid",
  "ipc-channel",
@@ -11645,7 +12093,6 @@ dependencies = [
 [[package]]
 name = "servo-media-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "malloc_size_of_derive",
  "servo-malloc-size-of",
@@ -11654,7 +12101,6 @@ dependencies = [
 [[package]]
 name = "servo-media-webrtc"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "log",
  "servo-media-streams",
@@ -11664,7 +12110,6 @@ dependencies = [
 [[package]]
 name = "servo-metrics"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "malloc_size_of_derive",
  "servo-base",
@@ -11679,7 +12124,6 @@ dependencies = [
 [[package]]
 name = "servo-net"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "async-compression",
  "async-recursion",
@@ -11756,7 +12200,6 @@ dependencies = [
 [[package]]
 name = "servo-net-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "bytes",
  "content-security-policy",
@@ -11801,7 +12244,6 @@ dependencies = [
 [[package]]
 name = "servo-paint"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "bitflags 2.13.2",
  "crossbeam-channel",
@@ -11837,7 +12279,6 @@ dependencies = [
 [[package]]
 name = "servo-paint-api"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "bitflags 2.13.2",
  "crossbeam-channel",
@@ -11871,7 +12312,6 @@ dependencies = [
 [[package]]
 name = "servo-pixels"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "euclid",
  "image",
@@ -11886,7 +12326,6 @@ dependencies = [
 [[package]]
 name = "servo-profile"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "libc",
  "log",
@@ -11904,7 +12343,6 @@ dependencies = [
 [[package]]
 name = "servo-profile-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "crossbeam-channel",
  "ipc-channel",
@@ -11920,7 +12358,6 @@ dependencies = [
 [[package]]
 name = "servo-script"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "aes 0.9.3",
@@ -12066,7 +12503,6 @@ dependencies = [
 [[package]]
 name = "servo-script-bindings"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "atomic_refcell",
  "bitflags 2.13.2",
@@ -12110,7 +12546,6 @@ dependencies = [
 [[package]]
 name = "servo-script-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "accesskit",
  "bitflags 2.13.2",
@@ -12145,7 +12580,6 @@ dependencies = [
 [[package]]
 name = "servo-storage"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "libc",
  "log",
@@ -12170,7 +12604,6 @@ dependencies = [
 [[package]]
 name = "servo-storage-traits"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "malloc_size_of_derive",
  "serde",
@@ -12184,7 +12617,6 @@ dependencies = [
 [[package]]
 name = "servo-timers"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "crossbeam-channel",
  "malloc_size_of_derive",
@@ -12194,7 +12626,6 @@ dependencies = [
 [[package]]
 name = "servo-tracing"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12204,7 +12635,6 @@ dependencies = [
 [[package]]
 name = "servo-url"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "encoding_rs",
  "malloc_size_of_derive",
@@ -12218,7 +12648,6 @@ dependencies = [
 [[package]]
 name = "servo-wakelock"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "serde",
  "servo-embedder-traits",
@@ -12227,7 +12656,6 @@ dependencies = [
 [[package]]
 name = "servo-webgl"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "bitflags 2.13.2",
  "byteorder",
@@ -12251,7 +12679,6 @@ dependencies = [
 [[package]]
 name = "servo-webvtt"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "html5ever 0.40.1",
  "markup5ever 0.40.0",
@@ -12261,7 +12688,6 @@ dependencies = [
 [[package]]
 name = "servo-webxr-api"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "euclid",
  "ipc-channel",
@@ -12277,7 +12703,6 @@ dependencies = [
 [[package]]
 name = "servo-xpath"
 version = "0.7.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "log",
  "malloc_size_of_derive",
@@ -12834,7 +13259,6 @@ dependencies = [
 [[package]]
 name = "stylo"
 version = "0.22.0"
-source = "git+https://github.com/Travis-Gilbert/servo?rev=ebc89e684b721f0a8e2407aad20b121a61187779#ebc89e684b721f0a8e2407aad20b121a61187779"
 dependencies = [
  "app_units",
  "arrayvec",
@@ -13164,6 +13588,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "system-deps"
+version = "9.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db551ad38aac61d5e0343e0eeeb0163be3115c4e23b6a025959570ee0c03c67d"
+dependencies = [
+ "cfg-expr",
+ "heck 0.5.0",
+ "pkg-config",
+ "toml 1.1.8+spec-1.1.0",
+ "version-compare",
+]
+
+[[package]]
 name = "taffy"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13350,6 +13787,12 @@ dependencies = [
  "libc",
  "xattr",
 ]
+
+[[package]]
+name = "target-lexicon"
+version = "0.13.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adb6935a6f5c20170eeceb1a3835a49e12e19d792f6dd344ccc76a985ca5a6ca"
 
 [[package]]
 name = "tauri-winrt-notification"
@@ -14652,6 +15095,12 @@ dependencies = [
  "thread_local",
  "vello_common",
 ]
+
+[[package]]
+name = "version-compare"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03c2856837ef78f57382f06b2b8563a2f512f7185d732608fd9176cb3b8edf0e"
 
 [[package]]
 name = "version_check"

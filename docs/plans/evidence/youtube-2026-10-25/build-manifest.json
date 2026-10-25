@@ -1,0 +1,29 @@
+{
+  "frameBase": "74e432ff9dd44f7c4bb3387676225ad1fa37e8fc",
+  "servoBase": "ebc89e684b721f0a8e2407aad20b121a61187779",
+  "gstreamerBase": "1b2a95a1b72787cda146b46df9605b168e5b683b",
+  "buildCommand": "script/media-env cargo build --locked --example media_check --bin frame",
+  "localApp": "/Volumes/SSD Samsung/frame-deps/FrameYouTube.app",
+  "sha256": {
+    "servoPatch": "2ae7844ba5f7a1acb03c4e46ff4f0e1a736b2088ce42d9a331d4905891a6916c",
+    "gstreamerPatch": "8b0eec62f2001ec051c4e89a68a18e6312fd3a85754ff1f89d4e8fdbd1302321",
+    "appExecutable": "0fe566aa9d15678866d5cb17effb7b60ef3b046e7d466b4522156f00a179609c",
+    "probeExecutable": "877ba96c47e8b1ada67b760d26568892878a79caee3e6933b79b8e0c09683b9e",
+    "nativeMseLibrary": "742c29f2e43b78ab546f077b98dabfc141fb20cb696548990e335752bdf10df4",
+    "watchScript": "aa570abb7baf081dd9fba38b164b10afbec560541e899ad66400df015c73c809"
+  },
+  "exitCodes": {
+    "youtubeBigBuckBunny": 0,
+    "youtubeMeAtTheZoo": 0,
+    "mse": 0,
+    "timerGc": 0,
+    "ordinaryPlayback": 0,
+    "nativeRemoveRefill": 0,
+    "missingFixturesExpectedFailure": 1
+  },
+  "appSignature": "Ad-hoc local development signature; codesign --verify passed",
+  "limitations": [
+    "Full visible Frame window and audible output have not been verified",
+    "Full Chrome parity and portable distribution remain unverified"
+  ]
+}

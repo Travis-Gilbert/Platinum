@@ -69,13 +69,33 @@ Never put keys in settings files or shell rc files.
 
 macOS only for now.
 
+Media uses Servo's GStreamer backend. Install its development runtime first:
+
+```bash
+brew install gstreamer libnice-gstreamer meson ninja
+```
+
 ```bash
 FRAME_TARGET_DIR="/Volumes/SSD/cargo-targets/frame" script/bootstrap
 ```
 
 ```bash
-cargo run
+script/bootstrap-media
+script/media-env cargo build --locked
+script/setup-media
+script/media-env cargo run --locked
 ```
+
+`script/setup-media` links the plugins required by the pinned Servo version
+beside the development executable and examples. Run it again after changing
+the Cargo target directory; use `--release` for a release build. These links
+depend on the local GStreamer installation and are not a portable app bundle.
+
+YouTube compatibility is tracked in [the media plan](docs/plans/youtube.md).
+`script/bootstrap-media` applies the development patches in `patches/`
+to pinned Servo and GStreamer checkouts. `script/media-env` selects the patched
+MSE runtime. This work is under validation; see the plan for exact acceptance
+evidence and remaining YouTube limitations.
 
 `script/bootstrap` checks out the pinned Theorem commit under `deps/` (from a
 sibling `../Theorem` clone when there is one) and can put Cargo's target
