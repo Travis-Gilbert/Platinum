@@ -6,9 +6,11 @@
 //! GPUI's image loader to fetch and decode.
 //!
 //! SOURCING: GPUI's HTTP client fetches and html5ever parses, as for search
-//! snippets (`markup.rs`). Hand-rolled because the crates that pick a site's
-//! icon from its page, `site_icons` and `favicon-picker`, are GPL-3.0, and
-//! Frame is MIT.
+//! snippets (`markup.rs`). Hand-rolled: `favicon-scraper` (MIT) finds icons
+//! by fetching each one to measure it with `imagesize`, which cannot measure
+//! an SVG, so it drops `gpui-kit.com/logo.svg`; it also reads no `media` and
+//! no touch-icon rel. `webicon` (MIT) was last released in 2017, on reqwest
+//! 0.4. `site_icons` and `favicon-picker` are GPL-3.0, and Frame is MIT.
 
 use futures::AsyncReadExt as _;
 use gpui_kit::{App, Asset, SharedUri};
