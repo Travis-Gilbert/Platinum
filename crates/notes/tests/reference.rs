@@ -368,8 +368,7 @@ fn fixture_vault_matches_obsidian_recorded_groups() {
     }
     let report = json!({"matched":matched,"differences":differences,"omissions":omissions,
         "metadata_fields_not_compared":["sections","referenceLinks (reference definitions are resolved by comrak, not indexed separately)","listItems non-task entries/id/parent","frontmatterLinks.key/displayText/original","links/embeds.displayText (rendered display labels are not source aliases)"]});
-    let output =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/notes-reference-differences.json");
+    let output = Path::new(env!("CARGO_TARGET_TMPDIR")).join("notes-reference-differences.json");
     fs::write(&output, serde_json::to_vec_pretty(&report).unwrap()).unwrap();
     assert!(
         differences.is_empty(),
