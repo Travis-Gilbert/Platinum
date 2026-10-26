@@ -59,7 +59,7 @@ enum Command {
         /// CSS selector read by `dev:dom` for each note.
         #[arg(long, default_value = DOM_SELECTOR)]
         dom_selector: String,
-        /// Milliseconds to wait for the reading view to render before reading its DOM.
+        /// Milliseconds before each read of a note's DOM, which is read until it stops changing.
         #[arg(long, default_value_t = 500)]
         settle_ms: u64,
         /// With --app: seconds the app gets to bind its socket and open the vault.

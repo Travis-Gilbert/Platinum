@@ -104,7 +104,7 @@ pub struct Config {
     /// Empty means every group.
     pub only: Vec<Group>,
     pub dom_selector: String,
-    /// How long the app gets to render a note after it is opened, before its DOM is read.
+    /// The wait before each read of a note's DOM, the first one after opening it included.
     pub settle: Duration,
 }
 
@@ -140,6 +140,9 @@ pub struct Manifest {
     /// On disk but missing from `files`, and listed by `files` but not on disk.
     pub files_only_on_disk: Vec<String>,
     pub files_only_in_obsidian: Vec<String>,
+    /// Attempts the app never finished answering, each followed by another attempt; `commands`
+    /// counts them, and the call's final attempt is the one recorded (and in `failed` if it failed).
+    pub stalled: Vec<Failure>,
     pub failed: Vec<Failure>,
     pub known_gaps: Vec<Gap>,
 }
@@ -176,7 +179,7 @@ pub const KNOWN_GAPS: [Gap; 9] = [
     },
     Gap {
         what: "reading view completeness",
-        why: "Obsidian renders long notes lazily and embeds asynchronously, so a DOM read after the settle time can miss the end of a note; the supplied recording does not prove complete rendering",
+        why: "Obsidian renders long notes lazily and embeds asynchronously and the CLI has no signal for done, so the DOM is read until it stops changing; content that appears only after a longer pause, or only on scrolling, is missed",
     },
     Gap {
         what: "settings and plugin UI",
@@ -247,13 +250,34 @@ fn base_views(vault: &Path, path: &str) -> Result<Vec<String>> {
 }
 
 struct Recorder<'a> {
+    group: &'static str,
     obsidian: &'a Obsidian,
     normalizer: &'a Normalizer,
     records: BTreeMap<String, Record>,
+    /// Attempts killed at the timeout and run again.
+    stalled: Vec<Failure>,
 }
 
+/// 1.14.5 now and then writes a whole answer and never closes the connection, so the CLI waits
+/// until it is killed (about one call in 800 over the fixture vault, on no particular command).
+/// Every call the recorder makes is a query, or opens a note that opening again leaves as it is,
+/// so such a call is run again; each killed attempt is kept in `stalled`.
+const STALL_ATTEMPTS: usize = 3;
+
 impl Recorder<'_> {
-    fn run(&self, command: &str, args: &[&str]) -> Record {
+    fn run(&mut self, command: &str, args: &[&str]) -> Record {
+        for _ in 1..STALL_ATTEMPTS {
+            let record = self.obsidian.run(command, args);
+            if !record.timed_out() {
+                return self.normalizer.record(record);
+            }
+            let record = self.normalizer.record(record);
+            self.stalled.push(Failure {
+                group: self.group,
+                call: record.key(),
+                error: record.error.unwrap_or_default(),
+            });
+        }
         self.normalizer.record(self.obsidian.run(command, args))
     }
 
@@ -406,13 +430,31 @@ fn eval_group(rec: &mut Recorder) {
 struct Dom {
     open: Record,
     dom: Option<Record>,
+    /// `dev:dom` calls for this note, retries included.
     attempts: usize,
-    /// Earlier failed attempts, retained even if the final call succeeds.
+    /// How often an answer differed from the one before it while the view was still rendering.
+    changes: usize,
+    /// Earlier command-not-found answers, retained even if the final call succeeds.
     retries: Vec<Record>,
 }
 
+/// Command-not-found answers after which the last one is recorded as the note's failure.
 const DOM_ATTEMPTS: usize = 3;
-const DOM_RETRY_WAIT: Duration = Duration::from_millis(200);
+/// The reading view renders long notes lazily and embeds (notes, PDFs) asynchronously, and the CLI
+/// says nothing about when it is done, so the DOM is read every `settle` until it gives the same
+/// answer this many times in a row.
+const DOM_STABLE_READS: usize = 3;
+/// Reads after which a view that is still changing is recorded as it stands, as a failure.
+const DOM_MAX_READS: usize = 20;
+
+fn dom_command_missing(record: &Record) -> bool {
+    // 1.14.5's dispatcher emits this before running a handler. A selector miss instead returns
+    // "No elements found."; unrelated errors are not retried and exhaustion is not hidden.
+    record
+        .stdout
+        .trim_start()
+        .starts_with("Error: Command \"dev:dom\" not found.")
+}
 
 fn opened_preview(record: &Record) -> bool {
     let text = record.stdout.trim();
@@ -423,8 +465,8 @@ fn opened_preview(record: &Record) -> bool {
             || record.eval_value().as_ref().and_then(|v| v.as_str()) == Some("preview"))
 }
 
-/// Opens each note in the reading view, waits, and stores the DOM under `dom/`.
-fn dom_group(cfg: &Config, scan: &Scan, rec: &Recorder) -> Result<BTreeMap<String, Dom>> {
+/// Opens each note in the reading view, reads its DOM until it stops changing, and stores it under `dom/`.
+fn dom_group(cfg: &Config, scan: &Scan, rec: &mut Recorder) -> Result<BTreeMap<String, Dom>> {
     let mut pairs = BTreeMap::new();
     for note in &scan.notes {
         let path = serde_json::to_string(note)?;
@@ -447,29 +489,41 @@ fn dom_group(cfg: &Config, scan: &Scan, rec: &Recorder) -> Result<BTreeMap<Strin
                     open,
                     dom: None,
                     attempts: 0,
+                    changes: 0,
                     retries: Vec::new(),
                 },
             );
             continue;
         }
-        if !cfg.settle.is_zero() {
-            std::thread::sleep(cfg.settle);
-        }
-        let mut retries = Vec::new();
+        let (mut retries, mut attempts, mut changes, mut same) = (Vec::new(), 0, 0, 0);
+        let mut previous: Option<String> = None;
         let mut dom = loop {
-            let dom = rec.run("dev:dom", &[&format!("selector={}", cfg.dom_selector)]);
-            // 1.14.5's dispatcher emits this before running a handler. A selector miss instead
-            // returns "No elements found."; do not retry unrelated errors or hide exhaustion.
-            if !dom
-                .stdout
-                .trim_start()
-                .starts_with("Error: Command \"dev:dom\" not found.")
-                || retries.len() + 1 == DOM_ATTEMPTS
-            {
+            std::thread::sleep(cfg.settle);
+            let mut dom = rec.run("dev:dom", &[&format!("selector={}", cfg.dom_selector)]);
+            attempts += 1;
+            if dom_command_missing(&dom) {
+                if retries.len() + 1 == DOM_ATTEMPTS {
+                    break dom;
+                }
+                retries.push(dom);
+                continue;
+            }
+            if !dom.ok() {
                 break dom;
             }
-            retries.push(dom);
-            std::thread::sleep(DOM_RETRY_WAIT);
+            match &previous {
+                Some(p) if *p == dom.stdout => same += 1,
+                Some(_) => (changes, same) = (changes + 1, 1),
+                None => same = 1,
+            }
+            if same == DOM_STABLE_READS {
+                break dom;
+            }
+            if attempts == DOM_MAX_READS {
+                dom.error = Some(format!("reading view still changing after {attempts} reads"));
+                break dom;
+            }
+            previous = Some(dom.stdout.clone());
         };
         if dom.ok() && (dom.stdout.trim().is_empty() || dom.stdout.trim() == "No elements found.") {
             dom.error = Some("reading view selector returned no DOM".into());
@@ -485,7 +539,8 @@ fn dom_group(cfg: &Config, scan: &Scan, rec: &Recorder) -> Result<BTreeMap<Strin
             Dom {
                 open,
                 dom: Some(dom),
-                attempts: retries.len() + 1,
+                attempts,
+                changes,
                 retries,
             },
         );
@@ -545,8 +600,8 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
     let version = normalizer.record(version);
     let scan = scan(&cfg.vault)?;
     fs::create_dir_all(&cfg.out)?;
-    let (mut groups, mut skipped, mut failed, mut commands) =
-        (Vec::new(), Vec::new(), Vec::new(), 1);
+    let (mut groups, mut skipped, mut stalled, mut failed, mut commands) =
+        (Vec::new(), Vec::new(), Vec::new(), Vec::new(), 1);
     let mut obsidian_files = None;
     let mut dom_attempts = BTreeMap::new();
     for group in Group::ALL {
@@ -556,12 +611,14 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
         }
         let name = group.name();
         let mut rec = Recorder {
+            group: name,
             obsidian: &cfg.obsidian,
             normalizer: &normalizer,
             records: BTreeMap::new(),
+            stalled: Vec::new(),
         };
         if group == Group::Dom {
-            let pairs = dom_group(cfg, &scan, &rec)?;
+            let pairs = dom_group(cfg, &scan, &mut rec)?;
             for (note, p) in &pairs {
                 commands += 1 + p.attempts;
                 dom_attempts.insert(note.clone(), p.attempts);
@@ -597,6 +654,8 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
             }));
             write_json(&cfg.out.join(format!("{name}.json")), &rec.records)?;
         }
+        commands += rec.stalled.len();
+        stalled.append(&mut rec.stalled);
         eprintln!("{name}: done");
         groups.push(name);
     }
@@ -608,7 +667,7 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
         .collect();
     let disk: BTreeSet<String> = scan.files.iter().cloned().collect();
     let compare = !listed.is_empty();
-    for failure in &mut failed {
+    for failure in stalled.iter_mut().chain(&mut failed) {
         failure.error = normalizer.text(&failure.error);
         failure.call = normalizer.text(&failure.call);
     }
@@ -635,6 +694,7 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
         } else {
             Vec::new()
         },
+        stalled,
         failed,
         known_gaps: KNOWN_GAPS.into_iter().collect(),
     };

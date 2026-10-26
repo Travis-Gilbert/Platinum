@@ -16,8 +16,13 @@ use std::{
 };
 use wait_timeout::ChildExt;
 
-/// Long enough for the slowest documented call (`eval` of the whole metadata cache, a note's DOM).
-const TIMEOUT: Duration = Duration::from_secs(120);
+/// Long enough for the slowest documented call (`eval` of the whole metadata cache, a note's DOM):
+/// over the fixture vault no call took a second. A call the app stops answering never finishes
+/// (see `reference::STALL_ATTEMPTS`), so a longer wait only puts off the retry.
+const TIMEOUT: Duration = Duration::from_secs(20);
+
+/// How a call killed at the timeout is reported.
+const NO_ANSWER: &str = "no answer within";
 
 pub struct Obsidian {
     program: PathBuf,
@@ -49,6 +54,11 @@ pub struct Record {
 impl Record {
     pub fn ok(&self) -> bool {
         self.error.is_none()
+    }
+
+    /// Whether the CLI was killed at the timeout, still waiting for the app to close the connection.
+    pub fn timed_out(&self) -> bool {
+        self.exit_code.is_none() && self.error.as_deref().is_some_and(|e| e.starts_with(NO_ANSWER))
     }
 
     /// The call as typed, quoting values with spaces: the key records are stored under.
@@ -139,7 +149,7 @@ impl Obsidian {
                 record.stderr = String::from_utf8_lossy(&stderr).into_owned();
                 match status {
                     None => {
-                        record.error = Some(format!("no answer within {:?}; killed", self.timeout));
+                        record.error = Some(format!("{NO_ANSWER} {:?}; killed", self.timeout));
                     }
                     Some(status) => {
                         record.exit_code = status.code();
