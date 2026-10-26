@@ -7,6 +7,7 @@ mod index;
 mod model;
 mod offsets;
 mod parse;
+mod rename;
 mod resolve;
 mod settings;
 mod vault;
@@ -17,6 +18,7 @@ pub use index::{IndexedFile, IndexedLink, LinkMap, VaultIndex};
 pub use model::*;
 pub use offsets::{Offsets, Span};
 pub use parse::parse as parse_note;
+pub use rename::{DocumentEdits, RenamePlan, TextEdit, apply_text_edits};
 pub use resolve::{
     FileIndex, FileKind, Target, dir, heading_fragment, heading_key, join_relative, locate,
     name_key, normalize, stem,
