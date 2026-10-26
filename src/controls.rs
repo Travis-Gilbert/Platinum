@@ -4,7 +4,7 @@
 //! prompt, the file picker is GPUI's open panel, the color picker is AppKit's
 //! shared color panel, and `prompt()` is a small GPUI Kit dialog window. The
 //! context menu is not drawn here: the page hands its entries to the browser,
-//! which shows them in Frame's search menu (`navigator.rs`).
+//! which shows them in Platinum's search menu (`navigator.rs`).
 //!
 //! SOURCING: GPUI Kit `NativeMenu`, GPUI `prompt` / `prompt_for_paths`, and
 //! objc2-app-kit `NSColorPanel`; only the glue between them and Servo's
@@ -355,7 +355,7 @@ impl PromptWindow {
             kind: WindowKind::Dialog,
             window_bounds: Some(WindowBounds::Windowed(Bounds::new(origin, extent))),
             titlebar: Some(TitlebarOptions {
-                title: Some("Frame".into()),
+                title: Some(crate::brand::NAME.into()),
                 ..Default::default()
             }),
             is_resizable: false,

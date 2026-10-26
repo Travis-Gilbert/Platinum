@@ -1,10 +1,31 @@
-//! The app icon. A `.app` bundle names its icon in `Info.plist`; Frame is run
+//! The app's name and icon. A `.app` bundle names its icon in `Info.plist`; Platinum is run
 //! as a bare binary, which the Dock shows with a generic icon, so the icon is
 //! set at launch instead. The artwork is `assets/brand/icons/Platinum.icns`,
 //! the same file a bundle would carry.
 //!
 //! SOURCING: AppKit's `NSApplication.applicationIconImage`, through
 //! `objc2-app-kit`, as `glass.rs` and `share.rs` reach AppKit.
+
+/// The app's name, for menus, titles and the folders it keeps its files in.
+pub const NAME: &str = "Platinum";
+
+/// The app's folder under `base` (the data or cache directory): `Platinum`,
+/// taking over the `Frame` folder the app kept before it was renamed, so its
+/// profile, index and downloaded model carry over.
+pub fn app_dir(base: &std::path::Path) -> std::path::PathBuf {
+    let dir = base.join(NAME);
+    let legacy = base.join("Frame");
+    if !dir.exists() && legacy.is_dir() {
+        if let Err(error) = std::fs::rename(&legacy, &dir) {
+            log::warn!(
+                "could not move {} to {}: {error}",
+                legacy.display(),
+                dir.display()
+            );
+        }
+    }
+    dir
+}
 
 /// Show the Platinum icon in the Dock and the app switcher.
 #[cfg(target_os = "macos")]

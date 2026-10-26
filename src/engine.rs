@@ -80,7 +80,7 @@ impl Engine {
         cx.global::<Engine>().servo.clone()
     }
 
-    /// The `Cookie` header Servo would send to `url`, for a request Frame
+    /// The `Cookie` header Servo would send to `url`, for a request Platinum
     /// makes itself: a download.
     pub fn cookie_header(url: &Url, cx: &App) -> Option<String> {
         let engine = cx.try_global::<Engine>()?;
@@ -96,7 +96,7 @@ impl Engine {
         (!header.is_empty()).then_some(header)
     }
 
-    /// The user agent Servo sends, so Frame's own requests look the same.
+    /// The user agent Servo sends, so Platinum's own requests look the same.
     pub fn user_agent() -> String {
         servo::prefs::get().user_agent.clone()
     }

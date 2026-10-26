@@ -1,4 +1,4 @@
-//! Frame's own icons, drawn in the chrome's text color like GPUI Kit's: the
+//! Platinum's own icons, drawn in the chrome's text color like GPUI Kit's: the
 //! SVGs are masks, so their lighter fill (`fill-opacity`) gives each one a
 //! duotone in the current theme.
 //!

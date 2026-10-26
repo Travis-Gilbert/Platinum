@@ -1,5 +1,5 @@
 //! UI integration tests of the chrome in headless windows. Pages need Servo
-//! and results need the network, so these cover what is Frame's own: the
+//! and results need the network, so these cover what is Platinum's own: the
 //! right-click search, the palette, tab shortcuts, dragging tabs, the Ask
 //! button, the appearance button, the downloads list and compact mode.
 

@@ -93,7 +93,7 @@ pub enum PageEvent {
     Changed,
     /// The page opened new windows; `Page::take_opened` hands them over.
     Opened,
-    /// The page's own context menu, which Frame shows as its search menu.
+    /// The page's own context menu, which Platinum shows as its search menu.
     ContextMenu(PageMenu),
     /// The page closed itself.
     Closed,

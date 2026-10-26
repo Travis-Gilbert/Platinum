@@ -561,7 +561,7 @@ impl Browser {
                     log::error!("opening {url}: {error:#}");
                     window.push_notification(
                         Notification::error(format!("{error:#}"))
-                            .title("Frame could not open that page"),
+                            .title("Platinum could not open that page"),
                         cx,
                     );
                     return;
@@ -696,7 +696,7 @@ impl Browser {
         let on_file = at.as_ref() == Some(url);
         let blank = at.as_ref().is_none_or(|at| at.scheme() == "about");
         if !on_file && !blank {
-            // The page never left; Frame stopped it before it went.
+            // The page never left; Platinum stopped it before it went.
             return;
         }
         if on_file && can_back {

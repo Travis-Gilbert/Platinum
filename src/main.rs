@@ -1,4 +1,4 @@
-//! Frame: a standalone browser. Servo renders the web, GPUI Kit draws the
+//! Platinum: a standalone browser. Servo renders the web, GPUI Kit draws the
 //! chrome, and RustyWeb is the default search engine.
 
 // The `Action` derive names its crate `gpui`.
@@ -46,9 +46,7 @@ fn main() -> anyhow::Result<()> {
     // one has to be named before the first TLS connection.
     let _ = rustls::crypto::ring::default_provider().install_default();
 
-    let data_dir = dirs::data_dir()
-        .context("no application data directory")?
-        .join("Frame");
+    let data_dir = brand::app_dir(&dirs::data_dir().context("no application data directory")?);
     let profile_dir = data_dir.join("profile");
     std::fs::create_dir_all(&profile_dir)?;
     // RustyWeb's provider keys: a checkout's `.env` while developing, then
@@ -123,7 +121,7 @@ fn install_menus(cx: &mut App) {
             .checked(appearance == current)
     });
     cx.set_menus([
-        Menu::new("Frame").items([MenuItem::action("Quit Frame", Quit)]),
+        Menu::new(brand::NAME).items([MenuItem::action(format!("Quit {}", brand::NAME), Quit)]),
         Menu::new("File").items([
             MenuItem::action("New Tab", NewTab),
             MenuItem::action("Open Location", FocusAddressBar),

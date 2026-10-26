@@ -4,7 +4,7 @@
 //! Pages, their toolbars and the selected tab stay opaque, so a page reads
 //! exactly as it did.
 //!
-//! The glass takes the chrome's appearance, not the system's: Frame in Light
+//! The glass takes the chrome's appearance, not the system's: Platinum in Light
 //! on a Dark system gets light glass, which dark glass under the light frame
 //! would otherwise muddy into a flat grey.
 //!
