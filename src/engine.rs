@@ -12,8 +12,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use futures::StreamExt as _;
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender, unbounded};
 use gpui_kit::{App, AsyncApp, Global};
+use servo::protocol_handler::ProtocolRegistry;
 use servo::{CookieSource, EventLoopWaker, Opts, Preferences, Servo, ServoBuilder};
 use url::Url;
+
+/// The URL scheme of the notes app's pages, the only pages given WebGL2.
+pub const NOTES_SCHEME: &str = "frame-notes";
 
 /// Servo calls `wake` from its own threads; this only posts to the foreground.
 /// `pending` folds a burst of wakes into one turn of the event loop.
@@ -49,6 +53,12 @@ impl Engine {
     /// Build Servo with durable storage under `profile_dir` and start the task
     /// that turns its wake-ups into `spin_event_loop` calls.
     pub fn start(profile_dir: &Path, cx: &mut App) {
+        Self::start_with_protocols(profile_dir, ProtocolRegistry::default(), cx);
+    }
+
+    /// `start`, with the embedder's own URL schemes registered, such as the
+    /// notes app's `frame-notes:` pages.
+    pub fn start_with_protocols(profile_dir: &Path, protocols: ProtocolRegistry, cx: &mut App) {
         let (sender, receiver) = unbounded();
         let pending = Arc::new(AtomicBool::new(false));
         let mut opts = Opts::default();
@@ -57,11 +67,15 @@ impl Engine {
         let preferences = Preferences {
             layout_css_has_selector_enabled: true,
             dom_media_source_enabled: true,
+            // WebGL2 stays off for the web at large and is on for the notes
+            // app's pages, whose graph (cosmos.gl) needs it.
+            dom_webgl2_enabled_schemes: NOTES_SCHEME.into(),
             ..Preferences::default()
         };
         let servo = ServoBuilder::default()
             .opts(opts)
             .preferences(preferences)
+            .protocol_registry(protocols)
             .event_loop_waker(Box::new(ChannelWaker {
                 sender,
                 pending: pending.clone(),
