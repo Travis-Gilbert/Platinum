@@ -66,6 +66,16 @@ pub enum Fragment {
     Block(String),
 }
 
+impl std::fmt::Display for Fragment {
+    /// As a link writes it: `#Heading`, `#^id`.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Heading(heading) => write!(f, "#{heading}"),
+            Self::Block(id) => write!(f, "#^{id}"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Link {
     pub syntax: LinkSyntax,
