@@ -26,6 +26,8 @@ fn sorted(mut value: Value) -> Value {
             for item in items.values_mut() {
                 *item = sorted(item.take());
             }
+            // Workspace builds enable serde_json's preserve_order, and arrays sort by text.
+            items.sort_keys();
         }
         _ => (),
     }
