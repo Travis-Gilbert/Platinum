@@ -1,0 +1,10 @@
+/* A custom callout type, written for 1.13+ where --callout-color takes any CSS colour. */
+.callout[data-callout="custom-purple"] {
+  --callout-color: #7b6cd9;
+  --callout-icon: lucide-flame;
+}
+
+/* A class applied through the cssclasses property. */
+.dashboard .markdown-preview-sizer {
+  max-width: 60rem;
+}

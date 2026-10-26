@@ -12,6 +12,7 @@ publish = false
 members = [
     "crates/profile",
     "crates/notes",
+    "crates/notes-fixtures",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",

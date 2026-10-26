@@ -1,0 +1,29 @@
+{
+	"nodes":[
+		{"id":"793914c9c583d9d8","type":"text","text":"## Rich text\n\n- [ ] a task\n- [x] a finished task\n\n```js\nconst x = 1;\n```\n\n$x^2$\n\n> [!tip] A callout\n> in a card\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n[[Dead End]] and ![[pixel.png]]","x":0,"y":0,"width":360,"height":420},
+		{"id":"aad653ca3ee66963","type":"file","file":"Home.md","x":420,"y":0,"width":300,"height":200},
+		{"id":"f74f539fcf466019","type":"file","file":"links/Headings Target.md","x":420,"y":240,"width":300,"height":180,"subpath":"#First heading#Nested heading"},
+		{"id":"14511f2f5564650d","type":"file","file":"links/Blocks Target.md","x":780,"y":0,"width":300,"height":180,"subpath":"#^list-item"},
+		{"id":"bff139fa05ac583f","type":"file","file":"attachments/pixel.png","x":780,"y":240,"width":200,"height":150},
+		{"id":"c36bbd258b7ee694","type":"file","file":"attachments/photo.jpg","x":1040,"y":240,"width":200,"height":150},
+		{"id":"d38252762d3d4fd2","type":"file","file":"attachments/anim.gif","x":1300,"y":240,"width":200,"height":150},
+		{"id":"6a29435857924093","type":"file","file":"attachments/pic.webp","x":780,"y":430,"width":200,"height":150},
+		{"id":"ae8eb96df05e788a","type":"file","file":"attachments/vector.svg","x":1040,"y":430,"width":200,"height":150},
+		{"id":"a5ca0b5894324f8b","type":"file","file":"attachments/tone.mp3","x":1300,"y":0,"width":300,"height":80},
+		{"id":"421b47ffd946ca08","type":"file","file":"attachments/clip.mp4","x":1300,"y":430,"width":300,"height":200},
+		{"id":"437175ba4191210e","type":"file","file":"attachments/sample.pdf","x":0,"y":480,"width":360,"height":300},
+		{"id":"fcc790c72a86190d","type":"file","file":"canvases/Edges.canvas","x":420,"y":480,"width":300,"height":200},
+		{"id":"593616de15330c0f","type":"file","file":"bases/Projects.base","x":420,"y":720,"width":300,"height":200},
+		{"id":"851148b4fd8fd7ae","type":"group","x":-40,"y":840,"width":1000,"height":300,"label":"Folder: projects"},
+		{"id":"ec6ef230f1828039","type":"file","file":"projects/Project Alpha.md","x":0,"y":900,"width":280,"height":200},
+		{"id":"1d665b9b1467944c","type":"file","file":"projects/Project Beta.md","x":320,"y":900,"width":280,"height":200},
+		{"id":"7bc3ca68769437ce","type":"file","file":"projects/Project Gamma.md","x":640,"y":900,"width":280,"height":200},
+		{"id":"2567a5ec9705eb7a","type":"link","url":"https://obsidian.md/help","x":1040,"y":700,"width":300,"height":200},
+		{"id":"fa0ed5b5c600145b","type":"link","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw","x":1040,"y":940,"width":360,"height":240}
+	],
+	"edges":[
+		{"id":"5bf961ad81885c3d","fromNode":"793914c9c583d9d8","toNode":"aad653ca3ee66963","fromSide":"right","toSide":"left"},
+		{"id":"d5f28513947a2fd7","fromNode":"aad653ca3ee66963","toNode":"f74f539fcf466019","fromSide":"bottom","toSide":"top","label":"narrowed"},
+		{"id":"a3ab5ab2169fc8bc","fromNode":"aad653ca3ee66963","toNode":"14511f2f5564650d","fromSide":"right","toSide":"left"}
+	]
+}
