@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>texImage3D readback</title>
+<body style="background:#1d2a3a;color:#e8e8e8;font:13px monospace">
+<pre id="log">texImage3D readback</pre>
+<script>
+const canvas = document.createElement('canvas');
+canvas.width = canvas.height = 16;
+const gl = canvas.getContext('webgl2', { antialias: false });
+const out = { ready: true, steps: [] };
+function layerPixels(tex, target, w, h, layer) {
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, tex, 0, layer);
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  const px = new Uint8Array(w * h * 4);
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  const r = Array.from({ length: w * h }, (_, i) => px[i * 4]);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return { status: status === gl.FRAMEBUFFER_COMPLETE ? 'complete' : status, r, error: gl.getError() };
+}
+for (const target of [gl.TEXTURE_2D_ARRAY, gl.TEXTURE_3D]) {
+  for (const format of [[gl.R8, gl.RED, 1], [gl.RGBA8, gl.RGBA, 4]]) {
+    gl.getError();
+    const tex = gl.createTexture();
+    gl.bindTexture(target, tex);
+    gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    const [internal, fmt, n] = format;
+    const data = new Uint8Array(2 * 1 * 2 * n).map((_, i) => 10 + Math.floor(i / n));
+    gl.texImage3D(target, 0, internal, 2, 1, 2, 0, fmt, gl.UNSIGNED_BYTE, data);
+    const upload = gl.getError();
+    out.steps.push({ target: target === gl.TEXTURE_3D ? '3D' : '2D_ARRAY', internal: internal === gl.R8 ? 'R8' : 'RGBA8', upload, layer0: layerPixels(tex, target, 2, 1, 0), layer1: layerPixels(tex, target, 2, 1, 1) });
+  }
+}
+out.passed = true;
+document.getElementById('log').textContent = JSON.stringify(out, null, 1);
+setTimeout(() => console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out)), 1200);
+</script>

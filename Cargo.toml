@@ -63,6 +63,8 @@ url = "2"
 
 [dev-dependencies]
 tempfile = "3"
+# The graph probe's `frame-notes:` file handler sets a Content-Type header.
+http = "1"
 # Native media acceptance examples use the same CLI parser already in Servo.
 clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).

@@ -221,8 +221,10 @@ these facts came from.
   telemetry to Supabase and checks a license key with `rpc("ll")`, adding
   attribution when there is none. In Servo it would need everything cosmos.gl
   needs, plus WebAssembly and workers for DuckDB.
-- cosmos.gl does not run in Frame's Servo. The probe page draws 5,000 points
-  and 10,000 links ([manifest](evidence/notes-app-2026-10-25/manifest.json),
+- cosmos.gl did not run in Frame's Servo on 2026-10-25, the baseline for the
+  [work list](#servo-webgl2-work-list), which has the results after it. The
+  probe page draws 5,000 points and 10,000 links
+  ([manifest](evidence/notes-app-2026-10-25/manifest.json),
   [page](evidence/notes-app-2026-10-25/graph-probe.html)):
   - Shipping Frame leaves `dom_webgl2_enabled` off, so cosmos.gl 3.5.1 cannot
     create its luma.gl device
@@ -523,11 +525,10 @@ because of its non-commercial license, its telemetry and the DuckDB-WASM stack
 it would also need from Servo. cosmos.gl needs the Servo WebGL2 work list.
 Until that is done, the panel draws the same graph model with force-graph
 1.52.0 (MIT), bundled the same way, which runs in shipping Frame at 13 fps on
-the probe's 5,000 nodes and 10,000 links (see the baseline). WebGL2 is then
-turned on for `frame-notes:` pages only, beside the host allow-list in
-`is_webgl2_enabled`
-(`components/script/dom/webgl/webgl2renderingcontext.rs:198`, `:217`), until
-Servo's WebGL tests pass for every page.
+the probe's 5,000 nodes and 10,000 links (see the baseline). WebGL2 is on for
+`frame-notes:` pages only, through the `dom_webgl2_enabled_schemes` preference
+that `is_webgl2_enabled` checks beside its host allow-list (set in
+`src/engine.rs`), until Servo's WebGL tests pass for every page.
 
 **Canvas is the whiteboard fork over theorem-space.** theorem-space, already
 in the lock, is the JSON Canvas model, once its round trip keeps `background`,
@@ -881,7 +882,8 @@ core page previews are read-only.
    back real positions with progress above zero, has its frame rate recorded
    beside Chromium's, passes Servo's WPT WebGL tests for the changed areas,
    and WebGL2 is on for `frame-notes:` pages. Turning it on for every page
-   waits until Servo's WebGL2 tests pass as a whole.
+   waits until Servo's WebGL2 tests pass as a whole. Status: done on the
+   branches named in the work list, not merged.
 4. **First slice, then the reading view.** Start with one note end to end:
    open it from the fixture vault in a minimal editor tab on the fork's
    authority seam, show it in a Servo reading panel, save, close and reopen
@@ -958,44 +960,125 @@ core page previews are read-only.
 
 ## Servo WebGL2 work list
 
-Each item comes from the probe results and logs. Fix them in the Servo fork in
-this order and re-run the probe after each one.
+Each item came from the probe results and logs of 2026-10-25. All eight are
+done in the Servo fork, on branch `feat/webgl2-cosmos` (18 commits on
+`81d8e29`; not pushed or merged), and Frame's `feat/notes-webgl2` wires the
+scheme. The probe was re-run after each item
+([manifest](evidence/notes-webgl2-2026-10-26/manifest.json), one `itemN-*` run
+set per build). Every number below is from a debug build.
 
-1. **Extensions.** Chromium 152 exposes 36 WebGL2 extensions, and Servo none.
-   cosmos.gl runs its simulation in float textures. When it starts in
-   Chromium, luma.gl asks for 25 extensions, among them
-   `EXT_color_buffer_float`, `EXT_float_blend` and `OES_texture_float_linear`
-   ([log](evidence/notes-app-2026-10-25/chromium-v3-extensions.json)), and
-   cosmos.gl's README names `EXT_float_blend` as the extension behind its
-   many-body force. A request is not a requirement, so expose each extension
-   the native GL context supports and let the probe show which ones cosmos.gl
-   needs.
-2. **3D texture uploads.** Implement `texSubImage3D` and `copyTexSubImage3D`,
-   now commented out in `WebGL2RenderingContext.webidl`; luma.gl calls
-   `copyTexSubImage3D`.
-3. **Point sizes.** `ALIASED_POINT_SIZE_RANGE` returns [0, 0] under WebGL2
-   because `GetParameterFloat2` fails, and cosmos.gl draws nodes as points.
-4. **Default framebuffer.** `drawBuffers([BACK])` fails on the default
-   framebuffer, where WebGL2 allows `BACK` and `NONE`
-   ([log](evidence/notes-app-2026-10-25/servo-webgl2-v3-sim0.err)).
-5. **Float readback.** `readPixels` into a `Float32Array` fails with
-   `INVALID_OPERATION` (1282). cosmos.gl reads positions back for hovering,
-   selection and fitting the view; regl's refusal under WebGL1 is the same
-   gap.
-6. **Warnings.** The WebGL1 run logs six `DetachShader` failures
-   ([log](evidence/notes-app-2026-10-25/servo-default-v2.err)); find their
-   cause before trusting any draw. Every run also logs one "zero texture
-   because texture unloadable" warning, including the Canvas 2D run, which
-   uses no WebGL
-   ([log](evidence/notes-app-2026-10-25/servo-default-canvas.err)), so that
-   warning does not come from the page's WebGL and is not part of this list.
-7. **Drawing.** With items 1 to 6 fixed, find why nodes still do not appear,
-   using the probe's `sim=0` and `pointfix=1` modes and Servo's WPT WebGL
-   tests.
-8. **Scope.** Allow WebGL2 for `frame-notes:` pages in `is_webgl2_enabled`,
-   beside its host allow-list, so the graph panel gets it without exposing a
-   partial WebGL2 to every website; turn `dom_webgl2_enabled` on for all pages
-   only once Servo's WebGL2 tests pass as a whole.
+1. **Extensions.** Done (`5ebb886`). `getSupportedExtensions()` lists 6 on
+   WebGL2: `EXT_color_buffer_float`, `EXT_color_buffer_half_float`,
+   `EXT_float_blend`, `OES_texture_float_linear`,
+   `EXT_texture_filter_anisotropic` and `WEBGL_compressed_texture_s3tc`.
+   luma.gl asks for 25
+   ([log](evidence/notes-app-2026-10-25/chromium-v3-extensions.json)) and
+   cosmos.gl draws and simulates with those 6. The other 19 are not exposed;
+   most have no implementation in Servo (`EXT_render_snorm`,
+   `EXT_texture_norm16`, `WEBGL_debug_renderer_info`,
+   `EXT_disjoint_timer_query_webgl2`, `EXT_depth_clamp` and others).
+2. **3D texture uploads.** Done (`9410629`): `texSubImage3D` (the
+   `ArrayBufferView` form) and `copyTexSubImage3D`. The PBO and
+   `TexImageSource` overloads are still not there, as in `texImage3D`.
+3. **Point sizes.** Done (`b792c4e`). The desktop WebGL2 context is a core
+   profile, which has `POINT_SIZE_RANGE` and no `ALIASED_POINT_SIZE_RANGE`;
+   the range reads [1, 64].
+4. **Default framebuffer.** Done (`9c01a24`). `drawBuffers([BACK])` and
+   `readBuffer(BACK)` map to the surfman framebuffer's colour attachment. The
+   468 `DrawBuffers` failures of a `?lib=v3` run
+   ([item3](evidence/notes-webgl2-2026-10-26/item3-v3.err)) became none
+   ([item4](evidence/notes-webgl2-2026-10-26/item4-v3.err)).
+5. **Float readback.** Done (`c48525e`, `9f9f2a1`). `readPixels` takes the
+   pairs of ES 3.0 4.3.2 for each colour-buffer kind (`RGBA`/`FLOAT`,
+   `RGBA_INTEGER`/`INT` and `UNSIGNED_INT`, `RGBA`/`UNSIGNED_BYTE`), and
+   `texImage2D` keeps the sized internal format that decides the kind
+   ([matrix](evidence/notes-webgl2-2026-10-26/final-read-pixels-matrix.json)).
+6. **Warnings.** Done (`f3a7289`). The `DetachShader` failures came from
+   detaching shaders from a program that `glDeleteProgram` had already
+   detached: 12 in a delete and replace cycle, none after
+   ([before](evidence/notes-webgl2-2026-10-26/item6-lifecycle-before.err),
+   [after](evidence/notes-webgl2-2026-10-26/item6-lifecycle-after.err)). The
+   "zero texture because texture unloadable" warning is still logged, as
+   before; it also comes from the Canvas 2D run.
+7. **Drawing.** Done. Four separate causes, each a Servo bug, found with the
+   probe's `sim=0` and `pointfix=1` modes and narrowed pages
+   (`bf40d13`, `8d875a6`, `7129a82`, `bbc0d87`):
+   - `texStorage2D` read its level count as a mipmap level and refused sizes
+     that are not powers of two, so cosmos.gl's position and force textures
+     were never allocated;
+   - uniform block names kept ANGLE's `_u` prefix, so luma.gl found no
+     bindings for a draw call and dropped it without a GL error;
+   - `texSubImage2D` refused `RG`, `RED` and the `*_INTEGER` formats;
+   - Apple's GL compiles shaders with fast math, which folds `isnan()` to
+     false, so every point kept its NaN size and colour. The bodies of
+     ANGLE's `isnan` overloads are rewritten to test the float's bits.
+   The page's `pointfix=1` override makes no difference once the range is read
+   correctly (109,394 against 109,735 node pixels).
+8. **Scope.** Done (`dfd3fea`, and `src/engine.rs` here). The new preference
+   `dom_webgl2_enabled_schemes` lists URL schemes, checked in
+   `is_webgl2_enabled` after `dom_webgl2_enabled` and before the host list.
+   Frame sets it to `frame-notes`; `dom_webgl2_enabled` stays off.
+   `WebGLSync`, `WebGLQuery`, `WebGLTransformFeedback`, `WebGLSampler` and
+   `WebGLVertexArrayObject` were gated by the preference alone and follow the
+   same function now. The scheme-gate page
+   ([frame-notes](evidence/notes-webgl2-2026-10-26/final-scheme-gate-frame-notes.json),
+   [http](evidence/notes-webgl2-2026-10-26/final-scheme-gate-http.json)) finds
+   a WebGL2 context and all six interfaces on `frame-notes:` and none on
+   `http:`. The handler on that scheme in the probe is a minimal file server
+   (`examples/graph_probe.rs`); the notes app brings its own.
+
+Two more Servo changes came out of running the conformance tests: 3D texture
+layers could not be attached to framebuffers (`e7a1abb`), and the WebGL2
+unpack parameters (`UNPACK_ROW_LENGTH` and the others) were refused (`b6fa7f6`,
+which luma.gl and any atlas upload use). Four more fixed what the first
+conformance run found in the commits above (`5b2c23e`, `4d12230`, `e3a9352`,
+`20c844a`).
+
+**Results**, with the last build (Servo `20c844a`; the `final-*` runs; Chromium
+152 for comparison):
+
+| | Chromium | Frame, before | Frame, after |
+|---|---|---|---|
+| node-colour pixels, `sim=0` | not counted | 0 | 109,735 |
+| link-colour pixels, `sim=0` | not counted | 0 | 182,911 |
+| float readback of the first position, `sim=0` | not run | [0, 0, 0, 0] | [1851.84, 2248.23, 1979.82, 2013.56] |
+| simulation on: first position after 5 s | [2223.2, 2116.91, 2241.68, 1977.31] | [0, 0, 0, 0] | [2070.63, 1879.61, 2458.17, 2061.23] |
+| simulation on: `progress` | 0.048 | 0 | 0.0417 |
+| cosmos.gl v3, simulation on, fps | 120 | 28 | 80 to 84 |
+| force-graph (Canvas 2D), fps; no WebGL involved | 32 | 13 | 17 |
+| WebGL2 extensions; point size range | 36; [1, 511] | 0; [0, 0] | 6; [1, 64] |
+| GL errors in a `?lib=v3` run | not recorded | 2 `GetParameterFloat2` | none |
+
+The frame rate depends on the machine's load, which other builds were raising:
+the same binaries gave 7 to 11 fps at a load average of 50 to 70 and 83 to 84
+at 18 to 25 (the `control-*` runs). Frame's numbers are for a debug build on a
+machine under load (24 to 28 for the `final-*` runs); Chromium's are the
+2026-10-25 control, not run again. With the simulation on, node pixels are
+24,900 to 26,600 and link pixels about 1,000, because the layout is moving
+when the screenshot is taken 1.5 s after load. The simulation-on position is
+not at a fixed time, so only its being real, and different from the starting
+layout, is the check.
+
+**WPT** (`./mach test-wpt` over `conformance2` and the 17 `conformance`
+directories the changes touch, 1,974 test files, with `dom_webgl2_enabled`
+on): passing subtests went from 73,452 to 83,068. The largest changes:
+`conformance2/misc` 689 to 5,343, `conformance2/textures` 2,580 to 6,094,
+`conformance2/rendering` 3,138 to 4,203, `conformance2/reading` 378 to 588,
+`conformance2/extensions` 608 to 774 and `conformance2/glsl3` 933 to 1,008. No
+file passes fewer subtests, except four that differ between runs of one build:
+`texture-upload-size` reports 54 to 94 subtests on the base build, and three
+files crashed in the 6-process run of the branch and pass on both builds when
+run alone (the manifest's `wpt.fileLevel`). The
+`.ini` expectation files record WebGL2 off and were not rewritten, so the
+counts come from the raw logs. What does not pass yet is in `wpt.gaps` of the
+manifest; the largest are `compressedTexImage3D`, multisampled
+depth and stencil renderbuffers, sRGB readback (`GL_FRAMEBUFFER_SRGB`),
+feedback loop detection and the remaining WebGL2 extensions. The 6-process
+suite crashes a few files, a different few on each run, on the base build as
+well.
+
+Turning `dom_webgl2_enabled` on for every page still waits until Servo's
+WebGL2 tests pass as a whole.
 
 ## Upstream review
 
@@ -1038,10 +1121,12 @@ this order and re-run the probe after each one.
 
 ## Risks
 
-- **cosmos.gl depends on Servo WebGL2.** The size of that work is unknown
-  until items 1 to 6 are fixed and item 7 is understood. Cosmograph would not
-  avoid it. force-graph covers the graph meanwhile, but at 13 fps on the
-  probe's 5,000 nodes it may be slow on the generated vault.
+- **cosmos.gl depends on Servo WebGL2.** The work list is done on the Servo
+  branch and cosmos.gl draws and simulates in it, but the branch is not
+  merged, `deps/servo-mse` does not point at it, and the conformance suite
+  still fails on much of WebGL2 (see the work list). Cosmograph would not
+  avoid it. force-graph covers the graph until the branch lands, but at 13 to
+  17 fps on the probe's 5,000 nodes it may be slow on the generated vault.
 - **Three parsers.** comrak decides what the index sees, zorite's parser
   decorates the editor, and `MarkdownView` renders previews. Conformance
   fixtures keep them in step, but every new syntax lands three times.
@@ -1160,41 +1245,92 @@ The Canvas 2D run uses the same build:
 FRAME_MEDIA_SCRIPT=docs/plans/evidence/notes-app-2026-10-25/graph-probe-noop.js script/media-env cargo run --locked --example media_check -- 'http://127.0.0.1:8765/graph-probe-canvas.html'
 ```
 
-For the WebGL2 runs, copy `examples/media_check.rs` to
-`examples/graph_probe.rs` and add these lines directly after
-`engine::Engine::start(&app_profile, cx);`:
-
-```rust
-// TEMPORARY graph probe: WebGL2 on, everything else as Frame ships.
-let mut preferences = servo::prefs::get().clone();
-preferences.dom_webgl2_enabled = true;
-servo::prefs::set(preferences);
-```
-
-Build it and run it with the `?lib=v3`, `?lib=v3&sim=0` and
-`?lib=v3&sim=0&pointfix=1` URLs, then delete the copy:
+The WebGL2 runs of 2026-10-25 used a temporary copy of `media_check` that
+turned `dom_webgl2_enabled` on; that copy was deleted. Since 2026-10-26
+`examples/graph_probe.rs` is part of the repository and runs the pages from
+`frame-notes://probe/`, a scheme that has WebGL2 (it serves `--notes-root`
+with a minimal file handler), and counts the node, link and background pixels
+of the screenshot, which it prints with the page's JSON. It needs the Servo
+branch `feat/webgl2-cosmos` in `deps/servo-mse`:
 
 ```bash
 script/media-env cargo build --locked --example graph_probe
-FRAME_MEDIA_SCRIPT=docs/plans/evidence/notes-app-2026-10-25/graph-probe-noop.js script/media-env cargo run --locked --example graph_probe -- 'http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0'
+export FRAME_MEDIA_SCRIPT=docs/plans/evidence/notes-webgl2-2026-10-26/graph-probe-noop.js
+P='script/media-env cargo run --locked --example graph_probe -- --notes-root docs/plans/evidence/notes-webgl2-2026-10-26'
+$P 'frame-notes://probe/graph-probe.html?lib=v3'
+$P 'frame-notes://probe/graph-probe.html?lib=v3&sim=0'
+$P 'frame-notes://probe/graph-probe.html?lib=v3&sim=0&pointfix=1'
+$P 'frame-notes://probe/scheme-gate.html?expect=1'
 ```
 
-Cargo reported 17 minutes 45 seconds for the probe build here (recorded in the
-manifest). For the Chromium controls, open the same URLs in Chromium and read
-the `FRAME_MEDIA_RESULT` line from its console. The extension log came from a
-console script that wrapped `getExtension` and `getSupportedExtensions` on
-both WebGL prototypes before a second cosmos.gl graph ran for 4 seconds.
+The other pages in `evidence/notes-webgl2-2026-10-26/` are checks of single
+areas, each printing `passed`: `read-pixels-matrix.html`,
+`program-lifecycle.html`, `shader-nan.html`, `unpack-params.html`,
+`tex-storage.html`, `dbg-tex3d.html` and `dbg-readpixels-int.html`.
+`scheme-gate.html?expect=0` run from a local HTTP server
+(`python3 -I -m http.server 8765 --bind 127.0.0.1 --directory
+docs/plans/evidence/notes-webgl2-2026-10-26`) checks that `http:` pages get no
+WebGL2. Run Frame's stdout through `tail -n 1` for the JSON, and compare
+the `final-*` files. `fps` counts animation frames in 5 s, so it depends on
+the machine's load; the manifest's `loadAverage1m` records it.
+
+Servo's WPT tests ran from the `feat/webgl2-cosmos` checkout through
+`./mach test-wpt --binary <servoshell> --pref dom_webgl2_enabled=true
+--processes 6` on `tests/wpt/webgl/tests/conformance2` and the `conformance`
+directories listed in the manifest. mach refuses a checkout whose path
+contains a space; the manifest's `wpt.runner` says how the runs worked around
+that. The Servo changes have unit tests: `cargo test -p servo-config --lib`
+(the scheme gate) and the `#[cfg(test)]` modules of `pixelunpack.rs` and
+`shaderisnan.rs`.
+
+Cargo reported 17 minutes 45 seconds for the first probe build of 2026-10-25;
+later builds took 25 seconds to 13 minutes 16 seconds (manifest
+`cargoBuilds`). For the Chromium controls, open the same URLs in Chromium and
+read the `FRAME_MEDIA_RESULT` line from its console. The extension log came
+from a console script that wrapped `getExtension` and `getSupportedExtensions`
+on both WebGL prototypes before a second cosmos.gl graph ran for 4 seconds.
 
 ## Status
 
-Planning and probes only. The evidence in `evidence/notes-app-2026-10-25/` is
-new and uncommitted. No Frame or dependency source changed, and the temporary
-`graph_probe` example was deleted after its runs. Nothing was pushed or
-published. The first concrete work is step 1's three upstream changes (atomic
-writes, FSEvents and the three-way merge) and the zorite port, with the first
-two WebGL2 items (extensions and 3D texture uploads) alongside. The first
-end-to-end proof is step 4's slice. Remote vaults wait for the
+Planning and probes, and step 3. The Servo WebGL2 work is done on two
+branches: `feat/webgl2-cosmos` in the Servo fork (18 commits on `81d8e29`) and
+`feat/notes-webgl2` in Frame (the engine setting for the `frame-notes` scheme,
+the `graph_probe` example and the evidence in
+`evidence/notes-webgl2-2026-10-26/`). Neither is pushed or merged, and
+`deps/servo-mse` still points at the YouTube MSE branch, so shipping Frame has
+no WebGL2 yet. The first concrete work is step 1's three upstream changes
+(atomic writes, FSEvents and the three-way merge) and the zorite port, with
+landing the Servo branch alongside. The first end-to-end proof is step 4's
+slice. Remote vaults wait for the
 `sdk-source/files-api` branch to be pushed, merged and deployed. The requester
 chose cosmos.gl for the graph on 2026-10-26. One reading is open for the
 requester: whether the foundation's G0 and G1 hold the local steps (this plan
 reads them as holding only step 12).
+
+
+### WebGL2 review follow-up (2026-10-26)
+
+The review fixes are committed. That is nine more Servo commits on
+`feat/webgl2-cosmos`, 27 on `81d8e29` in all and still not pushed, and the notes
+protocol gate in Frame's `src/engine.rs`. `script/bootstrap-media` now pins that
+branch's tip. The record is in
+[`review-fixes.md`](evidence/notes-webgl2-2026-10-26/review-fixes.md).
+
+What the fixes do:
+
+- They harden mip and pixel arithmetic.
+- They correct extension and readback validation, including WebGL 1 float
+  readback.
+- They enforce the notes protocol boundary in one place,
+  `Engine::start_with_protocols`.
+
+Servo now carries trusted initiator metadata, because custom-scheme origins are
+opaque and referrers can be suppressed.
+
+On WebGL conformance, the patched build passes 83,199 subtests against base's
+73,592. The serial float run gains on every float extension file.
+
+One gap remains, and it predates this work. Servo replaces a float texture that
+has linear filtering but no linear-float support with RGBA8 black at upload
+time. It should substitute black at draw time instead. That replacement accounts
+for the remaining float blending failures and is left for its own change.
