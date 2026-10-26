@@ -1,4 +1,5 @@
 //! Test corpus and Obsidian reference harness for the notes app.
+pub mod generate;
 pub mod obsidian;
 
 /// The one Obsidian version the reference is recorded against.
