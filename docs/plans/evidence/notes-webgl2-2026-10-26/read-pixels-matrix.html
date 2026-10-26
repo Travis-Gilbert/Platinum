@@ -1,0 +1,129 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>readPixels matrix</title>
+<body style="background:#1d2a3a;color:#e8e8e8;font:13px monospace">
+<pre id="log">readPixels matrix</pre>
+<script>
+// Reads back every kind of color buffer through every format/type pair WebGL2 defines and
+// records the GL error and the values. The expected column comes from the OpenGL ES 3.0
+// table of readPixels combinations (4.3.2): fixed-point RGBA/UNSIGNED_BYTE, signed integer
+// RGBA_INTEGER/INT, unsigned integer RGBA_INTEGER/UNSIGNED_INT, floating-point RGBA/FLOAT.
+const canvas = document.createElement('canvas');
+canvas.width = canvas.height = 16;
+const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
+const out = { ready: true, cases: [] };
+
+function target(internalFormat, format, type) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 2, 2, 0, format, type, null);
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+}
+
+function attempt(name, expectError, buffer, format, type, dst) {
+  gl.getError();
+  gl.readPixels(0, 0, 1, 1, format, type, dst);
+  const error = gl.getError();
+  out.cases.push({
+    name,
+    error,
+    expectError,
+    ok: error === expectError,
+    values: error === 0 ? Array.from(dst) : null,
+  });
+}
+
+function bufferCase(name, internalFormat, format, type, clear, matching, mismatching) {
+  gl.getError();
+  const complete = target(internalFormat, format, type);
+  if (!complete) { out.cases.push({ name, skipped: 'framebuffer incomplete' }); return; }
+  clear();
+  attempt(name + ' ' + matching.label, 0, 'fbo', matching.format, matching.type, matching.make());
+  for (const m of mismatching) {
+    attempt(name + ' ' + m.label + ' (mismatch)', gl.INVALID_OPERATION, 'fbo', m.format, m.type, m.make());
+  }
+}
+
+const U8 = { label: 'RGBA/UNSIGNED_BYTE', format: gl.RGBA, type: gl.UNSIGNED_BYTE, make: () => new Uint8Array(4) };
+const F32 = { label: 'RGBA/FLOAT', format: gl.RGBA, type: gl.FLOAT, make: () => new Float32Array(4) };
+const I32 = { label: 'RGBA_INTEGER/INT', format: gl.RGBA_INTEGER, type: gl.INT, make: () => new Int32Array(4) };
+const U32 = { label: 'RGBA_INTEGER/UNSIGNED_INT', format: gl.RGBA_INTEGER, type: gl.UNSIGNED_INT, make: () => new Uint32Array(4) };
+
+const clearFloat = () => { gl.clearColor(0.25, 0.5, 1.5, -2); gl.clear(gl.COLOR_BUFFER_BIT); };
+const clearFixed = () => { gl.clearColor(1, 0.5, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); };
+const clearSigned = () => gl.clearBufferiv(gl.COLOR, 0, new Int32Array([1, -2, 3, -4]));
+const clearUnsigned = () => gl.clearBufferuiv(gl.COLOR, 0, new Uint32Array([1, 2, 3, 4000000000]));
+
+out.extension = !!gl.getExtension('EXT_color_buffer_float');
+bufferCase('RGBA8 texture', gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, clearFixed, U8, [F32, I32, U32]);
+bufferCase('RGBA32F texture', gl.RGBA32F, gl.RGBA, gl.FLOAT, clearFloat, F32, [U8, I32, U32]);
+bufferCase('RGBA16F texture', gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, clearFloat, F32, [U8, I32]);
+bufferCase('RGBA32I texture', gl.RGBA32I, gl.RGBA_INTEGER, gl.INT, clearSigned, I32, [U8, F32, U32]);
+bufferCase('RGBA32UI texture', gl.RGBA32UI, gl.RGBA_INTEGER, gl.UNSIGNED_INT, clearUnsigned, U32, [U8, F32, I32]);
+
+// Renderbuffer attachments follow the same rules.
+{
+  gl.getError();
+  const rb = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA32F, 2, 2);
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, rb);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE) {
+    clearFloat();
+    attempt('RGBA32F renderbuffer ' + F32.label, 0, 'fbo', F32.format, F32.type, F32.make());
+    attempt('RGBA32F renderbuffer ' + U8.label + ' (mismatch)', gl.INVALID_OPERATION, 'fbo', U8.format, U8.type, U8.make());
+  } else {
+    out.cases.push({ name: 'RGBA32F renderbuffer', skipped: 'framebuffer incomplete' });
+  }
+}
+
+// Reading into a pixel pack buffer takes the same combinations.
+{
+  gl.getError();
+  target(gl.RGBA32F, gl.RGBA, gl.FLOAT);
+  clearFloat();
+  const pbo = gl.createBuffer();
+  gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo);
+  gl.bufferData(gl.PIXEL_PACK_BUFFER, 16, gl.STREAM_READ);
+  gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, 0);
+  const error = gl.getError();
+  const back = new Float32Array(4);
+  let readBackError = null;
+  try { gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, back); } catch (e) { readBackError = String(e); }
+  out.cases.push({ name: 'RGBA32F texture RGBA/FLOAT into PIXEL_PACK_BUFFER', error, expectError: 0, ok: error === 0, values: readBackError ? null : Array.from(back), readBackError });
+  gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+  const mismatch = gl.getError();
+  out.cases.push({ name: 'RGBA32F texture RGBA/UNSIGNED_BYTE into PIXEL_PACK_BUFFER (mismatch)', error: mismatch, expectError: gl.INVALID_OPERATION, ok: mismatch === gl.INVALID_OPERATION });
+  gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+}
+
+// The default framebuffer is fixed-point RGBA8.
+{
+  gl.getError();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.clearColor(1, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  attempt('default framebuffer ' + U8.label, 0, 'default', U8.format, U8.type, U8.make());
+  attempt('default framebuffer ' + F32.label + ' (mismatch)', gl.INVALID_OPERATION, 'default', F32.format, F32.type, F32.make());
+}
+
+const near = (a, b) => Math.abs(a - b) < 1e-6;
+const by = (name) => out.cases.find((c) => c.name === name);
+out.valuesCorrect =
+  !!by('RGBA32F texture RGBA/FLOAT')?.values &&
+  by('RGBA32F texture RGBA/FLOAT').values.every((v, i) => near(v, [0.25, 0.5, 1.5, -2][i])) &&
+  JSON.stringify(by('RGBA32I texture RGBA_INTEGER/INT')?.values) === '[1,-2,3,-4]' &&
+  JSON.stringify(by('RGBA32UI texture RGBA_INTEGER/UNSIGNED_INT')?.values) === '[1,2,3,4000000000]';
+out.failures = out.cases.filter((c) => !c.skipped && !c.ok).map((c) => c.name);
+out.passed = out.failures.length === 0 && out.valuesCorrect;
+document.getElementById('log').textContent = JSON.stringify(out, null, 1);
+setTimeout(() => console.log('FRAME_MEDIA_FRAME svg-initial'), 300);
+setTimeout(() => console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out)), 1500);
+</script>
