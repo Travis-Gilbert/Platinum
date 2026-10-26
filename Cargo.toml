@@ -9,7 +9,7 @@ publish = false
 # Its own workspace: libservo is in this graph. `deps/` holds checkouts that
 # are path dependencies, not members.
 [workspace]
-members = ["crates/profile"]
+members = ["crates/profile", "vendor/zorite-editor", "vendor/zorite-markdown", "vendor/gpui-bidi", "vendor/gpui-whiteboard"]
 exclude = ["deps"]
 
 [dependencies]
