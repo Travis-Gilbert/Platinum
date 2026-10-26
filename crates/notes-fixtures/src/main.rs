@@ -65,7 +65,7 @@ enum Command {
         /// With --app: seconds the app gets to bind its socket and open the vault.
         #[arg(long, default_value_t = 90, requires = "app")]
         startup_secs: u64,
-        /// With --app: an extra Electron or Chromium flag for the app, e.g. `--app-arg=--disable-renderer-backgrounding`.
+        /// With --app: an extra Electron or Chromium flag for the app, e.g. `--app-arg=--force-device-scale-factor=1`.
         #[arg(long = "app-arg", requires = "app", allow_hyphen_values = true)]
         app_args: Vec<String>,
     },
