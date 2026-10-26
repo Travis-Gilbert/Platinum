@@ -30,8 +30,13 @@ pub fn canvas_links(json: &str) -> Result<Vec<CanvasLink>> {
         let node = card.get("id").and_then(Value::as_str).unwrap_or_default();
         let text = |key: &str| card.get(key).and_then(Value::as_str);
         match card.get("type").and_then(Value::as_str) {
-            Some("file") => {
-                let Some(file) = text("file").filter(|f| !f.is_empty()) else {
+            Some("file" | "group") => {
+                let field = if text("type") == Some("group") {
+                    "background"
+                } else {
+                    "file"
+                };
+                let Some(file) = text(field).filter(|f| !f.is_empty()) else {
                     continue;
                 };
                 links.push(CanvasLink {

@@ -191,6 +191,7 @@ impl VaultIndex {
                     .collect()
             })
             .unwrap_or_default();
+        let (words, characters) = crate::wordcount::count(text.unwrap_or_default());
         IndexedFile {
             path: path.into(),
             id,
@@ -210,8 +211,8 @@ impl VaultIndex {
                 })
                 .collect(),
             properties,
-            words: text.map_or(0, |t| t.split_whitespace().count()),
-            characters: text.map_or(0, |t| t.encode_utf16().count()),
+            words,
+            characters,
             error,
         }
     }
@@ -357,26 +358,63 @@ impl VaultIndex {
     pub fn dead_ends(&self) -> Vec<String> {
         self.files
             .iter()
-            .filter(|(_, f)| f.links.is_empty())
+            .filter(|(_, f)| !f.links.iter().any(|l| matches!(l.target, Target::File(_))))
             .map(|(p, _)| p.clone())
             .collect()
     }
     pub fn tags(&self) -> BTreeMap<String, usize> {
-        let mut counts = BTreeMap::new();
-        for file in self.files.values() {
+        let mut written = BTreeMap::<String, usize>::new();
+        for file in self.files.values().filter(|f| !f.excluded) {
             if let Some(note) = &file.note {
                 for tag in &note.tags {
-                    *counts.entry(tag.key()).or_default() += 1;
+                    let mut name = tag.name.as_str();
+                    loop {
+                        name = name.strip_suffix('/').unwrap_or(name);
+                        if !crate::parse::valid_tag(name) {
+                            break;
+                        }
+                        *written.entry(name.to_string()).or_default() += 1;
+                        let Some((parent, _)) = name.rsplit_once('/') else {
+                            break;
+                        };
+                        name = parent;
+                    }
                 }
             }
         }
-        counts
+        let mut folded = BTreeMap::<String, (String, usize, usize)>::new();
+        for (name, count) in written {
+            let entry = folded
+                .entry(name.to_lowercase())
+                .or_insert((name.clone(), 0, 0));
+            entry.1 += count;
+            if count > entry.2 {
+                entry.0 = name;
+                entry.2 = count;
+            }
+        }
+        folded
+            .into_values()
+            .map(|(name, count, _)| (name, count))
+            .collect()
     }
     pub fn properties(&self) -> BTreeMap<String, (PropertyType, usize)> {
         let mut counts = BTreeMap::new();
-        for file in self.files.values() {
+        for file in self.files.values().filter(|f| !f.excluded) {
             for (key, kind) in &file.properties {
-                counts.entry(key.clone()).or_insert((*kind, 0)).1 += 1;
+                let entry = counts.entry(key.clone()).or_insert((*kind, 0));
+                // Cache updates infer the shared name from the latest non-null value.
+                // Declared names already carry the assigned type in every projection.
+                if file
+                    .note
+                    .as_ref()
+                    .and_then(|n| n.frontmatter.as_ref())
+                    .and_then(|fm| fm.get(key))
+                    .is_some_and(|v| !v.is_null())
+                {
+                    entry.0 = *kind;
+                }
+                entry.1 += 1;
             }
         }
         counts

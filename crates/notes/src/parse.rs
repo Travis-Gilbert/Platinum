@@ -9,12 +9,22 @@ use regex::Regex;
 use std::ops::Range;
 use std::sync::LazyLock;
 
-// Obsidian's tags: letters, marks, digits, `_`, `-` and `/`, starting at a word boundary, with at
-// least one character that is not a digit. Theorem-UI's PR 16 settled the class.
-static TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"#([\p{L}\p{M}\p{N}_/-]+)").unwrap());
+// Obsidian's pinned punctuation exclusion class; slash and non-BMP characters are valid.
+static TAG: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r##"#([^\u{2000}-\u{206F}\u{2E00}-\u{2E7F}'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]+)"##)
+        .unwrap()
+});
+pub(crate) fn valid_tag(name: &str) -> bool {
+    let tag = format!("#{name}");
+    !name.is_empty()
+        && !name.chars().all(|c| c.is_ascii_digit())
+        && TAG
+            .find(&tag)
+            .is_some_and(|m| m.start() == 0 && m.end() == tag.len())
+}
 static BLOCK_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:^|\s)\^([A-Za-z0-9-]+)\s*$").unwrap());
-static FRONTMATTER_LINK: LazyLock<Regex> =
+static WIKI_LINK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(!?)\[\[([^\[\]\r\n]+)\]\]").unwrap());
 static FRONTMATTER_TAGS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^tags?[ \t]*:").unwrap());
@@ -40,10 +50,11 @@ fn options() -> Options<'static> {
     e.ofm_comments = true;
     e.front_matter_delimiter = Some("---".into());
     o.parse.relaxed_tasklist_matching = true;
+    o.parse.leave_footnote_definitions = true;
     o
 }
 
-/// Parses one Markdown note. `%%comments%%`, code and math contribute nothing.
+/// Parses one Markdown note. Comments contribute links/tags; code and math do not.
 pub fn parse(text: &str) -> Note {
     let arena = Arena::new();
     let root = parse_document(&arena, text, &options());
@@ -51,12 +62,16 @@ pub fn parse(text: &str) -> Note {
         text,
         o: Offsets::new(text),
         note: Note::default(),
+        references: std::collections::BTreeSet::new(),
     };
     for node in root.descendants() {
         if !in_inline_footnote_definition(node) {
             cx.visit(node);
         }
     }
+    cx.note.links.sort_by_key(|l| l.span.start);
+    cx.note.tags.sort_by_key(|t| t.span.start);
+    cx.note.footnotes.sort_by_key(|f| f.span.start);
     cx.note
 }
 
@@ -74,6 +89,7 @@ struct Cx<'t> {
     text: &'t str,
     o: Offsets,
     note: Note,
+    references: std::collections::BTreeSet<String>,
 }
 
 impl<'t> Cx<'t> {
@@ -93,8 +109,17 @@ impl<'t> Cx<'t> {
             NodeValue::WikiLink(w) => self.wikilink(node, w.embed),
             NodeValue::Link(l) => self.markdown_link(node, l, false),
             NodeValue::Image(l) => self.markdown_link(node, l, true),
+            NodeValue::CommentInline(_) | NodeValue::MultilineComment(_) => {
+                let span = self.span(node);
+                let raw = self.slice(span);
+                let end = span.end - usize::from(raw.ends_with("%%")) * 2;
+                self.inline_metadata(self.o.span(span.start + 2, end));
+            }
             NodeValue::TaskItem(t) => {
                 let status = t.symbol.unwrap_or(' ');
+                if status.len_utf16() != 1 {
+                    return;
+                }
                 let at = t.symbol_sourcepos.start;
                 let start = self
                     .o
@@ -107,7 +132,7 @@ impl<'t> Cx<'t> {
                 self.note.tasks.push(Task {
                     status,
                     text,
-                    span: self.span(node),
+                    span: self.item_span(node),
                     status_span: self.o.span(start, start + status.len_utf8()),
                 });
             }
@@ -118,20 +143,15 @@ impl<'t> Cx<'t> {
                 } else {
                     FootnoteKind::Reference
                 };
-                if kind == FootnoteKind::Inline {
-                    // The text of `^[text]` exists only in the definition comrak positions wrongly.
-                    let inner = Span {
-                        start: span.start + 2,
-                        end: span.end.saturating_sub(1).max(span.start + 2),
-                        ..span
-                    };
-                    self.tags_in(inner);
-                }
-                self.note.footnotes.push(Footnote {
-                    name: f.name.clone(),
-                    kind,
-                    span,
-                });
+                let (name, span) = if kind == FootnoteKind::Inline {
+                    let inner = self.o.span(span.start + 2, span.end.saturating_sub(1));
+                    self.inline_metadata(inner);
+                    (format!("[inline{}", self.references.len()), inner)
+                } else {
+                    (f.name.clone(), span)
+                };
+                self.references.insert(name.clone());
+                self.note.footnotes.push(Footnote { name, kind, span });
             }
             NodeValue::FootnoteDefinition(f) => {
                 let span = self.span(node);
@@ -191,6 +211,43 @@ impl<'t> Cx<'t> {
         s
     }
 
+    fn item_span<'a>(&self, node: &'a AstNode<'a>) -> Span {
+        let mut span = self.span(node);
+        if let Some(last) = node
+            .children()
+            .filter(|n| !matches!(n.data().value, NodeValue::List(_)))
+            .last()
+        {
+            span.end = self.span(last).end;
+        }
+        // Remark's lazy list continuation admits an immediately following quote.
+        if node.next_sibling().is_none()
+            && let Some(next) = node.parent().and_then(|p| p.next_sibling())
+            && matches!(next.data().value, NodeValue::BlockQuote)
+            && self.span(next).line == self.o.line_of(span.end) + 1
+        {
+            span.end = self.span(next).end;
+        }
+        span
+    }
+
+    /// Reuse comrak for inline content whose outer node is opaque or has synthetic positions.
+    fn inline_metadata(&mut self, span: Span) {
+        let inner = parse(self.slice(span));
+        let shift = |s: Span| self.o.span(span.start + s.start, span.start + s.end);
+        self.note
+            .links
+            .extend(inner.links.into_iter().map(|mut link| {
+                link.span = shift(link.span);
+                link.target_span = link.target_span.map(shift);
+                link
+            }));
+        self.note.tags.extend(inner.tags.into_iter().map(|mut tag| {
+            tag.span = shift(tag.span);
+            tag
+        }));
+    }
+
     /// From the start of the first child to the end of the last.
     fn content_text<'a>(&self, node: &'a AstNode<'a>) -> String {
         let (Some(first), Some(last)) = (node.first_child(), node.last_child()) else {
@@ -213,16 +270,67 @@ impl<'t> Cx<'t> {
         };
 
         let region = self.slice(span);
-        for m in FRONTMATTER_LINK.captures_iter(region) {
-            let (whole, inner) = (m.get(0).unwrap(), m.get(2).unwrap());
-            let (start, open) = (span.start + whole.start(), span.start + inner.start() - 2);
-            self.wiki_link(
-                start,
-                open,
-                span.start + inner.end(),
-                !m[1].is_empty(),
-                true,
-            );
+        if fm.error.is_none() {
+            // The existing YAML event parser supplies decoded scalars and exact source spans.
+            // A map frame alternates keys/values; sequences contain only values.
+            use granit_parser::{Event, Parser};
+            let yaml = frontmatter::body(region);
+            let base = yaml.as_ptr() as usize - self.text.as_ptr() as usize;
+            let offsets = Offsets::new(yaml);
+            let mut parser = Parser::new_from_str(yaml);
+            let mut containers: Vec<Option<bool>> = Vec::new();
+            while let Some(Ok((event, source))) = parser.next_event() {
+                match &event {
+                    Event::MappingEnd | Event::SequenceEnd => {
+                        containers.pop();
+                        continue;
+                    }
+                    Event::Scalar(..)
+                    | Event::MappingStart(..)
+                    | Event::SequenceStart(..)
+                    | Event::Alias(..) => {}
+                    _ => continue,
+                }
+                let key = if let Some(Some(next_key)) = containers.last_mut() {
+                    let key = *next_key;
+                    *next_key = !key;
+                    key
+                } else {
+                    false
+                };
+                match event {
+                    Event::MappingStart(..) => containers.push(Some(true)),
+                    Event::SequenceStart(..) => containers.push(None),
+                    Event::Scalar(value, _, _, _) if !key && value.starts_with('[') => {
+                        let parsed = parse(&value);
+                        if parsed.links.len() != 1 {
+                            continue;
+                        }
+                        let mut link = parsed.links.into_iter().next().unwrap();
+                        if link.embed || link.span.start != 0 || link.span.end != value.len() {
+                            continue;
+                        }
+                        let scalar = self.o.span(
+                            base + offsets.scalar_to_byte(source.start.index()),
+                            base + offsets.scalar_to_byte(source.end.index()),
+                        );
+                        if let Some(at) = self.slice(scalar).find(value.as_ref()) {
+                            let start = scalar.start + at;
+                            link.span = self.o.span(start, start + value.len());
+                            link.target_span = link
+                                .target_span
+                                .map(|s| self.o.span(start + s.start, start + s.end));
+                        } else {
+                            // Escaped YAML is renamed through the decoded scalar, not a guessed byte offset.
+                            link.span = scalar;
+                            link.target_span = None;
+                        }
+                        link.in_frontmatter = true;
+                        self.note.links.push(link);
+                    }
+                    _ => {}
+                }
+            }
         }
         let mut cursor = FRONTMATTER_TAGS.find(region).map_or(0, |m| m.end());
         for name in fm.tags() {
@@ -336,6 +444,25 @@ impl<'t> Cx<'t> {
         }
         let span = self.span(node);
         self.tags_in(span);
+        // Comrak rejects a second alias/size divider; Obsidian accepts it.
+        for capture in WIKI_LINK.captures_iter(self.slice(span)) {
+            if capture[2].matches('|').count() < 2 {
+                continue;
+            }
+            let whole = capture.get(0).unwrap();
+            let inner = capture.get(2).unwrap();
+            let from = span.start + whole.start();
+            if self.text[..from].ends_with('\\') {
+                continue;
+            }
+            self.wiki_link(
+                from,
+                span.start + inner.start() - 2,
+                span.start + inner.end(),
+                !capture[1].is_empty(),
+                false,
+            );
+        }
     }
 
     /// Tags written in the source text of `span`. Scanning the source rather than the node's value
@@ -347,9 +474,9 @@ impl<'t> Cx<'t> {
             let boundary = slice[..at]
                 .chars()
                 .next_back()
-                .is_none_or(|c| c.is_whitespace() || "([{,;".contains(c));
-            let name = m[1].trim_end_matches('/');
-            if !boundary || name.is_empty() || name.chars().all(|c| c.is_ascii_digit() || c == '/')
+                .is_none_or(char::is_whitespace);
+            let name = &m[1];
+            if !boundary || name.is_empty() || name.chars().all(|c| c.is_ascii_digit())
             {
                 continue;
             }
@@ -390,7 +517,7 @@ impl<'t> Cx<'t> {
                         matches!(p.data().value, NodeValue::Item(_) | NodeValue::TaskItem(_))
                     })
                     .filter(|p| p.first_child().is_some_and(|c| std::ptr::eq(c, node)))
-                    .map(|p| self.span(p))
+                    .map(|p| self.item_span(p))
             };
             self.note.blocks.push(Block {
                 id: id.as_str().to_string(),
@@ -518,7 +645,10 @@ pub(crate) fn fragment_of(s: impl AsRef<str>) -> Option<Fragment> {
 
 /// Percent-decoding that leaves a destination alone when it is not valid UTF-8.
 fn decode(s: &str) -> String {
-    percent_decode_str(s)
+    static RESERVED: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"(?i)%(3b|2f|3f|3a|40|26|3d|2b|24|2c|23)").unwrap());
+    let protected = RESERVED.replace_all(s, "%25$1");
+    percent_decode_str(&protected)
         .decode_utf8()
         .map_or_else(|_| s.to_string(), |d| d.into_owned())
 }
@@ -699,12 +829,12 @@ mod tests {
     }
 
     #[test]
-    fn links_in_code_comments_and_math_are_not_links() {
+    fn comments_contribute_links_while_code_and_math_do_not() {
         let src = "`[[inline]]`\n\n```\n[[fenced]] #fenced\n```\n\n%%[[commented]] #commented%% [[kept]]\n\n%%\n[[block comment]]\n%%\n\n$[[math]]$\n\n    [[indented]]\n";
         let n = parse(src);
         let targets: Vec<_> = n.links.iter().map(|l| l.target.as_str()).collect();
-        assert_eq!(targets, ["kept"]);
-        assert!(n.tags.is_empty());
+        assert_eq!(targets, ["commented", "kept", "block comment"]);
+        assert_eq!(n.tags[0].name, "commented");
     }
 
     #[test]
@@ -733,14 +863,13 @@ mod tests {
             [
                 ("Ideas", true, false),
                 ("Plan", true, false),
-                ("pic.png", true, true),
                 ("Body", false, false)
             ]
         );
         assert_eq!(link(&n, 0).span.slice(src), "[[Ideas]]");
         assert_eq!(link(&n, 1).span.slice(src), "[[Plan#Head|p]]");
-        assert_eq!(link(&n, 2).span.slice(src), "![[pic.png]]");
-        assert_eq!(link(&n, 3).span.line, 7);
+        assert_eq!(link(&n, 2).span.slice(src), "[[Body]]");
+        assert_eq!(link(&n, 2).span.line, 7);
     }
 
     #[test]
@@ -756,13 +885,12 @@ mod tests {
                 "ünï",
                 "日本語",
                 "x_y-z",
-                "a",
-                "1a",
-                "paren"
+                "a/",
+                "1a"
             ]
         );
         assert_eq!(texts(src, n.tags.iter().map(|t| t.span))[1], "#a/b/c");
-        assert_eq!(n.tags[5].span.slice(src), "#a");
+        assert_eq!(n.tags[5].span.slice(src), "#a/");
         assert!(n.tags.iter().all(|t| t.source == TagSource::Body));
     }
 
@@ -854,7 +982,7 @@ mod tests {
             got,
             [
                 ("pid", "Para ^pid"),
-                ("li1", "- item one ^li1\n  - child"),
+                ("li1", "- item one ^li1"),
                 ("qid", "> quote"),
                 ("tid", "| a |\n|---|\n| b |"),
                 ("same-para", "text\n^same-para"),
@@ -935,7 +1063,7 @@ mod tests {
             [
                 (FootnoteKind::Reference, "[^a]"),
                 (FootnoteKind::Reference, "[^b]"),
-                (FootnoteKind::Inline, "^[inline note]"),
+                (FootnoteKind::Inline, "inline note"),
                 (FootnoteKind::Definition, "[^a]: First."),
                 (FootnoteKind::Definition, "[^b]: Second."),
             ]

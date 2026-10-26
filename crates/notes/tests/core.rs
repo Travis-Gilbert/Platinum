@@ -127,7 +127,7 @@ fn index_queries_hidden_exclusions_and_incremental_resolution() {
     assert_eq!(v.index().files().len(), 2);
     assert_eq!(v.index().backlinks("B.md")["a.md"], 1);
     assert_eq!(v.index().unresolved()["Missing"], 1);
-    assert_eq!(v.index().tags()["tag"], 1);
+    assert_eq!(v.index().tags()["Tag"], 1);
     assert_eq!(v.index().tasks().len(), 1);
     assert_eq!(v.index().properties()["score"].1, 1);
     v.write_attachment("pic.png", b"image").unwrap();

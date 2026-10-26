@@ -11,6 +11,7 @@ mod rename;
 mod resolve;
 mod settings;
 mod vault;
+mod wordcount;
 
 pub use canvas::{CanvasLink, canvas_links};
 pub use ids::{IdStore, is_note_id};
