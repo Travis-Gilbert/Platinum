@@ -68,7 +68,12 @@ impl Default for VaultSettings {
 const FORBIDDEN: &[char] = &['\\', ':', '*', '?', '"', '<', '>', '|'];
 
 // Everything but unreserved characters and `/` is escaped in a Markdown destination.
-const DESTINATION: &AsciiSet = &NON_ALPHANUMERIC.remove(b'-').remove(b'_').remove(b'.').remove(b'~').remove(b'/');
+const DESTINATION: &AsciiSet = &NON_ALPHANUMERIC
+    .remove(b'-')
+    .remove(b'_')
+    .remove(b'.')
+    .remove(b'~')
+    .remove(b'/');
 
 /// Files in dot folders (`.obsidian`, `.theorem`, `.trash`) and dot files are not part of the vault.
 pub fn is_hidden(path: &str) -> bool {
@@ -80,22 +85,35 @@ impl VaultSettings {
     pub fn from_app_json(json: &str) -> Result<Self> {
         let app: Value = serde_json::from_str(json)?;
         let text = |key: &str| app.get(key).and_then(Value::as_str);
-        let filters = app.get("userIgnoreFilters").and_then(Value::as_array).into_iter().flatten();
+        let filters = app
+            .get("userIgnoreFilters")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten();
         Ok(Self {
             new_file_location: match text("newFileLocation") {
                 Some("current") => NewFileLocation::Current,
                 Some("folder") => NewFileLocation::Folder,
                 _ => NewFileLocation::Root,
             },
-            new_file_folder: text("newFileFolderPath").unwrap_or_default().trim_matches('/').to_string(),
+            new_file_folder: text("newFileFolderPath")
+                .unwrap_or_default()
+                .trim_matches('/')
+                .to_string(),
             attachment_folder: text("attachmentFolderPath").unwrap_or("/").to_string(),
-            use_markdown_links: app.get("useMarkdownLinks").and_then(Value::as_bool).unwrap_or(false),
+            use_markdown_links: app
+                .get("useMarkdownLinks")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
             link_format: match text("newLinkFormat") {
                 Some("relative") => LinkFormat::Relative,
                 Some("absolute") => LinkFormat::Absolute,
                 _ => LinkFormat::Shortest,
             },
-            exclusions: filters.filter_map(Value::as_str).filter_map(exclusion).collect(),
+            exclusions: filters
+                .filter_map(Value::as_str)
+                .filter_map(exclusion)
+                .collect(),
             ..Self::default()
         })
     }
@@ -103,7 +121,11 @@ impl VaultSettings {
     /// Reads `.obsidian/types.json`, the property types the vault has declared.
     pub fn read_property_types(&mut self, json: &str) -> Result<()> {
         let types: Value = serde_json::from_str(json)?;
-        let declared = types.get("types").and_then(Value::as_object).into_iter().flatten();
+        let declared = types
+            .get("types")
+            .and_then(Value::as_object)
+            .into_iter()
+            .flatten();
         self.property_types = declared
             .filter_map(|(key, kind)| {
                 let kind = match kind.as_str()? {
@@ -125,7 +147,10 @@ impl VaultSettings {
 
     /// The type of a property: the vault's declaration, else what its value looks like.
     pub fn property_type(&self, key: &str, value: &Value) -> PropertyType {
-        self.property_types.get(key).copied().unwrap_or_else(|| PropertyType::infer(key, value))
+        self.property_types
+            .get(key)
+            .copied()
+            .unwrap_or_else(|| PropertyType::infer(key, value))
     }
 
     /// Excluded files still resolve links, but search, the graph and unlinked mentions leave them out.
@@ -163,7 +188,9 @@ impl VaultSettings {
             FileKind::Other => format!("{path}.md"),
             _ => return None,
         };
-        let valid = path.split('/').all(|part| !part.contains(FORBIDDEN) && !part.contains(char::is_control));
+        let valid = path
+            .split('/')
+            .all(|part| !part.contains(FORBIDDEN) && !part.contains(char::is_control));
         (valid && !is_hidden(&path)).then_some(path)
     }
 
@@ -195,18 +222,33 @@ impl VaultSettings {
         embed: bool,
     ) -> String {
         let markdown = self.use_markdown_links;
-        let syntax = if markdown { LinkSyntax::Markdown } else { LinkSyntax::Wiki };
+        let syntax = if markdown {
+            LinkSyntax::Markdown
+        } else {
+            LinkSyntax::Wiki
+        };
         let note = FileKind::of(to) == FileKind::Note;
         // Wikilinks leave `.md` out; Markdown links keep it.
-        let shown = |path: &str| if note && !markdown { stem(path).to_string() } else { path.to_string() };
-        let relative = pathdiff::diff_paths(to, dir(from)).map_or_else(|| to.to_string(), |p| p.to_string_lossy().into_owned());
+        let shown = |path: &str| {
+            if note && !markdown {
+                stem(path).to_string()
+            } else {
+                path.to_string()
+            }
+        };
+        let relative = pathdiff::diff_paths(to, dir(from))
+            .map_or_else(|| to.to_string(), |p| p.to_string_lossy().into_owned());
         let primary = match self.link_format {
             LinkFormat::Shortest if note && markdown => format!("{}.md", index.shortest_name(to)),
             LinkFormat::Shortest => index.shortest_name(to),
             LinkFormat::Relative => shown(&relative),
             LinkFormat::Absolute => shown(to),
         };
-        let dotted = if relative.starts_with("..") { shown(&relative) } else { shown(&format!("./{relative}")) };
+        let dotted = if relative.starts_with("..") {
+            shown(&relative)
+        } else {
+            shown(&format!("./{relative}"))
+        };
         let rooted = shown(&format!("/{to}"));
         let name = [primary.clone(), dotted, rooted]
             .into_iter()
@@ -216,7 +258,10 @@ impl VaultSettings {
         let fragment = fragment.map(Fragment::to_string).unwrap_or_default();
         if !markdown {
             let alias = text.map(|t| format!("|{t}")).unwrap_or_default();
-            return format!("{}[[{name}{fragment}{alias}]]", if embed { "!" } else { "" });
+            return format!(
+                "{}[[{name}{fragment}{alias}]]",
+                if embed { "!" } else { "" }
+            );
         }
         let label = match (text, embed) {
             (Some(text), _) => text.to_string(),
@@ -230,7 +275,11 @@ impl VaultSettings {
                 }
             }
         };
-        let fragment = fragment.split('#').map(|part| utf8_percent_encode(part, DESTINATION).to_string()).collect::<Vec<_>>().join("#");
+        let fragment = fragment
+            .split('#')
+            .map(|part| utf8_percent_encode(part, DESTINATION).to_string())
+            .collect::<Vec<_>>()
+            .join("#");
         let destination = format!("{}{fragment}", utf8_percent_encode(&name, DESTINATION));
         format!("{}[{label}]({destination})", if embed { "!" } else { "" })
     }
@@ -239,7 +288,10 @@ impl VaultSettings {
 // `/regex/` is a pattern; anything else is a path prefix. A pattern that does not compile is ignored, as
 // the JavaScript patterns that Rust's engine cannot run (look-around) are.
 fn exclusion(filter: &str) -> Option<Exclusion> {
-    match filter.strip_prefix('/').and_then(|rest| rest.strip_suffix('/')) {
+    match filter
+        .strip_prefix('/')
+        .and_then(|rest| rest.strip_suffix('/'))
+    {
         Some(pattern) if !pattern.is_empty() => Regex::new(pattern).ok().map(Exclusion::Pattern),
         _ => (!filter.is_empty()).then(|| Exclusion::Prefix(filter.to_string())),
     }
@@ -276,7 +328,9 @@ mod tests {
         assert_eq!(s.attachment_folder, "./files");
         assert!(s.use_markdown_links);
         assert_eq!(s.link_format, LinkFormat::Relative);
-        let bad = settings(r#"{"newFileLocation":3,"useMarkdownLinks":"yes","newLinkFormat":[],"userIgnoreFilters":"nope"}"#);
+        let bad = settings(
+            r#"{"newFileLocation":3,"useMarkdownLinks":"yes","newLinkFormat":[],"userIgnoreFilters":"nope"}"#,
+        );
         assert_eq!(bad.new_file_location, NewFileLocation::Root);
         assert!(!bad.use_markdown_links);
         assert_eq!(bad.link_format, LinkFormat::Shortest);
@@ -284,7 +338,9 @@ mod tests {
 
     #[test]
     fn exclusions_are_prefixes_or_slashed_patterns() {
-        let s = settings(r#"{"userIgnoreFilters":["Private/","Templates","/\\.draft\\.md$/","/(?=look)/","/[/","/"]}"#);
+        let s = settings(
+            r#"{"userIgnoreFilters":["Private/","Templates","/\\.draft\\.md$/","/(?=look)/","/[/","/"]}"#,
+        );
         assert!(s.is_excluded("Private/secret.md"));
         assert!(s.is_excluded("Templates/Daily.md") && s.is_excluded("Templates old/x.md"));
         assert!(!s.is_excluded("Notes/Private/x.md"));
@@ -295,7 +351,12 @@ mod tests {
 
     #[test]
     fn dot_folders_and_files_are_hidden() {
-        assert!(is_hidden(".obsidian/app.json") && is_hidden("a/.theorem/ids.json") && is_hidden(".trash/x.md") && is_hidden("a/.hidden"));
+        assert!(
+            is_hidden(".obsidian/app.json")
+                && is_hidden("a/.theorem/ids.json")
+                && is_hidden(".trash/x.md")
+                && is_hidden("a/.hidden")
+        );
         assert!(!is_hidden("a/b.md") && !is_hidden("v1.2/notes.md"));
     }
 
@@ -307,7 +368,10 @@ mod tests {
         assert_eq!(s.property_type("status", &json!(true)), PropertyType::Text);
         assert_eq!(s.property_type("labels", &json!("one")), PropertyType::List);
         assert_eq!(s.property_type("bogus", &json!(1)), PropertyType::Number);
-        assert_eq!(s.property_type("done", &json!(true)), PropertyType::Checkbox);
+        assert_eq!(
+            s.property_type("done", &json!(true)),
+            PropertyType::Checkbox
+        );
         assert_eq!(s.property_type("tags", &json!(["a"])), PropertyType::Tags);
         assert!(s.read_property_types("[").is_err());
     }
@@ -325,8 +389,18 @@ mod tests {
             ("v1.2 notes", "v1.2 notes.md"),
             (" Spaced ", "Spaced.md"),
         ] {
-            assert_eq!(s.new_note_path(target, "a/b.md", LinkSyntax::Wiki).as_deref(), Some(want), "{target}");
-            assert!(!s.new_note_path(target, "a/b.md", LinkSyntax::Wiki).unwrap().to_lowercase().ends_with(".md.md"));
+            assert_eq!(
+                s.new_note_path(target, "a/b.md", LinkSyntax::Wiki)
+                    .as_deref(),
+                Some(want),
+                "{target}"
+            );
+            assert!(
+                !s.new_note_path(target, "a/b.md", LinkSyntax::Wiki)
+                    .unwrap()
+                    .to_lowercase()
+                    .ends_with(".md.md")
+            );
         }
     }
 
@@ -346,38 +420,97 @@ mod tests {
         assert_eq!(wiki(&folder, "../New").as_deref(), Some("New.md"));
         assert_eq!(wiki(&current, "/New").as_deref(), Some("New.md"));
         // A Markdown destination is always relative to the note.
-        assert_eq!(folder.new_note_path("New.md", from, LinkSyntax::Markdown).as_deref(), Some("notes/New.md"));
-        assert_eq!(folder.new_note_path("../x/New.md", from, LinkSyntax::Markdown).as_deref(), Some("x/New.md"));
+        assert_eq!(
+            folder
+                .new_note_path("New.md", from, LinkSyntax::Markdown)
+                .as_deref(),
+            Some("notes/New.md")
+        );
+        assert_eq!(
+            folder
+                .new_note_path("../x/New.md", from, LinkSyntax::Markdown)
+                .as_deref(),
+            Some("x/New.md")
+        );
     }
 
     #[test]
     fn nothing_is_made_for_attachments_bad_names_hidden_folders_or_outside_the_vault() {
         let s = VaultSettings::default();
-        for target in ["Figure 1.png", "clip.mp4", "doc.pdf", "Board.canvas", "a.base", "", "  ", "Why? Because", "a:b", "a\\b", "a|b", "../../out", ".obsidian/x", "a/.theorem/x", "..", "/"] {
-            assert_eq!(s.new_note_path(target, "notes/Plan.md", LinkSyntax::Wiki), None, "{target}");
+        for target in [
+            "Figure 1.png",
+            "clip.mp4",
+            "doc.pdf",
+            "Board.canvas",
+            "a.base",
+            "",
+            "  ",
+            "Why? Because",
+            "a:b",
+            "a\\b",
+            "a|b",
+            "../../out",
+            ".obsidian/x",
+            "a/.theorem/x",
+            "..",
+            "/",
+        ] {
+            assert_eq!(
+                s.new_note_path(target, "notes/Plan.md", LinkSyntax::Wiki),
+                None,
+                "{target}"
+            );
         }
     }
 
     #[test]
     fn attachments_go_where_the_vault_keeps_them() {
         let from = "notes/Plan.md";
-        let at = |folder: &str| VaultSettings { attachment_folder: folder.into(), ..Default::default() }.attachment_path(from, "pic.png");
+        let at = |folder: &str| {
+            VaultSettings {
+                attachment_folder: folder.into(),
+                ..Default::default()
+            }
+            .attachment_path(from, "pic.png")
+        };
         assert_eq!(at("/"), "pic.png");
         assert_eq!(at(""), "pic.png");
         assert_eq!(at("./"), "notes/pic.png");
         assert_eq!(at("./assets"), "notes/assets/pic.png");
         assert_eq!(at("Attachments"), "Attachments/pic.png");
         assert_eq!(at("Attachments/images"), "Attachments/images/pic.png");
-        assert_eq!(VaultSettings::default().attachment_path("Root.md", "pic.png"), "pic.png");
-        let same_folder = VaultSettings { attachment_folder: "./".into(), ..Default::default() };
+        assert_eq!(
+            VaultSettings::default().attachment_path("Root.md", "pic.png"),
+            "pic.png"
+        );
+        let same_folder = VaultSettings {
+            attachment_folder: "./".into(),
+            ..Default::default()
+        };
         assert_eq!(same_folder.attachment_path("Root.md", "pic.png"), "pic.png");
     }
 
     fn vault() -> FileIndex {
-        FileIndex::new(["Ideas.md", "archive/Ideas.md", "x/y/Note.md", "z/Note.md", "notes/Plan.md", "notes/Sub Note.md", "Sub Note.md", "img/a b.png"])
+        FileIndex::new([
+            "Ideas.md",
+            "archive/Ideas.md",
+            "x/y/Note.md",
+            "z/Note.md",
+            "notes/Plan.md",
+            "notes/Sub Note.md",
+            "Sub Note.md",
+            "img/a b.png",
+        ])
     }
 
-    fn link(app: &str, from: &str, to: &str, fragment: Option<&Fragment>, text: Option<&str>, embed: bool) -> String {
+    fn link(
+        app: &str,
+        from: &str,
+        to: &str,
+        fragment: Option<&Fragment>,
+        text: Option<&str>,
+        embed: bool,
+    ) -> String {
         settings(app).link_to(&vault(), from, to, fragment, text, embed)
     }
 
@@ -385,14 +518,20 @@ mod tests {
     fn wikilinks_in_each_format() {
         let f = |app: &str, from, to| link(app, from, to, None, None, false);
         assert_eq!(f("{}", "notes/Plan.md", "Ideas.md"), "[[Ideas]]");
-        assert_eq!(f("{}", "notes/Plan.md", "archive/Ideas.md"), "[[archive/Ideas]]");
+        assert_eq!(
+            f("{}", "notes/Plan.md", "archive/Ideas.md"),
+            "[[archive/Ideas]]"
+        );
         assert_eq!(f("{}", "Ideas.md", "x/y/Note.md"), "[[y/Note]]");
         assert_eq!(f("{}", "Ideas.md", "img/a b.png"), "[[a b.png]]");
         let relative = r#"{"newLinkFormat":"relative"}"#;
         assert_eq!(f(relative, "x/Home.md", "x/y/Note.md"), "[[y/Note]]");
         // "Note" from x/y would be z/Note.md, the shorter path, so the name says where it is.
         assert_eq!(f(relative, "x/y/Home.md", "x/y/Note.md"), "[[./Note]]");
-        assert_eq!(f(relative, "notes/Plan.md", "archive/Ideas.md"), "[[../archive/Ideas]]");
+        assert_eq!(
+            f(relative, "notes/Plan.md", "archive/Ideas.md"),
+            "[[../archive/Ideas]]"
+        );
         assert_eq!(f(relative, "z/Home.md", "z/Note.md"), "[[Note]]");
         let absolute = r#"{"newLinkFormat":"absolute"}"#;
         assert_eq!(f(absolute, "notes/Plan.md", "Ideas.md"), "[[Ideas]]");
@@ -402,15 +541,32 @@ mod tests {
     #[test]
     fn a_name_that_would_reach_another_file_falls_back_to_one_that_does_not() {
         // From x/Home.md the relative name "Note" is x/Note.md, but the file wanted is z/Note.md.
-        let v = FileIndex::new(["x/Home.md", "x/Note.md", "z/Note.md", "z/y/Note.md", "y/Note.md"]);
+        let v = FileIndex::new([
+            "x/Home.md",
+            "x/Note.md",
+            "z/Note.md",
+            "z/y/Note.md",
+            "y/Note.md",
+        ]);
         let s = settings(r#"{"newLinkFormat":"relative"}"#);
-        assert_eq!(s.link_to(&v, "z/Home.md", "z/y/Note.md", None, None, false), "[[./y/Note]]");
+        assert_eq!(
+            s.link_to(&v, "z/Home.md", "z/y/Note.md", None, None, false),
+            "[[./y/Note]]"
+        );
         let text = s.link_to(&v, "x/Home.md", "z/Note.md", None, None, false);
         assert_eq!(text, "[[../z/Note]]");
-        for (from, to) in [("x/Home.md", "x/Note.md"), ("x/Home.md", "y/Note.md"), ("z/Home.md", "x/Note.md")] {
+        for (from, to) in [
+            ("x/Home.md", "x/Note.md"),
+            ("x/Home.md", "y/Note.md"),
+            ("z/Home.md", "x/Note.md"),
+        ] {
             let text = s.link_to(&v, from, to, None, None, false);
             let target = text.trim_start_matches("[[").trim_end_matches("]]");
-            assert_eq!(v.resolve(target, from, LinkSyntax::Wiki), Some(to), "{text} from {from}");
+            assert_eq!(
+                v.resolve(target, from, LinkSyntax::Wiki),
+                Some(to),
+                "{text} from {from}"
+            );
         }
     }
 
@@ -418,21 +574,52 @@ mod tests {
     fn wikilinks_carry_fragments_aliases_and_the_embed_mark() {
         let heading = Fragment::Heading("Later on".into());
         let block = Fragment::Block("b1".into());
-        assert_eq!(link("{}", "x.md", "Ideas.md", Some(&heading), None, false), "[[Ideas#Later on]]");
-        assert_eq!(link("{}", "x.md", "Ideas.md", Some(&block), Some("this"), false), "[[Ideas#^b1|this]]");
-        assert_eq!(link("{}", "x.md", "img/a b.png", None, Some("100"), true), "![[a b.png|100]]");
+        assert_eq!(
+            link("{}", "x.md", "Ideas.md", Some(&heading), None, false),
+            "[[Ideas#Later on]]"
+        );
+        assert_eq!(
+            link("{}", "x.md", "Ideas.md", Some(&block), Some("this"), false),
+            "[[Ideas#^b1|this]]"
+        );
+        assert_eq!(
+            link("{}", "x.md", "img/a b.png", None, Some("100"), true),
+            "![[a b.png|100]]"
+        );
     }
 
     #[test]
     fn markdown_links_keep_the_extension_and_escape_the_destination() {
         let md = r#"{"useMarkdownLinks":true}"#;
-        assert_eq!(link(md, "x.md", "Ideas.md", None, None, false), "[Ideas](Ideas.md)");
+        assert_eq!(
+            link(md, "x.md", "Ideas.md", None, None, false),
+            "[Ideas](Ideas.md)"
+        );
         // "Sub Note" exists at the root and in notes/, so a link from elsewhere needs the folder.
-        assert_eq!(link(md, "x.md", "notes/Sub Note.md", None, None, false), "[Sub Note](notes/Sub%20Note.md)");
-        assert_eq!(link(md, "x.md", "img/a b.png", None, None, true), "![](a%20b.png)");
+        assert_eq!(
+            link(md, "x.md", "notes/Sub Note.md", None, None, false),
+            "[Sub Note](notes/Sub%20Note.md)"
+        );
+        assert_eq!(
+            link(md, "x.md", "img/a b.png", None, None, true),
+            "![](a%20b.png)"
+        );
         let heading = Fragment::Heading("Later on".into());
-        assert_eq!(link(md, "x.md", "Ideas.md", Some(&heading), None, false), "[Ideas > Later on](Ideas.md#Later%20on)");
-        assert_eq!(link(md, "x.md", "Ideas.md", Some(&Fragment::Block("b1".into())), Some("see"), false), "[see](Ideas.md#%5Eb1)");
+        assert_eq!(
+            link(md, "x.md", "Ideas.md", Some(&heading), None, false),
+            "[Ideas > Later on](Ideas.md#Later%20on)"
+        );
+        assert_eq!(
+            link(
+                md,
+                "x.md",
+                "Ideas.md",
+                Some(&Fragment::Block("b1".into())),
+                Some("see"),
+                false
+            ),
+            "[see](Ideas.md#%5Eb1)"
+        );
     }
 
     #[test]
@@ -441,18 +628,33 @@ mod tests {
         let paths: Vec<_> = v.paths().map(str::to_string).collect();
         for format in ["shortest", "relative", "absolute"] {
             for markdown in [false, true] {
-                let s = settings(&format!(r#"{{"newLinkFormat":"{format}","useMarkdownLinks":{markdown}}}"#));
+                let s = settings(&format!(
+                    r#"{{"newLinkFormat":"{format}","useMarkdownLinks":{markdown}}}"#
+                ));
                 for from in &paths {
                     for to in &paths {
                         let text = s.link_to(&v, from, to, None, None, false);
                         let name = if markdown {
                             let dest = text.rsplit_once("](").unwrap().1.trim_end_matches(')');
-                            percent_encoding::percent_decode_str(dest).decode_utf8().unwrap().into_owned()
+                            percent_encoding::percent_decode_str(dest)
+                                .decode_utf8()
+                                .unwrap()
+                                .into_owned()
                         } else {
-                            text.trim_start_matches("[[").trim_end_matches("]]").to_string()
+                            text.trim_start_matches("[[")
+                                .trim_end_matches("]]")
+                                .to_string()
                         };
-                        let syntax = if markdown { LinkSyntax::Markdown } else { LinkSyntax::Wiki };
-                        assert_eq!(v.resolve(&name, from, syntax), Some(to.as_str()), "{format} markdown={markdown}: {text} from {from}");
+                        let syntax = if markdown {
+                            LinkSyntax::Markdown
+                        } else {
+                            LinkSyntax::Wiki
+                        };
+                        assert_eq!(
+                            v.resolve(&name, from, syntax),
+                            Some(to.as_str()),
+                            "{format} markdown={markdown}: {text} from {from}"
+                        );
                     }
                 }
             }

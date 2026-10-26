@@ -14,13 +14,18 @@ static DATE_TIME: LazyLock<Regex> = LazyLock::new(|| {
 /// The YAML between the `---` lines of the front matter comrak returns.
 pub(crate) fn body(block: &str) -> &str {
     let block = block.trim_end_matches(['\r', '\n']);
-    let Some((_, rest)) = block.split_once('\n') else { return "" };
+    let Some((_, rest)) = block.split_once('\n') else {
+        return "";
+    };
     rest.rsplit_once('\n').map_or("", |(yaml, _)| yaml)
 }
 
 /// The properties in `yaml`, in file order; an error says why it is not a map.
 pub(crate) fn parse_yaml(yaml: &str) -> Result<IndexMap<String, Value>, String> {
-    if yaml.lines().all(|l| l.trim().is_empty() || l.trim_start().starts_with('#')) {
+    if yaml
+        .lines()
+        .all(|l| l.trim().is_empty() || l.trim_start().starts_with('#'))
+    {
         return Ok(IndexMap::new());
     }
     // Obsidian reads YAML 1.2, where `y`, `yes` and `on` are strings.
@@ -45,7 +50,11 @@ fn list(value: Option<&Value>, sep: fn(char) -> bool) -> Vec<String> {
         Some(other) => scalar(other).into_iter().collect(),
         None => Vec::new(),
     };
-    items.into_iter().map(|i| i.trim().to_string()).filter(|i| !i.is_empty()).collect()
+    items
+        .into_iter()
+        .map(|i| i.trim().to_string())
+        .filter(|i| !i.is_empty())
+        .collect()
 }
 
 impl Frontmatter {
@@ -65,11 +74,17 @@ impl Frontmatter {
 
     /// `aliases`, and the older `alias`.
     pub fn aliases(&self) -> Vec<String> {
-        ["aliases", "alias"].iter().flat_map(|key| list(self.get(key), |c| c == ',')).collect()
+        ["aliases", "alias"]
+            .iter()
+            .flat_map(|key| list(self.get(key), |c| c == ','))
+            .collect()
     }
 
     pub fn css_classes(&self) -> Vec<String> {
-        ["cssclasses", "cssclass"].iter().flat_map(|key| list(self.get(key), char::is_whitespace)).collect()
+        ["cssclasses", "cssclass"]
+            .iter()
+            .flat_map(|key| list(self.get(key), char::is_whitespace))
+            .collect()
     }
 
     /// An id Theorem wrote into the note; any other `theorem-id` is not one.
@@ -102,7 +117,11 @@ mod tests {
     use serde_json::json;
 
     fn fm(yaml: &str) -> Frontmatter {
-        Frontmatter { span: Span::default(), properties: parse_yaml(yaml).unwrap(), error: None }
+        Frontmatter {
+            span: Span::default(),
+            properties: parse_yaml(yaml).unwrap(),
+            error: None,
+        }
     }
 
     #[test]
@@ -114,9 +133,16 @@ mod tests {
 
     #[test]
     fn properties_keep_file_order_and_types() {
-        let f = fm("title: Plan\ncount: 3\nratio: 0.5\ndone: true\nrelated: [a, b]\ndue: 2026-01-02\nnothing:\n");
+        let f = fm(
+            "title: Plan\ncount: 3\nratio: 0.5\ndone: true\nrelated: [a, b]\ndue: 2026-01-02\nnothing:\n",
+        );
         let keys: Vec<_> = f.properties.keys().map(String::as_str).collect();
-        assert_eq!(keys, ["title", "count", "ratio", "done", "related", "due", "nothing"]);
+        assert_eq!(
+            keys,
+            [
+                "title", "count", "ratio", "done", "related", "due", "nothing"
+            ]
+        );
         assert_eq!(f.get("count"), Some(&json!(3)));
         assert_eq!(f.get("ratio"), Some(&json!(0.5)));
         assert_eq!(f.get("done"), Some(&json!(true)));
@@ -156,8 +182,14 @@ mod tests {
 
     #[test]
     fn aliases_split_at_commas_only() {
-        assert_eq!(fm("aliases: [One, Two Words]").aliases(), ["One", "Two Words"]);
-        assert_eq!(fm("aliases: One, Two Words").aliases(), ["One", "Two Words"]);
+        assert_eq!(
+            fm("aliases: [One, Two Words]").aliases(),
+            ["One", "Two Words"]
+        );
+        assert_eq!(
+            fm("aliases: One, Two Words").aliases(),
+            ["One", "Two Words"]
+        );
         assert_eq!(fm("alias: Solo").aliases(), ["Solo"]);
         assert_eq!(fm("aliases: [1984]").aliases(), ["1984"]);
     }
@@ -170,9 +202,15 @@ mod tests {
 
     #[test]
     fn only_theorems_own_ids_are_honoured() {
-        assert_eq!(fm("theorem-id: vf_01J9ZK3Q4M5N6P7R8S9T0V1W2X").theorem_id(), Some("vf_01J9ZK3Q4M5N6P7R8S9T0V1W2X"));
+        assert_eq!(
+            fm("theorem-id: vf_01J9ZK3Q4M5N6P7R8S9T0V1W2X").theorem_id(),
+            Some("vf_01J9ZK3Q4M5N6P7R8S9T0V1W2X")
+        );
         assert_eq!(fm("theorem-id: abc").theorem_id(), None);
-        assert_eq!(fm("theorem-id: vf_01J9ZK3Q4M5N6P7R8S9T0V1W2U").theorem_id(), None);
+        assert_eq!(
+            fm("theorem-id: vf_01J9ZK3Q4M5N6P7R8S9T0V1W2U").theorem_id(),
+            None
+        );
     }
 
     #[test]

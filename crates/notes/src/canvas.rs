@@ -21,19 +21,27 @@ pub struct CanvasLink {
 pub fn canvas_links(json: &str) -> Result<Vec<CanvasLink>> {
     let canvas: Value = serde_json::from_str(json).context("a canvas is JSON")?;
     let mut links = Vec::new();
-    for card in canvas.get("nodes").and_then(Value::as_array).into_iter().flatten() {
+    for card in canvas
+        .get("nodes")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
         let node = card.get("id").and_then(Value::as_str).unwrap_or_default();
         let text = |key: &str| card.get(key).and_then(Value::as_str);
         match card.get("type").and_then(Value::as_str) {
             Some("file") => {
-                let Some(file) = text("file").filter(|f| !f.is_empty()) else { continue };
+                let Some(file) = text("file").filter(|f| !f.is_empty()) else {
+                    continue;
+                };
                 links.push(CanvasLink {
                     node: node.to_string(),
                     link: Link {
                         syntax: LinkSyntax::Path,
                         embed: false,
                         target: file.to_string(),
-                        fragment: text("subpath").and_then(|s| fragment_of(s.trim_start_matches('#'))),
+                        fragment: text("subpath")
+                            .and_then(|s| fragment_of(s.trim_start_matches('#'))),
                         text: None,
                         span: Span::default(),
                         target_span: None,
@@ -43,7 +51,10 @@ pub fn canvas_links(json: &str) -> Result<Vec<CanvasLink>> {
             }
             Some("text") => {
                 let note = parse(text("text").unwrap_or_default());
-                links.extend(note.links.into_iter().map(|link| CanvasLink { node: node.to_string(), link }));
+                links.extend(note.links.into_iter().map(|link| CanvasLink {
+                    node: node.to_string(),
+                    link,
+                }));
             }
             _ => {}
         }
@@ -80,13 +91,23 @@ mod tests {
         let files: Vec<_> = links
             .iter()
             .filter(|l| l.link.syntax == LinkSyntax::Path)
-            .map(|l| (l.node.as_str(), l.link.target.as_str(), l.link.fragment.clone()))
+            .map(|l| {
+                (
+                    l.node.as_str(),
+                    l.link.target.as_str(),
+                    l.link.fragment.clone(),
+                )
+            })
             .collect();
         assert_eq!(
             files,
             [
                 ("a", "notes/Plan.md", None),
-                ("b", "notes/Plan.md", Some(Fragment::Heading("Phase one".into()))),
+                (
+                    "b",
+                    "notes/Plan.md",
+                    Some(Fragment::Heading("Phase one".into()))
+                ),
                 ("c", "notes/Plan.md", Some(Fragment::Block("blk".into()))),
                 ("d", "img/diagram.png", None),
             ]
@@ -97,7 +118,10 @@ mod tests {
     fn text_cards_hold_links_like_a_note() {
         let links = canvas_links(CANVAS).unwrap();
         let text: Vec<_> = links.iter().filter(|l| l.node == "e").collect();
-        let got: Vec<_> = text.iter().map(|l| (l.link.syntax, l.link.embed, l.link.target.as_str())).collect();
+        let got: Vec<_> = text
+            .iter()
+            .map(|l| (l.link.syntax, l.link.embed, l.link.target.as_str()))
+            .collect();
         assert_eq!(
             got,
             [

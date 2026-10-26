@@ -39,7 +39,10 @@ impl Offsets {
                 line_starts.push(i + 1);
             }
         }
-        Self { rope: Rope::from_str(text), line_starts }
+        Self {
+            rope: Rope::from_str(text),
+            line_starts,
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -57,20 +60,39 @@ impl Offsets {
 
     pub fn span(&self, start: usize, end: usize) -> Span {
         let start = start.min(self.len());
-        Span { start, end: end.clamp(start, self.len()), line: self.line_of(start) }
+        Span {
+            start,
+            end: end.clamp(start, self.len()),
+            line: self.line_of(start),
+        }
     }
 
     /// The span of a comrak source position: 1-based line, 1-based inclusive byte column.
     /// An end column of 0 ends at the line's start, as comrak writes it for a block that
     /// swallows its final newline.
-    pub fn sourcepos(&self, (start_line, start_col): (usize, usize), (end_line, end_col): (usize, usize)) -> Span {
-        let at = |line: usize| self.line_starts.get(line.saturating_sub(1)).copied().unwrap_or(self.len());
-        self.span(at(start_line) + start_col.saturating_sub(1), at(end_line) + end_col)
+    pub fn sourcepos(
+        &self,
+        (start_line, start_col): (usize, usize),
+        (end_line, end_col): (usize, usize),
+    ) -> Span {
+        let at = |line: usize| {
+            self.line_starts
+                .get(line.saturating_sub(1))
+                .copied()
+                .unwrap_or(self.len())
+        };
+        self.span(
+            at(start_line) + start_col.saturating_sub(1),
+            at(end_line) + end_col,
+        )
     }
 
     /// The first byte of `line` (1-based), or the end of the text past the last line.
     pub fn line_start(&self, line: u32) -> usize {
-        self.line_starts.get((line as usize).saturating_sub(1)).copied().unwrap_or(self.len())
+        self.line_starts
+            .get((line as usize).saturating_sub(1))
+            .copied()
+            .unwrap_or(self.len())
     }
 
     pub fn byte_to_scalar(&self, byte: usize) -> usize {
@@ -90,11 +112,13 @@ impl Offsets {
     }
 
     pub fn scalar_to_utf16(&self, scalar: usize) -> usize {
-        self.rope.char_to_utf16_cu(scalar.min(self.rope.len_chars()))
+        self.rope
+            .char_to_utf16_cu(scalar.min(self.rope.len_chars()))
     }
 
     pub fn utf16_to_scalar(&self, unit: usize) -> usize {
-        self.rope.utf16_cu_to_char(unit.min(self.rope.len_utf16_cu()))
+        self.rope
+            .utf16_cu_to_char(unit.min(self.rope.len_utf16_cu()))
     }
 }
 
@@ -156,7 +180,14 @@ mod tests {
         assert_eq!(o.scalar_to_byte(99), 5);
         assert_eq!(o.byte_to_utf16(99), 3);
         assert_eq!(o.utf16_to_byte(99), 5);
-        assert_eq!(o.span(3, 99), Span { start: 3, end: 5, line: 1 });
+        assert_eq!(
+            o.span(3, 99),
+            Span {
+                start: 3,
+                end: 5,
+                line: 1
+            }
+        );
     }
 
     #[test]
@@ -191,8 +222,24 @@ mod tests {
     #[test]
     fn spans_slice_safely() {
         let text = "a😀b";
-        assert_eq!(Span { start: 1, end: 5, line: 1 }.slice(text), "😀");
+        assert_eq!(
+            Span {
+                start: 1,
+                end: 5,
+                line: 1
+            }
+            .slice(text),
+            "😀"
+        );
         // Not on character boundaries: no panic, no text.
-        assert_eq!(Span { start: 2, end: 4, line: 1 }.slice(text), "");
+        assert_eq!(
+            Span {
+                start: 2,
+                end: 4,
+                line: 1
+            }
+            .slice(text),
+            ""
+        );
     }
 }

@@ -7,7 +7,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
-static NOTE_ID: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^vf_[0-9A-HJKMNP-TV-Z]{26}$").unwrap());
+static NOTE_ID: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^vf_[0-9A-HJKMNP-TV-Z]{26}$").unwrap());
 
 /// Whether `id` has the form Theorem gives ids (`vf_` and a ULID). Only those are honoured from a note's
 /// `theorem-id` property.
@@ -36,19 +37,28 @@ impl IdStore {
     /// well-formed id, or repeats an id already taken by an earlier path, is dropped.
     pub fn load(root: &Path) -> Result<Self> {
         let file = root.join(Self::FILE);
-        let mut store = Self { file, by_path: BTreeMap::new(), by_id: HashMap::new(), dirty: false };
+        let mut store = Self {
+            file,
+            by_path: BTreeMap::new(),
+            by_id: HashMap::new(),
+            dirty: false,
+        };
         let text = match std::fs::read_to_string(&store.file) {
             Ok(text) => text,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(store),
             Err(e) => return Err(e).with_context(|| format!("reading {}", store.file.display())),
         };
-        let Value::Object(entries) = serde_json::from_str(&text).with_context(|| format!("{} is not valid JSON", store.file.display()))?
+        let Value::Object(entries) = serde_json::from_str(&text)
+            .with_context(|| format!("{} is not valid JSON", store.file.display()))?
         else {
             bail!("{} is not a map of paths to ids", store.file.display());
         };
         let sorted: BTreeMap<_, _> = entries.into_iter().collect();
         for (path, id) in sorted {
-            if let Some(id) = id.as_str().filter(|id| is_note_id(id) && !store.by_id.contains_key(*id)) {
+            if let Some(id) = id
+                .as_str()
+                .filter(|id| is_note_id(id) && !store.by_id.contains_key(*id))
+            {
                 store.assign(&path, id.to_string());
             }
         }
@@ -124,7 +134,8 @@ impl IdStore {
         let mut temp = tempfile::NamedTempFile::new_in(dir)?;
         temp.write_all(json.as_bytes())?;
         temp.as_file().sync_all()?;
-        temp.persist(&self.file).with_context(|| format!("replacing {}", self.file.display()))?;
+        temp.persist(&self.file)
+            .with_context(|| format!("replacing {}", self.file.display()))?;
         self.dirty = false;
         Ok(())
     }
@@ -150,7 +161,16 @@ mod tests {
     #[test]
     fn ids_are_vf_and_a_ulid() {
         assert!(is_note_id(A));
-        for bad in ["", "vf_", "abc", "vf_01J9ZK3Q4M5N6P7R8S9T0V1W2", "vf_01J9ZK3Q4M5N6P7R8S9T0V1W2XX", "vf_01J9ZK3Q4M5N6P7R8S9T0V1W2U", "vf_01j9zk3q4m5n6p7r8s9t0v1w2x", "ws_01J9ZK3Q4M5N6P7R8S9T0V1W2X"] {
+        for bad in [
+            "",
+            "vf_",
+            "abc",
+            "vf_01J9ZK3Q4M5N6P7R8S9T0V1W2",
+            "vf_01J9ZK3Q4M5N6P7R8S9T0V1W2XX",
+            "vf_01J9ZK3Q4M5N6P7R8S9T0V1W2U",
+            "vf_01j9zk3q4m5n6p7r8s9t0v1w2x",
+            "ws_01J9ZK3Q4M5N6P7R8S9T0V1W2X",
+        ] {
             assert!(!is_note_id(bad), "{bad}");
         }
         assert!(is_note_id(&new_id()));
@@ -224,9 +244,15 @@ mod tests {
         store.save().unwrap();
         assert!(!store.is_dirty());
         let text = std::fs::read_to_string(dir.path().join(IdStore::FILE)).unwrap();
-        assert_eq!(text, format!("{{\n  \"a/One.md\": \"{A}\",\n  \"b/Two.md\": \"{B}\"\n}}\n"));
+        assert_eq!(
+            text,
+            format!("{{\n  \"a/One.md\": \"{A}\",\n  \"b/Two.md\": \"{B}\"\n}}\n")
+        );
         // No temporary file is left beside it.
-        let names: Vec<_> = std::fs::read_dir(dir.path().join(".theorem")).unwrap().map(|e| e.unwrap().file_name()).collect();
+        let names: Vec<_> = std::fs::read_dir(dir.path().join(".theorem"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
         assert_eq!(names, ["ids.json"]);
 
         let again = IdStore::load(dir.path()).unwrap();

@@ -25,7 +25,9 @@ impl FileKind {
     /// file is taken for video.
     pub fn of(path: &str) -> Self {
         let name = path.rsplit('/').next().unwrap_or(path);
-        let Some((_, ext)) = name.rsplit_once('.') else { return Self::Other };
+        let Some((_, ext)) = name.rsplit_once('.') else {
+            return Self::Other;
+        };
         match ext.to_ascii_lowercase().as_str() {
             "md" => Self::Note,
             "canvas" => Self::Canvas,
@@ -50,7 +52,10 @@ pub enum Target {
     File(String),
     /// Names no file. Links that name the same thing share a `key`, which ignores case but not folders:
     /// `a/Note` and `b/Note` are two targets, `a/Note` and `A/NOTE` one.
-    Unresolved { key: String, name: String },
+    Unresolved {
+        key: String,
+        name: String,
+    },
 }
 
 /// The key a link and the file it resolves to share: the base name, lowercased, without `.md`.
@@ -61,7 +66,11 @@ pub fn name_key(path: &str) -> String {
 
 /// The path without a trailing `.md`, in any case.
 pub fn stem(path: &str) -> &str {
-    match path.len().checked_sub(3).and_then(|i| path.split_at_checked(i)) {
+    match path
+        .len()
+        .checked_sub(3)
+        .and_then(|i| path.split_at_checked(i))
+    {
         Some((head, ext)) if ext.eq_ignore_ascii_case(".md") => head,
         _ => path,
     }
@@ -106,7 +115,10 @@ fn by_shortest_path(a: &&str, b: &&str) -> Ordering {
 }
 
 fn ends_with_path(file: &str, tail: &str) -> bool {
-    file == tail || file.strip_suffix(tail).is_some_and(|head| head.ends_with('/'))
+    file == tail
+        || file
+            .strip_suffix(tail)
+            .is_some_and(|head| head.ends_with('/'))
 }
 
 /// The files of a vault, found by name. Hidden folders (`.obsidian`, `.theorem`) are not part of it;
@@ -132,7 +144,9 @@ impl FileIndex {
 
     pub fn remove(&mut self, path: &str) -> bool {
         let key = name_key(path);
-        let Some(files) = self.named.get_mut(&key) else { return false };
+        let Some(files) = self.named.get_mut(&key) else {
+            return false;
+        };
         let removed = files.remove(path);
         if files.is_empty() {
             self.named.remove(&key);
@@ -141,7 +155,8 @@ impl FileIndex {
     }
 
     pub fn contains(&self, path: &str) -> bool {
-        self.files_named(&name_key(path)).is_some_and(|files| files.contains(path))
+        self.files_named(&name_key(path))
+            .is_some_and(|files| files.contains(path))
     }
 
     /// Every path, in no particular order.
@@ -151,7 +166,10 @@ impl FileIndex {
 
     /// The files whose name key is `key`, in path order.
     pub fn named<'a>(&'a self, key: &str) -> impl Iterator<Item = &'a str> + use<'a> {
-        self.files_named(key).into_iter().flatten().map(String::as_str)
+        self.files_named(key)
+            .into_iter()
+            .flatten()
+            .map(String::as_str)
     }
 
     fn files_named(&self, key: &str) -> Option<&BTreeSet<String>> {
@@ -161,7 +179,10 @@ impl FileIndex {
     // The file at `path` or `path.md`, matching case exactly.
     fn exactly(&self, path: &str) -> Option<&str> {
         let files = self.files_named(&name_key(path))?;
-        files.get(path).or_else(|| files.get(&format!("{path}.md"))).map(String::as_str)
+        files
+            .get(path)
+            .or_else(|| files.get(&format!("{path}.md")))
+            .map(String::as_str)
     }
 
     // The shortest-path file whose path ends with `target`'s segments; case-sensitive matches before
@@ -169,10 +190,14 @@ impl FileIndex {
     fn by_suffix(&self, target: &str) -> Option<&str> {
         let want = stem(target);
         let files = || self.named(&name_key(target));
-        let mut pool: Vec<&str> = files().filter(|file| ends_with_path(stem(file), want)).collect();
+        let mut pool: Vec<&str> = files()
+            .filter(|file| ends_with_path(stem(file), want))
+            .collect();
         if pool.is_empty() {
             let want = want.to_lowercase();
-            pool = files().filter(|file| ends_with_path(&stem(file).to_lowercase(), &want)).collect();
+            pool = files()
+                .filter(|file| ends_with_path(&stem(file).to_lowercase(), &want))
+                .collect();
         }
         pool.into_iter().min_by(by_shortest_path)
     }
@@ -180,7 +205,8 @@ impl FileIndex {
     // The file at `path` or `path.md`, ignoring case.
     fn ignoring_case(&self, path: &str) -> Option<&str> {
         let want = stem(path).to_lowercase();
-        self.named(&name_key(path)).find(|file| stem(file).to_lowercase() == want)
+        self.named(&name_key(path))
+            .find(|file| stem(file).to_lowercase() == want)
     }
 
     /// The file `target` (without `#heading` or `#^block`) names in the note `from`, or None.
@@ -210,7 +236,8 @@ impl FileIndex {
             }
         }
         let vault_path = normalize(target.trim_start_matches('/'))?;
-        self.exactly(&vault_path).or_else(|| self.by_suffix(&vault_path))
+        self.exactly(&vault_path)
+            .or_else(|| self.by_suffix(&vault_path))
     }
 
     /// What `link`, written in the note `from`, points at. A link with no target (`[[#Heading]]`) points
@@ -222,7 +249,10 @@ impl FileIndex {
         }
         match self.resolve(name, from, link.syntax) {
             Some(path) => Target::File(path.to_string()),
-            None => Target::Unresolved { key: unresolved_key(name, from, link.syntax), name: name.to_string() },
+            None => Target::Unresolved {
+                key: unresolved_key(name, from, link.syntax),
+                name: name.to_string(),
+            },
         }
     }
 
@@ -230,7 +260,11 @@ impl FileIndex {
     /// the fewest trailing folders no other file shares. Notes leave out `.md`; other files keep their
     /// extension.
     pub fn shortest_name(&self, path: &str) -> String {
-        let shown = if FileKind::of(path) == FileKind::Note { stem(path) } else { path };
+        let shown = if FileKind::of(path) == FileKind::Note {
+            stem(path)
+        } else {
+            path
+        };
         let segments: Vec<&str> = shown.split('/').collect();
         let key = name_key(path);
         for take in 1..=segments.len() {
@@ -253,32 +287,48 @@ impl FileIndex {
     pub fn free_path(&self, wanted: &str) -> String {
         let taken = |candidate: &str| {
             let lower = candidate.to_lowercase();
-            self.named(&name_key(candidate)).any(|file| file.to_lowercase() == lower)
+            self.named(&name_key(candidate))
+                .any(|file| file.to_lowercase() == lower)
         };
         if !taken(wanted) {
             return wanted.to_string();
         }
         let (stem, ext) = match wanted.rsplit_once('.') {
-            Some((stem, ext)) if !stem.ends_with('/') && !ext.contains('/') && !stem.is_empty() => (stem, format!(".{ext}")),
+            Some((stem, ext)) if !stem.ends_with('/') && !ext.contains('/') && !stem.is_empty() => {
+                (stem, format!(".{ext}"))
+            }
             _ => (wanted, String::new()),
         };
-        (1..).map(|n| format!("{stem} {n}{ext}")).find(|candidate| !taken(candidate)).expect("an unbounded range")
+        (1..)
+            .map(|n| format!("{stem} {n}{ext}"))
+            .find(|candidate| !taken(candidate))
+            .expect("an unbounded range")
     }
 }
 
 // Unresolved links share a node by what they name, compared without case. Relative destinations are
 // first made vault paths, since the same text names different files from different folders.
 fn unresolved_key(name: &str, from: &str, syntax: LinkSyntax) -> String {
-    let relative = !name.starts_with('/') && (syntax == LinkSyntax::Markdown || is_explicitly_relative(name));
-    let named = if relative { join_relative(from, name) } else { None };
+    let relative =
+        !name.starts_with('/') && (syntax == LinkSyntax::Markdown || is_explicitly_relative(name));
+    let named = if relative {
+        join_relative(from, name)
+    } else {
+        None
+    };
     named.as_deref().unwrap_or(name).to_lowercase()
 }
 
 // Obsidian matches headings, and writes them into links, with these replaced by spaces.
-static UNSAFE_IN_LINKS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%%|\[\[|\]\]|[:#|^\\]").unwrap());
+static UNSAFE_IN_LINKS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"%%|\[\[|\]\]|[:#|^\\]").unwrap());
 
 fn link_safe_heading(text: &str) -> String {
-    UNSAFE_IN_LINKS.replace_all(text, " ").split_whitespace().collect::<Vec<_>>().join(" ")
+    UNSAFE_IN_LINKS
+        .replace_all(text, " ")
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// How a heading is compared: unsafe link characters as spaces, spacing collapsed, case ignored.
@@ -297,7 +347,11 @@ pub fn heading_fragment(text: &str) -> String {
 /// is the heading B inside the section of A; failing that, the last part alone, anywhere.
 pub fn locate(note: &Note, fragment: &Fragment) -> Option<Span> {
     match fragment {
-        Fragment::Block(id) => note.blocks.iter().find(|b| b.id.eq_ignore_ascii_case(id)).map(|b| b.span),
+        Fragment::Block(id) => note
+            .blocks
+            .iter()
+            .find(|b| b.id.eq_ignore_ascii_case(id))
+            .map(|b| b.span),
         Fragment::Heading(path) => {
             let by_key = |key: &str| {
                 let found = note.headings.iter().find(|h| heading_key(&h.text) == key);
@@ -305,7 +359,11 @@ pub fn locate(note: &Note, fragment: &Fragment) -> Option<Span> {
             };
             by_key(&heading_key(path))
                 .or_else(|| in_sections(note, path))
-                .or_else(|| path.rsplit('#').next().and_then(|last| by_key(&heading_key(last))))
+                .or_else(|| {
+                    path.rsplit('#')
+                        .next()
+                        .and_then(|last| by_key(&heading_key(last)))
+                })
         }
     }
 }
@@ -316,10 +374,16 @@ fn in_sections(note: &Note, path: &str) -> Option<Span> {
     let headings = &note.headings;
     let (mut from, mut limit) = (0, headings.len());
     let mut found = None;
-    for part in path.split('#').map(heading_key).filter(|part| !part.is_empty()) {
+    for part in path
+        .split('#')
+        .map(heading_key)
+        .filter(|part| !part.is_empty())
+    {
         let at = (from..limit).find(|&i| heading_key(&headings[i].text) == part)?;
         let level = headings[at].level;
-        limit = (at + 1..limit).find(|&i| headings[i].level <= level).unwrap_or(limit);
+        limit = (at + 1..limit)
+            .find(|&i| headings[i].level <= level)
+            .unwrap_or(limit);
         from = at + 1;
         found = Some(headings[at].span);
     }
@@ -358,9 +422,18 @@ mod tests {
     #[test]
     fn a_path_picks_among_files_with_the_same_name() {
         let v = vault();
-        assert_eq!(wiki(&v, "archive/Ideas", "notes/Plan.md"), Some("archive/Ideas.md"));
-        assert_eq!(wiki(&v, "alpha/Deep", "Ideas.md"), Some("projects/alpha/Deep.md"));
-        assert_eq!(wiki(&v, "projects/alpha/Deep.md", "Ideas.md"), Some("projects/alpha/Deep.md"));
+        assert_eq!(
+            wiki(&v, "archive/Ideas", "notes/Plan.md"),
+            Some("archive/Ideas.md")
+        );
+        assert_eq!(
+            wiki(&v, "alpha/Deep", "Ideas.md"),
+            Some("projects/alpha/Deep.md")
+        );
+        assert_eq!(
+            wiki(&v, "projects/alpha/Deep.md", "Ideas.md"),
+            Some("projects/alpha/Deep.md")
+        );
     }
 
     #[test]
@@ -370,30 +443,54 @@ mod tests {
         assert_eq!(wiki(&v, "Note", "x.md"), Some("a/Note.md"));
         assert_eq!(wiki(&v, "NOTE", "x.md"), Some("a/Note.md"));
         assert_eq!(wiki(&v, "ideas", "x.md"), Some("Ideas.md"));
-        assert_eq!(wiki(&vault(), "NOTES/plan.md", "x.md"), Some("notes/Plan.md"));
+        assert_eq!(
+            wiki(&vault(), "NOTES/plan.md", "x.md"),
+            Some("notes/Plan.md")
+        );
     }
 
     #[test]
     fn relative_and_absolute_targets() {
         let v = vault();
-        assert_eq!(wiki(&v, "./sub/Deep", "notes/Plan.md"), Some("notes/sub/Deep.md"));
-        assert_eq!(v.resolve("../specs/My Spec.md", "notes/Plan.md", LinkSyntax::Markdown), Some("specs/My Spec.md"));
+        assert_eq!(
+            wiki(&v, "./sub/Deep", "notes/Plan.md"),
+            Some("notes/sub/Deep.md")
+        );
+        assert_eq!(
+            v.resolve("../specs/My Spec.md", "notes/Plan.md", LinkSyntax::Markdown),
+            Some("specs/My Spec.md")
+        );
         assert_eq!(wiki(&v, "/Ideas", "archive/x.md"), Some("Ideas.md"));
-        assert_eq!(v.resolve("../../outside.md", "notes/Plan.md", LinkSyntax::Markdown), None);
+        assert_eq!(
+            v.resolve("../../outside.md", "notes/Plan.md", LinkSyntax::Markdown),
+            None
+        );
         // An explicit relative path ignores case only against the folder it names.
-        assert_eq!(wiki(&v, "./SUB/deep", "notes/Plan.md"), Some("notes/sub/Deep.md"));
+        assert_eq!(
+            wiki(&v, "./SUB/deep", "notes/Plan.md"),
+            Some("notes/sub/Deep.md")
+        );
         assert_eq!(wiki(&v, "../Ideas", "notes/Plan.md"), Some("Ideas.md"));
     }
 
     #[test]
     fn markdown_destinations_are_relative_to_the_note_first() {
         let v = FileIndex::new(["Ideas.md", "notes/Ideas.md"]);
-        assert_eq!(v.resolve("Ideas.md", "notes/Plan.md", LinkSyntax::Markdown), Some("notes/Ideas.md"));
-        assert_eq!(v.resolve("Ideas.md", "Plan.md", LinkSyntax::Markdown), Some("Ideas.md"));
+        assert_eq!(
+            v.resolve("Ideas.md", "notes/Plan.md", LinkSyntax::Markdown),
+            Some("notes/Ideas.md")
+        );
+        assert_eq!(
+            v.resolve("Ideas.md", "Plan.md", LinkSyntax::Markdown),
+            Some("Ideas.md")
+        );
         // A wikilink is not relative: the shortest path wins.
         assert_eq!(wiki(&v, "Ideas", "notes/Plan.md"), Some("Ideas.md"));
         // A Markdown destination that is not under the note's folder falls back to the vault path.
-        assert_eq!(v.resolve("notes/Ideas.md", "other/Plan.md", LinkSyntax::Markdown), Some("notes/Ideas.md"));
+        assert_eq!(
+            v.resolve("notes/Ideas.md", "other/Plan.md", LinkSyntax::Markdown),
+            Some("notes/Ideas.md")
+        );
     }
 
     #[test]
@@ -411,20 +508,35 @@ mod tests {
     #[test]
     fn a_path_target_names_one_file_exactly() {
         let v = vault();
-        assert_eq!(v.resolve("notes/Plan.md", "x.canvas", LinkSyntax::Path), Some("notes/Plan.md"));
+        assert_eq!(
+            v.resolve("notes/Plan.md", "x.canvas", LinkSyntax::Path),
+            Some("notes/Plan.md")
+        );
         assert_eq!(v.resolve("Plan.md", "x.canvas", LinkSyntax::Path), None);
-        assert_eq!(v.resolve("notes/plan.md", "x.canvas", LinkSyntax::Path), None);
-        assert_eq!(v.resolve("img/diagram.png", "x.canvas", LinkSyntax::Path), Some("img/diagram.png"));
+        assert_eq!(
+            v.resolve("notes/plan.md", "x.canvas", LinkSyntax::Path),
+            None
+        );
+        assert_eq!(
+            v.resolve("img/diagram.png", "x.canvas", LinkSyntax::Path),
+            Some("img/diagram.png")
+        );
     }
 
     #[test]
     fn a_link_to_a_heading_of_the_same_note_points_at_that_note() {
         let v = vault();
         let note = parse_note("[[#Later]] [[Nowhere]]");
-        assert_eq!(v.target_of("Ideas.md", &note.links[0]), Target::File("Ideas.md".into()));
+        assert_eq!(
+            v.target_of("Ideas.md", &note.links[0]),
+            Target::File("Ideas.md".into())
+        );
         assert_eq!(
             v.target_of("Ideas.md", &note.links[1]),
-            Target::Unresolved { key: "nowhere".into(), name: "Nowhere".into() }
+            Target::Unresolved {
+                key: "nowhere".into(),
+                name: "Nowhere".into()
+            }
         );
     }
 
@@ -470,22 +582,41 @@ mod tests {
         // Same depth, so the shorter path wins.
         assert_eq!(wiki(&v, "Ideas", "x.md"), Some("moved/Ideas.md"));
         assert_eq!(v.paths().count(), 7);
-        assert_eq!(v.named("ideas").collect::<Vec<_>>(), ["archive/Ideas.md", "moved/Ideas.md"]);
+        assert_eq!(
+            v.named("ideas").collect::<Vec<_>>(),
+            ["archive/Ideas.md", "moved/Ideas.md"]
+        );
     }
 
     #[test]
     fn file_kinds_follow_the_extension() {
-        let kinds: Vec<_> = ["a.md", "a.MD", "b.canvas", "c.base", "d.PNG", "e.mp3", "f.mp4", "g.webm", "h.pdf", "i.txt", "j", "dir.v2/k"]
-            .map(FileKind::of)
-            .into();
+        let kinds: Vec<_> = [
+            "a.md", "a.MD", "b.canvas", "c.base", "d.PNG", "e.mp3", "f.mp4", "g.webm", "h.pdf",
+            "i.txt", "j", "dir.v2/k",
+        ]
+        .map(FileKind::of)
+        .into();
         use FileKind::*;
-        assert_eq!(kinds, [Note, Note, Canvas, Base, Image, Audio, Video, Video, Pdf, Other, Other, Other]);
+        assert_eq!(
+            kinds,
+            [
+                Note, Note, Canvas, Base, Image, Audio, Video, Video, Pdf, Other, Other, Other
+            ]
+        );
         assert!(Image.is_attachment() && !Note.is_attachment());
     }
 
     #[test]
     fn a_new_link_names_a_file_as_short_as_stays_unambiguous() {
-        let v = FileIndex::new(["Ideas.md", "archive/Ideas.md", "x/y/Note.md", "z/Note.md", "Solo.md", "img/diagram.png", "img/a/diagram.png"]);
+        let v = FileIndex::new([
+            "Ideas.md",
+            "archive/Ideas.md",
+            "x/y/Note.md",
+            "z/Note.md",
+            "Solo.md",
+            "img/diagram.png",
+            "img/a/diagram.png",
+        ]);
         assert_eq!(v.shortest_name("Solo.md"), "Solo");
         assert_eq!(v.shortest_name("Ideas.md"), "Ideas");
         assert_eq!(v.shortest_name("archive/Ideas.md"), "archive/Ideas");
@@ -516,7 +647,10 @@ mod tests {
         assert_eq!(normalize("a/.."), None);
         assert_eq!(normalize("../a"), None);
         assert_eq!(normalize(""), None);
-        assert_eq!(join_relative("notes/Plan.md", "../Ideas.md"), Some("Ideas.md".into()));
+        assert_eq!(
+            join_relative("notes/Plan.md", "../Ideas.md"),
+            Some("Ideas.md".into())
+        );
         assert_eq!(join_relative("Plan.md", "./x"), Some("x".into()));
         assert_eq!(join_relative("Plan.md", "../x"), None);
     }
@@ -538,18 +672,30 @@ mod tests {
         assert_eq!(at(heading("C# basics")).as_deref(), Some("## C# basics"));
         assert_eq!(at(heading("basics")).as_deref(), Some("## basics"));
         // Neither is mistaken for the other, and case and spacing do not matter.
-        assert_eq!(at(heading("  c#   BASICS ")).as_deref(), Some("## C# basics"));
+        assert_eq!(
+            at(heading("  c#   BASICS ")).as_deref(),
+            Some("## C# basics")
+        );
     }
 
     #[test]
     fn nested_headings_are_found_inside_their_sections() {
-        assert_eq!(at(heading("Part A#Setup#Detail")).as_deref(), Some("### Detail"));
+        assert_eq!(
+            at(heading("Part A#Setup#Detail")).as_deref(),
+            Some("### Detail")
+        );
         assert_eq!(at(heading("Part B#Setup")).as_deref(), Some("## Setup"));
         let note = parse_note(NOTE);
         let b = locate(&note, &heading("Part B#Setup")).unwrap();
         let a = locate(&note, &heading("Part A#Setup")).unwrap();
-        assert!(b.start > a.start, "the Setup under Part B is not the one under Part A");
-        assert_eq!(at(heading("Part B#Setup#Other")).as_deref(), Some("### Other"));
+        assert!(
+            b.start > a.start,
+            "the Setup under Part B is not the one under Part A"
+        );
+        assert_eq!(
+            at(heading("Part B#Setup#Other")).as_deref(),
+            Some("### Other")
+        );
     }
 
     #[test]
@@ -565,7 +711,10 @@ mod tests {
     fn headings_compare_without_the_characters_a_link_cannot_hold() {
         assert_eq!(heading_key("Why: a | b ^ c %% [[d]]"), "why a b c d");
         assert_eq!(heading_fragment("Why: a  |  b"), "Why a b");
-        assert_eq!(at(heading("Bold **and** `code`")).as_deref(), Some("## Bold **and** `code`"));
+        assert_eq!(
+            at(heading("Bold **and** `code`")).as_deref(),
+            Some("## Bold **and** `code`")
+        );
         let note = parse_note("## Why: this\n");
         assert!(locate(&note, &heading("Why this")).is_some());
         assert!(locate(&note, &heading("Why: this")).is_some());
@@ -573,8 +722,14 @@ mod tests {
 
     #[test]
     fn blocks_are_found_by_id() {
-        assert_eq!(at(Fragment::Block("two".into())).as_deref(), Some("Two. ^two"));
-        assert_eq!(at(Fragment::Block("TWO".into())).as_deref(), Some("Two. ^two"));
+        assert_eq!(
+            at(Fragment::Block("two".into())).as_deref(),
+            Some("Two. ^two")
+        );
+        assert_eq!(
+            at(Fragment::Block("TWO".into())).as_deref(),
+            Some("Two. ^two")
+        );
         assert_eq!(at(Fragment::Block("nope".into())), None);
     }
 }
