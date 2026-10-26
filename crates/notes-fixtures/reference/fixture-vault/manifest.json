@@ -1,0 +1,154 @@
+{
+  "obsidian_version": "1.14.5",
+  "version_output": "1.14.5 (installer 1.14.5)",
+  "harness": "notes-fixtures 0.1.0",
+  "vault": "crates/notes-fixtures/vault",
+  "isolation": {
+    "app": "/Applications/Obsidian.app",
+    "home": "__home__",
+    "user_data_dir": "__profile__",
+    "vault_copy": "__vault__",
+    "sandboxed": true
+  },
+  "groups": [
+    "vault",
+    "links",
+    "outline",
+    "properties",
+    "tags",
+    "tasks",
+    "search",
+    "bases",
+    "wordcount",
+    "eval",
+    "dom"
+  ],
+  "skipped_groups": [],
+  "commands": 940,
+  "dom_attempts": {
+    "Dead End.md": 3,
+    "Home.md": 3,
+    "Orphan.md": 3,
+    "Unicode é 日本.md": 3,
+    "a/Links From A.md": 3,
+    "a/Note.md": 3,
+    "b/Links From B.md": 3,
+    "b/Note.md": 3,
+    "callouts/All Callouts.md": 3,
+    "callouts/Callout Titles and Folding.md": 3,
+    "callouts/Custom Callout.md": 3,
+    "callouts/Nested Callouts.md": 3,
+    "daily/2026-10-23.md": 3,
+    "daily/2026-10-24.md": 3,
+    "daily/2026-10-25.md": 3,
+    "dataview/Dataview Fields.md": 3,
+    "embeds/Embed Canvas and Base.md": 3,
+    "embeds/Embed Images.md": 3,
+    "embeds/Embed Media.md": 4,
+    "embeds/Embed Notes.md": 3,
+    "embeds/Embed Query.md": 3,
+    "embeds/Loop A.md": 3,
+    "embeds/Loop B.md": 3,
+    "excluded/Hidden Note.md": 3,
+    "inbox/Inbox.md": 3,
+    "links/Aliases.md": 3,
+    "links/Blocks Target.md": 3,
+    "links/Headings Target.md": 3,
+    "links/Link Forms.md": 3,
+    "links/Markdown Links.md": 3,
+    "links/Mentions.md": 3,
+    "links/Unresolved Links.md": 3,
+    "projects/Project Alpha.md": 3,
+    "projects/Project Beta.md": 3,
+    "projects/Project Delta.md": 3,
+    "projects/Project Gamma.md": 3,
+    "properties/Aliases and Cssclasses.md": 3,
+    "properties/All Property Types.md": 3,
+    "properties/Broken Frontmatter.md": 3,
+    "properties/Empty Frontmatter.md": 3,
+    "properties/Frontmatter Only.md": 3,
+    "properties/Link Properties.md": 3,
+    "properties/Type Mismatch.md": 3,
+    "review/Heading With Hash.md": 3,
+    "review/Missing Note Creation.md": 3,
+    "search/Case Sensitivity.md": 3,
+    "search/Search Corpus.md": 3,
+    "slides/Deck.md": 3,
+    "syntax/Bidirectional Text.md": 3,
+    "syntax/Byte Order Mark.md": 3,
+    "syntax/Code Blocks.md": 3,
+    "syntax/Comments and Highlights.md": 3,
+    "syntax/Folding and Lists.md": 3,
+    "syntax/Footnotes.md": 3,
+    "syntax/Inline Formatting.md": 3,
+    "syntax/Line Endings.md": 3,
+    "syntax/Math.md": 3,
+    "syntax/Mermaid.md": 3,
+    "syntax/Raw HTML.md": 3,
+    "syntax/Tables.md": 3,
+    "tagging/Frontmatter Tags.md": 3,
+    "tagging/Tags As Text.md": 3,
+    "tagging/Tags.md": 3,
+    "tagging/Unicode Tags.md": 3,
+    "tasks/Task Statuses.md": 3,
+    "templates/Daily.md": 3,
+    "templates/Meeting.md": 3,
+    "weekly/2026-W43.md": 3
+  },
+  "notes": 68,
+  "canvases": 4,
+  "bases": 3,
+  "files_only_on_disk": [],
+  "files_only_in_obsidian": [],
+  "stalled": [
+    {
+      "group": "tasks",
+      "call": "tasks status=< format=json",
+      "error": "no answer within 20s; killed"
+    },
+    {
+      "group": "dom",
+      "call": "dev:dom selector=\".workspace-leaf.mod-active .markdown-reading-view\"",
+      "error": "no answer within 20s; killed"
+    }
+  ],
+  "failed": [],
+  "known_gaps": [
+    {
+      "what": "graph view",
+      "why": "the CLI has no graph command; derive nodes and edges from eval's resolvedLinks and unresolvedLinks. Filters, groups, forces and the local graph are not queryable"
+    },
+    {
+      "what": "unlinked mentions",
+      "why": "backlinks documents linked backlinks only"
+    },
+    {
+      "what": "base views by file",
+      "why": "base:views lists the current base only, so view names are read from each .base file's YAML"
+    },
+    {
+      "what": "JSON output shapes",
+      "why": "the CLI page names the formats but not their fields; answers are normalized at recording time and parsed only as far as they are JSON"
+    },
+    {
+      "what": "canvas contents",
+      "why": "the CLI has no canvas command; canvases are covered by files, and by their links if resolvedLinks includes them"
+    },
+    {
+      "what": "search results view",
+      "why": "explain, collapse, sort order and copy are UI; only the matches come back"
+    },
+    {
+      "what": "Live Preview and Source mode",
+      "why": "only the reading view's DOM is captured"
+    },
+    {
+      "what": "reading view completeness",
+      "why": "Obsidian renders long notes lazily and embeds asynchronously and the CLI has no signal for done, so the DOM is read until it stops changing; content that appears only after a longer pause, or only on scrolling, is missed"
+    },
+    {
+      "what": "settings and plugin UI",
+      "why": "workspace, ribbon, status bar, hotkeys and settings are not in the DOM of a note"
+    }
+  ]
+}
