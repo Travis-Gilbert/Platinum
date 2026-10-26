@@ -1,0 +1,287 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Frame graph probe</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0d1117; color: #c9d1d9; font: 12px -apple-system, sans-serif; }
+  #graph { position: absolute; inset: 0; }
+  #log { position: absolute; left: 8px; top: 8px; z-index: 2; white-space: pre; pointer-events: none; }
+</style>
+<div id="graph"></div>
+<div id="log"></div>
+<script type="module">
+// Reports what a cosmos.gl graph needs from WebGL, then runs one.
+// ?lib=v2 loads cosmos.gl 2.6.4 (regl, WebGL1); ?lib=v3 loads 3.5.1 (luma.gl, WebGL2).
+const params = new URLSearchParams(location.search);
+const lib = params.get('lib') || 'v3';
+const N = Number(params.get('n') || 5000);
+const M = Number(params.get('m') || 10000);
+const out = { lib, points: N, links: M, ua: navigator.userAgent };
+const log = document.getElementById('log');
+const show = () => { log.textContent = JSON.stringify({ lib, ready: out.ready, error: out.cosmosError, fps: out.fps }, null, 1); };
+
+function glInfo(kind) {
+  const canvas = document.createElement('canvas');
+  let gl = null;
+  try { gl = canvas.getContext(kind); } catch (e) { return { error: String(e) }; }
+  if (!gl) return null;
+  const info = {
+    version: gl.getParameter(gl.VERSION),
+    renderer: gl.getParameter(gl.RENDERER),
+    maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+    extensions: gl.getSupportedExtensions(),
+  };
+  // cosmos.gl keeps positions and forces in float textures and renders into them.
+  const colorBufferFloat = kind === 'webgl2'
+    ? gl.getExtension('EXT_color_buffer_float')
+    : (gl.getExtension('OES_texture_float') && gl.getExtension('WEBGL_color_buffer_float'));
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  if (kind === 'webgl2') gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 4, 4, 0, gl.RGBA, gl.FLOAT, null);
+  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 4, 4, 0, gl.RGBA, gl.FLOAT, null);
+  const framebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  info.float32Renderable = {
+    extension: !!colorBufferFloat,
+    framebufferComplete: gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE,
+    glError: gl.getError(),
+  };
+  info.floatBlend = !!gl.getExtension('EXT_float_blend');
+  info.floatLinear = !!gl.getExtension('OES_texture_float_linear');
+  return info;
+}
+
+// cosmos.gl's pipeline in miniature: render into a float texture, add into it
+// with blending (the many-body force), then read it from a vertex shader
+// (point positions) and a fragment shader. Expect red 128 if float blending
+// applied and 64 if it was dropped; green 128 either way.
+function pipelineTest(kind, upload = false, filter = 'NEAREST') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64; canvas.height = 32;
+  canvas.style.cssText = 'position:absolute;right:' + (upload ? 144 : 8) + 'px;top:' + (kind === 'webgl2' ? 80 : 8) + 'px;width:128px;height:64px;z-index:3;image-rendering:pixelated';
+  document.body.appendChild(canvas);
+  const gl = canvas.getContext(kind, { preserveDrawingBuffer: true, antialias: false });
+  if (!gl) return null;
+  const r = { maxVertexTextureUnits: gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS) };
+  try {
+    if (kind === 'webgl2') r.colorBufferFloat = !!gl.getExtension('EXT_color_buffer_float');
+    else r.colorBufferFloat = !!(gl.getExtension('OES_texture_float') && gl.getExtension('WEBGL_color_buffer_float'));
+    r.floatBlendExtension = !!gl.getExtension('EXT_float_blend');
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    for (const p of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER]) gl.texParameteri(gl.TEXTURE_2D, p, gl[filter]);
+    for (const p of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T]) gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE);
+    // Uploading data is how cosmos.gl seeds point positions; null+clear is how it renders forces.
+    if (upload === 'storage') {
+      // luma.gl allocates immutable storage, then uploads into it.
+      gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32F, 1, 1);
+      r.storageError = gl.getError();
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 1, 1, gl.RGBA, gl.FLOAT, new Float32Array([0.5, 0.5, 0, 1]));
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, kind === 'webgl2' ? gl.RGBA32F : gl.RGBA, 1, 1, 0, gl.RGBA, gl.FLOAT, upload ? new Float32Array([0.5, 0.5, 0, 1]) : null);
+    }
+    r.uploadError = gl.getError();
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    r.renderTarget = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.viewport(0, 0, 1, 1);
+    if (!upload) { gl.clearColor(0.25, 0.5, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); }
+    const compile = (type, src) => {
+      const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+      return s;
+    };
+    const program = (vs, fs) => {
+      const p = gl.createProgram();
+      gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(p, 0, 'a'); gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+      return p;
+    };
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.useProgram(program('attribute vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }',
+      'precision highp float; void main(){ gl_FragColor = vec4(0.25, 0., 0., 0.); }'));
+    if (!upload) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      r.floatBlendDrawError = gl.getError();
+      gl.disable(gl.BLEND);
+    }
+    const f = new Float32Array(4);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, f);
+    r.floatReadback = Array.from(f);
+    r.floatReadbackError = gl.getError();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, 64, 32);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    const show = program(
+      'attribute vec2 a; uniform sampler2D t; uniform float side; varying vec4 v; void main(){ v = texture2D(t, vec2(0.5)); gl_Position = vec4(a.x * 0.5 + side * 0.5, a.y, 0., 1.); }',
+      'precision highp float; uniform sampler2D t; uniform float frag; varying vec4 v; void main(){ gl_FragColor = vec4(mix(v, texture2D(t, vec2(0.5)), frag).rgb, 1.); }');
+    gl.useProgram(show);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(gl.getUniformLocation(show, 't'), 0);
+    for (const [side, frag] of [[-1, 0], [1, 1]]) {
+      gl.uniform1f(gl.getUniformLocation(show, 'side'), side);
+      gl.uniform1f(gl.getUniformLocation(show, 'frag'), frag);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    const px = new Uint8Array(4);
+    gl.readPixels(16, 16, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    r.vertexFetch = Array.from(px);
+    gl.readPixels(48, 16, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    r.fragmentFetch = Array.from(px);
+    r.finalError = gl.getError();
+  } catch (e) {
+    r.error = String(e && e.message || e);
+  }
+  return r;
+}
+
+// cosmos.gl draws nodes as GL points and clamps their size to the reported range.
+function pointTest(kind) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32; canvas.height = 32;
+  const gl = canvas.getContext(kind, { preserveDrawingBuffer: true, antialias: false });
+  if (!gl) return null;
+  const r = { range: Array.from(gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || []), rangeError: gl.getError() };
+  const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, 'attribute vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); gl_PointSize = 16.; }'));
+  gl.attachShader(p, compile(gl.FRAGMENT_SHADER, 'precision mediump float; void main(){ gl_FragColor = vec4(1., 0., 0., 1.); }'));
+  gl.bindAttribLocation(p, 0, 'a'); gl.linkProgram(p); gl.useProgram(p);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.POINTS, 0, 1);
+  const px = new Uint8Array(4);
+  // The centre pixel is inside any visible point; 4px off-centre needs a size above 8.
+  gl.readPixels(16, 16, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); r.centre = Array.from(px);
+  gl.readPixels(20, 16, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); r.offCentre = Array.from(px);
+  r.error = gl.getError();
+  return r;
+}
+
+out.points1 = pointTest('webgl');
+out.points2 = pointTest('webgl2');
+out.webgl2 = glInfo('webgl2');
+out.webgl1 = glInfo('webgl');
+out.pipeline1 = pipelineTest('webgl');
+out.pipeline2 = pipelineTest('webgl2');
+out.upload1 = pipelineTest('webgl', true);
+out.upload1Linear = pipelineTest('webgl', true, 'LINEAR');
+out.upload2 = pipelineTest('webgl2', true);
+out.storage2 = pipelineTest('webgl2', 'storage');
+
+// ?pointfix=1 reports the WebGL1 point size range where WebGL2 reports [0, 0].
+if (params.get('pointfix') === '1' && self.WebGL2RenderingContext) {
+  const getParameter = WebGL2RenderingContext.prototype.getParameter;
+  WebGL2RenderingContext.prototype.getParameter = function (pname) {
+    const value = getParameter.call(this, pname);
+    if (pname === this.ALIASED_POINT_SIZE_RANGE && value && value[1] === 0) {
+      out.pointRangeOverrides = (out.pointRangeOverrides || 0) + 1;
+      return new Float32Array([1, 64]);
+    }
+    return value;
+  };
+}
+
+// ?nearest=1 tests the workaround: never ask for linear filtering.
+if (params.get('nearest') === '1') {
+  for (const proto of [WebGLRenderingContext.prototype, self.WebGL2RenderingContext && WebGL2RenderingContext.prototype].filter(Boolean)) {
+    const texParameteri = proto.texParameteri;
+    proto.texParameteri = function (target, pname, value) {
+      if ((pname === this.TEXTURE_MIN_FILTER || pname === this.TEXTURE_MAG_FILTER) && value !== this.NEAREST) {
+        value = this.NEAREST;
+        out.linearRequests = (out.linearRequests || 0) + 1;
+      }
+      return texParameteri.call(this, target, pname, value);
+    };
+  }
+}
+
+const url = lib === 'v2'
+  ? 'https://esm.sh/@cosmos.gl/graph@2.6.4?bundle'
+  : 'https://esm.sh/@cosmos.gl/graph@3.5.1?bundle&deps=@luma.gl/core@9.3.6,@luma.gl/engine@9.3.6,@luma.gl/webgl@9.3.6,@luma.gl/shadertools@9.3.6';
+out.moduleUrl = url;
+
+const errors = [];
+addEventListener('error', (event) => errors.push(String(event.message) + ' @ ' + event.filename + ':' + event.lineno + ':' + event.colno + (event.error && event.error.stack ? '\n' + event.error.stack : '')));
+addEventListener('unhandledrejection', (event) => errors.push(String(event.reason && (event.reason.stack || event.reason))));
+
+try {
+  const started = performance.now();
+  const { Graph } = await import(url);
+  out.importMs = Math.round(performance.now() - started);
+  const positions = new Float32Array(N * 2);
+  for (let i = 0; i < N * 2; i++) positions[i] = Math.random() * 4096;
+  const links = new Float32Array(M * 2);
+  for (let i = 0; i < M; i++) {
+    links[2 * i] = Math.floor(Math.random() * N);
+    links[2 * i + 1] = Math.floor(Math.random() * N);
+  }
+  const graph = new Graph(document.getElementById('graph'), {
+    spaceSize: 4096,
+    // Distinct from the page so the screenshot shows whether the canvas composites.
+    backgroundColor: '#1d2a3a',
+    // 3.x names, then the 2.x names for the same settings.
+    pointDefaultColor: '#e8973a',
+    linkDefaultColor: '#a05050',
+    pointDefaultSize: 6,
+    pointColor: '#e8973a',
+    linkColor: '#a05050',
+    pointSize: 6,
+    disableSimulation: params.get('sim') === '0',
+    enableSimulation: params.get('sim') !== '0',
+    simulationRepulsion: 2,
+    simulationLinkSpring: 0.3,
+    simulationGravity: 0.05,
+    // fitView reads point positions back from the GPU.
+    fitViewOnInit: params.get('fit') !== '0',
+    fitViewDelay: 300,
+  });
+  graph.setPointPositions(positions);
+  graph.setLinks(links);
+  graph.render();
+  if (graph.ready) {
+    await Promise.race([
+      graph.ready,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('graph.ready timed out')), 15000)),
+    ]);
+  }
+  out.ready = true;
+  // Screenshot once the view has fitted, before the layout settles.
+  setTimeout(() => { show(); console.log('FRAME_MEDIA_FRAME svg-initial'); }, 1500);
+  let frames = 0;
+  const count = () => { frames++; requestAnimationFrame(count); };
+  requestAnimationFrame(count);
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+  out.fps = Math.round(frames / 5);
+  try {
+    const now = graph.getPointPositions();
+    let moved = 0;
+    for (let i = 0; i < Math.min(now.length, 400); i++) if (Math.abs(now[i] - positions[i]) > 0.01) moved++;
+    out.positionsMovedOf400 = moved;
+    out.positionSample = Array.from(now.slice(0, 4), (v) => Math.round(v * 100) / 100);
+    out.initialSample = Array.from(positions.slice(0, 4), (v) => Math.round(v * 100) / 100);
+  } catch (e) { out.readbackError = String(e); }
+  try { out.progress = graph.progress; } catch (e) { /* optional */ }
+} catch (e) {
+  out.cosmosError = String(e && (e.stack || e.message) || e);
+}
+out.errors = errors.slice(0, 10);
+show();
+if (!out.ready) console.log('FRAME_MEDIA_FRAME svg-initial');
+setTimeout(() => {
+  out.passed = !!out.ready && !out.cosmosError;
+  console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out));
+}, 2500);
+</script>
