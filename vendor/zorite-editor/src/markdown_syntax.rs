@@ -2815,6 +2815,41 @@ mod tests {
         assert_eq!(disp, "Notes");
     }
 
+    // THEOREM PATCH: exercise the port through GPUI's rendered input handler.
+    #[gpui::test]
+    fn markdown_note_accepts_unicode_input(cx: &mut gpui::TestAppContext) {
+        use gpui::{AppContext as _, VisualTestContext};
+
+        let note =
+            "# Notes\n\n- First item\n- [[Linked note]]\n\nEmoji 😀, CJK 中文, combining e\u{301}";
+        cx.update(crate::bind_keys);
+        let window = cx.update(|cx| {
+            cx.open_window(Default::default(), |window, cx| {
+                cx.new(|cx| {
+                    let mut editor = crate::EditorState::new(window, cx).with_text(note);
+                    editor.set_markdown_style(test_style(), cx);
+                    editor.focus(window, cx);
+                    editor
+                })
+            })
+            .unwrap()
+        });
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        cx.update(|window, _| window.activate_window());
+        cx.run_until_parked();
+        window
+            .update(cx, |editor, _, _| assert_eq!(editor.text(), note))
+            .unwrap();
+
+        cx.simulate_keystrokes("ctrl-end a b c");
+        cx.simulate_input(" 日本語🙂a\u{308}");
+        window
+            .update(cx, |editor, _, _| {
+                assert_eq!(editor.text(), format!("{note}abc 日本語🙂a\u{308}"));
+            })
+            .unwrap();
+    }
+
     fn test_style() -> SyntaxStyle {
         let c = hsla(0., 0., 0.5, 1.);
         SyntaxStyle {

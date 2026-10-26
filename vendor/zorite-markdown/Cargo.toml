@@ -4,6 +4,7 @@ version = "0.10.0"
 edition = "2024"
 description = "A Markdown reading view for GPUI: wrapped text, clickable links and wiki-links, tables, alerts, images, and right-to-left text."
 license = "MIT"
+publish = false
 repository = "https://github.com/packetThrower/zorite"
 homepage = "https://packetthrower.github.io/zorite/reference/crates/zorite-markdown/"
 keywords = ["gpui", "markdown", "renderer", "wiki-links", "rtl"]
@@ -16,8 +17,8 @@ default = ["view"]
 view = ["dep:gpui", "dep:markdown", "dep:gpui-bidi"]
 
 [dependencies]
-# Shared workspace spec (the root pins the rev) so Cargo unifies to one gpui.
-gpui = { workspace = true, optional = true }
+# THEOREM PATCH: match Frame's patched GPUI snapshot.
+gpui = { package = "gpui-pre", version = "=0.3.9", optional = true }
 markdown = { version = "1", optional = true }
 
 # Logical-order line breaking for RTL paragraphs (#66). gpui wraps by
