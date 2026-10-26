@@ -387,7 +387,7 @@ fn split_fragment(s: &str) -> (&str, Option<&str>) {
     s.split_once('#').map_or((s, None), |(path, fragment)| (path, Some(fragment)))
 }
 
-fn fragment_of(s: impl AsRef<str>) -> Option<Fragment> {
+pub(crate) fn fragment_of(s: impl AsRef<str>) -> Option<Fragment> {
     let s = s.as_ref().trim();
     match s.strip_prefix('^') {
         Some(block) if !block.is_empty() => Some(Fragment::Block(block.to_string())),
@@ -406,11 +406,11 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
-    fn link<'a>(note: &'a Note, i: usize) -> &'a Link {
+    fn link(note: &Note, i: usize) -> &Link {
         &note.links[i]
     }
 
-    fn texts<'a>(src: &'a str, spans: impl IntoIterator<Item = Span>) -> Vec<&'a str> {
+    fn texts(src: &str, spans: impl IntoIterator<Item = Span>) -> Vec<&str> {
         spans.into_iter().map(|s| s.slice(src)).collect()
     }
 
