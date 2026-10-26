@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Prepares a Frame checkout to build.
 #
-# Frame's RustyWeb crates are path dependencies under deps/, a read-only
-# checkout of Theorem at a pinned commit of claude/rustyweb-synthesis-on-request,
-# which builds on codex/rustyweb-programmable-web-2.
+# Frame's RustyWeb and notes crates are path dependencies under deps/, a
+# read-only checkout of Theorem at a pinned commit of claude/notes-foundations,
+# which builds on claude/rustyweb-synthesis-on-request and
+# codex/rustyweb-programmable-web-2.
 # deps/ and the Cargo target directory can live on another disk: a Servo build
 # needs about 25 GB.
 #
@@ -13,8 +14,8 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="7ef4dfe0c20def5dbc91705f051a6a846946ec54"
-theorem_branch="claude/rustyweb-synthesis-on-request"
+theorem_rev="d7e322c3e985824528594a5347c26067254f59fb"
+theorem_branch="claude/notes-foundations"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"

@@ -187,6 +187,27 @@ these facts came from.
   merged and deployed, and Cloudflare's build of the merge commit failed.
   `commonplace-api` is retiring ("do not add capabilities here"), so it is not
   a route for remote vaults.
+- SDK+ ([theorem-sdk-foundation.md](theorem-sdk-foundation.md)) has since
+  folded the Files handler into `Travis-Gilbert/sdk-foundation-20261025`, a
+  locked Theorem worktree whose changes are all uncommitted on top of main
+  `8e151d5`, with its status file at `complete: false`. Its record, read on
+  2026-10-26, lists 22 Files operations (vault, entries, content read and
+  write, directories, moves, deletion, links, backlinks, graph, resolution,
+  search, tags, properties, settings read and write, events, suggestions and
+  decisions, promotion, OKF export and import), payloads owned by
+  `theorem-surface-contracts::files_api`, and candidate clients at
+  `0.6.0-alpha.1`: TypeScript from Fern 3.107.3, and a Rust crate
+  `theorem-sdk` (`packages/theorem-sdk-rust`, Progenitor 0.15.1,
+  `publish = false`), both generated from one OpenAPI file (schema digest
+  `c2e6c591`). It reports all 22 operations run against the shipping process
+  with MCP disabled, each client reading what the other wrote, and
+  acknowledged content, event positions and idempotent write receipts
+  surviving a SIGKILL. Nothing is pushed, published or deployed:
+  `localhost:3000/api/files/v1/vault` answers an HTML 404, and S1's inventory
+  gate still refuses 129 unresolved projections. The Rust crate pins
+  `futures = "=0.3.32"` and `reqwest = "=0.13.4"`, while Frame's lock has
+  0.3.34 and 0.13.5, so adding it as it stands holds Frame's whole graph at
+  the older versions, or fails to resolve if anything needs the newer ones.
 - cosmos.gl 3.5.1 (`@cosmos.gl/graph`) is MIT, renders through luma.gl 9.3.6
   on WebGL2, and is active (cosmograph-org/cosmos was pushed on 2026-10-23).
   Cosmograph 2.5.1 is CC-BY-NC-4.0, with a business license only on request
@@ -381,10 +402,11 @@ relative to its folder.
 
 **Remote vaults go through Theorem's Files API.** The remote RustyRed database
 is a Theorem vault behind Files API v1, reached with the SDK+ Rust client
-(SDK+ S1 to S3). The contract is PR #16's SDK 0.5.0 OpenAPI file, and its
-server is on the unpushed `sdk-source/files-api` Theorem branch, so step 12
-builds and tests against that server run locally, and shipping remote vaults
-waits for the branch to be merged and deployed. Neither file route on Theorem
+`theorem-sdk`. The contract is the SDK+ candidate's OpenAPI file
+(`0.6.0-alpha.1`, 22 operations), which supersedes PR #16's 0.5.0, and its
+server is the native process built from the SDK+ worktree, so step 12 builds
+and tests against that process run locally, and shipping remote vaults waits
+for that work to be committed, merged and deployed. Neither file route on Theorem
 main replaces it: `/api/project-files/v1` is read-only and serves one checkout
 the server chooses, and `theorem-ide-host` carries an execution grant
 (subprocesses, terminals, extensions) that a notes client should never hold.
@@ -401,8 +423,11 @@ hash. Remote notes are the doc-store's Markdown projection of block documents,
 so a remote vault must pass the same byte-for-byte checks as a local one, and
 any normalisation in the projection is a fix to propose upstream. How a native
 client signs in and gets its CSRF token is open: the recorded smoke ran with
-authentication off. Loro update exchange would save sending whole files;
-propose it once the whole-file path passes.
+authentication off. The SDK+ record shows bootstrap answering an API token
+that has no product user (it made `principalId` nullable for that case), so an
+API token is one route; how a Frame user gets one is unchecked. Loro update
+exchange would save sending whole files; propose it once the whole-file path
+passes.
 
 **The editor is a fork of zorite-editor.** Fork zorite-editor, zorite-markdown
 and gpui-bidi into `vendor/` and move them to gpui-pre 0.3.9. Of the three
@@ -912,10 +937,12 @@ core page previews are read-only.
     weekly notes, unique note creator, random note, note composer, audio
     recorder, slides, file recovery, PDF export, static publishing, and the
     web viewer's reader view, Save to vault and ad blocking.
-12. **Remote vault.** Waits for SDK+ S1 to S3, and builds against the
-    `sdk-source/files-api` server run locally until that branch is deployed.
-    Sign-in and the CSRF token, the client, the local mirror, event following,
-    idempotent writes, `merged` answers applied through the three-way merge,
+12. **Remote vault.** Waits for SDK+ S1 to S3 to close and for the SDK+
+    worktree to be committed, and builds against its native process run
+    locally until it is deployed. Before Frame takes `theorem-sdk`, its exact
+    `futures` and `reqwest` pins become ranges upstream, so it unifies with
+    Frame's lock. Sign-in and the CSRF token, the client, the local mirror,
+    event following, idempotent writes, `merged` answers applied through the three-way merge,
     and Loro update exchange if the contract adopts it. Done when two Frame
     clients and Theorem-UI edit the same remote vault, online and offline,
     without losing an edit, and remote notes pass the byte-for-byte file
@@ -997,10 +1024,12 @@ this order and re-run the probe after each one.
   **adblock-rust** 0.13.3 (MPL-2.0, used unmodified), **pdf.js** 6.4.299
   (Apache-2.0), **Prism** 1.30.0 (MIT) and **idiomorph** 0.8.0 (0BSD): adopt,
   pinned.
-- **Theorem Files API**: the server is on `sdk-source/files-api`, a local
-  Theorem branch that GitHub does not have (tip `a287925`); main `8e151d5` has
-  no handler. Push and merge it, and check its Markdown projection against the
-  byte-for-byte fixtures.
+- **Theorem Files API**: the server and the `theorem-sdk` Rust client are
+  uncommitted work in the SDK+ worktree (`Travis-Gilbert/sdk-foundation-20261025`,
+  folded in from `sdk-source/files-api` at `a287925`); main `8e151d5` has no
+  handler. Commit, merge and deploy it, turn the client's exact pins into
+  ranges, and check its Markdown projection against the byte-for-byte
+  fixtures.
 - **obsidianmd/jsoncanvas** (MIT): vendor its sample canvases as fixtures.
   **obsidianmd/obsidian-help**: no license; local use only.
 
@@ -1037,9 +1066,10 @@ this order and re-run the probe after each one.
   switching a card from snapshot to live costs, are unmeasured until step 4.
 - **pdf.js in Servo.** Whether pdf.js runs in Servo is unverified; PDFKit page
   images are the fallback.
-- **Remote.** The Files API server is on an unpushed branch, so remote vaults
-  cannot ship until it is merged and deployed; whether its Markdown projection
-  keeps a note's bytes, and how a native client signs in, are unchecked.
+- **Remote.** The Files API server is uncommitted SDK+ work, so remote vaults
+  cannot ship until it is committed, merged and deployed; whether its Markdown
+  projection keeps a note's bytes, and how a Frame user gets an API token, are
+  unchecked.
 - **Two renderers per feature.** MathJax and Mermaid in Servo against RaTeX
   and mermaid-rs-renderer in GPUI; WebKit against Servo for PDF export.
 - **Media from a custom scheme.** Whether Servo's media elements play
