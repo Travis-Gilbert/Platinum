@@ -1,4 +1,5 @@
 //! Frontmatter: YAML properties, typed as Obsidian types them.
+use crate::ids::is_note_id;
 use crate::model::{Frontmatter, PropertyType};
 use indexmap::IndexMap;
 use regex::Regex;
@@ -9,7 +10,6 @@ static DATE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$
 static DATE_TIME: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$").unwrap()
 });
-static ENTRY_ID: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^vf_[0-9A-HJKMNP-TV-Z]{26}$").unwrap());
 
 /// The YAML between the `---` lines of the front matter comrak returns.
 pub(crate) fn body(block: &str) -> &str {
@@ -74,7 +74,7 @@ impl Frontmatter {
 
     /// An id Theorem wrote into the note; any other `theorem-id` is not one.
     pub fn theorem_id(&self) -> Option<&str> {
-        self.get("theorem-id")?.as_str().filter(|id| ENTRY_ID.is_match(id))
+        self.get("theorem-id")?.as_str().filter(|id| is_note_id(id))
     }
 }
 

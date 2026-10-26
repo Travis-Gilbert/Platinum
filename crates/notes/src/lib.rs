@@ -1,11 +1,13 @@
 //! The headless core of Frame's notes app: parses notes, resolves links and decides what the index contains.
 mod frontmatter;
+mod ids;
 mod model;
 mod offsets;
 mod parse;
 mod resolve;
 mod settings;
 
+pub use ids::{IdStore, is_note_id};
 pub use model::*;
 pub use offsets::{Offsets, Span};
 pub use parse::parse as parse_note;
