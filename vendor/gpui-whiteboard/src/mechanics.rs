@@ -607,14 +607,14 @@ mod tests {
             end_anchor: None,
         };
         vec![
-            ElementKind::Rect(b.clone()),
-            ElementKind::Ellipse(b.clone()),
-            ElementKind::Diamond(b.clone()),
-            ElementKind::Triangle(b.clone()),
-            ElementKind::RoundRect(b.clone()),
-            ElementKind::Star(b.clone()),
-            ElementKind::Hexagon(b.clone()),
-            ElementKind::Line(seg.clone()),
+            ElementKind::Rect(b),
+            ElementKind::Ellipse(b),
+            ElementKind::Diamond(b),
+            ElementKind::Triangle(b),
+            ElementKind::RoundRect(b),
+            ElementKind::Star(b),
+            ElementKind::Hexagon(b),
+            ElementKind::Line(seg),
             ElementKind::Arrow(seg),
             ElementKind::Draw(Stroke {
                 points: vec![[0.0, 0.0], [100.0, 0.0]],

@@ -7,15 +7,13 @@
 //! `PathBuilder` fill — so text rotates, scales, and z-orders exactly like the
 //! shapes. A face is just bytes, so a host can swap in a user-uploaded font; the
 //! default (JetBrains Mono, OFL — see `assets/JetBrainsMono-OFL.txt`) comes from
-//! `theorem-design-gpui`, the product's one font source.
+//! the upstream font bundled in this crate; a host can replace it through the
+//! provider.
 
 use std::sync::{Arc, OnceLock, RwLock};
 
-/// The default face: the product's metadata face, read from the one place
-/// Theorem embeds fonts (SPEC-THEOREMWEB-CHAT-WORKSPACE-1.0 5.1 forbids a
-/// second font-loading system). Upstream bundled its own copy of the same
-/// JetBrains Mono file under `assets/`; this fork borrows the design crate's.
-const DEFAULT_FONT: &[u8] = theorem_design_gpui::mono_face();
+/// The upstream JetBrains Mono face, bundled under the SIL OFL 1.1.
+const DEFAULT_FONT: &[u8] = include_bytes!("../assets/JetBrainsMono-Regular.ttf");
 
 /// Floor for shape-label auto-shrink (world units): a label never shrinks below
 /// this, even if it then slightly overflows a very small box. See [`Font::fit_size`].
@@ -138,15 +136,30 @@ impl Font {
 
     #[cfg(not(target_arch = "wasm32"))]
     fn load_system_cjk_fallback() -> Option<(Arc<Vec<u8>>, u32)> {
-        // The editor uses GPUI's text stack, which gets system font fallback for
-        // free. Whiteboard text is converted to vector outlines, so we need a
-        // single face that actually contains CJK glyphs. The product's font
-        // source owns the system lookup, so this crate asks it rather than
-        // reading the filesystem itself; a face that does not parse here falls
-        // back to the bundled Latin-only JetBrains Mono. The result is cached by
-        // `system_cjk_fallback`: CJK collections are often tens of megabytes and
-        // must not be re-read for every whiteboard entity.
-        let (bytes, index) = theorem_design_gpui::system_cjk_face()?;
+        // Vector outlines need a face with CJK coverage. Keep Theorem's system
+        // candidate order; system_cjk_fallback caches the bytes once per process.
+        const CANDIDATES: &[(&str, u32)] = &[
+            // macOS
+            ("/Library/Fonts/Arial Unicode.ttf", 0),
+            ("/System/Library/Fonts/PingFang.ttc", 0),
+            ("/System/Library/Fonts/Hiragino Sans GB.ttc", 0),
+            ("/System/Library/Fonts/STHeiti Medium.ttc", 0),
+            ("/System/Library/Fonts/STHeiti Light.ttc", 0),
+            // Windows
+            ("C:/Windows/Fonts/msyh.ttc", 0),
+            ("C:/Windows/Fonts/simhei.ttf", 0),
+            ("C:/Windows/Fonts/simsun.ttc", 0),
+            // Linux common CJK packages
+            ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0),
+            ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", 0),
+            (
+                "/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf",
+                0,
+            ),
+        ];
+        let (bytes, index) = CANDIDATES
+            .iter()
+            .find_map(|(path, index)| std::fs::read(path).ok().map(|bytes| (bytes, *index)))?;
         ttf_parser::Face::parse(&bytes, index).ok()?;
         Some((Arc::new(bytes), index))
     }

@@ -5008,6 +5008,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b0d73e1bc02eef886a5947f41b8512708792e9e5d3053d181843311a487f96f"
 
 [[package]]
+name = "gpui-whiteboard"
+version = "0.5.1"
+dependencies = [
+ "gpui-pre",
+ "log",
+ "serde",
+ "serde_json",
+ "theorem-space",
+ "ttf-parser",
+]
+
+[[package]]
 name = "granit-parser"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

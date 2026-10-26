@@ -461,7 +461,7 @@ fn context_menu_hook_replaces_the_builtin_menu(cx: &mut TestAppContext) {
     });
     view.update(cx, |v, _| v.context_menu = None);
 
-    let calls: Rc<RefCell<Vec<([f32; 2], Option<u64>, Point<Pixels>)>>> = Rc::default();
+    let calls = Rc::new(RefCell::new(Vec::new()));
     let sink = calls.clone();
     view.update(cx, |v, _| {
         v.set_on_context_menu(Rc::new(move |scene_pt, hit, window_pt, _, _| {
@@ -1001,7 +1001,7 @@ fn a_connection_drawn_between_two_cards_anchors_to_both(cx: &mut TestAppContext)
         .elements
         .iter()
         .find_map(|e| match &e.kind {
-            ElementKind::Arrow(s) => Some(s.clone()),
+            ElementKind::Arrow(s) => Some(*s),
             _ => None,
         })
         .expect("the connection is an arrow");

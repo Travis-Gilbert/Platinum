@@ -4,14 +4,15 @@ version = "0.5.1"
 edition = "2024"
 description = "An infinite whiteboard canvas for GPUI: shapes, arrows, freehand drawing, text, images, and templates, with a built-in toolbar."
 license = "MIT"
+publish = false
 repository = "https://github.com/packetThrower/zorite"
 homepage = "https://packetthrower.github.io/zorite/reference/crates/gpui-whiteboard/"
 keywords = ["gpui", "whiteboard", "canvas", "drawing", "infinite-canvas"]
 categories = ["gui", "graphics"]
 
 [dependencies]
-# Shared workspace spec (the root pins the rev) so Cargo unifies to one gpui.
-gpui = { workspace = true }
+# THEOREM PATCH: use Frame's existing patched GPUI snapshot.
+gpui = { package = "gpui-pre", version = "=0.3.9" }
 
 # The board model (`Scene` + camera, and elements once drawing lands) is owned
 # and (de)serialized by this crate, so the host can persist it as an opaque
@@ -27,16 +28,11 @@ log = "0.4"
 # lockfile unifies to a single copy.
 ttf-parser = "0.25"
 
-# The default face is the product's metadata face, read from the one crate
-# that embeds fonts, so the board's vector text and the text system share a
-# single source (SPEC-THEOREMWEB-CHAT-WORKSPACE-1.0 5.1).
-theorem-design-gpui = { path = "../design" }
-
 # The Space adapter (`space` module): the board as a projection of a
 # renderer-neutral Space, its gestures returned as SpaceCommands (Canvas 2.5
 # 8.2). Default-features only, so the fork still builds standalone with
 # `--no-default-features`. Wasm-safe: the `canonical` feature stays off.
-theorem-space = { path = "../../../../../rustyredcore_THG/crates/theorem-space", optional = true }
+theorem-space = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/theorem-space", optional = true, default-features = false }
 
 [features]
 default = ["space"]
@@ -45,7 +41,7 @@ space = ["dep:theorem-space"]
 [dev-dependencies]
 # `#[gpui::test]` / `TestAppContext` are test-support only. A feature on the
 # existing `gpui` edge adds no package, so the lockfile is unchanged.
-gpui = { workspace = true, features = ["test-support"] }
+gpui = { package = "gpui-pre", version = "=0.3.9", features = ["test-support"] }
 
 # No unsafe code in this fork (FORK.md); an upstream rebase that brings some
 # in fails to compile until it is reviewed.
