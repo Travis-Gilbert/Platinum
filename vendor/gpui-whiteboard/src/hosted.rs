@@ -256,8 +256,8 @@ impl WhiteboardView {
         self.scene.camera
     }
 
-    /// Put the camera where the host says. Zoom is clamped to the interactive
-    /// range and a non-finite component is refused (the camera is left as it is),
+    /// Put the camera where the host says. Zoom and pan are clamped to their
+    /// interactive ranges; a non-finite component is refused (the camera is left as it is),
     /// so a bad host value cannot blank the board. Works in either mode. Does not
     /// call `on_change`: a camera the host drives is the host's to persist.
     pub fn set_camera(&mut self, camera: Camera, cx: &mut Context<Self>) {
@@ -269,6 +269,7 @@ impl WhiteboardView {
             zoom: camera.zoom.clamp(MIN_ZOOM, MAX_ZOOM),
             ..camera
         };
+        self.scene.camera.bound_pan();
         cx.notify();
     }
 

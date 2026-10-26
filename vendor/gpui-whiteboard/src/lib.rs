@@ -73,8 +73,17 @@ const GRID: f32 = 24.0;
 const MIN_DOT_SPACING: f32 = 16.0;
 /// Dot size in screen px (constant — dots don't grow with zoom).
 const DOT: f32 = 2.0;
+/// Thinnest on-screen stroke. Thinner, a horizontal or vertical line can fall
+/// between pixel rows and vanish on some renderers (blinking as you zoom).
+const MIN_STROKE_PX: f32 = 1.0;
 /// Screen px per scroll "line" for inexact (`Lines`) scroll deltas.
 const LINE_PX: f32 = 16.0;
+/// Most `Lines` one wheel event may scroll. Windows' "one screen at a time"
+/// wheel setting reports `u32::MAX` lines per notch.
+const MAX_SCROLL_LINES: f32 = 20.0;
+/// Furthest the camera may pan from the origin, in world units. Past ~1e8 a
+/// grid step no longer changes an f32, and the dot-grid loop never ends.
+const MAX_PAN: f32 = 1.0e6;
 const VIEWPORT_CULL_MARGIN_PX: f32 = 96.0;
 
 fn accepts_wheel_input(read_only: bool) -> bool {
@@ -729,6 +738,9 @@ pub struct WhiteboardView {
     /// signature. Panning and zooming can reuse these directly.
     text_layout_cache: HashMap<u64, CachedTextLayout>,
     label_layout_cache: HashMap<u64, CachedLabelLayout>,
+    /// Pen strokes' cached tessellations, by element id — only the strokes
+    /// painted last frame are kept.
+    stroke_meshes: HashMap<u64, StrokeMesh>,
     tool: Tool,
     /// Keyboard focus — grabbed while editing a text element.
     focus: FocusHandle,
@@ -906,6 +918,7 @@ impl WhiteboardView {
             font: Font::default(),
             text_layout_cache: HashMap::new(),
             label_layout_cache: HashMap::new(),
+            stroke_meshes: HashMap::new(),
             tool: Tool::Pan,
             focus: cx.focus_handle(),
             editing: None,
@@ -4579,7 +4592,10 @@ impl WhiteboardView {
     fn on_scroll(&mut self, ev: &ScrollWheelEvent, _window: &mut Window, cx: &mut Context<Self>) {
         let (dx, dy) = match ev.delta {
             ScrollDelta::Pixels(p) => (f32::from(p.x), f32::from(p.y)),
-            ScrollDelta::Lines(p) => (p.x * LINE_PX, p.y * LINE_PX),
+            ScrollDelta::Lines(p) => {
+                let lines = |l: f32| l.clamp(-MAX_SCROLL_LINES, MAX_SCROLL_LINES) * LINE_PX;
+                (lines(p.x), lines(p.y))
+            }
         };
         if ev.modifiers.platform || ev.modifiers.control {
             let (rx, ry) = self.relative(ev.position);
@@ -5711,6 +5727,8 @@ impl Render for WhiteboardView {
             .collect();
         let text_layout_cache = &mut self.text_layout_cache;
         let label_layout_cache = &mut self.label_layout_cache;
+        let mut old_meshes = std::mem::take(&mut self.stroke_meshes);
+        let mut stroke_meshes: HashMap<u64, StrokeMesh> = HashMap::new();
         let mut layers: Vec<Layer> = Vec::new();
         let mut band: Vec<ElemPaint> = Vec::new();
         for e in self.scene.elements.iter_mut() {
@@ -5856,6 +5874,7 @@ impl Render for WhiteboardView {
                             selection,
                             sel_color: sel_fill,
                             decorations: layout.decorations.clone(),
+                            mesh: layout.mesh.clone(),
                         })
                     } else if is_closed_shape(kind)
                         && let Some((bx, by, bw, bh, rot)) = box_like(kind)
@@ -5915,6 +5934,7 @@ impl Render for WhiteboardView {
                             selection,
                             sel_color: sel_fill,
                             decorations: label_layout.text.decorations.clone(),
+                            mesh: label_layout.text.mesh.clone(),
                         })
                     } else {
                         None
@@ -5925,6 +5945,12 @@ impl Render for WhiteboardView {
                         fill,
                         text,
                         mindmap_connector_style: mindmap_connector_styles.get(&id).copied(),
+                        stroke_mesh: matches!(kind, ElementKind::Draw(_)).then(|| {
+                            stroke_meshes
+                                .entry(id)
+                                .or_insert_with(|| old_meshes.remove(&id).unwrap_or_default())
+                                .clone()
+                        }),
                     });
                 }
             }
@@ -5932,6 +5958,7 @@ impl Render for WhiteboardView {
         if !band.is_empty() {
             layers.push(Layer::Band(band));
         }
+        self.stroke_meshes = stroke_meshes;
 
         // The in-progress element previews in the current active color / fill.
         let pending_ink = self.active_stroke.map_or(ink, u32_to_hsla);
@@ -7672,6 +7699,29 @@ mod tests {
     }
 
     #[test]
+    fn dash_spans_stay_bounded() {
+        // Bisect D's dashed line (1300 world px, width 4) swept across zoom:
+        // the old f32 stepping stalled from ~0.556 and grew the path forever.
+        let mut z = MIN_ZOOM;
+        while z <= MAX_ZOOM {
+            let stroke = (4.0 * z).max(0.5);
+            let (dash, cycle) = (
+                (stroke * 4.5).max(10.0),
+                (stroke * 4.5).max(10.0) + (stroke * 2.5).max(6.0),
+            );
+            let len = 1300.0 * z;
+            let n = paint::dash_spans(0.0, len, dash, cycle).count();
+            assert!(n as f32 <= len / cycle + 2.0, "zoom {z}: {n} dashes");
+            z *= 1.0007;
+        }
+        // A piece starting mid-gap and mid-dash.
+        let spans: Vec<_> = paint::dash_spans(12.0, 20.0, 10.0, 16.0).collect();
+        assert_eq!(spans, vec![(4.0, 14.0)]);
+        let spans: Vec<_> = paint::dash_spans(5.0, 10.0, 10.0, 16.0).collect();
+        assert_eq!(spans, vec![(0.0, 5.0)]);
+    }
+
+    #[test]
     fn camera_round_trips_through_json() {
         let scene = Scene {
             camera: Camera {
@@ -7684,6 +7734,18 @@ mod tests {
         let restored = Scene::parse(&scene.to_json()).expect("round trips").scene;
         assert_eq!(restored.camera.x, 12.5);
         assert_eq!(restored.camera.zoom, 2.0);
+    }
+
+    #[test]
+    fn camera_pan_stays_bounded() {
+        let mut c = Camera::default();
+        c.pan_by(-(u32::MAX as f32) * LINE_PX, 0.0);
+        assert_eq!(c.x, MAX_PAN);
+
+        let scene = Scene::parse(r#"{"camera":{"x":7e10,"y":-7e10,"zoom":1}}"#)
+            .expect("valid scene")
+            .scene;
+        assert_eq!((scene.camera.x, scene.camera.y), (MAX_PAN, -MAX_PAN));
     }
 
     #[test]

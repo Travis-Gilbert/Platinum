@@ -3,8 +3,8 @@
 ## Origin
 
 - Upstream: https://github.com/packetThrower/zorite, directory `crates/gpui-whiteboard`
-- Revision: `4aad847f57a5ac3e8ec0b6220e25d9db7e5264b4` (crate version 0.5.1, edition 2024)
-- Imported verbatim in `1683bb450 chore(theoremweb): vendor zorite gpui-pdf and gpui-whiteboard as hard forks`. Every difference from that import is listed below; anything not listed is upstream.
+- Revision: `6ee46f28cbe0017f7f152033227d897434ddd0ef` (crate version 0.5.1, edition 2024)
+- Initially based on upstream `4aad847f57a5ac3e8ec0b6220e25d9db7e5264b4`, imported verbatim in `1683bb450 chore(theoremweb): vendor zorite gpui-pdf and gpui-whiteboard as hard forks`. Frame imported Theorem `6e57dbb39` in `4e54225` and rebased it to the revision above. Every retained difference from that upstream revision is listed below; anything not listed is upstream.
 
 ## Licenses
 
@@ -24,7 +24,7 @@ Theorem's spatial canvas uses the whiteboard for **mechanics only**: drawing too
 4. **Pure mechanics module** (`src/mechanics.rs`, public). Topmost-first `hit_test` / `hit_test_where` / `hit_test_all`; `marquee_select` with `MarqueeMode::{Intersecting, Contained}`; `ZOrder` and `reorder` / `reorder_by` / `reorder_elements` returning the new order; `element_bounds`, `selection_bounds`, `scene_bounds`, `union_rect`; `fit_thumbnail` / `fit_scene_thumbnail` returning a `ThumbnailTransform`; `RotationSupport`, `rotation_support`, `supports_rotation`. Reuses `geometry.rs`. `lib.rs` now calls these where it previously inlined the same logic (`element_bbox`, `selection_bbox`, `text_at`, `shape_at`, the two hit-test sites, the marquee finish, `reorder_selection`); the private `enum ZOrder` moved here and became public. `scene_bbox_for_local_thumbnail` delegates to `mechanics::scene_bounds`. *Reason:* the host's canvas must run the same hit-test, marquee and z-order the view does, from outside a window. A reorder that would change nothing is decided before a snapshot is taken, so a no-op no longer pushes an undo entry.
 5. **Hosted history** (`src/hosted.rs`, `src/lib.rs`). `HistoryMode::{Local (default), Hosted}`, `set_history_mode`, `set_on_commit`, `apply_external`, and `WhiteboardEvent::{Commit { before, after, label }, UndoRequested, RedoRequested, CameraRequested}`. Hosted mode keeps **no** local stack. `push_undo(label)` (now labeled at all 18 call sites) takes a lazy "before" snapshot (first one wins); the Commit is emitted once the gesture has ended and only if the elements actually changed. A pen stroke, drag, resize, rotate, marquee or text edit therefore emits nothing until it completes, and a click that changes nothing emits nothing. Undo and redo keys emit `UndoRequested` / `RedoRequested` and change nothing. `apply_external(scene)` replaces the elements without a Commit and without `on_change`, cancels in-flight gestures, and leaves the camera alone. Events reach both the `set_on_commit` hook (every event, including requests) and `cx.subscribe`. The host-called `add_*` APIs, which never flush, settle themselves. *Reason:* one undo owner. A view that keeps its own stack beside the host's would undo the same edit twice or diverge.
 6. **Context-menu seam** (`src/hosted.rs`, `src/lib.rs`). `set_on_context_menu(Fn([f32; 2], Option<u64>, Point<Pixels>, &mut Window, &mut App))` receives the scene point, the topmost element under it, and the window position, and suppresses the built-in menu. A right-click inside the open color picker still belongs to the picker. *Reason:* the host owns commands and menus.
-7. **Camera seam** (`src/hosted.rs`, `src/lib.rs`, `src/scene.rs`). `CameraMode::{Local (default), Hosted}`, `set_camera_mode`, `camera()`, `set_camera(Camera)`, `CameraIntent::{Pan, ZoomAbout, Reset}`. In Hosted mode wheel, pinch, pan-drag and reset emit `CameraRequested { camera, intent }` (the camera the view would have used) and change nothing; the host answers with `set_camera`, which clamps zoom to the interactive range, refuses non-finite values, and does not mark the board dirty (the host owns the camera). `Camera::{screen_to_world, pan_by, zoom_about}` are now `pub`. *Reason:* one camera owner, so the host's spatial canvas and the board never disagree about where the viewport is.
+7. **Camera seam** (`src/hosted.rs`, `src/lib.rs`, `src/scene.rs`). `CameraMode::{Local (default), Hosted}`, `set_camera_mode`, `camera()`, `set_camera(Camera)`, `CameraIntent::{Pan, ZoomAbout, Reset}`. In Hosted mode wheel, pinch, pan-drag and reset emit `CameraRequested { camera, intent }` (the camera the view would have used) and change nothing; the host answers with `set_camera`, which clamps zoom and pan to the interactive ranges, refuses non-finite values, and does not mark the board dirty (the host owns the camera). `Camera::{screen_to_world, pan_by, zoom_about}` are now `pub`. *Reason:* one camera owner, so the host's spatial canvas and the board never disagree about where the viewport is.
 8. **Font seam** (`src/font.rs`). `Font::default()` is now: registered provider, then (native only) the system CJK face, then the bundled JetBrains Mono. `set_font_provider(Option<impl Fn() -> Option<Font> + Send + Sync + 'static>)` installs or removes the provider; `Font::bundled()` exposes the shared, cached bundled face. The `std::fs` search for a system CJK face is behind `#[cfg(not(target_arch = "wasm32"))]` with a wasm32 stub that returns `None`. *Reason:* upstream read font files from disk on every target, which cannot work in the browser build and must not panic there.
 9. **Rotation capability** (`src/mechanics.rs`). `supports_rotation(&ElementKind) -> bool` and the finer `rotation_support` (`Free`, `Baked`, `QuarterTurns`, `None`) come from an exhaustive `match` with no wildcard, so a new `ElementKind` fails to compile until classified, and a test rotates every kind and compares the result with the declared capability. `supports_rotation` is true for `Free` (box shapes, text) and `Baked` (line, arrow, draw: the points are rotated, no angle is stored). Images snap to quarter turns (`QuarterTurns`) and embeds do not rotate (`None`); both report false. Hit-testing a rotated shape uses the axis-aligned box of its rotated bounds, which is conservative (it can accept a click just outside a rotated corner). *Reason:* a host offering a rotate command must not offer it for something that will not rotate.
 10. **Model changes** (`src/scene.rs`). `PartialEq` derived on the model types so a Commit can be skipped when nothing changed; `TextGeom` compares by hand and ignores the cached `measured_w` / `measured_h`. Wire format is unchanged.
@@ -50,10 +50,47 @@ Theorem's spatial canvas uses the whiteboard for **mechanics only**: drawing too
 - Space adapter: a content edit that changes the bounds of a turned drawing re-frames it, so the turn is then shown about the new frame centre.
 - Space adapter: reordering elements inside one drawing does not change the stored element order.
 
+## Frame rebase to 6ee46f2
+
+Applied in this order, preserving all 19 divergences above:
+
+1. `7c11533`: bounded dash iteration and its zoom-sweep regression, first.
+2. `3586a48`: wheel-line limits and bounded camera pan.
+3. `077cd9a`: minimum one-screen-pixel strokes.
+4. `37cf7b3`, `b44dfa1`, `bba7056`: merge commits combining the same dash,
+   pan and stroke fixes; their combined result is retained without applying
+   those fixes twice.
+5. `c963c3c`: cached glyph tessellation and a single dot-grid path.
+6. `b5e9121`: cached pen-stroke tessellation, translated on pan.
+
+Each intermediate `lib.rs` and `paint.rs` was checked against its Git blob
+hash in the corresponding upstream commit's tree before it was applied.
+
+Conflicts and adaptations:
+
+- `3586a48`, `src/scene.rs`: upstream bounded pan inside `from_json`; the fork
+  shares `sanitize_camera` between `from_json` and recoverable `parse`. Kept
+  that shared path and added `bound_pan` there, preserving retained elements
+  and camera errors while protecting both loaders.
+- The hosted `set_camera` is another entry point absent upstream. Made
+  `Camera::bound_pan` crate-visible and call it from that setter too, retaining
+  non-finite refusal and the rule that host camera updates emit no event or
+  persistence write. Extended the mounted camera test to cover extreme pan.
+- Upstream's new camera-load regression uses the fork's recoverable `parse`,
+  not deprecated `from_json`. The dash sweep starts at the fork's `MIN_ZOOM`
+  (0.02) and keeps its shared maximum (4.0).
+- All other upstream hunks merged cleanly, including cache fields and render
+  paths. `paint.rs` matches upstream 6ee46f2 byte for byte. The fork's history,
+  camera requests, constraints, id retention, mechanics, engine, Space
+  adapter, font seam and unsafe-code prohibition remain in place.
+
+The rebase is its own commit. It still names Theorem's workspace
+dependencies, so the crate builds in Frame only from the port commit after it.
+
 ## Rebase procedure
 
-1. Fetch upstream and list what moved in the crate: `git -C <zorite checkout> log --oneline 4aad847f57a5ac3e8ec0b6220e25d9db7e5264b4..origin/main -- crates/gpui-whiteboard`. If nothing changed, stop.
-2. Produce the upstream delta only: `git -C <zorite checkout> diff 4aad847f57a5ac3e8ec0b6220e25d9db7e5264b4 <new rev> -- crates/gpui-whiteboard > upstream.patch`.
+1. Fetch upstream and list what moved in the crate: `git -C <zorite checkout> log --oneline 6ee46f28cbe0017f7f152033227d897434ddd0ef..origin/main -- crates/gpui-whiteboard`. If nothing changed, stop.
+2. Produce the upstream delta only: `git -C <zorite checkout> diff 6ee46f28cbe0017f7f152033227d897434ddd0ef <new rev> -- crates/gpui-whiteboard > upstream.patch`.
 3. Apply it on a clean tree of this crate with `git apply --3way` run from the crate directory (use `-p3` to strip `a/crates/gpui-whiteboard/`). Resolve conflicts against the divergence list above, in this order of risk: `src/lib.rs` (`push_undo` call sites, `on_right_down`, the wheel / pinch / pan handlers, `flush`, `reorder_selection`, the inlined hit-tests), then `src/scene.rs`, then `src/font.rs`.
 4. Re-check by hand every place upstream added a **new mutation entry point** (a new tool, a new `add_*`, a new edit path): it must call `push_undo(label)` before it mutates and reach `flush` or `settle_hosted`, or Hosted mode will silently miss that edit. Likewise any new camera mutation must go through `request_camera`, and any new `ElementKind` must be classified in `rotation_support`, `element_bounds` and the hit-test (the exhaustive matches will say where).
 5. Run, from `apps/theoremweb/`, with `--offline --locked`:

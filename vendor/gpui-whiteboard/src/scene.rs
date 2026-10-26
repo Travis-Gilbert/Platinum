@@ -138,6 +138,7 @@ impl Scene {
         if !self.camera.zoom.is_finite() || self.camera.zoom <= 0.0 {
             self.camera.zoom = 1.0;
         }
+        self.camera.bound_pan();
     }
 
     /// Serialize for persistence.
@@ -884,6 +885,20 @@ impl Camera {
         let z = self.zoom.max(MIN_ZOOM);
         self.x -= dx / z;
         self.y -= dy / z;
+        self.bound_pan();
+    }
+
+    /// Keep the camera within `MAX_PAN` of the origin (NaN → origin).
+    pub(crate) fn bound_pan(&mut self) {
+        let bound = |v: f32| {
+            if v.is_nan() {
+                0.0
+            } else {
+                v.clamp(-MAX_PAN, MAX_PAN)
+            }
+        };
+        self.x = bound(self.x);
+        self.y = bound(self.y);
     }
 
     /// Multiply the zoom by `factor`, keeping the world point under the
@@ -897,6 +912,7 @@ impl Camera {
         self.x += rx * (1.0 / z - 1.0 / z2);
         self.y += ry * (1.0 / z - 1.0 / z2);
         self.zoom = z2;
+        self.bound_pan();
     }
 }
 

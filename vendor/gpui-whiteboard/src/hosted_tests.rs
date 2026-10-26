@@ -553,6 +553,23 @@ fn hosted_camera_reports_requests_and_moves_only_on_set_camera(cx: &mut TestAppC
         );
     });
     view.read_with(cx, |v, _| assert_eq!(v.camera().zoom, MAX_ZOOM));
+    // The host cannot feed the dot grid a pan so large that f32 stops advancing.
+    view.update(cx, |v, cx| {
+        v.set_camera(
+            Camera {
+                x: 7e10,
+                y: -7e10,
+                zoom: MAX_ZOOM,
+            },
+            cx,
+        );
+    });
+    view.read_with(cx, |v, _| {
+        assert_eq!((v.camera().x, v.camera().y), (MAX_PAN, -MAX_PAN));
+        assert!(!v.dirty);
+    });
+    assert!(probe.persisted.borrow().is_empty());
+    assert_eq!(probe.via_hook.borrow().len(), seen.len());
     // A non-finite camera from a buggy host is refused, not stored.
     view.update(cx, |v, cx| {
         v.set_camera(
