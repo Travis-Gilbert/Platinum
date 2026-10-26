@@ -3818,6 +3818,7 @@ dependencies = [
  "gpui-kit",
  "gpui-pre",
  "gpui-pre-macos",
+ "http",
  "humansize",
  "image",
  "log",
