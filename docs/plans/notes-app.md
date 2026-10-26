@@ -1294,9 +1294,10 @@ on both WebGL prototypes before a second cosmos.gl graph ran for 4 seconds.
 
 Work for steps 1 to 3 is merged into `feat/notes-app`, which is not pushed.
 Step 1's atomic writes, FSEvents watching, three-way merge
-and note moves are on `claude/notes-foundations` in Theorem, which Frame pins;
-the moves commit is pushed, and a second round of review fixes to it is not yet
-committed. The RedCore journal change is still in review on
+and note moves are on `claude/notes-foundations` in Theorem, which Frame pins.
+The moves commit `d7e322c3e` is pushed. Its review fixes are committed as
+`7eb1ba024`, which `script/bootstrap` now pins; that commit is not pushed yet, so
+a fresh bootstrap cannot fetch it. The RedCore journal change is still in review on
 `claude/notes-redcore-journal`. The zorite editor and whiteboard lane is
 merged. Step 2's headless vault core is merged, and its index matches Obsidian
 1.14.5 on all 537 recorded calls over the fixture vault
