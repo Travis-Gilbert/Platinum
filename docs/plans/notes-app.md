@@ -1273,3 +1273,30 @@ slice. Remote vaults wait for the
 chose cosmos.gl for the graph on 2026-10-26. One reading is open for the
 requester: whether the foundation's G0 and G1 hold the local steps (this plan
 reads them as holding only step 12).
+
+### WebGL2 review follow-up (2026-10-26)
+
+The review fixes are committed. That is nine more Servo commits on
+`feat/webgl2-cosmos`, 27 on `81d8e29` in all and still not pushed, and the notes
+protocol gate in Frame's `src/engine.rs`. `script/bootstrap-media` now pins that
+branch's tip. The record is in
+[`review-fixes.md`](evidence/notes-webgl2-2026-10-26/review-fixes.md).
+
+What the fixes do:
+
+- They harden mip and pixel arithmetic.
+- They correct extension and readback validation, including WebGL 1 float
+  readback.
+- They enforce the notes protocol boundary in one place,
+  `Engine::start_with_protocols`.
+
+Servo now carries trusted initiator metadata, because custom-scheme origins are
+opaque and referrers can be suppressed.
+
+On WebGL conformance, the patched build passes 83,199 subtests against base's
+73,592. The serial float run gains on every float extension file.
+
+One gap remains, and it predates this work. Servo replaces a float texture that
+has linear filtering but no linear-float support with RGBA8 black at upload
+time. It should substitute black at draw time instead. That replacement accounts
+for the remaining float blending failures and is left for its own change.
