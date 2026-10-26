@@ -6,6 +6,7 @@ extern crate gpui_kit as gpui;
 
 mod actions;
 mod address;
+mod brand;
 mod browser;
 mod controls;
 mod delegate;
@@ -60,6 +61,7 @@ fn main() -> anyhow::Result<()> {
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);
+            brand::install();
             install_commands(cx);
             Engine::start(&profile_dir, cx);
             search::init(&data_dir, cx);
