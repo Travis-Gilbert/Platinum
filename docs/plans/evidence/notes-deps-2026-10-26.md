@@ -137,3 +137,39 @@ Method: read every constructor the notes core will call and every place the link
 **Other subprocess sites in linked crates** (all behind explicit calls, none in construction): `compute-offload/src/executors/smt.rs:381,471` (an SMT solver binary), `rustyred-thg-offload/src/smt_check.rs:234` (`kill`). `theorem-harness-core/src/project_slug.rs:38` is `#[cfg(test)]`. No `#[ctor]`, `inventory::submit` or `linkme` section in any linked crate, so nothing runs at load time.
 
 **Not covered.** This is a read of source in the 36 path crates, not a runtime trace. Registry crates (`extism`, `wasmtime`, `burn`, `reqwest`, `tokio`) were not read; `extism` is only reached through `rustyred-plugin`, which no constructor on the notes path instantiates. The follow-up that would make G6 mechanical rather than read-based is a test in step 2 that opens `RedCoreAuthority` + `Vfs` + `IdeRuntime` with the network namespace denied and asserts no socket is opened; not done here.
+
+## 6. After the foundations branch
+
+Sections 1 to 5 describe `frame-notes` against Theorem 6e57dbb. Frame now
+builds against `claude/notes-foundations` (d9d1b9f44, local only), which sits directly on 6e57dbb
+and adds atomic writes, the move to `notify` 8.2.0 with FSEvents, the
+three-way merge in `documents_reconcile`, and one dependency cut:
+`rustyred-thg-vfs` used only `BlobStore` and `InMemoryBlobStore` from
+`commonplace`, so that 90-line seam moved into `rustyred-thg-core`
+(`rustyred_thg_core::blob`), `commonplace` re-exports it unchanged, and the
+VFS no longer depends on `commonplace`.
+
+Measured on the merged `feat/notes-app` lock, by name and version in
+`Cargo.lock` (a different count from section 2's `cargo tree --duplicates`):
+
+| | Packages | Names in more than one version |
+|---|---|---|
+| Frame at b7db174 | 1501 | 161 |
+| Merged lanes, Theorem 6e57dbb | 1856 | 195 |
+| Merged lanes, foundations branch | 1572 | 166 |
+
+The cut removes 284 packages and adds none. `burn`, `wasmtime`, `extism`,
+`cranelift`, `cubecl`, `tch`, `tree-sitter`, `jsonschema`, `commonplace`,
+`theorem-harness-core`, `theorem-blocks`, `rustyred-plugin` and
+`rustyred-thg-ml` are gone from the `frame-notes` graph; 18 path crates and
+479 registry crates remain in it (all targets, normal and build edges). The
+names newly duplicated against b7db174 are `enum-as-inner`, `fearless_simd`,
+`hash32`, `quick_cache` and `ropey` (1.6.1 beside GPUI Kit's 2.0.0-beta.1).
+`notify` resolves once, at 8.2.0, shared with `gpui-component`, so the app
+has one watcher stack. The Loro pins from section 1 are unchanged.
+
+What stays: `rustyred-thg-core` depends on `object_store` with its `aws`
+feature, which brings `reqwest` 0.12.28 and `tokio` 1.54.1. Section 5's
+reading still holds: nothing on the notes path constructs that client. Making
+`object_store` optional in `rustyred-thg-core` would remove both, but every
+Theorem crate depends on that crate, so it is not done here.
