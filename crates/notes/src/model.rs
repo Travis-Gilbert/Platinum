@@ -126,17 +126,24 @@ pub struct Task {
     pub status: char,
     /// The item's first paragraph, as written.
     pub text: String,
-    /// The list item, nested items included.
+    /// The list item excluding trailing nested lists, as in the metadata cache.
     pub span: Span,
     /// The status character, where a toggle writes.
     pub status_span: Span,
+}
+
+impl Task {
+    /// Obsidian considers every status other than a space completed.
+    pub fn is_done(&self) -> bool {
+        self.status != ' '
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FootnoteKind {
     Reference,
     Definition,
-    /// `^[text]`, a reference with its text in place.
+    /// `^[text]`, indexed as a definition whose span is the inner content.
     Inline,
 }
 
@@ -222,6 +229,7 @@ pub struct Highlight {
 /// The types Obsidian gives properties.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PropertyType {
+    Unknown,
     Text,
     List,
     Number,

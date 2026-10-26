@@ -105,12 +105,11 @@ fn is_explicitly_relative(target: &str) -> bool {
     target.starts_with("./") || target.starts_with("../")
 }
 
-// Fewer folders first, then the shorter path, then by code point.
+// JavaScript path.length counts UTF-16 units. Lexical order stabilizes load-order ties.
 fn by_shortest_path(a: &&str, b: &&str) -> Ordering {
-    let folders = |p: &str| p.matches('/').count();
-    folders(a)
-        .cmp(&folders(b))
-        .then_with(|| a.chars().count().cmp(&b.chars().count()))
+    a.encode_utf16()
+        .count()
+        .cmp(&b.encode_utf16().count())
         .then_with(|| a.cmp(b))
 }
 
@@ -185,21 +184,18 @@ impl FileIndex {
             .map(String::as_str)
     }
 
-    // The shortest-path file whose path ends with `target`'s segments; case-sensitive matches before
-    // case-insensitive ones.
-    fn by_suffix(&self, target: &str) -> Option<&str> {
-        let want = stem(target);
-        let files = || self.named(&name_key(target));
-        let mut pool: Vec<&str> = files()
-            .filter(|file| ends_with_path(stem(file), want))
-            .collect();
-        if pool.is_empty() {
-            let want = want.to_lowercase();
-            pool = files()
-                .filter(|file| ends_with_path(&stem(file).to_lowercase(), &want))
-                .collect();
-        }
-        pool.into_iter().min_by(by_shortest_path)
+    fn by_suffix<'a>(&'a self, target: &str, from: &str) -> Vec<&'a str> {
+        let want = stem(target).to_lowercase();
+        let folder = dir(from).to_lowercase();
+        let mut pool = self
+            .named(&name_key(target))
+            .filter(|file| ends_with_path(&stem(file).to_lowercase(), &want))
+            .collect::<Vec<_>>();
+        pool.sort_by(|a, b| {
+            let local = |p: &str| p.to_lowercase().starts_with(&folder);
+            local(b).cmp(&local(a)).then_with(|| by_shortest_path(a, b))
+        });
+        pool
     }
 
     // The file at `path` or `path.md`, ignoring case.
@@ -209,35 +205,40 @@ impl FileIndex {
             .find(|file| stem(file).to_lowercase() == want)
     }
 
-    /// The file `target` (without `#heading` or `#^block`) names in the note `from`, or None.
-    ///
-    /// - `./` and `../` targets and Markdown destinations are tried relative to the linking note first.
-    /// - A leading `/` means the vault root.
-    /// - Then the target as a vault path, with or without `.md`.
-    /// - Then, as Obsidian does for `[[Note]]` and `[[folder/Note]]`, the file with the shortest path that
-    ///   ends with the target, matching case if any does.
-    /// - `LinkSyntax::Path` is a vault path and nothing else.
-    pub fn resolve(&self, target: &str, from: &str, syntax: LinkSyntax) -> Option<&str> {
+    /// Candidate destinations in Obsidian order: exact paths, then suffix matches under
+    /// the source folder, then other suffix matches; each group sorts by path length.
+    /// Frame uses lexical order for equal-length ties that Obsidian leaves in load order.
+    pub fn resolution_candidates(&self, target: &str, from: &str, syntax: LinkSyntax) -> Vec<&str> {
         if syntax == LinkSyntax::Path {
-            return self.exactly(target);
+            return self.exactly(target).into_iter().collect();
         }
         let target = target.trim();
         if target.is_empty() {
-            return None;
+            return Vec::new();
         }
-        let explicit = is_explicitly_relative(target);
-        if !target.starts_with('/') && (syntax == LinkSyntax::Markdown || explicit) {
-            let joined = join_relative(from, target)?;
-            if let Some(found) = self.exactly(&joined) {
-                return Some(found);
-            }
-            if explicit {
-                return self.ignoring_case(&joined);
-            }
+        if is_explicitly_relative(target) {
+            let Some(joined) = join_relative(from, target) else {
+                return Vec::new();
+            };
+            return self.ignoring_case(&joined).into_iter().collect();
         }
-        let vault_path = normalize(target.trim_start_matches('/'))?;
-        self.exactly(&vault_path)
-            .or_else(|| self.by_suffix(&vault_path))
+        let Some(vault_path) = normalize(target.trim_start_matches('/')) else {
+            return Vec::new();
+        };
+        if let Some(exact) = self.ignoring_case(&vault_path) {
+            return vec![exact];
+        }
+        if target.starts_with('/') {
+            return Vec::new();
+        }
+        self.by_suffix(&vault_path, from)
+    }
+
+    /// The first candidate, or None when the link names no file.
+    pub fn resolve(&self, target: &str, from: &str, syntax: LinkSyntax) -> Option<&str> {
+        self.resolution_candidates(target, from, syntax)
+            .into_iter()
+            .next()
     }
 
     /// What `link`, written in the note `from`, points at. A link with no target (`[[#Heading]]`) points
@@ -251,7 +252,7 @@ impl FileIndex {
             Some(path) => Target::File(path.to_string()),
             None => Target::Unresolved {
                 key: unresolved_key(name, from, link.syntax),
-                name: name.to_string(),
+                name: stem(name).to_string(),
             },
         }
     }
@@ -437,9 +438,9 @@ mod tests {
     }
 
     #[test]
-    fn case_is_matched_exactly_before_it_is_ignored() {
+    fn resolution_compares_paths_without_case() {
         let v = FileIndex::new(["a/Note.md", "b/note.md", "Ideas.md"]);
-        assert_eq!(wiki(&v, "note", "x.md"), Some("b/note.md"));
+        assert_eq!(wiki(&v, "note", "x.md"), Some("a/Note.md"));
         assert_eq!(wiki(&v, "Note", "x.md"), Some("a/Note.md"));
         assert_eq!(wiki(&v, "NOTE", "x.md"), Some("a/Note.md"));
         assert_eq!(wiki(&v, "ideas", "x.md"), Some("Ideas.md"));
@@ -474,17 +475,17 @@ mod tests {
     }
 
     #[test]
-    fn markdown_destinations_are_relative_to_the_note_first() {
+    fn exact_vault_paths_precede_folder_candidates() {
         let v = FileIndex::new(["Ideas.md", "notes/Ideas.md"]);
         assert_eq!(
             v.resolve("Ideas.md", "notes/Plan.md", LinkSyntax::Markdown),
-            Some("notes/Ideas.md")
+            Some("Ideas.md")
         );
         assert_eq!(
             v.resolve("Ideas.md", "Plan.md", LinkSyntax::Markdown),
             Some("Ideas.md")
         );
-        // A wikilink is not relative: the shortest path wins.
+        // The exact root path wins for either syntax.
         assert_eq!(wiki(&v, "Ideas", "notes/Plan.md"), Some("Ideas.md"));
         // A Markdown destination that is not under the note's folder falls back to the vault path.
         assert_eq!(

@@ -139,6 +139,7 @@ impl VaultSettings {
             .filter_map(|(key, kind)| {
                 let kind = match kind.as_str()? {
                     "text" => PropertyType::Text,
+                    "unknown" => PropertyType::Unknown,
                     "multitext" => PropertyType::List,
                     "number" => PropertyType::Number,
                     "checkbox" => PropertyType::Checkbox,
@@ -148,7 +149,7 @@ impl VaultSettings {
                     "aliases" => PropertyType::Aliases,
                     _ => return None,
                 };
-                Some((key.clone(), kind))
+                Some((key.to_lowercase(), kind))
             })
             .collect();
         Ok(())
@@ -157,7 +158,7 @@ impl VaultSettings {
     /// The type of a property: the vault's declaration, else what its value looks like.
     pub fn property_type(&self, key: &str, value: &Value) -> PropertyType {
         self.property_types
-            .get(key)
+            .get(&key.to_lowercase())
             .copied()
             .unwrap_or_else(|| PropertyType::infer(key, value))
     }
@@ -535,8 +536,8 @@ mod tests {
         assert_eq!(f("{}", "Ideas.md", "img/a b.png"), "[[a b.png]]");
         let relative = r#"{"newLinkFormat":"relative"}"#;
         assert_eq!(f(relative, "x/Home.md", "x/y/Note.md"), "[[y/Note]]");
-        // "Note" from x/y would be z/Note.md, the shorter path, so the name says where it is.
-        assert_eq!(f(relative, "x/y/Home.md", "x/y/Note.md"), "[[./Note]]");
+        // The source folder takes precedence over a shorter nonlocal path.
+        assert_eq!(f(relative, "x/y/Home.md", "x/y/Note.md"), "[[Note]]");
         assert_eq!(
             f(relative, "notes/Plan.md", "archive/Ideas.md"),
             "[[../archive/Ideas]]"

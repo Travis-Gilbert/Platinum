@@ -6,9 +6,9 @@ use regex::Regex;
 use serde_json::Value;
 use std::sync::LazyLock;
 
-static DATE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap());
+static DATE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[0-9]{4}-[01][0-9]-[0-3][0-9]$").unwrap());
 static DATE_TIME: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$").unwrap()
+    Regex::new(r"^[0-9]{4}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]$").unwrap()
 });
 
 /// The YAML between the `---` lines of the front matter comrak returns.
@@ -62,13 +62,24 @@ impl Frontmatter {
         self.properties.get(key)
     }
 
-    /// `tags`, and the older `tag`, without any `#`.
+    /// Written strings in the case-insensitive `tags` property. A scalar is one tag,
+    /// never a comma/space-separated list; entries containing spaces are not tags.
     pub fn tags(&self) -> Vec<String> {
-        ["tags", "tag"]
+        let value = self
+            .properties
             .iter()
-            .flat_map(|key| list(self.get(key), |c| c == ',' || c.is_whitespace()))
-            .map(|t| t.trim_start_matches('#').to_string())
-            .filter(|t| !t.is_empty())
+            .find(|(key, _)| key.eq_ignore_ascii_case("tags"))
+            .map(|(_, value)| value);
+        let values: Vec<&str> = match value {
+            Some(Value::Array(items)) => items.iter().filter_map(Value::as_str).collect(),
+            Some(Value::String(s)) => vec![s],
+            _ => Vec::new(),
+        };
+        values
+            .into_iter()
+            .map(str::trim)
+            .filter(|s| !s.is_empty() && !s.contains(' '))
+            .map(|s| s.strip_prefix('#').unwrap_or(s).to_string())
             .collect()
     }
 
@@ -96,13 +107,16 @@ impl Frontmatter {
 impl PropertyType {
     /// The type a property has when the vault has not declared one for its name.
     pub fn infer(key: &str, value: &Value) -> Self {
-        match (key, value) {
+        match (key.to_lowercase().as_str(), value) {
             ("tags", _) => Self::Tags,
             ("aliases", _) => Self::Aliases,
             ("cssclasses", _) => Self::List,
             (_, Value::Bool(_)) => Self::Checkbox,
             (_, Value::Number(_)) => Self::Number,
-            (_, Value::Array(_)) => Self::List,
+            (_, Value::Array(items)) if items.iter().all(|v| v.is_null() || v.is_string()) => {
+                Self::List
+            }
+            (_, Value::Object(_) | Value::Array(_)) => Self::Unknown,
             (_, Value::String(s)) if DATE_TIME.is_match(s) => Self::DateTime,
             (_, Value::String(s)) if DATE.is_match(s) => Self::Date,
             _ => Self::Text,
@@ -168,14 +182,15 @@ mod tests {
     fn yaml_one_one_booleans_stay_strings() {
         let f = fm("tags: [y, n, yes, no, on, off, true]\nflag: yes");
         assert_eq!(f.get("flag"), Some(&json!("yes")));
-        assert_eq!(f.tags(), ["y", "n", "yes", "no", "on", "off", "true"]);
+        assert_eq!(f.tags(), ["y", "n", "yes", "no", "on", "off"]);
     }
 
     #[test]
     fn tags_come_from_a_list_or_a_string() {
         assert_eq!(fm("tags: [a, '#b/c', ünï]").tags(), ["a", "b/c", "ünï"]);
-        assert_eq!(fm("tags: a, b/c d").tags(), ["a", "b/c", "d"]);
-        assert_eq!(fm("tag: solo").tags(), ["solo"]);
+        assert!(fm("tags: a, b/c d").tags().is_empty());
+        assert!(fm("tag: solo").tags().is_empty());
+        assert_eq!(fm("tags: solo").tags(), ["solo"]);
         assert_eq!(fm("tags:\n  - x\n  - y").tags(), ["x", "y"]);
         assert!(fm("tags:").tags().is_empty());
     }
@@ -222,7 +237,7 @@ mod tests {
         assert_eq!(t("x", json!(["a"])), PropertyType::List);
         assert_eq!(t("x", json!("2026-01-02")), PropertyType::Date);
         assert_eq!(t("x", json!("2026-01-02T10:30")), PropertyType::DateTime);
-        assert_eq!(t("x", json!("2026-01-02 10:30:00")), PropertyType::DateTime);
+        assert_eq!(t("x", json!("2026-01-02 10:30:00")), PropertyType::Text);
         assert_eq!(t("x", json!(null)), PropertyType::Text);
         assert_eq!(t("tags", json!("a")), PropertyType::Tags);
         assert_eq!(t("aliases", json!("a")), PropertyType::Aliases);
