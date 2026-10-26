@@ -46,8 +46,8 @@ const GRACE: Duration = Duration::from_secs(10);
 /// answer is asked again rather than waited for.
 const ASK: Duration = Duration::from_secs(5);
 
-/// Said when the app logged the request but its vault window never answered.
-const STALLED: &str = "\nthe app received the request but its vault window never answered. Seen on a Mac whose display was asleep with the screen locked (the window counts as hidden and the app stalls); run it again with the screen awake and unlocked";
+/// Said when the app logged the request but never answered it.
+const STALLED: &str = "\nthe app received the request but never answered it, which a blocked main thread does (a keychain prompt did, before --use-mock-keychain); `sample` on the app's pid shows where it waits";
 
 /// Set by the signal thread before it kills the app, so that the main thread, which would see the
 /// app die, leaves the exit to that thread.
@@ -244,12 +244,18 @@ impl Instance {
             .arg(format!("--user-data-dir={}", profile.display()))
             // Chromium cannot start its own sandbox inside ours ("sandbox initialization failed").
             .arg("--no-sandbox")
+            // Electron's safeStorage keeps its key in the login keychain. On the CLI's first
+            // request the Security framework found no login keychain under the private home and
+            // the main thread waited on a password prompt, so the request was never answered. The
+            // mock keychain also keeps the app off the user's own keychain.
+            .arg("--use-mock-keychain")
             .args(&opts.args)
             .current_dir(&home)
             .env_clear()
             .env("HOME", &home)
             // Foundation finds the home through the user database, not `HOME`; this sends
-            // NSHomeDirectory and the app's defaults plist to the private home as well.
+            // NSHomeDirectory to the private home as well. Defaults still come from the real
+            // user's domain, since cfprefsd serves them and ignores this variable.
             .env("CFFIXED_USER_HOME", &home)
             .env("TMPDIR", &tmp)
             .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
@@ -431,14 +437,25 @@ impl Instance {
         self.signals.close();
     }
 
-    /// Stops the app and checks that the real CLI socket was not touched. The directory goes
-    /// when the instance is dropped.
+    /// Stops the app and checks that it was still running and that the real CLI socket was not
+    /// touched. The directory goes when the instance is dropped.
     pub fn quit(mut self) -> Result<()> {
+        if let Some(status) = self.child.try_wait()?
+            && !INTERRUPTED.load(Ordering::SeqCst)
+        {
+            bail!(
+                "Obsidian exited with {status} during the run, so later answers are missing\n{}",
+                self.log_tail()
+            );
+        }
         self.stop();
+        let after = socket_state(&self.real_socket);
         ensure!(
-            socket_state(&self.real_socket) == self.real_socket_before,
-            "{} changed while Obsidian ran",
-            self.real_socket.display()
+            after == self.real_socket_before,
+            "{} changed while Obsidian ran (inode and mtime before {:?}, after {after:?})\n{}",
+            self.real_socket.display(),
+            self.real_socket_before,
+            self.log_tail()
         );
         Ok(())
     }

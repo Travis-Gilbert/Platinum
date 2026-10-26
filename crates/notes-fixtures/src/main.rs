@@ -59,13 +59,13 @@ enum Command {
         /// CSS selector read by `dev:dom` for each note.
         #[arg(long, default_value = DOM_SELECTOR)]
         dom_selector: String,
-        /// Milliseconds to wait for the reading view to render before reading its DOM.
+        /// Milliseconds before each read of a note's DOM, which is read until it stops changing.
         #[arg(long, default_value_t = 500)]
         settle_ms: u64,
         /// With --app: seconds the app gets to bind its socket and open the vault.
         #[arg(long, default_value_t = 90, requires = "app")]
         startup_secs: u64,
-        /// With --app: an extra Electron or Chromium flag for the app, e.g. `--app-arg=--disable-renderer-backgrounding`.
+        /// With --app: an extra Electron or Chromium flag for the app, e.g. `--app-arg=--force-device-scale-factor=1`.
         #[arg(long = "app-arg", requires = "app", allow_hyphen_values = true)]
         app_args: Vec<String>,
     },

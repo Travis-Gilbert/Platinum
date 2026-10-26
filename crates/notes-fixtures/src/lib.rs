@@ -1,6 +1,7 @@
 //! Test corpus and Obsidian reference harness for the notes app.
 pub mod generate;
 pub mod launch;
+mod normalize;
 pub mod obsidian;
 pub mod reference;
 

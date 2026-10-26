@@ -291,6 +291,7 @@ fn the_manifest_says_what_was_run() {
     assert_eq!(m.groups, Group::ALL.map(Group::name));
     assert!(m.skipped_groups.is_empty());
     assert!(m.failed.is_empty(), "{:?}", m.failed);
+    assert!(m.stalled.is_empty(), "{:?}", m.stalled);
     assert_eq!(
         m.commands,
         run.calls.len(),
@@ -343,7 +344,7 @@ fn each_group_writes_its_file_of_records() {
 }
 
 #[test]
-fn records_keep_output_verbatim_and_parse_json_when_asked() {
+fn records_keep_content_and_parse_json_when_asked() {
     let run = full();
     let links = json(&run.out.join("links.json"));
     assert_eq!(links["links path=Home.md"]["stdout"], "Dead End.md\n");
@@ -638,15 +639,22 @@ fn the_reading_view_of_each_note_is_stored() {
         );
         assert!(html.contains(&format!("data-selector=\"{DOM_SELECTOR}\"")));
     }
-    // The note is opened before its DOM is read, every time.
+    // The note is opened before its DOM is read, every time, and an unchanging DOM is read
+    // three times.
     let order: Vec<&str> = run
         .calls
         .iter()
         .filter(|c| matches!(c.command(), "eval" | "dev:dom"))
         .map(Call::command)
         .collect();
-    let dom_calls = &order[order.len() - 2 * notes.len()..];
-    assert!(dom_calls.chunks(2).all(|p| p == ["eval", "dev:dom"]));
+    let dom_calls = &order[order.len() - 4 * notes.len()..];
+    assert!(
+        dom_calls
+            .chunks(4)
+            .all(|p| p == ["eval", "dev:dom", "dev:dom", "dev:dom"])
+    );
+    assert!(run.manifest.dom_attempts.values().all(|n| *n == 3));
+    assert!(notes.iter().all(|n| dom[n.as_str()]["changes"] == 0));
 }
 
 #[test]
@@ -739,7 +747,8 @@ fn an_error_printed_on_a_clean_exit_is_a_failed_call() {
     assert_eq!(links["deadends"]["exit_code"], 0);
 }
 
-/// A call the app never answers is killed at its timeout and recorded; the run goes on.
+/// A call the app never answers is killed at its timeout, run twice more, and recorded as failed;
+/// the run goes on.
 #[test]
 fn a_call_that_never_answers_is_killed_and_recorded() {
     let fake = Fake::new("ref-hang");
@@ -773,6 +782,70 @@ fn a_call_that_never_answers_is_killed_and_recorded() {
         links["orphans"]
     );
     assert_eq!(links["deadends"]["exit_code"], 0);
+    // The fake hangs on every `orphans` call, `orphans total` too: two stalls and a failure each.
+    let stalled: Vec<_> = m.stalled.iter().map(|f| (f.group, f.call.as_str())).collect();
+    assert_eq!(
+        stalled,
+        [
+            ("links", "orphans"),
+            ("links", "orphans"),
+            ("links", "orphans total"),
+            ("links", "orphans total")
+        ]
+    );
+    let orphans = fake.calls().iter().filter(|c| c.command() == "orphans").count();
+    assert_eq!(orphans, 6);
+    assert_eq!(m.commands, fake.calls().len());
+}
+
+/// A call that stalls once is run again; its answer is recorded and the stalled attempt is kept
+/// in the manifest.
+#[test]
+fn a_call_that_stalls_once_is_run_again() {
+    let fake = Fake::new("ref-stall");
+    let vault = vault().canonicalize().unwrap();
+    let out = fake.dir.join("out");
+    let mut cfg = config(&fake, &vault, &out);
+    cfg.obsidian = fake
+        .client(&vault)
+        .env("FAKE_OBSIDIAN_HANG_ONCE", "orphans")
+        .timeout(Duration::from_millis(700));
+    cfg.only = vec![Group::Links];
+    let m = reference::run(&cfg).unwrap();
+    assert!(m.failed.is_empty(), "{:?}", m.failed);
+    assert_eq!(m.stalled.len(), 1, "{:?}", m.stalled);
+    assert_eq!((m.stalled[0].group, m.stalled[0].call.as_str()), ("links", "orphans"));
+    assert!(m.stalled[0].error.contains("no answer within"), "{:?}", m.stalled);
+    assert_eq!(m.commands, fake.calls().len());
+    let links = json(&out.join("links.json"));
+    assert_eq!(links["orphans"]["exit_code"], 0);
+    assert!(links["orphans"]["error"].is_null());
+    let on_disk = json(&out.join("manifest.json"));
+    assert_eq!(on_disk["stalled"][0]["call"], "orphans");
+    assert!(on_disk["failed"].as_array().unwrap().is_empty());
+}
+
+/// Stalled attempts in the DOM group count as commands too.
+#[test]
+fn a_dom_call_that_stalls_once_is_run_again() {
+    let fake = Fake::new("ref-dom-stall");
+    let mut cfg = dom_config(&fake);
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_HANG_ONCE", "dev:dom")
+        .timeout(Duration::from_millis(700));
+    let m = reference::run(&cfg).unwrap();
+    assert!(m.failed.is_empty(), "{:?}", m.failed);
+    assert_eq!(m.stalled.len(), 1, "{:?}", m.stalled);
+    assert_eq!(m.stalled[0].group, "dom");
+    assert_eq!(m.commands, 6);
+    assert_eq!(m.commands, fake.calls().len());
+    assert_eq!(m.dom_attempts["Note.md"], 3);
+    assert!(
+        fs::read_to_string(cfg.out.join("dom/Note.md.html"))
+            .unwrap()
+            .contains("fake dom")
+    );
 }
 
 #[test]
@@ -1059,4 +1132,274 @@ fn the_readme_cites_every_command_the_harness_uses() {
             m
         });
     assert!(by_command.len() >= 20, "{by_command:?}");
+}
+
+fn dom_config(fake: &Fake) -> Config {
+    let dir = fake.dir.join("vault");
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("Note.md"), "# Note\n").unwrap();
+    let mut cfg = config(fake, &dir, &fake.dir.join("out"));
+    cfg.only = vec![Group::Dom];
+    cfg
+}
+
+#[test]
+fn dom_retries_a_missing_command_and_keeps_the_failed_attempts() {
+    let fake = Fake::new("ref-dom-retry");
+    let mut cfg = dom_config(&fake);
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_DOM_MISSING", "2");
+    let m = reference::run(&cfg).unwrap();
+    assert!(m.failed.is_empty(), "{:?}", m.failed);
+    assert_eq!(m.commands, 7);
+    assert_eq!(m.commands, fake.calls().len());
+    assert_eq!(m.dom_attempts["Note.md"], 5);
+    let dom = json(&cfg.out.join("dom.json"));
+    let d = &dom["Note.md"];
+    assert_eq!(d["attempts"], 5);
+    assert_eq!(d["changes"], 0);
+    assert_eq!(d["retries"].as_array().unwrap().len(), 2);
+    for retry in d["retries"].as_array().unwrap() {
+        assert_eq!(retry["exit_code"], 0);
+        assert!(retry["error"].as_str().unwrap().contains("not found"));
+        assert!(retry["stdout"].as_str().unwrap().contains("not found"));
+    }
+    assert!(d["dom"]["error"].is_null());
+    assert!(
+        fs::read_to_string(cfg.out.join("dom/Note.md.html"))
+            .unwrap()
+            .contains("fake dom")
+    );
+    assert_eq!(
+        json(&cfg.out.join("manifest.json"))["dom_attempts"]["Note.md"],
+        5
+    );
+}
+
+#[test]
+fn dom_is_read_until_it_stops_changing() {
+    let fake = Fake::new("ref-dom-changes");
+    let mut cfg = dom_config(&fake);
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_DOM_CHANGES", "2");
+    let m = reference::run(&cfg).unwrap();
+    assert!(m.failed.is_empty(), "{:?}", m.failed);
+    // Two answers that differ, then the same one three times.
+    assert_eq!(m.dom_attempts["Note.md"], 5);
+    assert_eq!(m.commands, 7);
+    assert_eq!(m.commands, fake.calls().len());
+    let d = &json(&cfg.out.join("dom.json"))["Note.md"];
+    assert_eq!(d["changes"], 2);
+    assert_eq!(d["retries"], serde_json::json!([]));
+    let html = fs::read_to_string(cfg.out.join("dom/Note.md.html")).unwrap();
+    assert!(html.contains("fake dom") && !html.contains("rendering"), "{html}");
+}
+
+#[test]
+fn a_view_that_never_settles_is_recorded_as_it_stands_and_failed() {
+    let fake = Fake::new("ref-dom-unsettled");
+    let mut cfg = dom_config(&fake);
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_DOM_CHANGES", "99");
+    let m = reference::run(&cfg).unwrap();
+    assert_eq!(m.dom_attempts["Note.md"], 20);
+    assert_eq!(m.commands, fake.calls().len());
+    assert_eq!(m.failed.len(), 1, "{:?}", m.failed);
+    assert_eq!(m.failed[0].call, "dev:dom (Note.md)");
+    assert_eq!(m.failed[0].error, "reading view still changing after 20 reads");
+    assert_eq!(json(&cfg.out.join("dom.json"))["Note.md"]["changes"], 19);
+    assert!(
+        fs::read_to_string(cfg.out.join("dom/Note.md.html"))
+            .unwrap()
+            .contains("rendering, read 20")
+    );
+}
+
+#[test]
+fn dom_retry_exhaustion_stays_failed_and_continues_to_the_next_note() {
+    let fake = Fake::new("ref-dom-exhausted");
+    let mut cfg = dom_config(&fake);
+    fs::write(cfg.vault.join("Second.md"), "second").unwrap();
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_DOM_MISSING", "99");
+    let m = reference::run(&cfg).unwrap();
+    assert_eq!(m.commands, 9);
+    assert_eq!(m.commands, fake.calls().len());
+    assert_eq!(m.failed.len(), 2);
+    assert!(
+        m.failed
+            .iter()
+            .all(|f| f.call.starts_with("dev:dom") && f.error.contains("not found"))
+    );
+    assert!(m.dom_attempts.values().all(|n| *n == 3));
+    let dom = json(&cfg.out.join("dom.json"));
+    for note in ["Note.md", "Second.md"] {
+        assert_eq!(dom[note]["attempts"], 3);
+        assert_eq!(dom[note]["retries"].as_array().unwrap().len(), 2);
+        assert!(dom[note]["dom"]["error"].is_string());
+        assert!(
+            fs::read_to_string(cfg.out.join(format!("dom/{note}.html")))
+                .unwrap()
+                .contains("not found")
+        );
+    }
+}
+
+#[test]
+fn dom_rejects_missing_wrong_or_throwing_open_without_reading_stale_dom() {
+    for (i, answer) in [
+        "=> missing",
+        "=> source",
+        "=> null",
+        "=> {}",
+        "=> Promise { <pending> }",
+        "Error: failed to open",
+        "a log line\nError: failed to open",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let fake = Fake::new(&format!("ref-dom-open-{i}"));
+        let mut cfg = dom_config(&fake);
+        cfg.obsidian = fake.client(&cfg.vault).env("FAKE_OBSIDIAN_OPEN", answer);
+        let m = reference::run(&cfg).unwrap();
+        assert_eq!(m.commands, 2, "{answer}");
+        assert_eq!(m.failed.len(), 1, "{answer}");
+        assert_eq!(m.failed[0].call, "eval (Note.md)");
+        assert_eq!(m.dom_attempts["Note.md"], 0);
+        let dom = json(&cfg.out.join("dom.json"));
+        assert!(dom["Note.md"]["open"]["error"].is_string());
+        assert!(dom["Note.md"]["dom"].is_null());
+        assert!(!cfg.out.join("dom/Note.md.html").exists());
+        assert!(!fake.calls().iter().any(|c| c.command() == "dev:dom"));
+    }
+}
+
+#[test]
+fn dom_accepts_bare_and_json_preview_answers() {
+    for (i, answer) in ["=> preview", "preview", "=> \"preview\"", "\"preview\""]
+        .iter()
+        .enumerate()
+    {
+        let fake = Fake::new(&format!("ref-dom-preview-{i}"));
+        let mut cfg = dom_config(&fake);
+        cfg.obsidian = fake.client(&cfg.vault).env("FAKE_OBSIDIAN_OPEN", answer);
+        let m = reference::run(&cfg).unwrap();
+        assert!(m.failed.is_empty(), "{answer}: {:?}", m.failed);
+        assert_eq!(m.dom_attempts["Note.md"], 3);
+        assert_eq!(m.commands, 5);
+    }
+}
+
+/// An unrelated error ends the reads at once; an empty selection may be a view not yet rendered,
+/// so it is read until it stops changing, and fails if it stays empty.
+#[test]
+fn dom_stops_at_unrelated_errors_and_fails_empty_selections() {
+    for (i, (answer, reads)) in [
+        ("Error: Invalid selector", 1),
+        ("No elements found.", 3),
+        ("", 3),
+    ]
+    .iter()
+    .enumerate()
+    {
+        let fake = Fake::new(&format!("ref-dom-error-{i}"));
+        let mut cfg = dom_config(&fake);
+        cfg.obsidian = fake.client(&cfg.vault).env("FAKE_OBSIDIAN_DOM", answer);
+        let m = reference::run(&cfg).unwrap();
+        assert_eq!(m.commands, 2 + reads, "{answer:?}");
+        assert_eq!(m.failed.len(), 1, "{answer:?}");
+        assert_eq!(m.dom_attempts["Note.md"], *reads, "{answer:?}");
+        assert_eq!(
+            json(&cfg.out.join("dom.json"))["Note.md"]["retries"],
+            serde_json::json!([])
+        );
+    }
+}
+
+#[test]
+fn mock_runs_normalize_every_group_and_manifest_before_writing() {
+    use notes_fixtures::launch::Isolation;
+    let mut outputs = Vec::new();
+    for i in 0..2 {
+        let fake = Fake::new(&format!("ref-normalize-{i}"));
+        let mut cfg = dom_config(&fake);
+        fs::write(cfg.vault.join("Note.md"), "# Note\n- [ ] Task\n").unwrap();
+        fs::write(
+            cfg.vault.join("Notes.base"),
+            "views:\n  - name: All\n    type: table\n",
+        )
+        .unwrap();
+        cfg.only.clear();
+        let root = format!("/private/var/folders/machine-{i}/T/nfo-run-{i}");
+        let copy = format!("{root}/vaults/vault");
+        cfg.isolation = Some(Isolation {
+            app: "/Applications/Obsidian.app".into(),
+            home: format!("{root}/home"),
+            user_data_dir: format!("{root}/profile"),
+            vault_copy: copy.clone(),
+            sandboxed: true,
+        });
+        cfg.obsidian = fake
+            .client(&cfg.vault)
+            .env("FAKE_OBSIDIAN_VAULT_PATH", &copy)
+            .env(
+                "FAKE_OBSIDIAN_DIAGNOSTIC",
+                &format!("{copy} {root}/home {root}/profile {root}/tmp"),
+            )
+            .env(
+                "FAKE_OBSIDIAN_DOM",
+                &format!(
+                    "<img src=\"app://host-{i}{copy}/attachments/pixel.png?{}\">",
+                    1793019655954_u64 + i
+                ),
+            );
+        let m = reference::run(&cfg).unwrap();
+        assert!(m.failed.is_empty(), "{:?}", m.failed);
+        assert_eq!(m.groups.len(), 11);
+        assert_eq!(m.commands, fake.calls().len());
+        let manifest = json(&cfg.out.join("manifest.json"));
+        // Repo-relative when Cargo's target directory is inside the checkout, otherwise a placeholder.
+        let repo = crate_dir().join("../..").canonicalize().unwrap();
+        let vault_dir = fake.dir.join("vault").canonicalize().unwrap();
+        let expected = vault_dir
+            .strip_prefix(&repo)
+            .map_or("__vault__".into(), |p| p.to_string_lossy().into_owned());
+        assert_eq!(manifest["vault"], expected);
+        assert_eq!(manifest["isolation"]["home"], "__home__");
+        assert_eq!(manifest["isolation"]["user_data_dir"], "__profile__");
+        assert_eq!(manifest["isolation"]["vault_copy"], "__vault__");
+        assert_eq!(manifest["isolation"]["sandboxed"], true);
+        assert_eq!(manifest["isolation"]["app"], "/Applications/Obsidian.app");
+        let vault = json(&cfg.out.join("vault.json"));
+        assert!(
+            vault["vault"]["stdout"]
+                .as_str()
+                .unwrap()
+                .contains("path\t__vault__")
+        );
+        assert_eq!(vault["vault info=path"]["stdout"], "__vault__\n");
+        let mut written = BTreeMap::new();
+        for entry in walkdir::WalkDir::new(&cfg.out)
+            .into_iter()
+            .map(Result::unwrap)
+            .filter(|e| e.file_type().is_file())
+        {
+            let text = fs::read_to_string(entry.path()).unwrap();
+            assert!(!text.contains(&root), "{}", entry.path().display());
+            assert!(!text.contains(&format!("host-{i}")));
+            // A repository-relative test vault name intentionally differs between runs.
+            let text = text.replace(&format!("ref-normalize-{i}"), "ref-normalize");
+            written.insert(
+                entry.path().strip_prefix(&cfg.out).unwrap().to_path_buf(),
+                text,
+            );
+        }
+        outputs.push(written);
+    }
+    assert_eq!(outputs[0], outputs[1]);
 }

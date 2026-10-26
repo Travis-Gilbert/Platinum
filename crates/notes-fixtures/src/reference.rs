@@ -11,6 +11,7 @@
 use crate::{
     OBSIDIAN_VERSION,
     launch::Isolation,
+    normalize::Normalizer,
     obsidian::{Obsidian, Record, parse_version},
 };
 use anyhow::{Context, Result, bail};
@@ -25,8 +26,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-/// The reading view's root element. Class names are from memory of Obsidian's DOM and unverified
-/// until the first real run; `--dom-selector` overrides them.
+/// The reading view root observed in the 1.14.5 recording; `--dom-selector` overrides it.
 pub const DOM_SELECTOR: &str = ".workspace-leaf.mod-active .markdown-reading-view";
 pub const DEFAULT_QUERIES: &str = include_str!("../queries.json");
 
@@ -104,7 +104,7 @@ pub struct Config {
     /// Empty means every group.
     pub only: Vec<Group>,
     pub dom_selector: String,
-    /// How long the app gets to render a note after it is opened, before its DOM is read.
+    /// The wait before each read of a note's DOM, the first one after opening it included.
     pub settle: Duration,
 }
 
@@ -132,12 +132,17 @@ pub struct Manifest {
     pub groups: Vec<&'static str>,
     pub skipped_groups: Vec<&'static str>,
     pub commands: usize,
+    /// Actual dev:dom invocations per note, including retries (zero if opening failed).
+    pub dom_attempts: BTreeMap<String, usize>,
     pub notes: usize,
     pub canvases: usize,
     pub bases: usize,
     /// On disk but missing from `files`, and listed by `files` but not on disk.
     pub files_only_on_disk: Vec<String>,
     pub files_only_in_obsidian: Vec<String>,
+    /// Attempts the app never finished answering, each followed by another attempt; `commands`
+    /// counts them, and the call's final attempt is the one recorded (and in `failed` if it failed).
+    pub stalled: Vec<Failure>,
     pub failed: Vec<Failure>,
     pub known_gaps: Vec<Gap>,
 }
@@ -158,7 +163,7 @@ pub const KNOWN_GAPS: [Gap; 9] = [
     },
     Gap {
         what: "JSON output shapes",
-        why: "the CLI page names the formats but not their fields; stdout is kept verbatim and parsed only as far as it is JSON",
+        why: "the CLI page names the formats but not their fields; answers are normalized at recording time and parsed only as far as they are JSON",
     },
     Gap {
         what: "canvas contents",
@@ -174,7 +179,7 @@ pub const KNOWN_GAPS: [Gap; 9] = [
     },
     Gap {
         what: "reading view completeness",
-        why: "Obsidian renders long notes lazily and embeds asynchronously, so a DOM read after the settle time can miss the end of a note; the selector and class names are unverified",
+        why: "Obsidian renders long notes lazily and embeds asynchronously and the CLI has no signal for done, so the DOM is read until it stops changing; content that appears only after a longer pause, or only on scrolling, is missed",
     },
     Gap {
         what: "settings and plugin UI",
@@ -245,13 +250,39 @@ fn base_views(vault: &Path, path: &str) -> Result<Vec<String>> {
 }
 
 struct Recorder<'a> {
+    group: &'static str,
     obsidian: &'a Obsidian,
+    normalizer: &'a Normalizer,
     records: BTreeMap<String, Record>,
+    /// Attempts killed at the timeout and run again.
+    stalled: Vec<Failure>,
 }
 
+/// 1.14.5 now and then writes a whole answer and never closes the connection, so the CLI waits
+/// until it is killed (about one call in 800 over the fixture vault, on no particular command).
+/// Every call the recorder makes is a query, or opens a note that opening again leaves as it is,
+/// so such a call is run again; each killed attempt is kept in `stalled`.
+const STALL_ATTEMPTS: usize = 3;
+
 impl Recorder<'_> {
+    fn run(&mut self, command: &str, args: &[&str]) -> Record {
+        for _ in 1..STALL_ATTEMPTS {
+            let record = self.obsidian.run(command, args);
+            if !record.timed_out() {
+                return self.normalizer.record(record);
+            }
+            let record = self.normalizer.record(record);
+            self.stalled.push(Failure {
+                group: self.group,
+                call: record.key(),
+                error: record.error.unwrap_or_default(),
+            });
+        }
+        self.normalizer.record(self.obsidian.run(command, args))
+    }
+
     fn call(&mut self, command: &str, args: &[&str]) -> &mut Record {
-        let record = self.obsidian.run(command, args);
+        let record = self.run(command, args);
         match self.records.entry(record.key()) {
             Entry::Occupied(mut e) => {
                 e.insert(record);
@@ -262,18 +293,15 @@ impl Recorder<'_> {
     }
 }
 
-/// Rewrites `stdout` into `parsed` when it is JSON, to keep large `eval` dumps from being stored twice.
+/// The normalizer stores JSON eval results once, in `parsed`.
 fn eval(rec: &mut Recorder, code: &str) {
-    let record = rec.call("eval", &[&format!("code={code}")]);
-    if let Some(v) = record.eval_value() {
-        record.parsed = Some(v);
-        record.stdout.clear();
-    }
+    rec.call("eval", &[&format!("code={code}")]);
 }
 
 fn vault_group(rec: &mut Recorder) {
     for (command, args) in [
         ("vault", &[][..]),
+        ("vault", &["info=path"]),
         ("files", &[]),
         ("files", &["total"]),
         ("folders", &[]),
@@ -401,31 +429,121 @@ fn eval_group(rec: &mut Recorder) {
 #[derive(Serialize)]
 struct Dom {
     open: Record,
-    dom: Record,
+    dom: Option<Record>,
+    /// `dev:dom` calls for this note, retries included.
+    attempts: usize,
+    /// How often an answer differed from the one before it while the view was still rendering.
+    changes: usize,
+    /// Earlier command-not-found answers, retained even if the final call succeeds.
+    retries: Vec<Record>,
 }
 
-/// Opens each note in the reading view, waits, and stores the DOM under `dom/`.
-fn dom_group(cfg: &Config, scan: &Scan) -> Result<BTreeMap<String, Dom>> {
+/// Command-not-found answers after which the last one is recorded as the note's failure.
+const DOM_ATTEMPTS: usize = 3;
+/// The reading view renders long notes lazily and embeds (notes, PDFs) asynchronously, and the CLI
+/// says nothing about when it is done, so the DOM is read every `settle` until it gives the same
+/// answer this many times in a row.
+const DOM_STABLE_READS: usize = 3;
+/// Reads after which a view that is still changing is recorded as it stands, as a failure.
+const DOM_MAX_READS: usize = 20;
+
+fn dom_command_missing(record: &Record) -> bool {
+    // 1.14.5's dispatcher emits this before running a handler. A selector miss instead returns
+    // "No elements found."; unrelated errors are not retried and exhaustion is not hidden.
+    record
+        .stdout
+        .trim_start()
+        .starts_with("Error: Command \"dev:dom\" not found.")
+}
+
+fn opened_preview(record: &Record) -> bool {
+    let text = record.stdout.trim();
+    let text = text.strip_prefix("=>").map_or(text, str::trim);
+    record.ok()
+        && (text == "preview"
+            || record.parsed.as_ref().and_then(|v| v.as_str()) == Some("preview")
+            || record.eval_value().as_ref().and_then(|v| v.as_str()) == Some("preview"))
+}
+
+/// Opens each note in the reading view, reads its DOM until it stops changing, and stores it under `dom/`.
+fn dom_group(cfg: &Config, scan: &Scan, rec: &mut Recorder) -> Result<BTreeMap<String, Dom>> {
     let mut pairs = BTreeMap::new();
     for note in &scan.notes {
         let path = serde_json::to_string(note)?;
         let code = format!(
             "code=(async () => {{ const f = app.vault.getFileByPath({path}); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, {{ state: {{ mode: 'preview' }} }}); return l.view.getMode(); }})()"
         );
-        let open = cfg.obsidian.run("eval", &[&code]);
-        if !cfg.settle.is_zero() {
-            std::thread::sleep(cfg.settle);
+        let mut open = rec.run("eval", &[&code]);
+        if !opened_preview(&open) {
+            if open.ok() {
+                open.error = Some(format!(
+                    "note did not open in preview: {}",
+                    open.parsed
+                        .as_ref()
+                        .map_or_else(|| open.stdout.trim().to_string(), ToString::to_string)
+                ));
+            }
+            pairs.insert(
+                note.clone(),
+                Dom {
+                    open,
+                    dom: None,
+                    attempts: 0,
+                    changes: 0,
+                    retries: Vec::new(),
+                },
+            );
+            continue;
         }
-        let mut dom = cfg
-            .obsidian
-            .run("dev:dom", &[&format!("selector={}", cfg.dom_selector)]);
+        let (mut retries, mut attempts, mut changes, mut same) = (Vec::new(), 0, 0, 0);
+        let mut previous: Option<String> = None;
+        let mut dom = loop {
+            std::thread::sleep(cfg.settle);
+            let mut dom = rec.run("dev:dom", &[&format!("selector={}", cfg.dom_selector)]);
+            attempts += 1;
+            if dom_command_missing(&dom) {
+                if retries.len() + 1 == DOM_ATTEMPTS {
+                    break dom;
+                }
+                retries.push(dom);
+                continue;
+            }
+            if !dom.ok() {
+                break dom;
+            }
+            match &previous {
+                Some(p) if *p == dom.stdout => same += 1,
+                Some(_) => (changes, same) = (changes + 1, 1),
+                None => same = 1,
+            }
+            if same == DOM_STABLE_READS {
+                break dom;
+            }
+            if attempts == DOM_MAX_READS {
+                dom.error = Some(format!("reading view still changing after {attempts} reads"));
+                break dom;
+            }
+            previous = Some(dom.stdout.clone());
+        };
+        if dom.ok() && (dom.stdout.trim().is_empty() || dom.stdout.trim() == "No elements found.") {
+            dom.error = Some("reading view selector returned no DOM".into());
+        }
         let file = format!("dom/{note}.html");
         let to = cfg.out.join(&file);
         fs::create_dir_all(to.parent().context("note without a folder")?)?;
         fs::write(&to, &dom.stdout)?;
         dom.stdout.clear();
         dom.stdout_file = Some(file);
-        pairs.insert(note.clone(), Dom { open, dom });
+        pairs.insert(
+            note.clone(),
+            Dom {
+                open,
+                dom: Some(dom),
+                attempts,
+                changes,
+                retries,
+            },
+        );
     }
     Ok(pairs)
 }
@@ -478,22 +596,33 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
             "refusing to run: Obsidian reports {found}, and the reference is recorded against {OBSIDIAN_VERSION} only"
         );
     }
+    let normalizer = Normalizer::new(&cfg.vault, cfg.isolation.as_ref())?;
+    let version = normalizer.record(version);
     let scan = scan(&cfg.vault)?;
     fs::create_dir_all(&cfg.out)?;
-    let (mut groups, mut skipped, mut failed, mut commands) =
-        (Vec::new(), Vec::new(), Vec::new(), 1);
+    let (mut groups, mut skipped, mut stalled, mut failed, mut commands) =
+        (Vec::new(), Vec::new(), Vec::new(), Vec::new(), 1);
     let mut obsidian_files = None;
+    let mut dom_attempts = BTreeMap::new();
     for group in Group::ALL {
         if !cfg.only.is_empty() && !cfg.only.contains(&group) {
             skipped.push(group.name());
             continue;
         }
         let name = group.name();
+        let mut rec = Recorder {
+            group: name,
+            obsidian: &cfg.obsidian,
+            normalizer: &normalizer,
+            records: BTreeMap::new(),
+            stalled: Vec::new(),
+        };
         if group == Group::Dom {
-            let pairs = dom_group(cfg, &scan)?;
-            commands += pairs.len() * 2;
+            let pairs = dom_group(cfg, &scan, &mut rec)?;
             for (note, p) in &pairs {
-                for r in [&p.open, &p.dom] {
+                commands += 1 + p.attempts;
+                dom_attempts.insert(note.clone(), p.attempts);
+                for r in std::iter::once(&p.open).chain(p.dom.iter()) {
                     if let Some(error) = &r.error {
                         failed.push(Failure {
                             group: name,
@@ -505,10 +634,6 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
             }
             write_json(&cfg.out.join("dom.json"), &pairs)?;
         } else {
-            let mut rec = Recorder {
-                obsidian: &cfg.obsidian,
-                records: BTreeMap::new(),
-            };
             fill(group, cfg, &scan, &mut rec, &mut failed);
             if group == Group::Vault {
                 obsidian_files = rec.records.get("files").map(|r| r.stdout.clone());
@@ -529,6 +654,8 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
             }));
             write_json(&cfg.out.join(format!("{name}.json")), &rec.records)?;
         }
+        commands += rec.stalled.len();
+        stalled.append(&mut rec.stalled);
         eprintln!("{name}: done");
         groups.push(name);
     }
@@ -540,15 +667,20 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
         .collect();
     let disk: BTreeSet<String> = scan.files.iter().cloned().collect();
     let compare = !listed.is_empty();
+    for failure in stalled.iter_mut().chain(&mut failed) {
+        failure.error = normalizer.text(&failure.error);
+        failure.call = normalizer.text(&failure.call);
+    }
     let manifest = Manifest {
         obsidian_version: found,
         version_output: version.stdout.trim().to_string(),
         harness: concat!(env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION")),
-        vault: cfg.vault.display().to_string(),
-        isolation: cfg.isolation.clone(),
+        vault: normalizer.vault_path(&cfg.vault)?,
+        isolation: cfg.isolation.as_ref().map(|i| normalizer.isolation(i)),
         groups,
         skipped_groups: skipped,
         commands,
+        dom_attempts,
         notes: scan.notes.len(),
         canvases: scan.canvases.len(),
         bases: scan.bases.len(),
@@ -562,6 +694,7 @@ pub fn run(cfg: &Config) -> Result<Manifest> {
         } else {
             Vec::new()
         },
+        stalled,
         failed,
         known_gaps: KNOWN_GAPS.into_iter().collect(),
     };

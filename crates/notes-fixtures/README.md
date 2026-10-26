@@ -81,7 +81,7 @@ The commands, parameters and output formats are the ones documented on these pag
 
 | Group | Calls |
 | --- | --- |
-| `vault` | `vault`, `files` (and `files total`), `folders`, `bases`, `plugins:enabled filter=core format=json`, `plugins:enabled filter=community format=json`, `bookmarks format=json`, `templates`, `snippets:enabled` |
+| `vault` | `vault`, `vault info=path`, `files` (and `files total`), `folders`, `bases`, `plugins:enabled filter=core format=json`, `plugins:enabled filter=community format=json`, `bookmarks format=json`, `templates`, `snippets:enabled` |
 | `links` | `unresolved verbose counts format=json`, `unresolved total`, `orphans`, `deadends` (each also with `total`); for each note `links path=` and `backlinks path= counts format=json` |
 | `outline` | for each note `outline path= format=json` |
 | `properties` | `aliases verbose`, `aliases total`, `properties counts format=json`; for each note `properties path= format=json` and `aliases path=` |
@@ -91,11 +91,11 @@ The commands, parameters and output formats are the ones documented on these pag
 | `bases` | `base:query path= format=json` for each `.base`, and again with `view=` for each view name read from its YAML (`base:views` lists the current base only) |
 | `wordcount` | for each note `wordcount path=` |
 | `eval` | `eval code=` with `app.metadataCache.resolvedLinks`, `.unresolvedLinks`, `getCache(path)` for every note, and the file count |
-| `dom` | for each note `eval code=` to open it in the reading view, a pause, then `dev:dom selector=` |
+| `dom` | for each note `eval code=` to open it in the reading view, then `dev:dom selector=` every `--settle-ms` until three answers in a row agree |
 
 Before anything else the harness runs `version`. It parses the first `x.y.z` of the output, because the CLI page only says "Show Obsidian version", and stops with `refusing to run` unless it is exactly 1.14.5. Nothing is written, not even the output directory, when it refuses.
 
-A failing call is recorded and the run goes on. A call that gets no answer in 120 seconds is killed and recorded as failed. The app reports a bad command as `Error: ...` text on a successful exit (read from the 1.14.5 bundle), so that text counts as a failure too.
+A failing call is recorded and the run goes on. A call that gets no answer in 20 seconds is killed and run again, up to three attempts; each killed attempt is listed in the manifest's `stalled` and counted in `commands`, and a call killed three times is recorded as failed (see [Stalled calls](#stalled-calls)). The app reports a bad command as `Error: ...` text on a successful exit (read from the 1.14.5 bundle), so that text counts as a failure too.
 
 ### Isolation
 
@@ -110,10 +110,10 @@ The CLI drives a running app, so a reference run has to start the app itself. Re
 `--app` therefore does this, and nothing else touches the user's Obsidian:
 
 1. A temporary directory `nfo-*` under `$TMPDIR`, kept short because a unix socket path may be at most 104 bytes. In it: a `home/`, a `profile/` and `vaults/<name>`, a copy of the vault. The original is never opened.
-2. `profile/obsidian.json` registers only that copy as open, with `cli` on and updates off. The app is started with `--user-data-dir=<profile>`, `HOME=<home>`, a private `TMPDIR`, a cleared environment and `PATH=/usr/bin:/bin:/usr/sbin:/sbin`.
-3. `sandbox-exec` wraps it with a profile that denies the real `~/Library/Application Support/obsidian`, `Obsidian`, its saved window state and the real `~/.obsidian-cli.sock`. A misdirected app fails to read them instead of using them. Chromium cannot start its own sandbox inside that one, so the app gets `--no-sandbox`.
+2. `profile/obsidian.json` registers only that copy as open, with `cli` on and updates off. The app is started with `--user-data-dir=<profile>`, `--use-mock-keychain`, `HOME=<home>` (and `CFFIXED_USER_HOME`), a private `TMPDIR`, a cleared environment and `PATH=/usr/bin:/bin:/usr/sbin:/sbin`. Without the mock keychain, Electron's safeStorage looked for a login keychain under the private home, found none, and the main thread waited on a password prompt, so the first CLI request was never answered; the mock also keeps the app off the user's keychain.
+3. `sandbox-exec` wraps it with a profile that denies the real `~/Library/Application Support/obsidian`, `Obsidian`, its saved window state and the real `~/.obsidian-cli.sock`. A misdirected app fails to read them instead of using them. One thing it cannot cover: the app's Cocoa defaults (`md.obsidian`) are served by `cfprefsd` from the real user's domain whatever the home, so the isolated app shares that domain with the user's Obsidian. Obsidian keeps its own settings in its profile, not there. Chromium cannot start its own sandbox inside that one, so the app gets `--no-sandbox`.
 4. Every CLI call runs with the private `HOME`, in the vault copy. After the first answer the harness checks that `vault info=path` names the copy; anything else stops the run.
-5. The app runs in its own process group. It is quit on success, on any error, on SIGINT, SIGTERM and SIGHUP, and on a panic: SIGTERM, ten seconds of grace, then SIGKILL for the group. The temporary directory is removed. The real socket's inode and modification time are compared before and after. `manifest.json` records the paths, the app version and whether the sandbox was on (`isolation`).
+5. The app runs in its own process group. It is quit on success, on any error, on SIGINT, SIGTERM and SIGHUP, and on a panic: SIGTERM, ten seconds of grace, then SIGKILL for the group. The temporary directory is removed. The real socket's inode and modification time are compared before and after. `manifest.json` records placeholders for the isolation paths, the app version and whether the sandbox was on (`isolation`).
 
 `tests/launch.rs` checks all of this against a fake `Obsidian.app` that records its environment and tries to read stand-ins for the real profile and socket.
 
@@ -140,32 +140,116 @@ cargo run -p notes-fixtures --release -- reference \
 
 For the help vault, clone it outside the repository and use `--vault <clone> --out crates/notes-fixtures/reference/obsidian-help` (ignored by git). To drive an instance you started and isolated yourself, use `--attach` (with `--vault-name <name>` to pass `vault=<name>` first on every call).
 
-The window must be visible: the run needs the screen awake and unlocked (see the next section).
+Every run so far had the screen awake and unlocked. Whether a locked screen or a hidden window changes the answers, the reading view in particular, has not been tried.
 
-### Not yet seen answering
+### The committed recording
 
-The isolation and the socket path work on the machine this was built on: the private-HOME client reached the isolated app, which logged `Received command line [ 'vault', 'info=path' ]`, and the real `~/.obsidian-cli.sock` was never created. But no real run got an answer. The vault window loads (its console banner is logged) and then never becomes ready, so the request the app queued for it, and every later one, goes unanswered; the app logged only the first request although the harness asked every five seconds. A two-note vault with no `.obsidian/` behaves the same, so the fixture is not the cause, and none of `--disable-renderer-backgrounding`, `--disable-backgrounding-occluded-windows`, `--disable-features=MacWebContentsOcclusion,WebContentsOcclusion,CalculateNativeWinOcclusion`, or `-NSAppSleepDisabled YES` changed it.
+`reference/fixture-vault/` was recorded on 2026-10-26 with Obsidian 1.14.5 by the command in step 2, in 154 seconds: 940 calls over 68 notes, none failed. Two calls stalled and were answered on their second attempt (`tasks status=< format=json` and one `dev:dom`; see [Stalled calls](#stalled-calls)). All 68 notes opened in the reading view. 67 reading views gave the same answer on the first three reads; `embeds/Embed Media.md` changed once, when its PDF finished loading.
 
-At the time, the Mac's main display was asleep and its session locked (`CGDisplayIsAsleep` true, `CGSSessionScreenIsLocked` 1). Chromium treats an occluded macOS window as hidden and stops rendering it (<https://www.chromium.org/developers/design-documents/mac-occlusion/>), which would stall Obsidian's startup. That is the one correlate seen, not a confirmed cause. If `probe` does not get an answer on an awake, unlocked desktop either, the log it prints says where it stopped; `--app-arg` passes more Electron or Chromium flags to try. When the app received the request but never answered, the error says so.
+Six earlier full recordings and one of the DOM group alone were compared with it, answer by answer. Apart from calls that stalled in a run that had no retry yet, two things varied:
+
+- The ambiguous `[[Note]]` in `links/Link Forms.md` resolved to `a/Note.md` in four runs and to `b/Note.md` in three, which changes `resolvedLinks` and the backlink counts of both notes. Obsidian does not fix this order; see the audit under [Outputs](#outputs).
+- Reading views read once, 500 ms after opening, had not always finished rendering: the PDF in `embeds/Embed Media.md` (no pages in six runs, two of three in one) and the embedded notes in `embeds/Embed Notes.md` (an empty view in one run). Reading until the view stops changing, as below, gave the complete view both times it was run.
+
+### Reading the DOM
+
+The recorder checks that opening succeeded and returned exactly `preview` (bare, `=>` prefixed, or JSON quoted). Missing files, another mode, thrown errors, and unrecognized answers fail the opening record; DOM is not read from the preceding note.
+
+The reading view renders long notes lazily and embeds asynchronously, and the CLI says nothing about when it is done, so `dev:dom` is called every `--settle-ms` (500 ms by default) until three answers in a row are the same, at most 20 times. Answers are compared after normalization, so generated geometry is not a change. A view still changing after 20 reads is recorded as it stands and listed in `failed`. An empty answer or `No elements found.` is read again the same way and fails if it stays. Other errors end the reads.
+
+`Error: Command "dev:dom" not found. It may require a plugin to be enabled.` is retried up to three times. An earlier recording got it for four notes, and none of the eight runs since has. Read from the 1.14.5 bundle: the renderer's `handleCli` looks up its handler map and emits this error before invoking any handler; `dev:dom` and `eval` are registered in the desktop branch of CLI initialization, and `dev:dom` checks no plugin and no view. A renderer whose handler map is not in place answers this way; what caused it then is not known.
+
+`dom.json` stores, per note, `attempts` (every `dev:dom` call), `changes` (how often an answer differed from the one before it), the command-not-found answers in `retries`, and the final `dom` record (`null` when opening failed). The manifest's `dom_attempts` map includes every note, with zero for failed opens; `commands` includes every call.
+
+### Stalled calls
+
+1.14.5 now and then never finishes a call it has answered: the CLI has the answer (in one case only part of an outline) and waits for the app to close the connection, which it does not do. From samples of both processes during stalls, and from the bundle:
+
+- The client connects to `$HOME/.obsidian-cli.sock`, writes one JSON line and copies the socket to its stdout until end of file. During a stall its main thread waits in `pthread_join` and its reader thread in `read()` on the socket.
+- The app's socket handler reads that line, runs the command in the vault's renderer through `executeJavaScript`, writes the answer and calls `end()` on the socket in the same step. During a stall the app's main and renderer threads are idle and it still holds the connection open. The five-second header timer the handler never clears only rejects a promise that has already settled.
+- A second call during a stall is answered normally while the stalled one stays stuck, so the app as a whole is not blocked.
+- No call that finished took more than a second. In three runs with a 120-second limit and no retry, each had one stall, on the call in flight four to five seconds after the app started; runs with the retry also stalled later in the run, as the committed recording did. Over all the runs it came to about one call in 800, on no particular command.
+
+The cause inside the app is not known. Every call the recorder makes is a query, or opens a note that opening again leaves as it is, so a call gets 20 seconds and is then killed and run again, up to three attempts. Each killed attempt is listed in the manifest's `stalled` (group, call, error) and counted in `commands`. The final attempt is the one recorded, and a call killed three times is in `failed`.
 
 ### Outputs
 
-`crates/notes-fixtures/reference/<vault>/` holds `<group>.json` for each group (a map from the call, as typed, to its record: `command`, `args`, `exit_code`, `stdout` verbatim, `stderr`, `error`, and `parsed` when `format=json` gave JSON), `dom.json` with `dom/<note>.html` for each note's reading view, and `manifest.json`: the Obsidian version and the raw `version` output, the harness version, the vault, the groups run and skipped, the number of calls, the files `files` listed that are not on disk and the reverse, every failed call, and `known_gaps`, the things no run can ask Obsidian.
+`crates/notes-fixtures/reference/<vault>/` holds `<group>.json` for each group (a map from the call, as typed, to its record: `command`, `args`, `exit_code`, normalized `stdout`, `stderr`, `error`, and `parsed` when `format=json` gave JSON), `dom.json` with `dom/<note>.html` for each note's reading view, and `manifest.json`: the Obsidian version and the normalized `version` output, the harness version, the vault, the groups run and skipped, the number of calls, the files `files` listed that are not on disk and the reverse, every stalled attempt (`stalled`), every failed call, and `known_gaps`, the things no run can ask Obsidian.
+
+Every answer goes through the same recording normalizer before it reaches a group JSON,
+DOM sidecar, or manifest. The live CLI and the launch safety checks still use original
+answers. JSON keys and string values, stdout, stderr and errors are normalized together;
+JSON stdout is serialized with sorted object keys. No post-processing of recordings is needed.
+
+| Placeholder | Where it applies |
+| --- | --- |
+| `__vault__` | Original vault and isolated copy roots in answers, including `/private/var/…` and `/var/…` aliases and resource URLs; `isolation.vault_copy`. The manifest's `vault` instead uses the repository-relative source path (`crates/notes-fixtures/vault`); an external vault uses this placeholder. |
+| `__app__` | Authority of every `app://` resource URL. |
+| `__mtime__` | Numeric cache-busting query on an `app://` resource; the `?` and any fragment or following parameters remain. |
+| `__home__` | Private HOME in answers/diagnostics and `isolation.home`. |
+| `__profile__` | Private user-data directory in answers/diagnostics and `isolation.user_data_dir`. |
+| `__run__` | Other paths beneath the isolation root, such as its private temporary directory, in diagnostics. |
+| `__repo__` | Repository root in answers/diagnostics outside the source vault. |
+| `__footnote_N__` | Random 16-hex footnote suffixes in DOM `id`, `data-footnote-id`, and `href`; N starts at 1 for each DOM answer in first-occurrence order, preserving distinct embedded-note namespaces and reference links. |
+| `__layout__` | Runtime geometry in generated preview sizers, Bases containers/rows/cells/cards, PDF containers/text layers/thumbnails, and canvas backing dimensions. CSS declarations, units and DOM structure remain. Authored image dimensions, raw HTML styles, SVG geometry and MathJax metrics remain. |
+| `__limited_result__` | Each returned entry of a search with a positive `limit`. The app truncates its unsorted file enumeration, so membership and context are run-dependent. Cardinality is retained; selected file identity/context are deliberately not a parity assertion for these limited calls. Unlimited calls retain full results. |
+
+For example, an image becomes
+`app://__app__/__vault__/attachments/pixel.png?__mtime__`.
+`isolation.app` and `sandboxed` are retained as requested provenance.
+
+Audit of the supplied recording:
+
+- The vault/source paths, resource authority and mtime queries, random footnote suffixes,
+  and generated layout measurements above vary with the checkout, run or window.
+- Search result order follows `getMarkdownFiles()` enumeration in the installed bundle;
+  complete result arrays are sorted. Tags sorted by count have no tie-breaker in the app;
+  ties are recorded in tag order. JSON object keys and recorder maps are sorted. Semantic
+  arrays (outline/source positions, frontmatter lists, bookmarks and Base view rows) keep
+  their order. `base:query` sorts input files by path before applying the view, making
+  ties deterministic. Each alias and unresolved target in this recording has only one
+  source file, so their unsorted source lists cannot vary here. The other CLI listings
+  and task output are sorted by the app, and fixture scanning, status sets and file
+  differences already use ordered traversal/collections.
+- An ambiguous link resolves in an order the app does not fix. Read from the bundle,
+  `getLinkpathDest` takes the files with the link's name, puts the ones under the source note's
+  folder first, and sorts each group by path length; files whose paths are equally long keep the
+  order the vault loaded them in, which varies between runs. `[[Note]]` in `links/Link Forms.md`
+  has two such candidates, `a/Note.md` and `b/Note.md` (nine characters each, neither under
+  `links/`), and resolved to each in different runs; the recording has `a/Note.md`. For that one
+  link, `resolvedLinks` of `links/Link Forms.md` and the backlink counts of the two notes are not a
+  parity assertion: either candidate matches Obsidian. Links from inside `a/` and `b/` resolve to
+  their own folder's note in every run.
+- `vault.size` and Bases `Size (KB)` derive from fixture byte lengths, not allocated disk
+  blocks. No file ctime/mtime stat fields occur in the recorded JSON; the mtime queries
+  above are the only epoch timestamps found. Metadata positions and counts are content-derived.
+- Daily-note dates, frontmatter `created`/due dates, the pasted-image filename, task dates,
+  template date/time tokens and custom HTML IDs are authored fixture data. Bases `Time left`
+  subtracts the fixed `date("2026-10-25")`, not the current clock. These values are preserved.
+- No additional user names or random IDs were found. Version strings, enabled plugins,
+  content, errors and attempt counts are evidence: failures, stalls, retry counts and DOM
+  read counts can differ between runs and are intentionally retained rather than made to
+  look successful.
+
+The normalizer uses the existing `regex` and `serde_json` dependencies. Its DOM substitutions
+are narrowly scoped to the generated attributes observed above; it does not parse or
+reserialize the HTML tree. This preserves Obsidian's markup and avoids a new parser dependency.
+Font availability and different app settings can still change *which* content is rendered,
+and content that appears only after a longer pause than three reads, or only on scrolling, is
+not captured. Normalizing geometry does not establish complete DOM capture.
 
 Known gaps: the graph view (the CLI has no graph command; nodes and edges come from `resolvedLinks` and `unresolvedLinks`), unlinked mentions (`backlinks` is documented as linked only), canvas contents (no canvas command), the search results view, Live Preview and Source mode, and settings and workspace UI. `COVERAGE.md` says which matrix rows these leave to a comparison in the running app.
 
 ### Unverified
 
-These come from memory, not from a page or a run, and the first real run settles them:
+These still need live acceptance after the recorder changes:
 
-- everything the app answers: no run has produced an answer yet (see above), so the JSON shapes, the `help` listing beyond its first lines, and the text of `version` are unseen;
-- the reading view selector `.workspace-leaf.mod-active .markdown-reading-view` and the class names in the DOM (override with `--dom-selector`);
-- whether `eval` waits for a promise, which is why the harness pauses after opening a note (`--settle-ms`);
-- the JSON field names of every `format=json` answer, which the CLI page does not give: the harness keeps stdout verbatim and parses it only as far as it is JSON;
+- reading-view capture of content that renders only on scrolling, and across window sizes (override the selector with `--dom-selector`);
+- the JSON field names of every `format=json` answer, which the CLI page does not give: the harness normalizes stdout and parses it only as far as it is JSON;
 - the shapes of the files in `vault/.obsidian/` (`app.json`, `bookmarks.json`, `graph.json`, `workspaces.json`, `hotkeys.json`, `types.json`, `core-plugins.json`);
-- the outcome of each probe note: whether `[[Note#C# basics]]` or `[[Note#C basics]]` resolves, whether alias links resolve, whether links in comments count, which tag forms are tags.
+- the outcome of each probe note: whether `[[Note#C# basics]]` or `[[Note#C basics]]` resolves, whether alias links resolve, whether links in comments count, which tag forms are tags. The recording holds Obsidian's answers; they have not been read out into `COVERAGE.md` yet.
 
-The fake CLI used by the tests is a shell script that answers in the shapes the CLI page shows; whatever the page leaves out, such as the JSON fields, it makes up.
+The normalization tests also use representative strings from the supplied real recording. The fake CLI used by the tests is a shell script that answers in the shapes the CLI page shows; whatever the page leaves out, such as the JSON fields, it makes up.
 
 ## Tests
 
@@ -174,7 +258,7 @@ cargo test -p notes-fixtures --locked
 ```
 
 - `tests/generate.rs`: determinism, the pinned digest, the mix, valid extras, no name collisions.
-- `tests/reference.rs`: the harness against the fake CLI. The script is written to a temporary directory and put first on `PATH` for the binary tests; it logs every invocation and replies with the documented shapes. The tests check the call table, the version refusal, `vault=` ordering, the outputs, and that failures are recorded: a non-zero exit, `Error:` text on a clean exit, and a call that never answers.
+- `tests/reference.rs`: the harness against the fake CLI. The script is written to a temporary directory and put first on `PATH` for the binary tests; it logs every invocation and replies with the documented shapes. The tests check the call table, the version refusal, `vault=` ordering, the normalized outputs across two mock isolation roots, preview validation, DOM reads until the view stops changing, bounded command-not-found retries and attempt accounting, and that failures are recorded: a non-zero exit, `Error:` text on a clean exit, a call that never answers, and a call (or a DOM read) that stalls once and is run again.
 - `tests/launch.rs` (macOS): the isolated launch against a fake `Obsidian.app`: private home and profile, the sandbox denying stand-ins for the real profile and socket, the seeded `obsidian.json`, flags passed through, every CLI call on the private home and in the copy, the app and the directory gone afterwards, and the same on a wrong version, a vault mismatch, an app that exits or never binds, SIGINT, a missing app, and the `--app`/`--attach` rules.
 - `tests/vault.rs`: the lints above.
 - `tests/coverage.rs`: `COVERAGE.md` against the matrix in `docs/plans/notes-app.md`.

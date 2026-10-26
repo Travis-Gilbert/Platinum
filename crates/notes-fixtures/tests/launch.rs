@@ -22,6 +22,8 @@ enum Mode {
     Exit,
     /// Starts, never binds a socket.
     Silent,
+    /// Serves until the CLI has been asked for `files`, then exits mid-run.
+    Dies,
 }
 
 struct World {
@@ -93,6 +95,16 @@ exec nc -lU "$HOME/.obsidian-cli.sock"
             ),
             Mode::Exit => "#!/bin/sh\necho 'boom: cannot open a window' >&2\nexit 3\n".into(),
             Mode::Silent => format!("#!/bin/sh\necho \"pid $$\" > '{log}'\nexec sleep 300\n"),
+            Mode::Dies => format!(
+                r#"#!/bin/sh
+echo "pid $$" > '{log}'
+nc -lU "$HOME/.obsidian-cli.sock" &
+until grep -q 'argv.files' '{cli}' 2>/dev/null; do sleep 0.05; done
+echo 'the vault window closed' >&2
+exit 0
+"#,
+                cli = self.cli_log.display(),
+            ),
         }
     }
 
@@ -187,7 +199,7 @@ fn the_app_runs_on_a_private_home_and_profile_and_is_gone_afterwards() {
             "vault,tags",
             "--startup-secs",
             "20",
-            "--app-arg=--disable-renderer-backgrounding",
+            "--app-arg=--force-device-scale-factor=1",
         ],
         &[],
     );
@@ -211,7 +223,8 @@ fn the_app_runs_on_a_private_home_and_profile_and_is_gone_afterwards() {
     assert_eq!(
         said["args"],
         format!(
-            "--user-data-dir={} --no-sandbox --disable-renderer-backgrounding",
+            // The mock keychain, so the app never waits on a keychain prompt.
+            "--user-data-dir={} --no-sandbox --use-mock-keychain --force-device-scale-factor=1",
             root.join("profile").display()
         )
     );
@@ -267,10 +280,9 @@ fn the_app_runs_on_a_private_home_and_profile_and_is_gone_afterwards() {
 
     let manifest = json(&w.dir.join("out/manifest.json"));
     assert_eq!(manifest["isolation"]["sandboxed"], true);
-    assert_eq!(manifest["isolation"]["vault_copy"], copy);
+    assert_eq!(manifest["isolation"]["vault_copy"], "__vault__");
     assert_eq!(
-        manifest["vault"],
-        vault().canonicalize().unwrap().display().to_string(),
+        manifest["vault"], "crates/notes-fixtures/vault",
         "the manifest names the vault that was copied"
     );
 
@@ -334,6 +346,20 @@ fn an_app_that_exits_is_reported_with_its_log_without_waiting_out_the_timeout() 
         started.elapsed()
     );
     assert!(!w.dir.join("out").exists());
+    assert!(w.tmp_is_empty());
+}
+
+#[test]
+fn an_app_that_dies_mid_run_fails_the_run_with_its_log() {
+    let w = World::new("launch-dies", "t10", Mode::Dies);
+    let run = w.reference(&["--only", "vault,tags", "--startup-secs", "20"], &[]);
+    assert!(!run.status.success());
+    let say = text(&run);
+    assert!(
+        say.contains("exited with") && say.contains("during the run"),
+        "{say}"
+    );
+    assert!(say.contains("the vault window closed"), "{say}");
     assert!(w.tmp_is_empty());
 }
 

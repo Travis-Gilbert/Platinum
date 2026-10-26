@@ -42,7 +42,10 @@ machine and the same vaults:
   which includes the rendered reading view. Frame must match the link,
   backlink, unresolved-link, tag, alias, property, heading, task and
   word-count results exactly, including notes with the same name in different
-  folders.
+  folders. One answer Obsidian does not fix: an ambiguous link whose candidates
+  are equally long paths, none under the linking note's folder, resolves in the
+  order the vault loaded (1.14.5's `getLinkpathDest`), so either candidate
+  matches; Frame breaks such ties the same way every time.
 - **Reading view.** The normalised DOM structure (elements, the class names
   that themes and snippets rely on, and text) matches Obsidian's reading view
   for every fixture note. Compare screenshots side by side as well.

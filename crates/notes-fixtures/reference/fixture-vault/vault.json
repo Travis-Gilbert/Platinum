@@ -1,0 +1,209 @@
+{
+  "bases": {
+    "command": "bases",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "bases/Notes.base\nbases/Projects.base\nbases/Tasks.base\n",
+    "stderr": "",
+    "error": null
+  },
+  "bookmarks format=json": {
+    "command": "bookmarks",
+    "args": [
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"value\": \"Home.md\"\n  },\n  {\n    \"value\": \"links/Headings Target.md#First heading#Nested heading\"\n  },\n  {\n    \"value\": \"links/Blocks Target.md#^quote-block\"\n  },\n  {\n    \"value\": \"tag:#project\"\n  },\n  {\n    \"value\": \"callouts\"\n  },\n  {\n    \"value\": \"[group] Boards\"\n  },\n  {\n    \"value\": \"canvases/Board.canvas\"\n  },\n  {\n    \"value\": \"bases/Notes.base\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "value": "Home.md"
+      },
+      {
+        "value": "links/Headings Target.md#First heading#Nested heading"
+      },
+      {
+        "value": "links/Blocks Target.md#^quote-block"
+      },
+      {
+        "value": "tag:#project"
+      },
+      {
+        "value": "callouts"
+      },
+      {
+        "value": "[group] Boards"
+      },
+      {
+        "value": "canvases/Board.canvas"
+      },
+      {
+        "value": "bases/Notes.base"
+      }
+    ]
+  },
+  "files": {
+    "command": "files",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "a/Links From A.md\na/Note.md\nattachments/anim.gif\nattachments/clip.mp4\nattachments/clip.webm\nattachments/icon.bmp\nattachments/Pasted image 20261024101500.png\nattachments/photo.jpg\nattachments/pic.avif\nattachments/pic.webp\nattachments/pixel.png\nattachments/sample.pdf\nattachments/tone.m4a\nattachments/tone.mp3\nattachments/tone.ogg\nattachments/tone.wav\nattachments/unused.png\nattachments/vector.svg\nattachments/wide.png\nb/Links From B.md\nb/Note.md\nbases/Notes.base\nbases/Projects.base\nbases/Tasks.base\ncallouts/All Callouts.md\ncallouts/Callout Titles and Folding.md\ncallouts/Custom Callout.md\ncallouts/Nested Callouts.md\ncanvases/Board.canvas\ncanvases/Cards.canvas\ncanvases/Edges.canvas\ncanvases/Groups.canvas\ndaily/2026-10-23.md\ndaily/2026-10-24.md\ndaily/2026-10-25.md\ndataview/Dataview Fields.md\nDead End.md\nembeds/Embed Canvas and Base.md\nembeds/Embed Images.md\nembeds/Embed Media.md\nembeds/Embed Notes.md\nembeds/Embed Query.md\nembeds/Loop A.md\nembeds/Loop B.md\nexcluded/Hidden Note.md\nHome.md\ninbox/Inbox.md\nlinks/Aliases.md\nlinks/Blocks Target.md\nlinks/Headings Target.md\nlinks/Link Forms.md\nlinks/Markdown Links.md\nlinks/Mentions.md\nlinks/Unresolved Links.md\nOrphan.md\nprojects/Project Alpha.md\nprojects/Project Beta.md\nprojects/Project Delta.md\nprojects/Project Gamma.md\nproperties/Aliases and Cssclasses.md\nproperties/All Property Types.md\nproperties/Broken Frontmatter.md\nproperties/Empty Frontmatter.md\nproperties/Frontmatter Only.md\nproperties/Link Properties.md\nproperties/Type Mismatch.md\nreview/Heading With Hash.md\nreview/Missing Note Creation.md\nsearch/Case Sensitivity.md\nsearch/Search Corpus.md\nslides/Deck.md\nsyntax/Bidirectional Text.md\nsyntax/Byte Order Mark.md\nsyntax/Code Blocks.md\nsyntax/Comments and Highlights.md\nsyntax/Folding and Lists.md\nsyntax/Footnotes.md\nsyntax/Inline Formatting.md\nsyntax/Line Endings.md\nsyntax/Math.md\nsyntax/Mermaid.md\nsyntax/Raw HTML.md\nsyntax/Tables.md\ntagging/Frontmatter Tags.md\ntagging/Tags As Text.md\ntagging/Tags.md\ntagging/Unicode Tags.md\ntasks/Task Statuses.md\ntemplates/Daily.md\ntemplates/Meeting.md\nUnicode é 日本.md\nweekly/2026-W43.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "files total": {
+    "command": "files",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "92\n",
+    "stderr": "",
+    "error": null
+  },
+  "folders": {
+    "command": "folders",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "/\na\nattachments\nb\nbases\ncallouts\ncanvases\ndaily\ndataview\nembeds\nexcluded\ninbox\nlinks\nprojects\nproperties\nreview\nsearch\nslides\nsyntax\ntagging\ntasks\ntemplates\nweekly\n",
+    "stderr": "",
+    "error": null
+  },
+  "plugins:enabled filter=community format=json": {
+    "command": "plugins:enabled",
+    "args": [
+      "filter=community",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": []
+  },
+  "plugins:enabled filter=core format=json": {
+    "command": "plugins:enabled",
+    "args": [
+      "filter=core",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"id\": \"backlink\"\n  },\n  {\n    \"id\": \"bases\"\n  },\n  {\n    \"id\": \"bookmarks\"\n  },\n  {\n    \"id\": \"canvas\"\n  },\n  {\n    \"id\": \"command-palette\"\n  },\n  {\n    \"id\": \"daily-notes\"\n  },\n  {\n    \"id\": \"editor-status\"\n  },\n  {\n    \"id\": \"file-explorer\"\n  },\n  {\n    \"id\": \"file-recovery\"\n  },\n  {\n    \"id\": \"footnotes\"\n  },\n  {\n    \"id\": \"global-search\"\n  },\n  {\n    \"id\": \"graph\"\n  },\n  {\n    \"id\": \"note-composer\"\n  },\n  {\n    \"id\": \"outgoing-link\"\n  },\n  {\n    \"id\": \"outline\"\n  },\n  {\n    \"id\": \"page-preview\"\n  },\n  {\n    \"id\": \"properties\"\n  },\n  {\n    \"id\": \"random-note\"\n  },\n  {\n    \"id\": \"slash-command\"\n  },\n  {\n    \"id\": \"slides\"\n  },\n  {\n    \"id\": \"switcher\"\n  },\n  {\n    \"id\": \"tag-pane\"\n  },\n  {\n    \"id\": \"templates\"\n  },\n  {\n    \"id\": \"word-count\"\n  },\n  {\n    \"id\": \"workspaces\"\n  },\n  {\n    \"id\": \"zk-prefixer\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "id": "backlink"
+      },
+      {
+        "id": "bases"
+      },
+      {
+        "id": "bookmarks"
+      },
+      {
+        "id": "canvas"
+      },
+      {
+        "id": "command-palette"
+      },
+      {
+        "id": "daily-notes"
+      },
+      {
+        "id": "editor-status"
+      },
+      {
+        "id": "file-explorer"
+      },
+      {
+        "id": "file-recovery"
+      },
+      {
+        "id": "footnotes"
+      },
+      {
+        "id": "global-search"
+      },
+      {
+        "id": "graph"
+      },
+      {
+        "id": "note-composer"
+      },
+      {
+        "id": "outgoing-link"
+      },
+      {
+        "id": "outline"
+      },
+      {
+        "id": "page-preview"
+      },
+      {
+        "id": "properties"
+      },
+      {
+        "id": "random-note"
+      },
+      {
+        "id": "slash-command"
+      },
+      {
+        "id": "slides"
+      },
+      {
+        "id": "switcher"
+      },
+      {
+        "id": "tag-pane"
+      },
+      {
+        "id": "templates"
+      },
+      {
+        "id": "word-count"
+      },
+      {
+        "id": "workspaces"
+      },
+      {
+        "id": "zk-prefixer"
+      }
+    ]
+  },
+  "snippets:enabled": {
+    "command": "snippets:enabled",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "callouts\nfolder-colours\n",
+    "stderr": "",
+    "error": null
+  },
+  "templates": {
+    "command": "templates",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "Daily\nMeeting\n",
+    "stderr": "",
+    "error": null
+  },
+  "vault": {
+    "command": "vault",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "name\tvault\npath\t__vault__\nfiles\t92\nfolders\t22\nsize\t92723\n",
+    "stderr": "",
+    "error": null
+  },
+  "vault info=path": {
+    "command": "vault",
+    "args": [
+      "info=path"
+    ],
+    "exit_code": 0,
+    "stdout": "__vault__\n",
+    "stderr": "",
+    "error": null
+  }
+}

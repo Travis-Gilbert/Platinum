@@ -9,7 +9,13 @@
 #   FAKE_OBSIDIAN_FILES_EXTRA a path `files` adds
 #   FAKE_OBSIDIAN_ERROR       a command name that prints `Error: ...` and exits 0, as the real app does
 #   FAKE_OBSIDIAN_HANG        a command name that never answers
+#   FAKE_OBSIDIAN_HANG_ONCE   a command name that never answers the first time it is called
 #   FAKE_OBSIDIAN_VAULT_PATH  the path `vault` reports instead of the working directory
+#   FAKE_OBSIDIAN_DIAGNOSTIC  text printed to stderr on every call
+#   FAKE_OBSIDIAN_OPEN        answer to the openFile eval (default: => preview)
+#   FAKE_OBSIDIAN_DOM_MISSING number of dev:dom not-found answers after each open
+#   FAKE_OBSIDIAN_DOM_CHANGES number of dev:dom answers after those that differ each time, as a view still rendering
+#   FAKE_OBSIDIAN_DOM         final dev:dom answer, including an explicitly empty answer
 log="${FAKE_OBSIDIAN_LOG:?FAKE_OBSIDIAN_LOG is required}"
 printf '%s\n' "$HOME" >> "$log.home"
 {
@@ -19,6 +25,9 @@ printf '%s\n' "$HOME" >> "$log.home"
   printf '\n'
 } >> "$log"
 
+if [ -n "${FAKE_OBSIDIAN_DIAGNOSTIC:-}" ]; then
+  printf '%s\n' "$FAKE_OBSIDIAN_DIAGNOSTIC" >&2
+fi
 case "$1" in vault=*) shift ;; esac
 cmd="$1"
 shift
@@ -31,6 +40,10 @@ if [ "$cmd" = "${FAKE_OBSIDIAN_ERROR:-}" ]; then
   exit 0
 fi
 if [ "$cmd" = "${FAKE_OBSIDIAN_HANG:-}" ]; then
+  exec sleep 30
+fi
+if [ "$cmd" = "${FAKE_OBSIDIAN_HANG_ONCE:-}" ] && [ ! -e "$log.hung" ]; then
+  : > "$log.hung"
   exec sleep 30
 fi
 
@@ -97,7 +110,8 @@ case "$cmd" in
     case "$1" in
       code=*openFile*)
         printf '%s' "$1" | sed -n 's/.*getFileByPath(\("[^"]*"\)).*/\1/p' > "$log.active"
-        echo '=> "preview"'
+        printf '0' > "$log.dom-attempts"
+        printf '%s\n' "${FAKE_OBSIDIAN_OPEN-=> preview}"
         ;;
       code=*unresolvedLinks*) echo '=> {"Home.md":{"Missing":1}}' ;;
       code=*resolvedLinks*) echo '=> {"Home.md":{"Dead End.md":1}}' ;;
@@ -106,6 +120,21 @@ case "$cmd" in
     esac
     ;;
   dev:dom)
+    attempt=$(cat "$log.dom-attempts")
+    attempt=$((attempt + 1))
+    printf '%s' "$attempt" > "$log.dom-attempts"
+    if [ "$attempt" -le "${FAKE_OBSIDIAN_DOM_MISSING:-0}" ]; then
+      echo 'Error: Command "dev:dom" not found. It may require a plugin to be enabled.'
+      exit 0
+    fi
+    if [ "$attempt" -le $(( ${FAKE_OBSIDIAN_DOM_MISSING:-0} + ${FAKE_OBSIDIAN_DOM_CHANGES:-0} )) ]; then
+      printf '<div class="markdown-reading-view">rendering, read %s</div>\n' "$attempt"
+      exit 0
+    fi
+    if [ "${FAKE_OBSIDIAN_DOM+x}" ]; then
+      printf '%s\n' "$FAKE_OBSIDIAN_DOM"
+      exit 0
+    fi
     printf '<div class="markdown-reading-view" data-selector="%s">fake dom for %s</div>\n' "$selector" "$(cat "$log.active" 2>/dev/null)"
     ;;
   *)
