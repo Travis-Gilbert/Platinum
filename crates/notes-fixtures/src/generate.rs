@@ -642,8 +642,10 @@ fn canvas(g: &mut Gen, notes: &[Note], k: usize) -> String {
         .filter(|_| g.chance(60))
         .map(|j| json!({"id": format!("e{}", id(j)), "fromNode": id(j - 1), "toNode": id(j), "fromSide": "right", "toSide": "left"}))
         .collect();
-    let mut text =
-        serde_json::to_string_pretty(&json!({"nodes": nodes, "edges": edges})).unwrap_or_default();
+    // A workspace that turns on serde_json's `preserve_order` would otherwise change the bytes.
+    let mut doc = json!({"nodes": nodes, "edges": edges});
+    doc.sort_all_objects();
+    let mut text = serde_json::to_string_pretty(&doc).unwrap_or_default();
     text.push('\n');
     text
 }
