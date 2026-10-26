@@ -27,8 +27,8 @@ pub struct Obsidian {
     timeout: Duration,
 }
 
-/// One invocation and everything it printed. The answers are kept verbatim: most output shapes
-/// are not documented, so nothing here guesses at them.
+/// One invocation and everything it printed. The client returns verbatim answers; the reference
+/// recorder normalizes them before writing. Most output shapes are not documented.
 #[derive(Debug, Clone, Serialize)]
 pub struct Record {
     pub command: String,

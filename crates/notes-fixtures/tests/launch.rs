@@ -267,10 +267,9 @@ fn the_app_runs_on_a_private_home_and_profile_and_is_gone_afterwards() {
 
     let manifest = json(&w.dir.join("out/manifest.json"));
     assert_eq!(manifest["isolation"]["sandboxed"], true);
-    assert_eq!(manifest["isolation"]["vault_copy"], copy);
+    assert_eq!(manifest["isolation"]["vault_copy"], "__vault__");
     assert_eq!(
-        manifest["vault"],
-        vault().canonicalize().unwrap().display().to_string(),
+        manifest["vault"], "crates/notes-fixtures/vault",
         "the manifest names the vault that was copied"
     );
 

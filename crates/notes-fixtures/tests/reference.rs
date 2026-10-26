@@ -343,7 +343,7 @@ fn each_group_writes_its_file_of_records() {
 }
 
 #[test]
-fn records_keep_output_verbatim_and_parse_json_when_asked() {
+fn records_keep_content_and_parse_json_when_asked() {
     let run = full();
     let links = json(&run.out.join("links.json"));
     assert_eq!(links["links path=Home.md"]["stdout"], "Dead End.md\n");
@@ -1059,4 +1059,226 @@ fn the_readme_cites_every_command_the_harness_uses() {
             m
         });
     assert!(by_command.len() >= 20, "{by_command:?}");
+}
+
+fn dom_config(fake: &Fake) -> Config {
+    let dir = fake.dir.join("vault");
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("Note.md"), "# Note\n").unwrap();
+    let mut cfg = config(fake, &dir, &fake.dir.join("out"));
+    cfg.only = vec![Group::Dom];
+    cfg
+}
+
+#[test]
+fn dom_retries_a_missing_command_and_keeps_the_failed_attempts() {
+    let fake = Fake::new("ref-dom-retry");
+    let mut cfg = dom_config(&fake);
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_DOM_MISSING", "2");
+    let m = reference::run(&cfg).unwrap();
+    assert!(m.failed.is_empty(), "{:?}", m.failed);
+    assert_eq!(m.commands, 5);
+    assert_eq!(m.commands, fake.calls().len());
+    assert_eq!(m.dom_attempts["Note.md"], 3);
+    let dom = json(&cfg.out.join("dom.json"));
+    let d = &dom["Note.md"];
+    assert_eq!(d["attempts"], 3);
+    assert_eq!(d["retries"].as_array().unwrap().len(), 2);
+    for retry in d["retries"].as_array().unwrap() {
+        assert_eq!(retry["exit_code"], 0);
+        assert!(retry["error"].as_str().unwrap().contains("not found"));
+        assert!(retry["stdout"].as_str().unwrap().contains("not found"));
+    }
+    assert!(d["dom"]["error"].is_null());
+    assert!(
+        fs::read_to_string(cfg.out.join("dom/Note.md.html"))
+            .unwrap()
+            .contains("fake dom")
+    );
+    assert_eq!(
+        json(&cfg.out.join("manifest.json"))["dom_attempts"]["Note.md"],
+        3
+    );
+}
+
+#[test]
+fn dom_retry_exhaustion_stays_failed_and_continues_to_the_next_note() {
+    let fake = Fake::new("ref-dom-exhausted");
+    let mut cfg = dom_config(&fake);
+    fs::write(cfg.vault.join("Second.md"), "second").unwrap();
+    cfg.obsidian = fake
+        .client(&cfg.vault)
+        .env("FAKE_OBSIDIAN_DOM_MISSING", "99");
+    let m = reference::run(&cfg).unwrap();
+    assert_eq!(m.commands, 9);
+    assert_eq!(m.commands, fake.calls().len());
+    assert_eq!(m.failed.len(), 2);
+    assert!(
+        m.failed
+            .iter()
+            .all(|f| f.call.starts_with("dev:dom") && f.error.contains("not found"))
+    );
+    assert!(m.dom_attempts.values().all(|n| *n == 3));
+    let dom = json(&cfg.out.join("dom.json"));
+    for note in ["Note.md", "Second.md"] {
+        assert_eq!(dom[note]["attempts"], 3);
+        assert_eq!(dom[note]["retries"].as_array().unwrap().len(), 2);
+        assert!(dom[note]["dom"]["error"].is_string());
+        assert!(
+            fs::read_to_string(cfg.out.join(format!("dom/{note}.html")))
+                .unwrap()
+                .contains("not found")
+        );
+    }
+}
+
+#[test]
+fn dom_rejects_missing_wrong_or_throwing_open_without_reading_stale_dom() {
+    for (i, answer) in [
+        "=> missing",
+        "=> source",
+        "=> null",
+        "=> {}",
+        "=> Promise { <pending> }",
+        "Error: failed to open",
+        "a log line\nError: failed to open",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let fake = Fake::new(&format!("ref-dom-open-{i}"));
+        let mut cfg = dom_config(&fake);
+        cfg.obsidian = fake.client(&cfg.vault).env("FAKE_OBSIDIAN_OPEN", answer);
+        let m = reference::run(&cfg).unwrap();
+        assert_eq!(m.commands, 2, "{answer}");
+        assert_eq!(m.failed.len(), 1, "{answer}");
+        assert_eq!(m.failed[0].call, "eval (Note.md)");
+        assert_eq!(m.dom_attempts["Note.md"], 0);
+        let dom = json(&cfg.out.join("dom.json"));
+        assert!(dom["Note.md"]["open"]["error"].is_string());
+        assert!(dom["Note.md"]["dom"].is_null());
+        assert!(!cfg.out.join("dom/Note.md.html").exists());
+        assert!(!fake.calls().iter().any(|c| c.command() == "dev:dom"));
+    }
+}
+
+#[test]
+fn dom_accepts_bare_and_json_preview_answers() {
+    for (i, answer) in ["=> preview", "preview", "=> \"preview\"", "\"preview\""]
+        .iter()
+        .enumerate()
+    {
+        let fake = Fake::new(&format!("ref-dom-preview-{i}"));
+        let mut cfg = dom_config(&fake);
+        cfg.obsidian = fake.client(&cfg.vault).env("FAKE_OBSIDIAN_OPEN", answer);
+        let m = reference::run(&cfg).unwrap();
+        assert!(m.failed.is_empty(), "{answer}: {:?}", m.failed);
+        assert_eq!(m.dom_attempts["Note.md"], 1);
+        assert_eq!(m.commands, 3);
+    }
+}
+
+#[test]
+fn dom_does_not_retry_unrelated_errors_or_empty_selections() {
+    for (i, answer) in ["Error: Invalid selector", "No elements found.", ""]
+        .iter()
+        .enumerate()
+    {
+        let fake = Fake::new(&format!("ref-dom-error-{i}"));
+        let mut cfg = dom_config(&fake);
+        cfg.obsidian = fake.client(&cfg.vault).env("FAKE_OBSIDIAN_DOM", answer);
+        let m = reference::run(&cfg).unwrap();
+        assert_eq!(m.commands, 3);
+        assert_eq!(m.failed.len(), 1);
+        assert_eq!(m.dom_attempts["Note.md"], 1);
+        assert_eq!(
+            json(&cfg.out.join("dom.json"))["Note.md"]["retries"],
+            serde_json::json!([])
+        );
+    }
+}
+
+#[test]
+fn mock_runs_normalize_every_group_and_manifest_before_writing() {
+    use notes_fixtures::launch::Isolation;
+    let mut outputs = Vec::new();
+    for i in 0..2 {
+        let fake = Fake::new(&format!("ref-normalize-{i}"));
+        let mut cfg = dom_config(&fake);
+        fs::write(cfg.vault.join("Note.md"), "# Note\n- [ ] Task\n").unwrap();
+        fs::write(
+            cfg.vault.join("Notes.base"),
+            "views:\n  - name: All\n    type: table\n",
+        )
+        .unwrap();
+        cfg.only.clear();
+        let root = format!("/private/var/folders/machine-{i}/T/nfo-run-{i}");
+        let copy = format!("{root}/vaults/vault");
+        cfg.isolation = Some(Isolation {
+            app: "/Applications/Obsidian.app".into(),
+            home: format!("{root}/home"),
+            user_data_dir: format!("{root}/profile"),
+            vault_copy: copy.clone(),
+            sandboxed: true,
+        });
+        cfg.obsidian = fake
+            .client(&cfg.vault)
+            .env("FAKE_OBSIDIAN_VAULT_PATH", &copy)
+            .env(
+                "FAKE_OBSIDIAN_DIAGNOSTIC",
+                &format!("{copy} {root}/home {root}/profile {root}/tmp"),
+            )
+            .env(
+                "FAKE_OBSIDIAN_DOM",
+                &format!(
+                    "<img src=\"app://host-{i}{copy}/attachments/pixel.png?{}\">",
+                    1793019655954_u64 + i
+                ),
+            );
+        let m = reference::run(&cfg).unwrap();
+        assert!(m.failed.is_empty(), "{:?}", m.failed);
+        assert_eq!(m.groups.len(), 11);
+        assert_eq!(m.commands, fake.calls().len());
+        let manifest = json(&cfg.out.join("manifest.json"));
+        // Repo-relative when Cargo's target directory is inside the checkout, otherwise a placeholder.
+        let repo = crate_dir().join("../..").canonicalize().unwrap();
+        let vault_dir = fake.dir.join("vault").canonicalize().unwrap();
+        let expected = vault_dir
+            .strip_prefix(&repo)
+            .map_or("__vault__".into(), |p| p.to_string_lossy().into_owned());
+        assert_eq!(manifest["vault"], expected);
+        assert_eq!(manifest["isolation"]["home"], "__home__");
+        assert_eq!(manifest["isolation"]["user_data_dir"], "__profile__");
+        assert_eq!(manifest["isolation"]["vault_copy"], "__vault__");
+        assert_eq!(manifest["isolation"]["sandboxed"], true);
+        assert_eq!(manifest["isolation"]["app"], "/Applications/Obsidian.app");
+        let vault = json(&cfg.out.join("vault.json"));
+        assert!(
+            vault["vault"]["stdout"]
+                .as_str()
+                .unwrap()
+                .contains("path\t__vault__")
+        );
+        assert_eq!(vault["vault info=path"]["stdout"], "__vault__\n");
+        let mut written = BTreeMap::new();
+        for entry in walkdir::WalkDir::new(&cfg.out)
+            .into_iter()
+            .map(Result::unwrap)
+            .filter(|e| e.file_type().is_file())
+        {
+            let text = fs::read_to_string(entry.path()).unwrap();
+            assert!(!text.contains(&root), "{}", entry.path().display());
+            assert!(!text.contains(&format!("host-{i}")));
+            // A repository-relative test vault name intentionally differs between runs.
+            let text = text.replace(&format!("ref-normalize-{i}"), "ref-normalize");
+            written.insert(
+                entry.path().strip_prefix(&cfg.out).unwrap().to_path_buf(),
+                text,
+            );
+        }
+        outputs.push(written);
+    }
+    assert_eq!(outputs[0], outputs[1]);
 }
