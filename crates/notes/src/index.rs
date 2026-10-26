@@ -46,12 +46,21 @@ pub struct IndexedFile {
     pub error: Option<String>,
 }
 
+impl IndexedFile {
+    pub(crate) fn resolution_changes(&self, names: &FileIndex) -> bool {
+        self.links
+            .iter()
+            .any(|link| names.target_of(&self.path, &link.link) != link.target)
+    }
+}
+
 pub type LinkMap = BTreeMap<String, BTreeMap<String, usize>>;
 
 /// Queries use the same materialized records persisted in RedCore. Exclusions are flags, never deletions.
 pub struct VaultIndex {
     graph: RedCoreGraphStore,
     files: BTreeMap<String, IndexedFile>,
+    incoming: LinkMap,
     names: FileIndex,
     generation: u64,
     folders: BTreeSet<String>,
@@ -68,6 +77,10 @@ impl VaultIndex {
             files.insert(file.path.clone(), file);
         }
         let names = FileIndex::new(files.keys().cloned());
+        let mut incoming = LinkMap::new();
+        for file in files.values() {
+            add_backlinks(&mut incoming, file);
+        }
         let generation = graph
             .get_node_record("notes:meta")
             .and_then(|n| n.properties["generation"].as_u64())
@@ -82,6 +95,7 @@ impl VaultIndex {
         Ok(Self {
             graph,
             files,
+            incoming,
             names,
             generation,
             folders,
@@ -222,11 +236,7 @@ impl VaultIndex {
                 if staged.contains_key(path) || deleted.contains(path) {
                     continue;
                 }
-                if file
-                    .links
-                    .iter()
-                    .any(|link| names.target_of(path, &link.link) != link.target)
-                {
+                if file.resolution_changes(&names) {
                     staged.insert(path.clone(), file.clone());
                 }
             }
@@ -240,7 +250,7 @@ impl VaultIndex {
         let mut mutations = Vec::new();
         for path in deleted.iter().chain(staged.keys()) {
             if let Some(old) = self.files.get(path) {
-                remove_projection(old, deleted.contains(path), &mut mutations);
+                remove_projection(old, deleted.contains(path), &mut mutations)?;
             }
         }
         for file in staged.values() {
@@ -266,6 +276,23 @@ impl VaultIndex {
         if !mutations.is_empty() {
             self.graph
                 .commit_batch(GraphMutationBatch::new(mutations))?;
+        }
+        for path in deleted.iter().chain(staged.keys()) {
+            if let Some(old) = self.files.get(path) {
+                for link in &old.links {
+                    if let Target::File(target) = &link.target
+                        && let Some(sources) = self.incoming.get_mut(target)
+                    {
+                        sources.remove(path);
+                        if sources.is_empty() {
+                            self.incoming.remove(target);
+                        }
+                    }
+                }
+            }
+        }
+        for file in staged.values() {
+            add_backlinks(&mut self.incoming, file);
         }
         for path in deleted {
             self.files.remove(path);
@@ -309,10 +336,7 @@ impl VaultIndex {
         self.files.get(path).map_or(&[], |f| &f.links)
     }
     pub fn backlinks(&self, path: &str) -> BTreeMap<String, usize> {
-        self.resolved_links()
-            .into_iter()
-            .filter_map(|(source, links)| links.get(path).map(|n| (source, *n)))
-            .collect()
+        self.incoming.get(path).cloned().unwrap_or_default()
     }
     pub fn unresolved(&self) -> BTreeMap<String, usize> {
         let mut counts = BTreeMap::new();
@@ -324,14 +348,9 @@ impl VaultIndex {
         counts
     }
     pub fn orphans(&self) -> Vec<String> {
-        let incoming: BTreeSet<_> = self
-            .resolved_links()
-            .into_values()
-            .flat_map(|l| l.into_keys())
-            .collect();
         self.files
             .keys()
-            .filter(|p| !incoming.contains(*p))
+            .filter(|p| !self.incoming.contains_key(*p))
             .cloned()
             .collect()
     }
@@ -383,6 +402,18 @@ impl VaultIndex {
     }
 }
 
+fn add_backlinks(incoming: &mut LinkMap, file: &IndexedFile) {
+    for link in &file.links {
+        if let Target::File(target) = &link.target {
+            *incoming
+                .entry(target.clone())
+                .or_default()
+                .entry(file.path.clone())
+                .or_default() += 1;
+        }
+    }
+}
+
 fn components(file: &IndexedFile) -> Result<Vec<(&'static str, Value)>> {
     let mut out = Vec::new();
     if let Some(note) = &file.note {
@@ -425,7 +456,11 @@ fn components(file: &IndexedFile) -> Result<Vec<(&'static str, Value)>> {
     }
     Ok(out)
 }
-fn remove_projection(file: &IndexedFile, delete_file: bool, batch: &mut Vec<GraphMutation>) {
+fn remove_projection(
+    file: &IndexedFile,
+    delete_file: bool,
+    batch: &mut Vec<GraphMutation>,
+) -> Result<()> {
     for (i, link) in file.links.iter().enumerate() {
         if matches!(link.target, Target::File(_)) {
             batch.push(GraphMutation::EdgeDelete(format!("link:{}:{i}", file.path)));
@@ -435,15 +470,12 @@ fn remove_projection(file: &IndexedFile, delete_file: bool, batch: &mut Vec<Grap
         batch.push(GraphMutation::NodeDelete(format!("file:{}", file.path)));
     }
     // Component order and count derive from the stored parser result.
-    for (i, _) in components(file)
-        .expect("serializable index record")
-        .iter()
-        .enumerate()
-    {
+    for (i, _) in components(file)?.iter().enumerate() {
         let id = format!("item:{}:{i}", file.path);
         batch.push(GraphMutation::EdgeDelete(format!("owns:{id}")));
         batch.push(GraphMutation::NodeDelete(id));
     }
+    Ok(())
 }
 fn add_projection(file: &IndexedFile, batch: &mut Vec<GraphMutation>) -> Result<()> {
     let parent = format!("file:{}", file.path);
@@ -468,4 +500,95 @@ fn add_projection(file: &IndexedFile, batch: &mut Vec<GraphMutation>) -> Result<
         )));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn project(path: &str, text: &str) -> IndexedFile {
+        VaultIndex::project(
+            path,
+            Some(text),
+            String::new(),
+            None,
+            &VaultSettings::default(),
+        )
+    }
+
+    #[test]
+    fn reverse_links_track_counts_structural_changes_and_reopen() {
+        let data = tempfile::tempdir().unwrap();
+        let mut index = VaultIndex::open(data.path()).unwrap();
+        index
+            .update(
+                vec![
+                    project("a.md", "[[b]] [[b]] ![[b]] [[missing]]"),
+                    project("b.md", "B"),
+                    project(
+                        "board.canvas",
+                        r#"{"nodes":[{"id":"b","type":"file","file":"b.md"}]}"#,
+                    ),
+                ],
+                &[],
+            )
+            .unwrap();
+        assert_eq!(
+            index.backlinks("b.md"),
+            BTreeMap::from([("a.md".into(), 3), ("board.canvas".into(), 1)])
+        );
+        assert_eq!(index.orphans(), ["a.md", "board.canvas"]);
+        assert!(index.backlinks("missing.md").is_empty());
+
+        index
+            .update(
+                vec![
+                    project("b.md", "Edited target"),
+                    project("missing.md", "New target"),
+                ],
+                &[],
+            )
+            .unwrap();
+        assert_eq!(index.backlinks("b.md")["a.md"], 3);
+        assert_eq!(
+            index.backlinks("missing.md"),
+            BTreeMap::from([("a.md".into(), 1)])
+        );
+        index
+            .update(vec![project("a.md", "[[b]] ![[missing]] [[missing]]")], &[])
+            .unwrap();
+        assert_eq!(index.backlinks("b.md")["a.md"], 1);
+        assert_eq!(index.backlinks("missing.md")["a.md"], 2);
+
+        index
+            .update(vec![], &["board.canvas".into(), "b.md".into()])
+            .unwrap();
+        assert!(index.backlinks("b.md").is_empty());
+        assert_eq!(index.orphans(), ["a.md"]);
+        index
+            .update(vec![project("nested/b.md", "Replacement target")], &[])
+            .unwrap();
+        assert_eq!(
+            index.backlinks("nested/b.md"),
+            BTreeMap::from([("a.md".into(), 1)])
+        );
+        let resolved = index.resolved_links();
+        drop(index);
+        let mut index = VaultIndex::open(data.path()).unwrap();
+        assert_eq!(index.resolved_links(), resolved);
+        assert_eq!(
+            index.backlinks("nested/b.md"),
+            BTreeMap::from([("a.md".into(), 1)])
+        );
+        assert_eq!(
+            index.backlinks("missing.md"),
+            BTreeMap::from([("a.md".into(), 2)])
+        );
+        assert_eq!(index.orphans(), ["a.md"]);
+
+        index.update(vec![], &["a.md".into()]).unwrap();
+        assert!(index.backlinks("nested/b.md").is_empty());
+        assert!(index.backlinks("missing.md").is_empty());
+        assert_eq!(index.orphans(), ["missing.md", "nested/b.md"]);
+    }
 }
