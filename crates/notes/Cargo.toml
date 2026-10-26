@@ -1,0 +1,15 @@
+[package]
+name = "frame-notes"
+version = "0.1.0"
+edition = "2024"
+description = "Headless core of Frame's notes app: parses notes, resolves links and decides what the index contains."
+publish = false
+
+[dependencies]
+# Document authority and vault filesystem, from the Theorem checkout Frame pins
+# (`deps/` is created by script/bootstrap). Nothing here uses them yet; step 2
+# binds them. They are linked now so the build and the AI-off audit
+# (docs/plans/evidence/notes-deps-2026-10-26.md) cover them.
+theorem-ide-runtime = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/theorem-ide-runtime" }
+theorem-ide-authority = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/theorem-ide-authority" }
+rustyred-thg-vfs = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-vfs" }
