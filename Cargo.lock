@@ -3711,6 +3711,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55d9ccda37e95b4f0978a3074b4a9939979103a7256459cfb449c9c84d1adf23"
 
 [[package]]
+name = "file-id"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1fc6a637b6dc58414714eddd9170ff187ecb0933d4c7024d1abbd23a3cc26e9"
+dependencies = [
+ "serde",
+ "windows-sys 0.60.2",
+]
+
+[[package]]
 name = "filedescriptor"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14849,7 +14859,10 @@ dependencies = [
  "agpui-shell-protocol",
  "base64 0.22.1",
  "caseless",
+ "file-id",
+ "fs2",
  "im",
+ "libc",
  "loro",
  "regex",
  "rustyred-thg-text-model",
@@ -14864,6 +14877,7 @@ dependencies = [
  "thiserror 2.0.21",
  "unicode-normalization",
  "url",
+ "xattr",
 ]
 
 [[package]]

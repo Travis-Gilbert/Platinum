@@ -14,7 +14,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="d7e322c3e985824528594a5347c26067254f59fb"
+theorem_rev="7eb1ba024b6ccab8146f7857535dcdc6334eb39b"
 theorem_branch="claude/notes-foundations"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 

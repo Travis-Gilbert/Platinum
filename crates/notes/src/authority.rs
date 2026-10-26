@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use theorem_ide_authority::RedCoreAuthority;
 use theorem_ide_runtime::authority::{
     AuthorityCommit, AuthorityDescriptor, AuthorityError, AuthorityHead, DiskRevision,
-    DocumentAuthority, RevisionRecord, TransactionRecord,
+    DocumentAuthority, FormerBinding, RevisionRecord, TransactionRecord,
 };
 
 #[derive(Clone)]
@@ -33,8 +33,20 @@ impl DocumentAuthority for SharedAuthority {
         self.lock()?.pending_documents(workspace)
     }
 
+    fn projection_pending(&self, id: &str) -> Result<bool, AuthorityError> {
+        self.lock()?.projection_pending(id)
+    }
+
     fn former_documents(&self, workspace: &str, path: &str) -> Result<Vec<String>, AuthorityError> {
         self.lock()?.former_documents(workspace, path)
+    }
+
+    fn former_bindings(
+        &self,
+        workspace: &str,
+        path: &str,
+    ) -> Result<Vec<FormerBinding>, AuthorityError> {
+        self.lock()?.former_bindings(workspace, path)
     }
 
     fn alias_candidates(&self, workspace: &str, path: &str) -> Result<Vec<String>, AuthorityError> {
@@ -133,6 +145,8 @@ mod tests {
             .create("vault", "Plan.md", "# Plan", "test", "test")
             .unwrap();
         let move_to_canvas = |text: &str| AuthorityCommit {
+            reapplies: None,
+            reverts: None,
             operation_id: format!("move-{text}"),
             actor: "test".into(),
             provenance: "test".into(),
