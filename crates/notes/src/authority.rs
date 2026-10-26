@@ -29,6 +29,18 @@ impl DocumentAuthority for SharedAuthority {
         self.lock()?.resolve(workspace, path)
     }
 
+    fn pending_documents(&self, workspace: &str) -> Result<Vec<String>, AuthorityError> {
+        self.lock()?.pending_documents(workspace)
+    }
+
+    fn former_documents(&self, workspace: &str, path: &str) -> Result<Vec<String>, AuthorityError> {
+        self.lock()?.former_documents(workspace, path)
+    }
+
+    fn alias_candidates(&self, workspace: &str, path: &str) -> Result<Vec<String>, AuthorityError> {
+        self.lock()?.alias_candidates(workspace, path)
+    }
+
     fn head(&self, id: &str) -> Result<Option<AuthorityHead>, AuthorityError> {
         self.lock()?.head(id)
     }
@@ -49,7 +61,12 @@ impl DocumentAuthority for SharedAuthority {
         let mut authority = self.lock()?;
         for change in &commit.changes {
             if let Some(head) = authority.head(&change.document_id)? {
-                crate::vault::validate(&head.path, &change.text).map_err(|error| {
+                // A moved document is checked as the kind it becomes.
+                let path = change
+                    .path_move
+                    .as_ref()
+                    .map_or(&head.path, |m| &m.new_path);
+                crate::vault::validate(path, &change.text).map_err(|error| {
                     AuthorityError::Invalid {
                         reason: error.to_string(),
                     }
@@ -101,5 +118,44 @@ impl DocumentAuthority for SharedAuthority {
         actor: &str,
     ) -> Result<(), AuthorityError> {
         self.lock()?.retire(id, expected_revision, actor)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use theorem_ide_runtime::authority::{DocumentChange, PathMove, RevisionKind, diff_edits};
+
+    #[test]
+    fn a_moved_document_is_validated_as_the_kind_it_becomes() {
+        let mut authority = SharedAuthority(Arc::new(Mutex::new(RedCoreAuthority::memory())));
+        let head = authority
+            .create("vault", "Plan.md", "# Plan", "test", "test")
+            .unwrap();
+        let move_to_canvas = |text: &str| AuthorityCommit {
+            operation_id: format!("move-{text}"),
+            actor: "test".into(),
+            provenance: "test".into(),
+            transaction_id: None,
+            changes: vec![DocumentChange {
+                document_id: head.document_id.clone(),
+                expected_revision: head.revision,
+                new_revision: head.revision + 1,
+                text: text.into(),
+                edits: diff_edits(&head.text, text),
+                kind: RevisionKind::Transaction,
+                path_move: Some(PathMove {
+                    expected_path: "Plan.md".into(),
+                    new_path: "Plan.canvas".into(),
+                }),
+                projection: None,
+            }],
+        };
+        assert!(matches!(
+            authority.commit(move_to_canvas("# Plan")),
+            Err(AuthorityError::Invalid { .. })
+        ));
+        let moved = authority.commit(move_to_canvas("{}")).unwrap();
+        assert_eq!(moved[0].path, "Plan.canvas");
     }
 }
