@@ -1292,20 +1292,22 @@ on both WebGL prototypes before a second cosmos.gl graph ran for 4 seconds.
 
 ## Status
 
-Planning and probes, and step 3. The Servo WebGL2 work is done on two
-branches: `feat/webgl2-cosmos` in the Servo fork (18 commits on `81d8e29`) and
-`feat/notes-webgl2` in Frame (the engine setting for the `frame-notes` scheme,
-the `graph_probe` example and the evidence in
-`evidence/notes-webgl2-2026-10-26/`). Neither is pushed or merged, and
-`deps/servo-mse` still points at the YouTube MSE branch, so shipping Frame has
-no WebGL2 yet. The first concrete work is step 1's three upstream changes
-(atomic writes, FSEvents and the three-way merge) and the zorite port, with
-landing the Servo branch alongside. The first end-to-end proof is step 4's
-slice. Remote vaults wait for the
-`sdk-source/files-api` branch to be pushed, merged and deployed. The requester
-chose cosmos.gl for the graph on 2026-10-26. One reading is open for the
-requester: whether the foundation's G0 and G1 hold the local steps (this plan
-reads them as holding only step 12).
+Work for steps 1 to 3 is merged into `feat/notes-app`, which is not pushed.
+Step 1's atomic writes, FSEvents watching, three-way merge
+and note moves are on `claude/notes-foundations` in Theorem, which Frame pins;
+the moves commit is pushed, and a second round of review fixes to it is not yet
+committed. The RedCore journal change is still in review on
+`claude/notes-redcore-journal`. The zorite editor and whiteboard lane is
+merged. Step 2's headless vault core is merged, and its index matches Obsidian
+1.14.5 on all 537 recorded calls over the fixture vault
+([evidence](evidence/notes-parity-2026-10-26.md)). Step 3's Servo WebGL2 work
+is 27 commits on `81d8e29` on `feat/webgl2-cosmos` in the Servo fork, which
+`script/bootstrap-media` now pins; that branch is not pushed yet, so a fresh
+bootstrap cannot fetch it. The first end-to-end proof is step 4's slice. Remote
+vaults (step 12) wait for SDK+ S1 to S3, G0, G1 and a deployed Files API
+server. The requester chose cosmos.gl for the graph on 2026-10-26. One reading
+is open for the requester: whether the foundation's G0 and G1 hold the local
+steps (this plan reads them as holding only step 12).
 
 
 ### WebGL2 review follow-up (2026-10-26)
