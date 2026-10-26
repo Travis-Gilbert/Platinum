@@ -67,7 +67,7 @@ impl WebViewDelegate for Results {
     fn show_console_message(&self, view: WebView, _: ConsoleLogLevel, message: String) {
         if let Some(
             file @ ("movie_5.mp4" | "movie_5.webm" | "youtube" | "mse" | "svg-initial"
-            | "svg-restyled"),
+            | "svg-restyled" | "selection" | "selection-prose"),
         ) = message.strip_prefix("FRAME_MEDIA_FRAME ")
         {
             let path = std::env::temp_dir().join(format!("frame-media-{file}.png"));

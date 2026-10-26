@@ -1,8 +1,10 @@
 # Experimental MSE integration
 
 `script/bootstrap-media` checks out Servo commit
-`81d8e2999569a8a496142651a1d129aed22fda77` from `Travis-Gilbert/youtube-mse`
-and applies the GStreamer patch without discarding local work.
+`5c8325a389555f3b1adc476106d8529791afe13e` from `Travis-Gilbert/youtube-mse`
+and applies the GStreamer patch without discarding local work. That commit
+also rounds text selection highlights the way code editors draw them
+(`components/layout/display_list/selection.rs`).
 `script/media-env` selects the native pkg-config files and plugin directory.
 The development runtime depends on the installed Homebrew GStreamer libraries;
 it is not a redistributable application bundle.
