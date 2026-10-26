@@ -962,7 +962,7 @@ core page previews are read-only.
 
 Each item came from the probe results and logs of 2026-10-25. All eight are
 done in the Servo fork, on branch `feat/webgl2-cosmos` (18 commits on
-`81d8e29`; not pushed or merged), and Frame's `feat/notes-webgl2` wires the
+`81d8e29` for these items; pushed to the fork, not merged), and Frame's `feat/notes-webgl2` wires the
 scheme. The probe was re-run after each item
 ([manifest](evidence/notes-webgl2-2026-10-26/manifest.json), one `itemN-*` run
 set per build). Every number below is from a debug build.
@@ -1292,19 +1292,18 @@ on both WebGL prototypes before a second cosmos.gl graph ran for 4 seconds.
 
 ## Status
 
-Work for steps 1 to 3 is merged into `feat/notes-app`, which is not pushed.
+Work for steps 1 to 3 is merged into `feat/notes-app`, which is pushed but not
+merged into `main`.
 Step 1's atomic writes, FSEvents watching, three-way merge
 and note moves are on `claude/notes-foundations` in Theorem, which Frame pins.
-The moves commit `d7e322c3e` is pushed. Its review fixes are committed as
-`7eb1ba024`, which `script/bootstrap` now pins; that commit is not pushed yet, so
-a fresh bootstrap cannot fetch it. The RedCore journal change is still in review on
+The moves commit `d7e322c3e` and its review fixes, `7eb1ba024`, are pushed, and
+`script/bootstrap` pins `7eb1ba024`. The RedCore journal change is still in review on
 `claude/notes-redcore-journal`. The zorite editor and whiteboard lane is
 merged. Step 2's headless vault core is merged, and its index matches Obsidian
 1.14.5 on all 537 recorded calls over the fixture vault
 ([evidence](evidence/notes-parity-2026-10-26.md)). Step 3's Servo WebGL2 work
 is 27 commits on `81d8e29` on `feat/webgl2-cosmos` in the Servo fork, which
-`script/bootstrap-media` now pins; that branch is not pushed yet, so a fresh
-bootstrap cannot fetch it. The first end-to-end proof is step 4's slice. Remote
+`script/bootstrap-media` now pins; that branch is pushed to the fork. The first end-to-end proof is step 4's slice. Remote
 vaults (step 12) wait for SDK+ S1 to S3, G0, G1 and a deployed Files API
 server. The requester chose cosmos.gl for the graph on 2026-10-26. One reading
 is open for the requester: whether the foundation's G0 and G1 hold the local
@@ -1314,7 +1313,7 @@ steps (this plan reads them as holding only step 12).
 ### WebGL2 review follow-up (2026-10-26)
 
 The review fixes are committed. That is nine more Servo commits on
-`feat/webgl2-cosmos`, 27 on `81d8e29` in all and still not pushed, and the notes
+`feat/webgl2-cosmos`, 27 on `81d8e29` in all and now pushed, and the notes
 protocol gate in Frame's `src/engine.rs`. `script/bootstrap-media` now pins that
 branch's tip. The record is in
 [`review-fixes.md`](evidence/notes-webgl2-2026-10-26/review-fixes.md).
