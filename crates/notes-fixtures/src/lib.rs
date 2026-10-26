@@ -2,6 +2,7 @@
 pub mod generate;
 pub mod launch;
 pub mod obsidian;
+pub mod reference;
 
 /// The one Obsidian version the reference is recorded against.
 pub const OBSIDIAN_VERSION: &str = "1.14.5";
