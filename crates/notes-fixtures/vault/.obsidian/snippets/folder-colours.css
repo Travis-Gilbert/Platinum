@@ -1,0 +1,10 @@
+/* Folder colours in the file explorer, as a snippet: the plan's reference screenshot does it this way. */
+.nav-folder-title[data-path="projects"] {
+  color: var(--color-green);
+}
+.nav-folder-title[data-path="daily"] {
+  color: var(--color-orange);
+}
+.nav-folder-title[data-path="review"] {
+  color: var(--color-red);
+}
