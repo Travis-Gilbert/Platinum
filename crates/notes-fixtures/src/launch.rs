@@ -248,6 +248,9 @@ impl Instance {
             .current_dir(&home)
             .env_clear()
             .env("HOME", &home)
+            // Foundation finds the home through the user database, not `HOME`; this sends
+            // NSHomeDirectory and the app's defaults plist to the private home as well.
+            .env("CFFIXED_USER_HOME", &home)
             .env("TMPDIR", &tmp)
             .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
             .stdin(Stdio::null())
