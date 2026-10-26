@@ -355,3 +355,63 @@ the real diffs; provide the runtime rename/session-rekey operation; run the
 FSEvents path with a real watcher; repair upstream bulk VFS mounting/unchanged
 graph writes and rerun the generated 10,000-note benchmark. None was replaced with a
 mock, compilation result, or smaller-vault acceptance claim.
+
+## Review follow-up on f80cd2e
+
+Rename planning now selects the moved document, indexed backlinks, and documents
+whose cached link resolution changes under the renamed file set. It reuses the
+same `IndexedFile::resolution_changes` check as structural index updates. Candidate
+discovery still walks cached link metadata; only selected notes and canvases have
+their authority heads read and text parsed. The private reader seam counts real
+head reads in the regression test without changing the public `RenamePlan` API.
+
+`VaultIndex` now maintains an in-memory target-to-source count map after each
+successful graph commit and reconstructs it from persisted file projections on
+open. Backlinks clone only the selected target's source map; orphans check that
+map rather than rebuilding all resolved links. RedCore's LINKS_TO and EMBEDS
+edges and the persisted schema are unchanged. Projection removal propagates
+serialization errors, and `authority.rs` uses named imports and item spacing.
+Mount-time session creation and the VFS-normalized root remain unchanged.
+No dependency was added; resolution and parsing reuse the existing `FileIndex`
+and parser.
+
+Added unit tests:
+
+- `rename::tests::rename_reads_only_moved_backlink_and_resolution_changed_documents`:
+  a 72-file vault with 64 unrelated notes reads exactly five heads, once each:
+  the moved note, a backlink note, a canvas, a note whose link is redirected by
+  the new name, and an unresolved link that becomes resolved. Four documents
+  need edits; the 64 unrelated notes are not read.
+- `index::tests::reverse_links_track_counts_structural_changes_and_reopen`:
+  duplicate links, embeds, canvas references, target and source edits, newly
+  resolved links, source/target deletion, orphan removal and reopen reconstruction.
+
+Validation commands (from the worktree root, no pull or commit):
+
+```sh
+env -u RUSTC_WRAPPER CARGO_TARGET_DIR=target CARGO_INCREMENTAL=0 TMPDIR="$PWD/target/tmp" cargo test --offline -p frame-notes --no-fail-fast
+env -u RUSTC_WRAPPER CARGO_TARGET_DIR=target CARGO_INCREMENTAL=0 TMPDIR="$PWD/target/tmp" cargo clippy --offline -p frame-notes --all-targets -- -D warnings
+cargo fmt -p frame-notes
+cargo fmt -p frame-notes --check
+git diff --check
+```
+
+The full suite was run once with `TMPDIR` set to `target/tmp`: 94 unit, 19 core,
+3 safety (both SIGKILL tests and the child helper), and 3 vault tests passed;
+0 doctests. Total: 119 passed, 2 failed. All existing rename tests passed.
+The reference test still fails because all eight recording groups are absent.
+G6 still fails before starting its child with
+`sandbox-exec: sandbox_apply: Operation not permitted`; the outside-sandbox G6
+receipt above is unchanged. The safety target took 158.17 s in this run.
+Clippy with `-D warnings`, formatting and diff checks passed (the same three
+upstream `rustyred-thg-core` dead-code warnings remain).
+
+A rerun outside the sandbox with the default `TMPDIR`
+(`env -u RUSTC_WRAPPER CARGO_INCREMENTAL=0 cargo test --offline -p frame-notes --no-fail-fast`)
+passed 94 unit, 19 core, 4 safety (G6 and both SIGKILL tests among them) and
+3 vault tests; the reference test still fails because the recordings are not
+committed. The safety target took 239.81 s while other builds shared the
+machine. FSEvents and the generated 10,000-note benchmark were not run. The
+new tests use `tempfile` and vault-relative paths with no assumption about the
+temporary folder's location. The upstream rename transaction and batch import
+remain pending; no workaround was added.

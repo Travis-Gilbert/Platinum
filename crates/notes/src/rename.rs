@@ -5,7 +5,8 @@ use crate::{
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+use theorem_ide_runtime::authority::AuthorityHead;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TextEdit {
@@ -31,6 +32,15 @@ pub struct RenamePlan {
 impl Vault {
     /// Compute only. No files, ids, sessions or graph records change until the authority commits a plan.
     pub fn plan_rename(&self, from: &str, to: &str) -> Result<RenamePlan> {
+        self.plan_rename_with_reader(from, to, |path| self.head(path))
+    }
+
+    fn plan_rename_with_reader(
+        &self,
+        from: &str,
+        to: &str,
+        mut read_head: impl FnMut(&str) -> Result<AuthorityHead>,
+    ) -> Result<RenamePlan> {
         ensure!(
             self.index().files().contains_key(from),
             "rename source is missing: {from}"
@@ -48,11 +58,21 @@ impl Vault {
         after.insert(to);
         let mut documents = Vec::new();
         if self.settings().always_update_links {
-            for (path, file) in self.index().files() {
+            let mut candidates = BTreeSet::from([from.to_owned()]);
+            candidates.extend(self.index().backlinks(from).into_keys());
+            candidates.extend(
+                self.index()
+                    .files()
+                    .iter()
+                    .filter(|(_, file)| file.resolution_changes(&after))
+                    .map(|(path, _)| path.clone()),
+            );
+            for path in &candidates {
+                let file = &self.index().files()[path];
                 if !matches!(file.kind, FileKind::Note | FileKind::Canvas) {
                     continue;
                 }
-                let head = self.head(path)?;
+                let head = read_head(path)?;
                 let text = head.text;
                 let new_path = if path == from { to } else { path };
                 let edits = if file.kind == FileKind::Canvas {
@@ -279,4 +299,71 @@ fn canvas_edits(
         });
     }
     Ok(edits)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn rename_reads_only_moved_backlink_and_resolution_changed_documents() {
+        let root = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        for (path, text) in [
+            ("old/Target.md", "[[./Neighbor]]"),
+            ("old/Neighbor.md", "Neighbor"),
+            ("deep/Other.md", "Other"),
+            ("Stable.md", "Stable"),
+            ("backlink.md", "[[old/Target|label]] ![[old/Target]]"),
+            (
+                "board.canvas",
+                r#"{"nodes":[{"id":"file","type":"file","file":"old/Target.md"}]}"#,
+            ),
+            ("changed.md", "[[Other]]"),
+            ("unresolved.md", "[[./Other]]"),
+        ] {
+            let path = root.path().join(path);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, text).unwrap();
+        }
+        for i in 0..64 {
+            fs::write(root.path().join(format!("unrelated-{i}.md")), "[[Stable]]").unwrap();
+        }
+        let vault = Vault::open(root.path(), data.path()).unwrap();
+        let mut reads = Vec::new();
+        let plan = vault
+            .plan_rename_with_reader("old/Target.md", "Other.md", |path| {
+                reads.push(path.to_owned());
+                vault.head(path)
+            })
+            .unwrap();
+        assert_eq!(vault.index().files().len(), 72);
+        assert_eq!(
+            reads,
+            [
+                "backlink.md",
+                "board.canvas",
+                "changed.md",
+                "old/Target.md",
+                "unresolved.md",
+            ]
+        );
+        assert_eq!(
+            plan.documents
+                .iter()
+                .map(|d| d.path.as_str())
+                .collect::<Vec<_>>(),
+            ["backlink.md", "board.canvas", "changed.md", "old/Target.md"]
+        );
+        let changed = plan
+            .documents
+            .iter()
+            .find(|d| d.path == "changed.md")
+            .unwrap();
+        assert_eq!(
+            apply_text_edits("[[Other]]", &changed.edits).unwrap(),
+            "[[deep/Other]]"
+        );
+    }
 }
