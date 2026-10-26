@@ -95,8 +95,7 @@ the other three crates and Frame's own dependencies were not edited.
 ## Not verified
 
 - The old Theorem graph was not built.
-- Native Metal pixels, real-window behavior and browser/WASM compatibility
-  were not tested; only `aarch64-apple-darwin` is installed. Mounted GPUI
+- Native Metal pixels and real-window behavior were not tested. Mounted GPUI
   tests exercise headless render and input dispatch, not a real GPU.
 - Frame and Servo were not built for this scoped port.
 - The CJK candidates are fixed paths. On this macOS (Darwin 27),

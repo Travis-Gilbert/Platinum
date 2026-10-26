@@ -124,7 +124,5 @@ dependencies, so the crate builds in Frame only from the port commit after it.
    - Run the other three vendored note crates' tests, then compare
      `cargo tree --offline -d --workspace`, GPUI feature sets and Cargo.lock
      against the base. Do not build Frame/Servo for this scoped port.
-   - Check wasm32 separately when a compatible toolchain/target is available;
-     native results do not establish browser-target compatibility.
 6. Update the revision in "Origin" and add a line per conflict resolved. If upstream adopted one of the seams above, delete our version and its entry.
 7. Do not run `cargo fmt` at package or workspace level; `rustfmt --edition 2024 <file>` only the files you changed.
