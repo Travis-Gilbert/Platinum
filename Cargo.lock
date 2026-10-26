@@ -3995,12 +3995,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "comrak",
+ "granit-parser",
  "indexmap 2.14.2",
+ "libc",
  "pathdiff",
  "percent-encoding",
  "pretty_assertions",
  "regex",
  "ropey 1.6.1",
+ "rustyred-thg-core",
  "rustyred-thg-vfs",
  "serde",
  "serde-saphyr",
@@ -4010,6 +4013,7 @@ dependencies = [
  "theorem-ide-runtime",
  "typed-path",
  "ulid",
+ "walkdir",
 ]
 
 [[package]]

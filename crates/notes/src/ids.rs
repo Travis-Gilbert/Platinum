@@ -121,6 +121,20 @@ impl IdStore {
         self.dirty = true;
     }
 
+    /// Persist through the vault's sole non-document writer.
+    pub fn save_vfs<G: rustyred_thg_core::GraphStore, B: rustyred_thg_core::blob::BlobStore>(
+        &mut self,
+        vfs: &mut rustyred_thg_vfs::Vfs<G, B>,
+    ) -> Result<()> {
+        if self.dirty {
+            let mut json = serde_json::to_string_pretty(&self.by_path)?;
+            json.push('\n');
+            vfs.write(&rustyred_thg_vfs::VfsPath::new(&self.file), json.as_bytes())?;
+            self.dirty = false;
+        }
+        Ok(())
+    }
+
     /// Writes the file if anything changed: sorted, indented by two spaces, ending in a newline, and
     /// replaced atomically so a crash leaves the old file or the new one.
     pub fn save(&mut self) -> Result<()> {

@@ -4,10 +4,11 @@ use crate::resolve::{FileIndex, FileKind, dir, join_relative, normalize, stem};
 use anyhow::Result;
 use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, utf8_percent_encode};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NewFileLocation {
     /// The vault's root folder.
     #[default]
@@ -18,7 +19,7 @@ pub enum NewFileLocation {
     Folder,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LinkFormat {
     /// The base name, or as many folders as keep it unambiguous.
     #[default]
@@ -35,7 +36,8 @@ enum Exclusion {
     Pattern(Regex),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct VaultSettings {
     pub new_file_location: NewFileLocation,
     /// Used when `new_file_location` is `Folder`.
@@ -46,6 +48,8 @@ pub struct VaultSettings {
     /// New links are `[text](Note.md)` rather than `[[Note]]`.
     pub use_markdown_links: bool,
     pub link_format: LinkFormat,
+    pub always_update_links: bool,
+    #[serde(with = "exclusion_data")]
     exclusions: Vec<Exclusion>,
     pub property_types: HashMap<String, PropertyType>,
 }
@@ -58,6 +62,7 @@ impl Default for VaultSettings {
             attachment_folder: "/".into(),
             use_markdown_links: false,
             link_format: LinkFormat::Shortest,
+            always_update_links: true,
             exclusions: Vec::new(),
             property_types: HashMap::new(),
         }
@@ -110,6 +115,10 @@ impl VaultSettings {
                 Some("absolute") => LinkFormat::Absolute,
                 _ => LinkFormat::Shortest,
             },
+            always_update_links: app
+                .get("alwaysUpdateLinks")
+                .and_then(Value::as_bool)
+                .unwrap_or(true),
             exclusions: filters
                 .filter_map(Value::as_str)
                 .filter_map(exclusion)
@@ -659,5 +668,30 @@ mod tests {
                 }
             }
         }
+    }
+}
+
+mod exclusion_data {
+    use super::*;
+    pub fn serialize<S: serde::Serializer>(
+        values: &[Exclusion],
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        values
+            .iter()
+            .map(|e| match e {
+                Exclusion::Prefix(s) => s.clone(),
+                Exclusion::Pattern(r) => format!("/{}/", r.as_str()),
+            })
+            .collect::<Vec<_>>()
+            .serialize(serializer)
+    }
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Vec<Exclusion>, D::Error> {
+        Ok(Vec::<String>::deserialize(deserializer)?
+            .iter()
+            .filter_map(|s| exclusion(s))
+            .collect())
     }
 }
