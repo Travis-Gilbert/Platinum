@@ -14,6 +14,9 @@
 extern crate gpui_kit as gpui;
 
 #[allow(dead_code)]
+#[path = "../src/canvas/mod.rs"]
+mod canvas;
+#[allow(dead_code)]
 #[path = "../src/controls.rs"]
 mod controls;
 #[allow(dead_code)]

@@ -28,6 +28,9 @@ mod scene;
 #[path = "../src/search.rs"]
 mod search;
 #[allow(dead_code)]
+#[path = "../src/site.rs"]
+mod site;
+#[allow(dead_code)]
 #[path = "../src/theme.rs"]
 mod theme;
 
