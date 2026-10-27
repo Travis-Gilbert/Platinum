@@ -13,8 +13,9 @@
 //! Tabs mode, and cards stay opaque. The floating pieces share one surface,
 //! `bar`: GPUI Kit's popover shape and shadow over `field`, the theme's color
 //! nearly opaque over the glass, so what people read never sits on the glass
-//! alone. No component picks a fill of its own; they ask `frame`, `pane` or
-//! `field`, directly or through `surface`.
+//! alone. No component picks a fill of its own; they ask `frame` or `field`,
+//! which are `glass::frame` and `glass::field`, directly or through `surface`.
+//! Without the glass both keep the theme's solid colors.
 //!
 //! Wherever a page's host is shown (a caption, a suggestion row, the site
 //! panel's header) it is written without a leading `www.` (`display_host`),
@@ -47,44 +48,11 @@ use std::rc::Rc;
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::{ActiveTheme as _, ThemeStyled as _, h_flex};
 use gpui_kit::{
-    App, Div, Hsla, InteractiveElement as _, IntoElement, ParentElement as _, Pixels,
-    SharedString, Styled as _, Window, div, prelude::FluentBuilder as _, px, rems,
-    transparent_black,
+    App, Div, InteractiveElement as _, IntoElement, ParentElement as _, Pixels, SharedString,
+    Styled as _, Window, div, prelude::FluentBuilder as _, px, rems,
 };
 
-// The three fills below are `glass::frame`, `glass::pane` and `glass::field`
-// as the glass branch has them, with the glass assumed present. At the merge
-// they become calls to those functions, which also keep the theme's solid
-// colors when the window has no glass.
-
-/// How much of the page's color lies over the frame on Frame's own surfaces.
-const PANE: f32 = 0.5;
-/// How much of the theme's own color a field keeps over the glass.
-const FIELD: f32 = 0.85;
-/// How much of the frame's color lies over light glass.
-const LIGHT_FRAME: f32 = 0.8;
-
-/// The window's frame, which is the board: clear in the dark theme, a light
-/// coat of the frame's color over the glass in the light one.
-pub(crate) fn frame(cx: &App) -> Hsla {
-    let theme = cx.theme();
-    if theme.is_dark() {
-        transparent_black()
-    } else {
-        theme.title_bar.opacity(LIGHT_FRAME)
-    }
-}
-
-/// A surface that belongs to the chrome and is read through: half the
-/// theme's color over the frame.
-pub(crate) fn pane(cx: &App) -> Hsla {
-    cx.theme().background.opacity(PANE)
-}
-
-/// A surface text sits on: the theme's color, nearly opaque over the glass.
-pub(crate) fn field(cx: &App) -> Hsla {
-    cx.theme().background.opacity(FIELD)
-}
+pub(crate) use crate::glass::{field, frame};
 
 /// A handler that is told what changed.
 pub(crate) type Handler<T> = Rc<dyn Fn(T, &mut Window, &mut App)>;

@@ -1564,7 +1564,7 @@ impl Browser {
     /// the light one. The theme's background is the color furthest from its
     /// text, so it reads where the text would not.
     fn chrome_ink(tab: &Tab, cx: &App) -> Option<Hsla> {
-        Self::background_ink(Self::chrome_fill(tab, cx), cx)
+        Self::background_ink(glass::seen(Self::chrome_fill(tab, cx), cx), cx)
     }
 
     fn background_ink(background: Hsla, cx: &App) -> Option<Hsla> {
