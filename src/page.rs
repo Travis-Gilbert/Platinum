@@ -43,6 +43,7 @@ use crate::engine::Engine;
 use crate::keys;
 use crate::scene::SceneRenderingContext;
 use crate::search::{self, VisitedPage};
+use crate::site::{self, SiteInfo};
 
 /// The key context the Edit menu's shortcuts bind in.
 pub const CONTEXT: &str = "Page";
@@ -53,6 +54,10 @@ pub const CONTEXT: &str = "Page";
 // A login form is never serialized into local search/model context. This also
 // excludes a site's own reflected password attributes after a fill.
 const READ_DOCUMENT: &str = include_str!("scripts/read_document.js");
+
+/// The site panel's reading of the current document: its metadata and the
+/// fonts in use, as a JSON string.
+const SITE_PANEL: &str = include_str!("scripts/site-panel.js");
 
 /// servoshell's line height for wheels that scroll by lines.
 const LINE_HEIGHT: f64 = 38.0;
@@ -156,6 +161,8 @@ pub struct Page {
     favicon: Option<(String, Arc<RenderImage>)>,
     /// The color along the top of the page, which the toolbar takes.
     tint: Option<Hsla>,
+    /// What the site panel shows, as of the last `read_site`.
+    site: Option<SiteInfo>,
     /// The corners of the card the page sits in, which round its picture
     /// (`Browser::content`).
     pub(crate) corners: Corners<Pixels>,
@@ -242,6 +249,7 @@ impl Page {
                 opened: Vec::new(),
                 favicon: None,
                 tint: None,
+                site: None,
                 corners: Corners::default(),
                 _subscriptions: subscriptions,
             }
@@ -274,6 +282,16 @@ impl Page {
     /// The color along the top of the page.
     pub fn tint(&self) -> Option<Hsla> {
         self.tint
+    }
+
+    /// What the site panel shows, while the page is still on the document
+    /// `read_site` read it from.
+    pub fn site(&self) -> Option<&SiteInfo> {
+        let info = self.site.as_ref()?;
+        let current = self.webview.url()?;
+        let mut read_from = info.url.clone()?;
+        read_from.set_fragment(current.fragment());
+        (read_from == current).then_some(info)
     }
 
     pub fn is_loading(&self) -> bool {
@@ -365,6 +383,11 @@ impl Page {
                     None => cx.emit(PageEvent::PasswordUnavailable),
                 },
                 ServoEvent::Document(page) => search::capture(page, cx),
+                ServoEvent::Site(info) => {
+                    self.site = Some(info);
+                    cx.emit(PageEvent::Changed);
+                    cx.notify();
+                }
                 ServoEvent::Crashed(reason) => self.crashed(&reason, window, cx),
                 ServoEvent::OpenExternally(url) => cx.open_url(url.as_str()),
                 ServoEvent::NewWebView(new) => {
@@ -449,6 +472,24 @@ impl Page {
                     None => {}
                 },
                 Err(error) => log::debug!("could not read the page back: {error:?}"),
+            });
+    }
+
+    /// Read what the site panel shows: the page's metadata and fonts, from
+    /// the document, and its palette, from the newest frame. Only when the
+    /// panel opens, never on a load, and none of it goes to the search index
+    /// or the model. The answer arrives like Servo's events and is kept for
+    /// `site`.
+    pub fn read_site(&self) {
+        let palette = self.context.with_pixels(site::palette).unwrap_or_default();
+        let delegate = self.delegate.clone();
+        self.webview
+            .evaluate_javascript(SITE_PANEL, move |result| match result {
+                Ok(JSValue::String(answer)) => match SiteInfo::from_answer(&answer, palette) {
+                    Some(info) => delegate.site(info),
+                    None => log::debug!("the site panel's answer was not an object"),
+                },
+                other => log::debug!("could not read the site: {other:?}"),
             });
     }
 

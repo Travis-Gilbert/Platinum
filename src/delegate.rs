@@ -23,6 +23,7 @@ use url::Url;
 
 use crate::scene::SceneRenderingContext;
 use crate::search::VisitedPage;
+use crate::site::SiteInfo;
 
 /// One thing the page has to act on after Servo's turn of the loop.
 pub enum ServoEvent {
@@ -42,6 +43,8 @@ pub enum ServoEvent {
     Loaded,
     /// The finished page's document, read back for the local search index.
     Document(VisitedPage),
+    /// What the site panel shows, read on demand. It never reaches the index.
+    Site(SiteInfo),
     Crashed(String),
     OpenExternally(Url),
     /// The page opened a new window; it becomes a tab.
@@ -84,6 +87,11 @@ impl Delegate {
     /// A document read back from the page, queued like Servo's own events.
     pub fn document(&self, page: VisitedPage) {
         self.push(ServoEvent::Document(page));
+    }
+
+    /// What the site panel shows, read back from the page.
+    pub fn site(&self, info: SiteInfo) {
+        self.push(ServoEvent::Site(info));
     }
 
     /// The page turned out to be a file Servo cannot show.
