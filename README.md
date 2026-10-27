@@ -189,6 +189,13 @@ appearance icons are redrawn from Streamline's Ultimate Duotone set as
 single-color masks, so their duotone takes the theme's text color; the
 downloads glyph is `sd-card-download`, from its CC BY 4.0 free subset.
 
+The spatial canvas's glyphs (`assets/icons/canvas-*.svg`) are shapes from
+[Lucide](https://lucide.dev), licensed ISC, with Feather's MIT licence for the
+icons Lucide inherits from it. Both notices are in
+`assets/icons/LICENSE-lucide.txt`. The glyphs are redrawn at the stroke width
+of the icons above, with a lighter fill layer added so they take the theme's
+text color as single-color masks.
+
 The home status bar’s import icon is the supplied Streamline Ultimate
 `App-Window-Download` PNG, embedded unchanged in an SVG so GPUI can tint its
 alpha mask with the current theme.
