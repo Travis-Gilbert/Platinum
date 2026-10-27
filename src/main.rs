@@ -22,6 +22,7 @@ mod scene;
 mod search;
 mod serp;
 mod share;
+mod site;
 mod theme;
 
 use anyhow::Context as _;
