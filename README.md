@@ -129,11 +129,14 @@ downloads glyph is `sd-card-download`, from its CC BY 4.0 free subset.
 
 ## Brand
 
-The app icon and logo are the Platinum brand kit (v1, 26 October 2026), kept
-in `assets/brand/`: `icons/` (`Platinum.icns`, `Platinum.ico`, a 1024 px PNG),
-`logos/` (horizontal and stacked lockups, wordmark and one-color mark; names
-ending in `dark` are dark ink for light backgrounds, `light` the reverse) and
-`source/` (the editable master, compact and micro drawings). `src/brand.rs`
+The app icon is the watercolor floppy painting,
+`assets/brand/source/platinum-painting.png`. `script/brand-icons` rebuilds
+`assets/brand/icons/` from it: `Platinum.icns`, `Platinum.ico` and a 1024 px
+PNG. The logos are the Platinum brand kit (v1, 26 October 2026), a vector
+drawing of the same disk, also kept in `assets/brand/`: `logos/` (horizontal
+and stacked lockups, wordmark and one-color mark; names ending in `dark` are
+dark ink for light backgrounds, `light` the reverse) and `source/` (the
+editable master, compact and micro drawings). `src/brand.rs`
 sets the `.icns` as the Dock icon at launch, since Platinum runs as a bare
 binary; a bundle would name the same file in its `Info.plist`. The wordmark
 is DejaVu Sans Bold, outlined to paths (`assets/brand/DejaVu-font-notice.txt`).
