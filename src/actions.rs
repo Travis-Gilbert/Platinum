@@ -27,6 +27,7 @@ actions!(
         FocusAddressBar,
         OpenPalette,
         ToggleCompact,
+        ShowCanvas,
         ToggleAsk,
         ShowDownloads,
         SharePage,

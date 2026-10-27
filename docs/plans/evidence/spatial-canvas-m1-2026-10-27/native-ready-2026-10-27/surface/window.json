@@ -1,0 +1,24 @@
+{
+  "visible": true,
+  "visibility": "Visible",
+  "active": true,
+  "display_refresh_hz": 120.0000048000002,
+  "viewport_points": [
+    900.0,
+    650.0
+  ],
+  "native_windows": [
+    {
+      "on_active_space": true,
+      "shown": true,
+      "miniaturized": false,
+      "occlusion": "NSWindowOcclusionState(8194)"
+    },
+    {
+      "on_active_space": true,
+      "shown": false,
+      "miniaturized": false,
+      "occlusion": "NSWindowOcclusionState(8192)"
+    }
+  ]
+}

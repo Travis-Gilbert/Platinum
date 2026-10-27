@@ -7,6 +7,7 @@ extern crate gpui_kit as gpui;
 mod actions;
 mod address;
 mod browser;
+mod canvas;
 mod controls;
 mod delegate;
 mod downloads;
@@ -101,6 +102,7 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("cmd-y", ShowHistory, None),
         KeyBinding::new("cmd-shift-p", FillPassword, None),
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
+        KeyBinding::new("ctrl-cmd-b", crate::actions::ShowCanvas, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
         KeyBinding::new("cmd-q", Quit, None),
         KeyBinding::new("cmd-z", Undo, Some(page::CONTEXT)),

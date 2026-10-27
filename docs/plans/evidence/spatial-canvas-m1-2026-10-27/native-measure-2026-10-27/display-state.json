@@ -1,0 +1,13 @@
+{
+  "command": [
+    "ioreg",
+    "-n",
+    "Root",
+    "-d1",
+    "-a"
+  ],
+  "locked": [
+    false
+  ],
+  "elapsed_seconds": 0.03876295800000662
+}

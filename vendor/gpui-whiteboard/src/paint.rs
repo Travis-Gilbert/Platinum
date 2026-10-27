@@ -1365,7 +1365,8 @@ pub(crate) fn paint_snap_points(
     }
 }
 
-pub(crate) fn paint_selection(
+// THEOREM PATCH: let hosted surface owners paint the existing overlay above live guests.
+pub fn paint_selection(
     kind: &ElementKind,
     cam: Camera,
     origin: Point<Pixels>,
@@ -1432,7 +1433,8 @@ pub(crate) fn paint_selection(
 }
 
 /// The in-progress marquee box: a faint fill + thin outline.
-pub(crate) fn paint_marquee(
+// THEOREM PATCH: share the marquee painter with hosted surface owners.
+pub fn paint_marquee(
     a: [f32; 2],
     b: [f32; 2],
     cam: Camera,

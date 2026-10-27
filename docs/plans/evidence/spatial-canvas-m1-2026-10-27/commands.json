@@ -1,0 +1,1165 @@
+[
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-g",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.003232999999454478,
+    "output": "disk.log"
+  },
+  {
+    "name": "touch-profile",
+    "command": [
+      "touch",
+      "crates/profile/src/lib.rs"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.0030665829999634298,
+    "output": "touch-profile.log"
+  },
+  {
+    "name": "frame-tests",
+    "command": [
+      "script/media-env",
+      "cargo",
+      "test",
+      "--locked",
+      "--bin",
+      "frame"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame"
+    },
+    "exit_code": 101,
+    "elapsed_seconds": 0.5837944590002735,
+    "output": "frame-tests.log"
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "script/media-env",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame"
+    },
+    "exit_code": 101,
+    "elapsed_seconds": 0.5438678750006147,
+    "output": "canvas-build.log"
+  },
+  {
+    "name": "format-new-rust",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "src/canvas/mod.rs",
+      "src/canvas/input.rs",
+      "src/canvas/surface.rs",
+      "examples/canvas_check.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.04955587499989633,
+    "output": "format-new-rust.log",
+    "stdin": null
+  },
+  {
+    "name": "parse-page",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--emit",
+      "stdout",
+      "src/page.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.046651458000269486,
+    "output_discarded": true,
+    "stderr": ""
+  },
+  {
+    "name": "parse-controls",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--emit",
+      "stdout",
+      "src/controls.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.04277079099938419,
+    "output_discarded": true,
+    "stderr": ""
+  },
+  {
+    "name": "parse-browser",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--emit",
+      "stdout",
+      "src/browser.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.24026645899994037,
+    "output_discarded": true,
+    "stderr": ""
+  },
+  {
+    "name": "parse-main",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--emit",
+      "stdout",
+      "src/main.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.03705937499944412,
+    "output_discarded": true,
+    "stderr": ""
+  },
+  {
+    "name": "parse-actions",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--emit",
+      "stdout",
+      "src/actions.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.034594541999467765,
+    "output_discarded": true,
+    "stderr": ""
+  },
+  {
+    "name": "probe-js-syntax",
+    "command": [
+      "node",
+      "--check",
+      "tests/canvas/probe.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02763733299980231,
+    "output": "probe-js-syntax.log",
+    "stdin": null
+  },
+  {
+    "name": "signin-js-syntax",
+    "command": [
+      "node",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02827104199968744,
+    "output": "signin-js-syntax.log",
+    "stdin": "\n  document.cookie = 'frame_canvas_session=m1; SameSite=Lax; Path=/';\n  const state = window.canvasInput = {clicks: 0, hovers: 0, drag: null, wheel: 0, choice: 'First', dialogs: [], escape: 0, space: 0};\n  const target = document.querySelector('#target');\n  target.addEventListener('click', e => { state.clicks++; state.click = [e.clientX, e.clientY]; });\n  target.addEventListener('pointerenter', () => state.hovers++);\n  const drag = document.querySelector('#drag');\n  drag.addEventListener('pointerdown', e => { drag.setPointerCapture(e.pointerId); state.drag = {start: [e.clientX, e.clientY], end: null}; });\n  drag.addEventListener('pointerup', e => { if (state.drag) state.drag.end = [e.clientX, e.clientY]; });\n  document.querySelector('#scroller').addEventListener('scroll', e => state.wheel = e.target.scrollTop);\n  document.querySelector('#choice').addEventListener('change', e => state.choice = e.target.value);\n  for (const kind of ['alert', 'confirm', 'prompt']) {\n    document.querySelector('#' + kind).addEventListener('click', () => {\n      state.dialogs.push({kind, response: window[kind]('Canvas ' + kind)});\n    });\n  }\n  addEventListener('keydown', e => {\n    if (e.key === ' ') state.space++;\n    if (e.key === 'Escape') {\n      state.escape++;\n      if (document.querySelector('#consumeEscape').checked) e.preventDefault();\n    }\n  });\n"
+  },
+  {
+    "name": "runner-python-syntax",
+    "command": [
+      "python3",
+      "-I",
+      "-c",
+      "import ast; from pathlib import Path; ast.parse(Path('tests/canvas/run-checks.py').read_text())"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02251770899965777,
+    "output": "runner-python-syntax.log",
+    "stdin": null
+  },
+  {
+    "name": "diff-whitespace",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02982537499974569,
+    "output": "diff-whitespace.log",
+    "stdin": null
+  },
+  {
+    "name": "lock-diff",
+    "command": [
+      "git",
+      "diff",
+      "--",
+      "Cargo.lock"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01015091699991899,
+    "output": "lock-diff.log",
+    "stdin": null
+  },
+  {
+    "name": "protected-path-diff",
+    "command": [
+      "git",
+      "diff",
+      "--",
+      "deps",
+      "vendor/gpui-pre",
+      "script/bootstrap",
+      "script/bootstrap-media"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.007104792000063753,
+    "output": "protected-path-diff.log",
+    "stdin": null
+  },
+  {
+    "name": "dependency-update-repeat-for-timing",
+    "command": [
+      "cargo",
+      "update",
+      "-p",
+      "gpui-whiteboard",
+      "--offline"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.8465051250004763,
+    "output": "dependency-update.log"
+  },
+  {
+    "name": "wrapper-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh"
+    ],
+    "elapsed_seconds": 0.01852445899930899,
+    "exit_code": 0,
+    "output": "wrapper-syntax-continuation.log"
+  },
+  {
+    "name": "rust-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "src/canvas/mod.rs",
+      "src/canvas/input.rs",
+      "src/canvas/surface.rs",
+      "examples/canvas_check.rs",
+      "examples/canvas_check/acceptance.rs",
+      "examples/canvas_check/measurements.rs"
+    ],
+    "elapsed_seconds": 0.14191445799951907,
+    "exit_code": 0,
+    "output": "rust-format-continuation.log"
+  },
+  {
+    "name": "fixture-probe-syntax",
+    "command": [
+      "node",
+      "--check",
+      "tests/canvas/probe.js"
+    ],
+    "elapsed_seconds": 0.04327858300166554,
+    "exit_code": 0,
+    "output": "fixture-probe-syntax-continuation.log"
+  },
+  {
+    "name": "diff-whitespace-continuation",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "elapsed_seconds": 0.04963766700166161,
+    "exit_code": 0,
+    "output": "diff-whitespace-continuation-continuation.log"
+  },
+  {
+    "name": "signin-index.html-syntax",
+    "command": [
+      "node",
+      "--check"
+    ],
+    "elapsed_seconds": 0.06573954099803814,
+    "exit_code": 0,
+    "output": "signin-index.html-syntax-continuation.log"
+  },
+  {
+    "name": "benchmark.html-syntax",
+    "command": [
+      "node",
+      "--check"
+    ],
+    "elapsed_seconds": 0.062382500000239816,
+    "exit_code": 0,
+    "output": "benchmark.html-syntax-continuation.log"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1.0219823749976058,
+    "output": "disk-1793115804245986000.log"
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1200.6246777500019,
+    "output": "canvas-build-1793115805269479000.log"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.019643915999040473,
+    "output": "disk-1793117068038680000.log",
+    "timed_out": false
+  },
+  {
+    "name": "zoom",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:53488/zoom-probe.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/zoom"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 1,
+    "elapsed_seconds": 4.989034707999963,
+    "output": "zoom-1793117068064513000.log",
+    "timed_out": false
+  },
+  {
+    "name": "signin",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:53488/signin/",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/signin"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 1,
+    "elapsed_seconds": 0.36735166599828517,
+    "output": "signin-1793117073054185000.log",
+    "timed_out": false
+  },
+  {
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "test",
+      "--locked",
+      "--bin",
+      "frame"
+    ],
+    "elapsed_seconds": 0.17048275000342983,
+    "exit_code": 1,
+    "output": "frame-tests-full-access.log",
+    "name": "frame-tests-full-access"
+  },
+  {
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "test",
+      "--locked",
+      "--bin",
+      "frame"
+    ],
+    "elapsed_seconds": 1499.9306243329993,
+    "exit_code": 101,
+    "output": "frame-tests-wrapper-fixed.log",
+    "name": "frame-tests-wrapper-fixed"
+  },
+  {
+    "name": "frame-tests-retry",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "test",
+      "--locked",
+      "--bin",
+      "frame"
+    ],
+    "elapsed_seconds": 451.34578862499984,
+    "exit_code": 0,
+    "output": "frame-tests-retry.log"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.0055681249978078995,
+    "output": "disk-1793117646419019000.log",
+    "timed_out": false
+  },
+  {
+    "name": "zoom",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:54243/zoom-probe.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/zoom"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 6.082786042003136,
+    "output": "zoom-1793117646432178000.log",
+    "timed_out": false
+  },
+  {
+    "name": "signin",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:54243/signin/",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/signin"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": -11,
+    "elapsed_seconds": 1.6962754590022087,
+    "output": "signin-1793117652515496000.log",
+    "timed_out": false
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.00425770799847669,
+    "output": "disk-1793117747151497000.log",
+    "timed_out": false
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 495.138425707999,
+    "output": "canvas-build-1793117747156222000.log",
+    "timed_out": false
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.003550458000972867,
+    "output": "disk-1793118561233404000.log",
+    "timed_out": false
+  },
+  {
+    "name": "zoom",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:55395/zoom-probe.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/zoom"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 9.178998291001335,
+    "output": "zoom-1793118561242702000.log",
+    "timed_out": false
+  },
+  {
+    "name": "signin",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:55395/signin/",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/signin"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": -15,
+    "elapsed_seconds": 128.5849589999998,
+    "output": "signin-1793118570422308000.log",
+    "timed_out": false
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.004109417001018301,
+    "output": "disk-1793118796951293000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 101,
+    "elapsed_seconds": 11.657704417000787,
+    "output": "canvas-build-1793118796955840000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.033790249999583466,
+    "output": "disk-1793118858710076000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 25.265004832999693,
+    "output": "canvas-build-1793118858744391000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.003774166001676349,
+    "output": "disk-1793118903407438000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "frame-tests",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "test",
+      "--locked",
+      "--bin",
+      "frame"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 14.91567466700144,
+    "output": "frame-tests-1793118903411621000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 9.067834624998795,
+    "output": "canvas-build-1793118918327928000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "zoom",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:56194/zoom-probe.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/zoom"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 3.723469333999674,
+    "output": "zoom-1793118927403782000.log",
+    "timed_out": false,
+    "binary_sha256": "27622a472a8cca061903ea16120b5f8580df02e80452aa39ac5a1e301fabe0d4"
+  },
+  {
+    "name": "signin",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:56194/signin/",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/signin"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1.5184384169988334,
+    "output": "signin-1793118931127961000.log",
+    "timed_out": false,
+    "binary_sha256": "27622a472a8cca061903ea16120b5f8580df02e80452aa39ac5a1e301fabe0d4"
+  },
+  {
+    "name": "measure",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:56194/benchmark.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/measure",
+      "--measure"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1.4634004159997858,
+    "output": "measure-1793118932647010000.log",
+    "timed_out": false,
+    "binary_sha256": "27622a472a8cca061903ea16120b5f8580df02e80452aa39ac5a1e301fabe0d4"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.004401207999762846,
+    "output": "disk-1793119009255969000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 101,
+    "elapsed_seconds": 7.162389583001641,
+    "output": "canvas-build-1793119009260872000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.004359499998827232,
+    "output": "disk-1793119088758031000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 9.42967733399928,
+    "output": "canvas-build-1793119088762845000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.0037213750001683366,
+    "output": "disk-1793119129776548000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "zoom",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:56646/zoom-probe.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/zoom"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp/frame-canvas-check-42f78m88",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 3.7807177920003596,
+    "output": "zoom-1793119129785664000.log",
+    "timed_out": false,
+    "binary_sha256": "84dec39271cbf43a9037a7ce48bb8f0b1c7eca0db14c35afe6b2bc783ce3193e",
+    "accepted": false,
+    "probe_result": {
+      "pid": 36921,
+      "passed": false,
+      "error": "native window is occluded; unlock the screen and expose the window before checking rendering or frame rate"
+    }
+  },
+  {
+    "name": "signin",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:56646/signin/",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/signin"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp/frame-canvas-check-pet3v1qx",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1.4801359579978453,
+    "output": "signin-1793119133567534000.log",
+    "timed_out": false,
+    "binary_sha256": "84dec39271cbf43a9037a7ce48bb8f0b1c7eca0db14c35afe6b2bc783ce3193e",
+    "accepted": false,
+    "probe_result": {
+      "pid": 36929,
+      "passed": false,
+      "error": "native window is occluded; unlock the screen and expose the window before checking rendering or frame rate"
+    }
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.0038512920000357553,
+    "output": "disk-1793119152785314000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "measure",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:56661/benchmark.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/measure",
+      "--measure"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp/frame-canvas-check-wi1p5fyr",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1.4802890829996613,
+    "output": "measure-1793119152793490000.log",
+    "timed_out": false,
+    "binary_sha256": "84dec39271cbf43a9037a7ce48bb8f0b1c7eca0db14c35afe6b2bc783ce3193e",
+    "accepted": false,
+    "probe_result": {
+      "pid": 37082,
+      "passed": false,
+      "error": "native window is occluded; unlock the screen and expose the window before checking rendering or frame rate"
+    }
+  },
+  {
+    "name": "setup-media",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "script/setup-media"
+    ],
+    "elapsed_seconds": 474.9147950830011,
+    "exit_code": 0,
+    "output": "setup-media.log"
+  },
+  {
+    "name": "final-rust-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "src/canvas/mod.rs",
+      "src/canvas/input.rs",
+      "src/canvas/surface.rs",
+      "examples/canvas_check.rs",
+      "examples/canvas_check/acceptance.rs",
+      "examples/canvas_check/measurements.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11505525000029593,
+    "output": "final-rust-format.log",
+    "stdin": null
+  },
+  {
+    "name": "final-python-syntax",
+    "command": [
+      "python3",
+      "-I",
+      "-c",
+      "import ast; ast.parse(open('tests/canvas/run-checks.py').read())"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.03929620900089503,
+    "output": "final-python-syntax.log",
+    "stdin": null
+  },
+  {
+    "name": "final-probe-js",
+    "command": [
+      "node",
+      "--check",
+      "tests/canvas/probe.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.03613995799969416,
+    "output": "final-probe-js.log",
+    "stdin": null
+  },
+  {
+    "name": "final-diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1353652499965392,
+    "output": "final-diff-check.log",
+    "stdin": null
+  },
+  {
+    "name": "final-protected-paths",
+    "command": [
+      "git",
+      "diff",
+      "--exit-code",
+      "--",
+      "deps",
+      "script/bootstrap",
+      "script/bootstrap-media",
+      "vendor/gpui-pre",
+      "vendor/gpui-pre-apple",
+      "vendor/gpui-component"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02878775000135647,
+    "output": "final-protected-paths.log",
+    "stdin": null
+  },
+  {
+    "name": "final-disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.007472125002095709,
+    "output": "final-disk.log",
+    "stdin": null
+  },
+  {
+    "name": "final-inline-signin-index",
+    "command": [
+      "node",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.04470595800012234,
+    "output": "final-inline-signin-index.log",
+    "stdin": "\n  document.cookie = 'frame_canvas_session=m1; SameSite=Lax; Path=/';\n  const state = window.canvasInput = {clicks: 0, hovers: 0, drag: null, wheel: 0, choice: 'First', dialogs: [], escape: 0, space: 0};\n  const target = document.querySelector('#target');\n  target.addEventListener('click', e => { state.clicks++; state.click = [e.clientX, e.clientY]; });\n  target.addEventListener('pointerenter', () => state.hovers++);\n  const drag = document.querySelector('#drag');\n  drag.addEventListener('pointerdown', e => { drag.setPointerCapture(e.pointerId); state.drag = {start: [e.clientX, e.clientY], end: null}; });\n  drag.addEventListener('pointerup', e => { if (state.drag) state.drag.end = [e.clientX, e.clientY]; });\n  document.querySelector('#scroller').addEventListener('scroll', e => state.wheel = e.target.scrollTop);\n  document.querySelector('#choice').addEventListener('change', e => state.choice = e.target.value);\n  for (const kind of ['alert', 'confirm', 'prompt']) {\n    document.querySelector('#' + kind).addEventListener('click', () => {\n      setTimeout(() => state.dialogs.push({kind, response: window[kind]('Canvas ' + kind)}), 250);\n    });\n  }\n  addEventListener('keydown', e => {\n    if (e.key === ' ') state.space++;\n    if (e.key === 'Escape') {\n      state.escape++;\n      if (document.querySelector('#consumeEscape').checked) e.preventDefault();\n    }\n  });\n"
+  },
+  {
+    "name": "final-inline-canvas-benchmark",
+    "command": [
+      "node",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.047577332999935606,
+    "output": "final-inline-canvas-benchmark.log",
+    "stdin": "\nconst canvas = document.querySelector('canvas');\nconst context = canvas.getContext('2d');\nwindow.canvasBench = {paused:false, frames:0};\nfunction draw(time) {\n  if (!canvasBench.paused) {\n    if (canvas.width !== innerWidth || canvas.height !== innerHeight) {\n      canvas.width = innerWidth; canvas.height = innerHeight;\n    }\n    context.fillStyle = '#132334'; context.fillRect(0,0,canvas.width,canvas.height);\n    context.fillStyle = '#74d7b5'; context.fillRect((time/8) % canvas.width,30,80,80);\n    context.fillStyle = 'white'; context.font = '32px sans-serif';\n    context.fillText('Live frame ' + (++canvasBench.frames), 30, 180);\n  }\n  requestAnimationFrame(draw);\n}\nrequestAnimationFrame(draw);\n"
+  },
+  {
+    "name": "final-inline-canvas-zoom-probe",
+    "command": [
+      "node",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.045947165999677964,
+    "output": "final-inline-canvas-zoom-probe.log",
+    "stdin": ""
+  }
+]

@@ -1,0 +1,1 @@
+canvas check: native window is occluded; unlock the screen and expose the window before checking rendering or frame rate

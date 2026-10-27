@@ -1,0 +1,43 @@
+[
+  {
+    "name": "diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12337579099767026,
+    "output": ""
+  },
+  {
+    "name": "protected-paths",
+    "command": [
+      "git",
+      "diff",
+      "--name-only",
+      "--",
+      "deps/",
+      "vendor/"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.011107041002105689,
+    "output": "vendor/gpui-whiteboard/src/lib.rs\nvendor/gpui-whiteboard/src/paint.rs\n"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004173083001660416,
+    "output": "Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on\n/dev/disk5s1   927Gi   855Gi    72Gi    93%    9.8M  754M    1%   /Volumes/SSD Samsung\n"
+  },
+  {
+    "name": "python-parse",
+    "elapsed_seconds": 0.0020170419993519317,
+    "passed": true
+  }
+]

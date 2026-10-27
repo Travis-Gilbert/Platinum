@@ -3973,6 +3973,7 @@ dependencies = [
  "gpui-kit",
  "gpui-pre",
  "gpui-pre-macos",
+ "gpui-whiteboard",
  "http",
  "humansize",
  "image",

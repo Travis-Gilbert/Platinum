@@ -218,6 +218,7 @@ impl Tab {
 }
 
 pub struct Browser {
+    canvas: Option<Entity<crate::canvas::SpatialCanvas>>,
     focus_handle: FocusHandle,
     /// In the dock's order: group by group, left to right, top to bottom.
     tabs: Vec<Tab>,
@@ -282,6 +283,7 @@ impl Browser {
             async {}
         });
         let mut browser = Self {
+            canvas: None,
             focus_handle: cx.focus_handle(),
             tabs: vec![Tab::start(0, panel)],
             active: 0,
@@ -1079,6 +1081,7 @@ impl Browser {
                     self.activate_id(id, window, cx);
                 }
             }
+            PageEvent::RevealCanvas => {},
             PageEvent::ContextMenu(menu) => {
                 let tab = &self.tabs[index];
                 if tab.showing == Showing::Page && self.displayed.contains(&tab.panel_id()) {
@@ -2573,6 +2576,17 @@ impl Render for Browser {
             .on_action(cx.listener(|browser, _: &SharePage, window, cx| {
                 browser.share_tab(browser.tabs[browser.active].id, window, cx)
             }))
+            .on_action(cx.listener(|browser, _: &crate::actions::ShowCanvas, window, cx| {
+                if let Some(board) = browser.canvas.take() {
+                    board.update(cx, |board, cx| board.detach(cx));
+                    browser.focus_content(window, cx);
+                } else if let Some(page) = browser.tabs[browser.active].page.clone() {
+                    let board = cx.new(|cx| crate::canvas::SpatialCanvas::new(page, cx));
+                    window.focus(&board.focus_handle(cx), cx);
+                    browser.canvas = Some(board);
+                }
+                cx.notify();
+            }))
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
             .capture_key_down(
                 cx.listener(|this, event: &gpui_kit::KeyDownEvent, window, cx| {
@@ -2587,7 +2601,10 @@ impl Render for Browser {
                 }),
             )
             .on_mouse_down(MouseButton::Right, cx.listener(Self::right_click))
-            .child(div().flex_1().min_h_0().child(self.dock.clone()))
+            .child(div().flex_1().min_h_0().child(match &self.canvas {
+                Some(board) => board.clone().into_any_element(),
+                None => self.dock.clone().into_any_element(),
+            }))
             .when(self.compact, |this| {
                 this.child(
                     // Pointing at the top edge brings the chrome back over the page.

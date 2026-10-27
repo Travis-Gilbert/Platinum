@@ -47,6 +47,8 @@ pub use hosted::{CameraIntent, CameraMode, CommitFn, ContextMenuFn, HistoryMode,
 use input::WhiteboardInputElement;
 use mechanics::ZOrder;
 use paint::*;
+// THEOREM PATCH: hosted guests paint between board content and these overlays.
+pub use paint::{paint_marquee, paint_selection};
 use render_perf::WorldViewport;
 pub use scene::*;
 

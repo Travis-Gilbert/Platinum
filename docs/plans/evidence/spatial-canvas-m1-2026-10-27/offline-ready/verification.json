@@ -1,0 +1,84 @@
+[
+  {
+    "name": "runner-dry-run",
+    "command": [
+      "python3",
+      "-I",
+      "tests/canvas/run-checks.py",
+      "--only",
+      "native",
+      "--dry-run",
+      "--evidence",
+      "docs/plans/evidence/spatial-canvas-m1-2026-10-27/offline-ready/dry-run"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.06902383399938117,
+    "output": "runner-dry-run.log"
+  },
+  {
+    "name": "diff-check",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017999332998442696,
+    "output": "diff-check.log"
+  },
+  {
+    "name": "format-new-rust",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "examples/canvas_check.rs",
+      "examples/canvas_check/foreground.rs",
+      "examples/canvas_check/acceptance.rs",
+      "examples/canvas_check/measurements.rs",
+      "src/canvas/surface.rs",
+      "src/canvas/mod.rs",
+      "src/canvas/input.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.08921516600094037,
+    "output": "format-new-rust.log"
+  },
+  {
+    "name": "protected-paths",
+    "command": [
+      "git",
+      "diff",
+      "--name-only",
+      "--",
+      "deps/",
+      "vendor/"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01059312500001397,
+    "output": "protected-paths.log"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.007721250000031432,
+    "output": "disk.log"
+  },
+  {
+    "name": "python-parse",
+    "exit_code": 0,
+    "elapsed_seconds": 0.001768458001606632
+  },
+  {
+    "name": "built-example",
+    "sha256": "9f87f2ef17e543e3597d47eeceac09ce6c90af0618a81132287cb5599bba32ef"
+  }
+]

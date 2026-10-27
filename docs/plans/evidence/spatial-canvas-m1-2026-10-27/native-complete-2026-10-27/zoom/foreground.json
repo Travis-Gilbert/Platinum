@@ -1,0 +1,18 @@
+{
+  "events": [
+    {
+      "elapsed_ms": 0.04475,
+      "source": "start",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    }
+  ],
+  "polls": 205,
+  "max_poll_gap_ms": 99.63225,
+  "failure": null,
+  "monitor": "GPUI activation/visibility observers plus 16 ms polling of AppKit's key window; failures latch",
+  "allow_owned_native_panel_focus": true
+}

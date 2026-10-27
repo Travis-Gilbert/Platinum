@@ -1,0 +1,635 @@
+[
+  {
+    "selector": "#choice",
+    "delay_ms": 50,
+    "state": {
+      "popup": true,
+      "color": false,
+      "file": false
+    },
+    "focus": {
+      "active": "choice",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#choice",
+    "delay_ms": 200,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    },
+    "focus": {
+      "active": "choice",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#choice",
+    "delay_ms": 500,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    },
+    "focus": {
+      "active": "choice",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#color",
+    "delay_ms": 50,
+    "state": {
+      "popup": false,
+      "color": true,
+      "file": false
+    },
+    "focus": {
+      "active": "color",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 3724.63
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 3724.64
+        },
+        {
+          "kind": "focus",
+          "id": "color",
+          "at": 3724.65
+        },
+        {
+          "kind": "focusin",
+          "id": "color",
+          "at": 3724.68
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#color",
+    "delay_ms": 200,
+    "state": {
+      "popup": false,
+      "color": true,
+      "file": false
+    },
+    "focus": {
+      "active": "color",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 3724.63
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 3724.64
+        },
+        {
+          "kind": "focus",
+          "id": "color",
+          "at": 3724.65
+        },
+        {
+          "kind": "focusin",
+          "id": "color",
+          "at": 3724.68
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#color",
+    "delay_ms": 500,
+    "state": {
+      "popup": false,
+      "color": true,
+      "file": false
+    },
+    "focus": {
+      "active": "color",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 3724.63
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 3724.64
+        },
+        {
+          "kind": "focus",
+          "id": "color",
+          "at": 3724.65
+        },
+        {
+          "kind": "focusin",
+          "id": "color",
+          "at": 3724.68
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#file",
+    "delay_ms": 50,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": true
+    },
+    "focus": {
+      "active": "file",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 3724.63
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 3724.64
+        },
+        {
+          "kind": "focus",
+          "id": "color",
+          "at": 3724.65
+        },
+        {
+          "kind": "focusin",
+          "id": "color",
+          "at": 3724.68
+        },
+        {
+          "kind": "blur",
+          "id": "color",
+          "at": 5279.78
+        },
+        {
+          "kind": "focusout",
+          "id": "color",
+          "at": 5279.91
+        },
+        {
+          "kind": "focus",
+          "id": "file",
+          "at": 5279.93
+        },
+        {
+          "kind": "focusin",
+          "id": "file",
+          "at": 5279.96
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#file",
+    "delay_ms": 200,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": true
+    },
+    "focus": {
+      "active": "file",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 3724.63
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 3724.64
+        },
+        {
+          "kind": "focus",
+          "id": "color",
+          "at": 3724.65
+        },
+        {
+          "kind": "focusin",
+          "id": "color",
+          "at": 3724.68
+        },
+        {
+          "kind": "blur",
+          "id": "color",
+          "at": 5279.78
+        },
+        {
+          "kind": "focusout",
+          "id": "color",
+          "at": 5279.91
+        },
+        {
+          "kind": "focus",
+          "id": "file",
+          "at": 5279.93
+        },
+        {
+          "kind": "focusin",
+          "id": "file",
+          "at": 5279.96
+        }
+      ]
+    }
+  },
+  {
+    "selector": "#file",
+    "delay_ms": 500,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": true
+    },
+    "focus": {
+      "active": "file",
+      "hasFocus": false,
+      "events": [
+        {
+          "kind": "focus",
+          "id": "choice",
+          "at": 2081.3
+        },
+        {
+          "kind": "focusin",
+          "id": "choice",
+          "at": 2081.35
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 2096.09
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 2096.1
+        },
+        {
+          "kind": "blur",
+          "at": 2096.15
+        },
+        {
+          "kind": "focusout",
+          "at": 2096.15
+        },
+        {
+          "kind": "blur",
+          "id": "choice",
+          "at": 3724.63
+        },
+        {
+          "kind": "focusout",
+          "id": "choice",
+          "at": 3724.64
+        },
+        {
+          "kind": "focus",
+          "id": "color",
+          "at": 3724.65
+        },
+        {
+          "kind": "focusin",
+          "id": "color",
+          "at": 3724.68
+        },
+        {
+          "kind": "blur",
+          "id": "color",
+          "at": 5279.78
+        },
+        {
+          "kind": "focusout",
+          "id": "color",
+          "at": 5279.91
+        },
+        {
+          "kind": "focus",
+          "id": "file",
+          "at": 5279.93
+        },
+        {
+          "kind": "focusin",
+          "id": "file",
+          "at": 5279.96
+        }
+      ]
+    }
+  },
+  {
+    "zoom": 0.35,
+    "old_hover_before": {
+      "count": 0,
+      "hover": false
+    },
+    "old_hover_after": {
+      "count": 0,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 0.35,
+    "explicit_exit": {
+      "count": 0,
+      "hover": false
+    },
+    "reentered": {
+      "count": 0,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 1.0,
+    "old_hover_before": {
+      "count": 0,
+      "hover": true
+    },
+    "old_hover_after": {
+      "count": 0,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 1.0,
+    "explicit_exit": {
+      "count": 0,
+      "hover": false
+    },
+    "reentered": {
+      "count": 0,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 2.0,
+    "old_hover_before": {
+      "count": 0,
+      "hover": true
+    },
+    "old_hover_after": {
+      "count": 0,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 2.0,
+    "explicit_exit": {
+      "count": 0,
+      "hover": false
+    },
+    "reentered": {
+      "count": 0,
+      "hover": true
+    }
+  }
+]

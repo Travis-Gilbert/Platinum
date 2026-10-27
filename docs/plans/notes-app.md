@@ -549,16 +549,18 @@ its own, not an iframe, so a page that refuses to be framed still loads, and
 it keeps its own origin, outside `frame-notes:`. It renders and takes input
 the way `src/page.rs` already handles each browser tab inside GPUI's scene, so
 the board composites it like any other element. While the board zooms, the
-page's CSS viewport keeps the card's size: the host resizes the webview to the
-card's on-screen pixels and sets its scale factor to the board's zoom times
-the display's, so the page stays sharp and never reflows. Pointer events map
-from screen to page coordinates through the board's transform. A drag on the
-card's frame moves the card; once the card is focused, input inside it goes to
-the page, and only one card or the board holds keyboard focus at a time. Cards
+host scales the newest frame without resizing the webview. Once the camera
+settles, the page's CSS viewport keeps the card's world size and its scale
+factor becomes the board's zoom times the display's, capped at the window's
+pixel size. Servo's viewport fix is needed to keep that scale change from
+firing a resize event or moving the CSS size by a rounded pixel. Pointer
+events map from screen to page coordinates through the board's transform. A
+drag on the card's caption moves the card; once the card is focused, input
+inside it goes to the page, and only one card or the board holds keyboard focus at a time. Cards
 clip to their own bounds and to the board's viewport. A live card that leaves
 the screen is hidden, which throttles it, and past a live-card limit set by
 measurement the least recently focused card goes back to its snapshot, keeping
-its URL and scroll position for when it is live again.
+its URL and restoring its scroll position when it is live again.
 
 **The index is RedCore with rustyred-thg-find.** comrak is the one parser that
 decides what a note contains. Its results go into the RedCore graph: files,

@@ -1,0 +1,28 @@
+{
+  "before": {
+    "surface": 390,
+    "signature": [
+      1800,
+      1125,
+      7686295613207151369
+    ],
+    "presents": 56
+  },
+  "after": {
+    "surface": 390,
+    "signature": [
+      1800,
+      1125,
+      7686295613207151369
+    ],
+    "presents": 56,
+    "held_surface": 390,
+    "held_signature": [
+      1800,
+      1125,
+      7686295613207151369
+    ]
+  },
+  "retained": true,
+  "hidden_copy_bytes": 0
+}

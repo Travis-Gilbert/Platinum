@@ -1,0 +1,177 @@
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+CONTROL 1793129948770 Page focus -> Servo true
+CONTROL 1793129948796 show InputMethod
+{"rendered_zoom":1.0,"camera_applied":true,"step":0,"zoom":1.0,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":0,"resizeEvents":[],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":0,"resizeEvents":[],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":0,"width_drift":0,"height_drift":0,"elapsed_ms":814.544625,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-0.png"}
+{"rendered_zoom":0.3499999940395355,"camera_applied":true,"step":1,"zoom":0.35,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":0,"resizeEvents":[],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071,"resizeCount":2,"resizeEvents":[{"at":3496.96,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3521.15,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":2,"width_drift":0,"height_drift":0,"elapsed_ms":1064.7085,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-1.png"}
+{"rendered_zoom":2.0,"camera_applied":true,"step":2,"zoom":2.0,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071,"resizeCount":2,"resizeEvents":[{"at":3496.96,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3521.15,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":4,"resizeEvents":[{"at":3496.96,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3521.15,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071},{"at":4563.55,"innerWidth":637,"innerHeight":398,"devicePixelRatio":1.40625},{"at":4588.44,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":4,"width_drift":0,"height_drift":0,"elapsed_ms":823.0259159999999,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-2.png"}
+{"rendered_zoom":1.0,"camera_applied":true,"step":3,"zoom":1.0,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":4,"resizeEvents":[{"at":3496.96,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3521.15,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071},{"at":4563.55,"innerWidth":637,"innerHeight":398,"devicePixelRatio":1.40625},{"at":4588.44,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793129946881:0.3889029053060671","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":4,"resizeEvents":[{"at":3496.96,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3521.15,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071},{"at":4563.55,"innerWidth":637,"innerHeight":398,"devicePixelRatio":1.40625},{"at":4588.44,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":4,"width_drift":0,"height_drift":0,"elapsed_ms":805.8122500000001,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-3.png"}
+CONTROL 1793129954752 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(0) }; popup=false color=false
+CONTROL 1793129957325 show SelectElement
+CONTROL 1793129957325 popup mounted
+CONTROL 1793129957331 Page blur -> owned popup retains Servo focus
+CONTROL 1793129957635 camera dismiss controls
+CONTROL 1793129957635 popup dismissed
+CONTROL 1793129957636 Page focus -> Servo true
+CONTROL 1793129958311 show ContextMenu
+CONTROL 1793129958312 popup mounted
+CONTROL 1793129958321 Page blur -> owned popup retains Servo focus
+CONTROL 1793129958626 camera dismiss controls
+CONTROL 1793129958626 popup dismissed
+CONTROL 1793129958627 Page focus -> Servo true
+CONTROL 1793129959295 show InputMethod
+CONTROL 1793129959320 show ColorPicker
+CONTROL 1793129959321 color open begin outside App update
+CONTROL 1793129959449 color open returned visible=true
+CONTROL 1793129959512 Page blur -> owned panel retains Servo focus
+CONTROL 1793129959802 camera dismiss controls
+CONTROL 1793129959816 key returned to owner key=true
+CONTROL 1793129959836 Page focus -> Servo true
+CONTROL 1793129960541 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(3) }; popup=false color=false
+CONTROL 1793129960564 show FilePicker
+CONTROL 1793129960564 file open begin
+CONTROL 1793129960564 file open returned
+CONTROL 1793129961371 Page blur -> owned panel retains Servo focus
+CONTROL 1793129961372 camera dismiss controls
+CONTROL 1793129961408 key returned to owner key=true
+CONTROL 1793129961420 Page focus -> Servo true
+CONTROL 1793129962311 show SelectElement
+CONTROL 1793129962311 popup mounted
+CONTROL 1793129962312 Page blur -> owned popup retains Servo focus
+CONTROL 1793129962736 popup dismissed
+CONTROL 1793129962736 Page focus -> Servo true
+
+ALERT: Canvas alert
+CONTROL 1793129963476 show SimpleDialog
+CONTROL 1793129963481 Page blur -> Servo false
+CONTROL 1793129963934 Page focus -> Servo true
+CONTROL 1793129965258 show SimpleDialog
+CONTROL 1793129965262 Page blur -> Servo false
+CONTROL 1793129965717 Page focus -> Servo true
+CONTROL 1793129967033 show SimpleDialog
+CONTROL 1793129967038 Page blur -> Servo false
+CONTROL 1793129967495 Page focus -> Servo true
+CONTROL 1793129970278 Page blur -> Servo false
+CONTROL 1793129972578 Page focus -> Servo true
+CONTROL 1793129975154 show SelectElement
+CONTROL 1793129975154 popup mounted
+CONTROL 1793129975162 Page blur -> owned popup retains Servo focus
+CONTROL 1793129975473 camera dismiss controls
+CONTROL 1793129975473 popup dismissed
+CONTROL 1793129975474 Page focus -> Servo true
+CONTROL 1793129976156 show ContextMenu
+CONTROL 1793129976156 popup mounted
+CONTROL 1793129976161 Page blur -> owned popup retains Servo focus
+CONTROL 1793129976508 camera dismiss controls
+CONTROL 1793129976508 popup dismissed
+CONTROL 1793129976509 Page focus -> Servo true
+CONTROL 1793129977198 show InputMethod
+CONTROL 1793129977218 show ColorPicker
+CONTROL 1793129977218 color open begin outside App update
+CONTROL 1793129977230 color open returned visible=true
+CONTROL 1793129977238 Page blur -> owned panel retains Servo focus
+CONTROL 1793129977706 camera dismiss controls
+CONTROL 1793129977726 key returned to owner key=true
+CONTROL 1793129977744 Page focus -> Servo true
+CONTROL 1793129978466 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(12) }; popup=false color=false
+CONTROL 1793129978489 show FilePicker
+CONTROL 1793129978489 file open begin
+CONTROL 1793129978489 file open returned
+CONTROL 1793129978879 Page blur -> owned panel retains Servo focus
+CONTROL 1793129978968 camera dismiss controls
+CONTROL 1793129978977 key returned to owner key=true
+CONTROL 1793129978979 Page focus -> Servo true
+CONTROL 1793129979832 show SelectElement
+CONTROL 1793129979832 popup mounted
+CONTROL 1793129979836 Page blur -> owned popup retains Servo focus
+CONTROL 1793129980289 popup dismissed
+CONTROL 1793129980290 Page focus -> Servo true
+
+ALERT: Canvas alert
+CONTROL 1793129981004 show SimpleDialog
+CONTROL 1793129981016 Page blur -> Servo false
+CONTROL 1793129981502 Page focus -> Servo true
+CONTROL 1793129982815 show SimpleDialog
+CONTROL 1793129982821 Page blur -> Servo false
+CONTROL 1793129983285 Page focus -> Servo true
+CONTROL 1793129984575 show SimpleDialog
+CONTROL 1793129984579 Page blur -> Servo false
+CONTROL 1793129985068 Page focus -> Servo true
+CONTROL 1793129987853 Page blur -> Servo false
+CONTROL 1793129990137 Page focus -> Servo true
+CONTROL 1793129992695 show SelectElement
+CONTROL 1793129992695 popup mounted
+CONTROL 1793129992703 Page blur -> owned popup retains Servo focus
+CONTROL 1793129993020 camera dismiss controls
+CONTROL 1793129993020 popup dismissed
+CONTROL 1793129993021 Page focus -> Servo true
+CONTROL 1793129993701 show ContextMenu
+CONTROL 1793129993701 popup mounted
+CONTROL 1793129993703 Page blur -> owned popup retains Servo focus
+CONTROL 1793129994047 camera dismiss controls
+CONTROL 1793129994047 popup dismissed
+CONTROL 1793129994048 Page focus -> Servo true
+CONTROL 1793129994754 show InputMethod
+CONTROL 1793129994754 show ColorPicker
+CONTROL 1793129994754 color open begin outside App update
+CONTROL 1793129994763 color open returned visible=true
+CONTROL 1793129994768 Page blur -> owned panel retains Servo focus
+CONTROL 1793129995243 camera dismiss controls
+CONTROL 1793129995249 key returned to owner key=true
+CONTROL 1793129995269 Page focus -> Servo true
+CONTROL 1793129996029 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(21) }; popup=false color=false
+CONTROL 1793129996030 show FilePicker
+CONTROL 1793129996030 file open begin
+CONTROL 1793129996030 file open returned
+CONTROL 1793129996359 Page blur -> owned panel retains Servo focus
+CONTROL 1793129996506 camera dismiss controls
+CONTROL 1793129996516 key returned to owner key=true
+CONTROL 1793129996528 Page focus -> Servo true
+CONTROL 1793129997362 show SelectElement
+CONTROL 1793129997362 popup mounted
+CONTROL 1793129997370 Page blur -> owned popup retains Servo focus
+CONTROL 1793129997820 popup dismissed
+CONTROL 1793129997821 Page focus -> Servo true
+
+ALERT: Canvas alert
+CONTROL 1793129998570 show SimpleDialog
+CONTROL 1793129998579 Page blur -> Servo false
+CONTROL 1793129999055 Page focus -> Servo true
+CONTROL 1793130000377 show SimpleDialog
+CONTROL 1793130000379 Page blur -> Servo false
+CONTROL 1793130000841 Page focus -> Servo true
+CONTROL 1793130002137 show SimpleDialog
+CONTROL 1793130002146 Page blur -> Servo false
+CONTROL 1793130002618 Page focus -> Servo true
+CONTROL 1793130005403 Page blur -> Servo false
+CONTROL 1793130006387 Page focus -> Servo true
+CONTROL 1793130006413 show InputMethod
+CONTROL 1793130007349 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(28) }; popup=false color=false
+CONTROL 1793130007349 show InputMethod
+CONTROL 1793130008272 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(29) }; popup=false color=false
+CONTROL 1793130008272 show InputMethod
+CONTROL 1793130009190 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(30) }; popup=false color=false
+CONTROL 1793130009190 show InputMethod
+CONTROL 1793130010134 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(31) }; popup=false color=false
+CONTROL 1793130010134 show InputMethod
+CONTROL 1793130011098 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(32) }; popup=false color=false
+CONTROL 1793130011098 show InputMethod
+CONTROL 1793130012004 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(33) }; popup=false color=false
+CONTROL 1793130012004 show InputMethod
+CONTROL 1793130012937 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(34) }; popup=false color=false
+CONTROL 1793130012937 show InputMethod
+CONTROL 1793130013906 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(35) }; popup=false color=false
+CONTROL 1793130013906 show InputMethod
+CONTROL 1793130014853 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(36) }; popup=false color=false
+CONTROL 1793130014853 show InputMethod
+CONTROL 1793130015775 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(37) }; popup=false color=false
+CONTROL 1793130015775 show InputMethod
+CONTROL 1793130016702 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(38) }; popup=false color=false
+CONTROL 1793130016702 show InputMethod
+CONTROL 1793130017657 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(39) }; popup=false color=false
+CONTROL 1793130017657 show InputMethod
+CONTROL 1793130018599 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(40) }; popup=false color=false
+CONTROL 1793130021096 Page blur -> Servo false
+CONTROL 1793130023571 Page focus -> Servo true
+CONTROL 1793130024427 Page blur -> Servo false
+CONTROL 1793130024816 Page focus -> Servo true
+CONTROL 1793130025911 Page blur -> Servo false
