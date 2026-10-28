@@ -44,6 +44,9 @@ impl TabIndicatorBounds {
     }
 }
 
+// THEOREM PATCH: room between two capsules, past the gap every tab has.
+const CAPSULE_GAP: Pixels = px(2.);
+
 /// A TabBar element that contains multiple [`Tab`] items.
 #[derive(IntoElement)]
 pub struct TabBar {
@@ -60,6 +63,8 @@ pub struct TabBar {
     size: Size,
     menu: bool,
     max_width: Option<Pixels>,
+    // THEOREM PATCH: the fill of the capsules `Tab::capsule` groups tabs into.
+    capsule_bg: Option<Background>,
     on_click: Option<Rc<dyn Fn(&usize, &mut Window, &mut App) + 'static>>,
 }
 
@@ -82,7 +87,17 @@ impl TabBar {
             on_click: None,
             menu: false,
             max_width: None,
+            capsule_bg: None,
         }
+    }
+
+    // THEOREM PATCH: capsules of tabs, as Dia's row of tabs draws them.
+    /// Fill each run of [`TabVariant::Folder`] tabs sharing a
+    /// [`Tab::capsule`] key with `bg`, rounded at its ends and set apart from
+    /// the next run. Separators are drawn only between tabs of one capsule.
+    pub fn capsule_bg(mut self, bg: impl Into<Background>) -> Self {
+        self.capsule_bg = Some(bg.into());
+        self
     }
 
     /// Set the Tab variant, all children will inherit the variant.
@@ -503,6 +518,16 @@ impl RenderOnce for TabBar {
         });
         let hovered_ix = hovered_tab.as_ref().and_then(|state| *state.read(cx));
         let has_shape = |ix| selected_index == Some(ix) || hovered_ix == Some(ix);
+        // THEOREM PATCH: which capsule each tab is in, and where runs meet.
+        let capsules: Vec<Option<u64>> = self.children.iter().map(|tab| tab.capsule).collect();
+        let together = |ix: usize| {
+            ix + 1 < num_tabs && capsules[ix].is_some() && capsules[ix] == capsules[ix + 1]
+        };
+        let capsule_bg = self
+            .capsule_bg
+            .filter(|_| self.variant == TabVariant::Folder);
+        let folder_metrics = FolderTabMetrics::new(self.size, cx);
+        let capsule_radius = cx.theme().radius_lg;
 
         for (ix, child) in self.children.into_iter().enumerate() {
             item_metas.push((
@@ -524,6 +549,8 @@ impl RenderOnce for TabBar {
             tab.hovered = hovered_ix == Some(ix);
             tab.separator = self.variant == TabVariant::Folder
                 && ix + 1 < num_tabs
+                // THEOREM PATCH: with capsules, only within one.
+                && (capsule_bg.is_none() || together(ix))
                 && !has_shape(ix)
                 && !has_shape(ix + 1);
             let disabled = tab.disabled;
@@ -559,9 +586,31 @@ impl RenderOnce for TabBar {
             // own `flex_grow` / `flex_basis` (e.g. `flex_1()`) must size it.
             let flex_grow = tab.style().flex_grow;
             let flex_basis = tab.style().flex_basis;
+            // THEOREM PATCH: and how far it gives way when the bar is full.
+            let flex_shrink = tab.style().flex_shrink;
+            let min_width = tab.style().min_size.width;
             // THEOREM PATCH: the wrapper stops growing where the tab does, so
             // capped tabs stay side by side instead of spreading apart.
             let max_width = tab.max_width.filter(|_| tab.icon.is_none());
+            // THEOREM PATCH: the tab's part of its capsule, behind it: from the
+            // middle of the bar's top padding to as far above its bottom, and
+            // over the gap to the next tab when that one shares it.
+            let capsule = capsule_bg.filter(|_| capsules[ix].is_some()).map(|bg| {
+                let starts = ix == 0 || capsules[ix - 1] != capsules[ix];
+                let ends = !together(ix);
+                let inset = folder_metrics.top_padding / 2.;
+                div()
+                    .absolute()
+                    .top(-inset)
+                    .bottom(inset)
+                    .left_0()
+                    .right(if ends { px(0.) } else { -FOLDER_TAB_GAP })
+                    .bg(bg)
+                    .when(starts, |this| this.rounded_l(capsule_radius))
+                    .when(ends, |this| this.rounded_r(capsule_radius))
+            });
+            let opens_capsule =
+                capsule.is_some() && ix > 0 && capsules[ix - 1] != capsules[ix];
 
             rendered_tabs.push(if let Some(ref rc) = bounds_rc {
                 let rc = rc.clone();
@@ -614,9 +663,18 @@ impl RenderOnce for TabBar {
                     .map(|mut this| {
                         this.style().flex_grow = flex_grow;
                         this.style().flex_basis = flex_basis;
+                        // THEOREM PATCH: see `flex_shrink` and `min_width` above.
+                        if flex_shrink.is_some() {
+                            this.style().flex_shrink = flex_shrink;
+                        }
+                        this.style().min_size.width = min_width;
                         this
                     })
                     .when_some(max_width, |this, max_width| this.max_w(max_width))
+                    // THEOREM PATCH: the capsule behind the tab, set apart from
+                    // the one before it.
+                    .when_some(capsule, |this, capsule| this.relative().child(capsule))
+                    .when(opens_capsule, |this| this.ml(CAPSULE_GAP))
                     .when(!disabled, |this| {
                         this.on_hover(move |hovered, _, cx| {
                             hovered_tab.update(cx, |state, cx| {

@@ -1,17 +1,25 @@
 //! UI integration tests of the chrome in headless windows. Pages need Servo
 //! and results need the network, so these cover what is Frame's own: the
 //! right-click search, the palette, tab shortcuts, dragging tabs, the Ask
-//! button, the appearance button, the downloads list and compact mode.
+//! button, the appearance button, the downloads list, compact mode, the
+//! sidebar's tree, pinned sites and restoring the session.
+
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
 
 use gpui_kit::component::{Root, Theme};
 use gpui_kit::{
     AppContext as _, Bounds, Entity, Focusable as _, Modifiers, MouseButton, Pixels, Point,
-    TestAppContext, VisualTestContext, point, px, size,
+    RenderImage, TestAppContext, VisualTestContext, point, px, size,
 };
+use url::Url;
 
 use super::{Browser, Showing};
 use crate::downloads::DownloadState;
-use crate::navigator::Placement;
+use crate::navigator::{Pick, Placement, TabAction};
+use crate::session::{self, Content, Pin};
+use crate::tabtree::Place;
 use crate::theme::{self, Appearance};
 
 fn open(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
@@ -93,6 +101,27 @@ fn bounds_of(cx: &mut VisualTestContext, name: String) -> Bounds<Pixels> {
     let name: &'static str = Box::leak(name.into_boxed_str());
     cx.debug_bounds(name)
         .unwrap_or_else(|| panic!("{name} drawn"))
+}
+
+/// Whether an element was drawn with `debug_selector(name)`.
+fn drawn(cx: &mut VisualTestContext, name: String) -> bool {
+    let name: &'static str = Box::leak(name.into_boxed_str());
+    cx.debug_bounds(name).is_some()
+}
+
+fn active_id(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> u64 {
+    cx.update(|_, cx| {
+        let browser = browser.read(cx);
+        browser.tabs[browser.active].id
+    })
+}
+
+/// A fresh data directory for one test.
+fn data_dir(test: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("frame-test-{}-{test}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("temporary data directory");
+    dir
 }
 
 /// The middle of the element drawn with `debug_selector(name)`.
@@ -412,24 +441,423 @@ fn a_file_address_downloads_instead_of_opening(cx: &mut TestAppContext) {
 
 /// Tabs grow to a width and stay side by side; New Tab is at the row's end.
 #[gpui_kit::test]
-fn tabs_sit_side_by_side_with_new_tab_at_the_end(cx: &mut TestAppContext) {
+fn tabs_sit_in_capsules_with_new_tab_after_them(cx: &mut TestAppContext) {
     let (browser, cx) = open(cx);
     keys(cx, "cmd-t");
-    let tabs: Vec<_> = ids(&browser, cx)
-        .into_iter()
-        .map(|id| bounds_of(cx, format!("tab-{id}")))
-        .collect();
+    let [a, b] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    let bounds = |cx: &mut VisualTestContext| [a, b].map(|id| bounds_of(cx, format!("tab-{id}")));
+    let tabs = bounds(cx);
     assert!(
-        tabs.iter().all(|tab| tab.size.width == px(240.)),
-        "two tabs in a wide window are as wide as tabs get: {tabs:?}"
+        tabs.iter().all(|tab| tab.size.width == px(160.)),
+        "Dia's width, with room to spare: {tabs:?}"
     );
-    let gap = tabs[1].left() - tabs[0].right();
-    assert!(gap <= px(4.), "{gap:?} between {tabs:?}");
+    let apart = tabs[1].left() - tabs[0].right();
+    assert_eq!(apart, px(6.), "two branches, two capsules: {tabs:?}");
 
     let row = cx.update(|_, cx| browser.read(cx).top_groups[0].as_u64());
     let new_tab = bounds_of(cx, format!("new-tab-{row}"));
+    let after = new_tab.left() - tabs[1].right();
     assert!(
-        new_tab.right() > px(1000. - 48.),
-        "New Tab at the right of the window: {new_tab:?}"
+        after >= px(0.) && after < px(16.),
+        "New Tab follows the last tab: {new_tab:?}"
     );
+
+    // One branch shares a capsule: its tabs sit closer.
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.tree.move_to(b, Place::Into(a));
+            cx.notify();
+        })
+    });
+    let tabs = bounds(cx);
+    assert!(tabs[1].left() - tabs[0].right() < apart, "{tabs:?}");
+
+    // A full row gives way, down to the narrowest a tab gets.
+    keys(cx, "cmd-t cmd-t cmd-t cmd-t cmd-t cmd-t cmd-t");
+    let widths: Vec<_> = ids(&browser, cx)
+        .into_iter()
+        .map(|id| bounds_of(cx, format!("tab-{id}")).size.width)
+        .collect();
+    assert!(
+        widths
+            .iter()
+            .all(|width| *width < px(160.) && *width >= px(96.)),
+        "{widths:?}"
+    );
+}
+
+#[gpui_kit::test]
+fn the_sidebar_draws_the_tabs_as_a_tree(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t");
+    let [a, b, c] = ids(&browser, cx)[..] else {
+        panic!("three tabs")
+    };
+    // `c` under `a`, as if `a` had opened it.
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            assert!(browser.tree.move_to(c, Place::Into(a)));
+            browser.sync_tree(cx);
+        })
+    });
+    assert!(!drawn(cx, "sidebar".into()), "rows of tabs by default");
+
+    keys(cx, "ctrl-cmd-s");
+    assert!(drawn(cx, "sidebar".into()));
+    assert!(!drawn(cx, format!("tab-{a}")), "the tree replaces the rows");
+    let [row_a, row_b, row_c] = [a, b, c].map(|id| bounds_of(cx, format!("tree-tab-{id}")));
+    assert!(row_a.top() < row_c.top() && row_c.top() < row_b.top());
+    assert!(
+        row_c.left() == row_a.left(),
+        "rows share a left edge; their content is indented"
+    );
+
+    // The fold hides `c` and leaves the active tab alone.
+    let before = active_id(&browser, cx);
+    let fold = center_of(cx, format!("fold-{a}"));
+    click(cx, fold);
+    assert!(!drawn(cx, format!("tree-tab-{c}")));
+    assert_eq!(active_id(&browser, cx), before);
+
+    // A row's click makes its tab the active one.
+    let row = center_of(cx, format!("tree-tab-{a}"));
+    click(cx, row);
+    assert_eq!(active_id(&browser, cx), a);
+    // The shortcuts count the rows drawn: `c` is folded away.
+    keys(cx, "cmd-2");
+    assert_eq!(active_id(&browser, cx), b);
+
+    // Going to a folded tab unfolds its branch.
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.picked(Pick::SwitchTab(c), window, cx)
+        })
+    });
+    assert!(drawn(cx, format!("tree-tab-{c}")));
+
+    keys(cx, "ctrl-cmd-s");
+    assert!(!drawn(cx, "sidebar".into()));
+    assert!(drawn(cx, format!("tab-{a}")));
+
+    // The rows of tabs have a button to bring the sidebar back.
+    let show = center_of(cx, "show-sidebar".into());
+    click(cx, show);
+    assert!(drawn(cx, "sidebar".into()));
+    assert!(
+        !drawn(cx, "show-sidebar".into()),
+        "the sidebar has its own hide button"
+    );
+    let hide = center_of(cx, "hide-sidebar".into());
+    click(cx, hide);
+    assert!(!drawn(cx, "sidebar".into()));
+}
+
+#[gpui_kit::test]
+fn dragging_a_row_onto_another_nests_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t ctrl-cmd-s");
+    let [a, b, c] = ids(&browser, cx)[..] else {
+        panic!("three tabs")
+    };
+    let from = center_of(cx, format!("tree-tab-{c}"));
+    let to = center_of(cx, format!("tree-tab-{a}"));
+    drag(cx, from, to);
+    let (children, roots) = cx.update(|_, cx| {
+        let tree = &browser.read(cx).tree;
+        (tree.children(a).to_vec(), tree.roots().to_vec())
+    });
+    assert_eq!(children, [c]);
+    assert_eq!(roots, [a, b]);
+
+    // Starting a drag moves no row: the pin target lies over the header.
+    let before = bounds_of(cx, format!("tree-tab-{b}"));
+    let held = Some(MouseButton::Left);
+    let from = before.center();
+    cx.simulate_mouse_down(from, MouseButton::Left, Modifiers::none());
+    cx.simulate_mouse_move(from + point(px(8.), px(0.)), held, Modifiers::none());
+    cx.run_until_parked();
+    assert!(drawn(cx, "pin-drop".into()));
+    assert_eq!(bounds_of(cx, format!("tree-tab-{b}")), before);
+    // Dropped there, the tab is pinned and leaves the tree.
+    let target = center_of(cx, "pin-drop".into());
+    cx.simulate_mouse_move(target, held, Modifiers::none());
+    cx.run_until_parked();
+    cx.simulate_mouse_up(target, MouseButton::Left, Modifiers::none());
+    cx.run_until_parked();
+    // A start tab shows no site, so there is nothing to pin.
+    assert!(cx.update(|_, cx| browser.read(cx).pins.is_empty()));
+    assert!(drawn(cx, format!("tree-tab-{b}")));
+}
+
+#[gpui_kit::test]
+fn closing_a_branch_closes_the_tabs_under_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t cmd-t");
+    let [a, b, c, d] = ids(&browser, cx)[..] else {
+        panic!("four tabs")
+    };
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.tree.move_to(b, Place::Into(a));
+            browser.tree.move_to(c, Place::Into(b));
+            browser.sync_tree(cx);
+        })
+    });
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.picked(Pick::Tab(TabAction::CloseBranch(a)), window, cx)
+        })
+    });
+    assert_eq!(ids(&browser, cx), [d]);
+    assert_eq!(cx.update(|_, cx| browser.read(cx).tree.order()), [d]);
+}
+
+#[gpui_kit::test]
+fn closing_a_tab_moves_the_tabs_under_it_up(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t");
+    let [a, b, c] = ids(&browser, cx)[..] else {
+        panic!("three tabs")
+    };
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.tree.move_to(b, Place::Into(a));
+            browser.tree.move_to(c, Place::Into(a));
+            browser.sync_tree(cx);
+        })
+    });
+    keys(cx, "ctrl-cmd-s");
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.picked(Pick::Tab(TabAction::Close(a)), window, cx)
+        })
+    });
+    cx.run_until_parked();
+    assert_eq!(ids(&browser, cx), [b, c]);
+    assert_eq!(
+        cx.update(|_, cx| browser.read(cx).tree.rows()),
+        [(b, 0), (c, 0)]
+    );
+    assert!(!drawn(cx, format!("tree-tab-{a}")));
+    assert!(drawn(cx, format!("tree-tab-{b}")) && drawn(cx, format!("tree-tab-{c}")));
+}
+
+#[gpui_kit::test]
+fn kept_site_icons_show_for_pins_and_unloaded_tabs(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    let [a, _] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    // A pin that redirects elsewhere, and a tab restored without its page.
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.pins.push(Pin {
+                id: 0,
+                url: Url::parse("https://www.notion.so/").unwrap(),
+                title: "Notion".into(),
+            });
+            let index = browser.tab_index(a).unwrap();
+            browser.tabs[index].asleep = Some(Content::Page {
+                url: Url::parse("https://example.org/").unwrap(),
+                title: "Example Domain".into(),
+            });
+            cx.notify();
+        })
+    });
+    assert!(!drawn(cx, "pin-icon-0".into()), "no icon kept yet");
+    assert!(!drawn(cx, format!("site-icon-{a}")));
+
+    let icon = Arc::new(RenderImage::new(vec![image::Frame::new(
+        image::RgbaImage::new(1, 1),
+    )]));
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.icons.insert("www.notion.so".into(), icon.clone());
+            browser.icons.insert("example.org".into(), icon);
+            cx.notify();
+        })
+    });
+    assert!(drawn(cx, "pin-icon-0".into()));
+    assert!(drawn(cx, format!("site-icon-{a}")));
+}
+
+#[gpui_kit::test]
+fn a_sidebar_row_dropped_on_a_pages_edge_splits_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t ctrl-cmd-s");
+    let [a, _] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    let from = center_of(cx, format!("tree-tab-{a}"));
+    drag(cx, from, point(px(900.), px(400.)));
+    let shown = cx.update(|_, cx| browser.read(cx).displayed.len());
+    assert_eq!(shown, 2, "side by side, as a tab dragged from the rows");
+}
+
+#[gpui_kit::test]
+fn the_sidebars_edge_drags_its_width(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "ctrl-cmd-s");
+    let sidebar = bounds_of(cx, "sidebar".into());
+    assert_eq!(sidebar.size.width, px(240.));
+
+    let edge = point(sidebar.right() - px(2.), sidebar.center().y);
+    drag(cx, edge, edge + point(px(100.), px(0.)));
+    let wider = bounds_of(cx, "sidebar".into()).size.width;
+    assert!(
+        (wider - px(340.)).abs() <= px(4.),
+        "followed the pointer: {wider:?}"
+    );
+
+    let edge = point(px(f32::from(wider) - 2.), sidebar.center().y);
+    drag(cx, edge, point(px(900.), edge.y));
+    assert_eq!(
+        bounds_of(cx, "sidebar".into()).size.width,
+        px(480.),
+        "no wider"
+    );
+    assert_eq!(
+        cx.update(|_, cx| browser.read(cx).sidebar_width),
+        px(480.),
+        "the width the session saves"
+    );
+}
+
+#[gpui_kit::test]
+fn the_tray_pins_the_active_tab_and_tabs_dropped_on_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t");
+    let [_, b, c] = ids(&browser, cx)[..] else {
+        panic!("three tabs")
+    };
+    // Two pages, as a restored session leaves them before they load.
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            for (id, url) in [(b, "https://example.org/"), (c, "https://example.com/")] {
+                let index = browser.tab_index(id).unwrap();
+                browser.tabs[index].asleep = Some(Content::Page {
+                    url: Url::parse(url).unwrap(),
+                    title: "Example".into(),
+                });
+            }
+            cx.notify();
+        })
+    });
+    assert!(
+        drawn(cx, "pin-tray".into()),
+        "the tray waits for a first pin"
+    );
+
+    let pin = center_of(cx, "pin-tab".into());
+    click(cx, pin);
+    assert!(
+        drawn(cx, "pin-0".into()),
+        "the active tab's site, in the tray"
+    );
+    assert!(!drawn(cx, format!("tab-{c}")), "its tab left the row");
+
+    let from = center_of(cx, format!("tab-{b}"));
+    let to = center_of(cx, "pin-tray".into());
+    drag(cx, from, to);
+    assert!(
+        drawn(cx, "pin-1".into()),
+        "a tab dropped on the tray is pinned"
+    );
+    assert_eq!(cx.update(|_, cx| browser.read(cx).pins.len()), 2);
+}
+
+#[gpui_kit::test]
+fn a_pinned_site_owns_a_tab_outside_the_tree(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    let [a, b] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    // As pinning a tab on the site would leave it.
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.pins.push(Pin {
+                id: 0,
+                url: Url::parse("https://example.org/").unwrap(),
+                title: "Example".into(),
+            });
+            browser.next_pin = 1;
+            let index = browser.tab_index(b).unwrap();
+            browser.tabs[index].pin = Some(0);
+            browser.tree.remove(b);
+            browser.sync_tree(cx);
+            cx.notify();
+        })
+    });
+    // In the rows of tabs, the site's button stands for its tab.
+    assert!(drawn(cx, "pin-0".into()));
+    assert!(!drawn(cx, format!("tab-{b}")));
+    assert!(drawn(cx, format!("tab-{a}")));
+
+    keys(cx, "ctrl-cmd-s");
+    assert!(drawn(cx, "pins".into()));
+    assert!(!drawn(cx, format!("tree-tab-{b}")));
+    keys(cx, "cmd-2");
+    assert_eq!(active_id(&browser, cx), a, "the pinned tab counts first");
+    let pin = center_of(cx, "pin-0".into());
+    click(cx, pin);
+    assert_eq!(active_id(&browser, cx), b, "the button goes to its tab");
+
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.tab_action(TabAction::Unpin(0), window, cx)
+        })
+    });
+    assert!(drawn(cx, format!("tree-tab-{b}")), "back in the tree");
+    assert!(!drawn(cx, "pins".into()), "no pins left to draw");
+}
+
+#[gpui_kit::test]
+fn the_tree_and_the_sidebar_survive_a_restart(cx: &mut TestAppContext) {
+    let dir = data_dir("restart");
+    std::fs::write(
+        dir.join("session.json"),
+        r#"{
+            "version": 1,
+            "sidebar": true,
+            "active": 7,
+            "tabs": [
+                { "id": 4, "name": "Browser research", "collapsed": false },
+                { "id": 7, "parent": 4, "opener": 4 },
+                { "id": 9 }
+            ],
+            "dock": [9, 4, 7]
+        }"#,
+    )
+    .unwrap();
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+
+    assert_eq!(ids(&browser, cx), [9, 4, 7], "in the dock's order");
+    assert_eq!(active_id(&browser, cx), 7);
+    let (order, parent, name) = cx.update(|_, cx| {
+        let tree = &browser.read(cx).tree;
+        (
+            tree.order(),
+            tree.node(7).unwrap().parent,
+            tree.node(4).unwrap().name.clone(),
+        )
+    });
+    assert_eq!(order, [4, 7, 9]);
+    assert_eq!(parent, Some(4));
+    assert_eq!(name.as_deref(), Some("Browser research"));
+    assert!(drawn(cx, "sidebar".into()));
+
+    // A change is written once things settle.
+    keys(cx, "cmd-t");
+    cx.executor().advance_clock(Duration::from_secs(2));
+    cx.run_until_parked();
+    let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
+    let saved = session::parse_session(&saved).expect("Frame's session");
+    assert_eq!(saved.tabs.len(), 4);
+    assert!(saved.sidebar);
+    let _ = std::fs::remove_dir_all(&dir);
 }

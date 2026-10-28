@@ -203,10 +203,13 @@ impl FrameDock {
         Self { browser }
     }
 
-    fn compact(&self, cx: &App) -> bool {
-        self.browser
-            .upgrade()
-            .is_some_and(|browser| browser.read(cx).compact)
+    /// No row of tabs runs above the cards: the chrome is hidden, or the
+    /// tabs are in the sidebar.
+    fn rowless(&self, cx: &App) -> bool {
+        self.browser.upgrade().is_some_and(|browser| {
+            let browser = browser.read(cx);
+            browser.compact || browser.sidebar
+        })
     }
 }
 
@@ -243,14 +246,14 @@ impl TabGroupRenderer for FrameDock {
         _: &mut Window,
         cx: &mut App,
     ) -> Stateful<Div> {
-        let compact = self.compact(cx);
+        let rowless = self.rowless(cx);
         let theme = cx.theme();
         div()
             .id(("card", group.node().as_u64()))
             .relative()
             .mx(px(FRAME))
             .mb(px(FRAME))
-            .when(compact, |card| card.mt(px(FRAME)))
+            .when(rowless, |card| card.mt(px(FRAME)))
             .rounded(theme.radius_lg)
             .bg(theme.background)
             // The page sits a little above the frame, as in Dia.

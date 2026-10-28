@@ -4,9 +4,10 @@
 //! command palette at the top of the window, whether or not the address bar
 //! is on screen.
 //!
-//! The list is local first: the page's own context menu entries, the open
-//! tabs (Switch), Frame's commands, and only then the web (RustyWeb search,
-//! and Ask, which is the one explicit AI entry).
+//! The list is local first: the page's own context menu entries, or those
+//! of the tab or pinned site under the pointer, the open tabs (Switch),
+//! Frame's commands, and only then the web (RustyWeb search, and Ask, which
+//! is the one explicit AI entry).
 //!
 //! SOURCING: GPUI Kit's `Command` (search field, groups, keyboard selection,
 //! filtering, keybinding hints) inside GPUI's `anchored` / `deferred`
@@ -26,8 +27,8 @@ use servo::ContextMenuAction;
 use url::Url;
 
 use crate::actions::{
-    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, Quit, Reload, SetAppearance, SharePage,
-    ShowDownloads, ToggleAsk, ToggleCompact,
+    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, PinTab, Quit, Reload, SetAppearance,
+    SharePage, ShowDownloads, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -55,6 +56,53 @@ pub enum Pick {
     Ask(String),
     /// Save the link or image under the pointer.
     Download(Url),
+    Tab(TabAction),
+}
+
+/// What can be done to the tab or pinned site a right-click was on. Tabs are
+/// named by the browser's ids, pins by theirs.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TabAction {
+    Close(u64),
+    /// The tab and every tab under it in the sidebar.
+    CloseBranch(u64),
+    Fold(u64),
+    Unfold(u64),
+    Rename(u64),
+    Pin(u64),
+    Unpin(u64),
+}
+
+impl TabAction {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Close(_) => "Close Tab",
+            Self::CloseBranch(_) => "Close Branch",
+            Self::Fold(_) => "Collapse Branch",
+            Self::Unfold(_) => "Expand Branch",
+            Self::Rename(_) => "Rename...",
+            Self::Pin(_) => "Pin Site",
+            Self::Unpin(_) => "Unpin Site",
+        }
+    }
+
+    fn icon(self) -> Icon {
+        match self {
+            Self::Close(_) | Self::CloseBranch(_) => Icon::new(IconName::Close),
+            Self::Fold(_) => Icon::new(IconName::ChevronRight),
+            Self::Unfold(_) => Icon::new(IconName::ChevronDown),
+            Self::Rename(_) => icons::rename(),
+            Self::Pin(_) => icons::pin(),
+            Self::Unpin(_) => icons::unpin(),
+        }
+    }
+}
+
+/// The entries for the tab or pinned site under the pointer.
+pub struct TabMenu {
+    /// "Tab" or "Pinned Site".
+    pub label: SharedString,
+    pub actions: Vec<TabAction>,
 }
 
 /// One open tab, as the navigator lists it.
@@ -75,6 +123,9 @@ pub struct BrowserState<'a> {
     pub ask: bool,
     /// The active tab shows a web page that can be shared.
     pub shareable: bool,
+    pub sidebar: bool,
+    /// The active tab shows a site that can be pinned.
+    pub pinnable: bool,
 }
 
 pub struct Navigator {
@@ -83,6 +134,8 @@ pub struct Navigator {
     /// The page whose context menu this is, with its entries; the page holds
     /// the responder until the navigator answers it.
     pub page: Option<(Entity<Page>, PageMenu)>,
+    /// The tab or pinned site whose context menu this is.
+    pub tab: Option<TabMenu>,
     /// Where focus goes back to when the navigator closes.
     pub restore_focus: Option<FocusHandle>,
 }
@@ -125,6 +178,14 @@ impl Navigator {
             }
             groups.push(group);
             picks.push(group_picks);
+        }
+        if let Some(menu) = &self.tab {
+            let mut group = CommandGroup::new().label(menu.label.clone());
+            for action in &menu.actions {
+                group = group.item(CommandItem::new().label(action.label()).icon(action.icon()));
+            }
+            groups.push(group);
+            picks.push(menu.actions.iter().copied().map(Pick::Tab).collect());
         }
 
         let mut tabs = None;
@@ -172,7 +233,28 @@ impl Navigator {
                 true,
                 false,
             ),
+            (
+                if browser.sidebar {
+                    "Hide Sidebar"
+                } else {
+                    "Show Sidebar"
+                }
+                .into(),
+                Icon::new(IconName::PanelLeft),
+                Box::new(ToggleSidebar),
+                true,
+                false,
+            ),
         ];
+        if browser.pinnable {
+            commands.push((
+                "Pin Tab".into(),
+                icons::pin(),
+                Box::new(PinTab),
+                !pointer,
+                false,
+            ));
+        }
         if browser.shareable {
             commands.push((
                 "Share Page".into(),

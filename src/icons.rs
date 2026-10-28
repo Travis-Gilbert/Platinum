@@ -2,9 +2,10 @@
 //! SVGs are masks, so their lighter fill (`fill-opacity`) gives each one a
 //! duotone in the current theme.
 //!
-//! The Ask glyphs are Streamline's "design file AI"; the rest are redrawn
-//! from the Streamline Ultimate Duotone set (`sd-card-download` from its CC BY
-//! 4.0 free subset). See the README's credits.
+//! The Ask glyphs are Streamline's "design file AI"; pin, unpin and rename
+//! are Lucide's, given the same duotone; the rest are redrawn from the
+//! Streamline Ultimate Duotone set (`sd-card-download` from its CC BY 4.0
+//! free subset). See the README's credits.
 
 use gpui_kit::component::Icon;
 
@@ -16,6 +17,9 @@ const DOWNLOADS: &[u8] = include_bytes!("../assets/icons/downloads.svg");
 const LIGHT: &[u8] = include_bytes!("../assets/icons/theme-light.svg");
 const DARK: &[u8] = include_bytes!("../assets/icons/theme-dark.svg");
 const SYSTEM: &[u8] = include_bytes!("../assets/icons/theme-system.svg");
+const PIN: &[u8] = include_bytes!("../assets/icons/pin.svg");
+const UNPIN: &[u8] = include_bytes!("../assets/icons/pin-off.svg");
+const RENAME: &[u8] = include_bytes!("../assets/icons/rename.svg");
 
 /// Ask, outlined: the address bar searches.
 pub fn ask() -> Icon {
@@ -51,4 +55,17 @@ pub fn dark() -> Icon {
 /// Light or dark, as the system is.
 pub fn system() -> Icon {
     Icon::default().data(SYSTEM)
+}
+
+pub fn pin() -> Icon {
+    Icon::default().data(PIN)
+}
+
+pub fn unpin() -> Icon {
+    Icon::default().data(UNPIN)
+}
+
+/// Naming a branch of tabs.
+pub fn rename() -> Icon {
+    Icon::default().data(RENAME)
 }

@@ -20,7 +20,9 @@ mod page;
 mod scene;
 mod search;
 mod serp;
+mod session;
 mod share;
+mod tabtree;
 mod theme;
 
 use anyhow::Context as _;
@@ -33,7 +35,8 @@ use gpui_kit::{
 
 use crate::actions::{
     ActivateTab, CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, NextTab, OpenPalette,
-    PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowDownloads, ToggleAsk, ToggleCompact,
+    PinTab, PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowDownloads, ToggleAsk,
+    ToggleCompact, ToggleSidebar,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
@@ -63,6 +66,7 @@ fn main() -> anyhow::Result<()> {
             install_commands(cx);
             Engine::start(&profile_dir, cx);
             search::init(&data_dir, cx);
+            session::init(&data_dir, cx);
             if let Err(error) = open_window(cx) {
                 log::error!("{error:#}");
                 cx.quit();
@@ -94,6 +98,7 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("cmd-l", FocusAddressBar, None),
         KeyBinding::new("cmd-k", OpenPalette, None),
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
+        KeyBinding::new("ctrl-cmd-s", ToggleSidebar, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
         KeyBinding::new("cmd-q", Quit, None),
         KeyBinding::new("cmd-z", Undo, Some(page::CONTEXT)),
@@ -128,6 +133,7 @@ fn install_menus(cx: &mut App) {
             MenuItem::action("Search", OpenPalette),
             MenuItem::separator(),
             MenuItem::action("Share...", SharePage),
+            MenuItem::action("Pin Tab", PinTab),
             MenuItem::separator(),
             MenuItem::action("Close Tab", CloseTab),
         ]),
@@ -144,6 +150,7 @@ fn install_menus(cx: &mut App) {
             MenuItem::action("Reload Page", Reload),
             MenuItem::separator(),
             MenuItem::action("Compact Mode", ToggleCompact),
+            MenuItem::action("Sidebar", ToggleSidebar),
             MenuItem::submenu(Menu::new("Appearance").items(appearances)),
             MenuItem::separator(),
             MenuItem::action("Show Downloads", ShowDownloads),
@@ -171,12 +178,14 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
     if let Some(titlebar) = options.titlebar.as_mut() {
         titlebar.traffic_light_position = Some(point(px(9.), px(10.)));
     }
-    cx.open_window(options, |window, cx| {
+    let _window = cx.open_window(options, |window, cx| {
         glass::install(window, cx);
         let browser = cx.new(|cx| Browser::new(window, cx));
         // The browser paints the frame; the root leaves the glass under it.
         cx.new(|cx| Root::new(browser, window, cx).bg(transparent_black()))
     })?;
+    #[cfg(feature = "snapshot")]
+    keep_snapshots(_window.into(), cx);
     // One window for now: closing it quits.
     cx.on_window_closed(|cx, _| {
         if cx.windows().is_empty() {
@@ -185,4 +194,34 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
     })
     .detach();
     Ok(())
+}
+
+/// Keep a picture of `window` in the file `FRAME_SNAPSHOT` names, redrawn
+/// every two seconds (the `snapshot` feature, for development).
+#[cfg(feature = "snapshot")]
+fn keep_snapshots(window: gpui_kit::AnyWindowHandle, cx: &mut App) {
+    let Some(path) = std::env::var_os("FRAME_SNAPSHOT") else {
+        return;
+    };
+    cx.spawn(async move |cx| {
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_secs(2))
+                .await;
+            let Ok(image) = cx.update_window(window, |_, window, _| window.render_to_image())
+            else {
+                break;
+            };
+            // Written aside and moved over, so the file is always whole.
+            let partial = std::path::Path::new(&path).with_extension("partial.png");
+            let saved = image.and_then(|image| {
+                image.save(&partial)?;
+                Ok(std::fs::rename(&partial, &path)?)
+            });
+            if let Err(error) = saved {
+                log::warn!("snapshot: {error:#}");
+            }
+        }
+    })
+    .detach();
 }
