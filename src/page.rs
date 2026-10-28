@@ -13,6 +13,7 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::anyhow;
 use dpi::PhysicalSize;
@@ -91,6 +92,8 @@ const RESERVED: &[&str] = &[
 pub enum PageEvent {
     /// The title, address, load state or history changed.
     Changed,
+    /// Only the page-derived chrome color changed.
+    TintChanged,
     Visited,
     PasswordFilled(bool),
     FormFilled(bool),
@@ -156,6 +159,9 @@ pub struct Page {
     favicon: Option<(String, Arc<RenderImage>)>,
     /// The color along the top of the page, which the toolbar takes.
     tint: Option<Hsla>,
+    /// One trailing sample reads the newest surface, including a final static frame.
+    tint_task: Option<gpui_kit::Task<()>>,
+    refresh_scheduled: bool,
     /// The corners of the card the page sits in, which round its picture
     /// (`Browser::content`).
     pub(crate) corners: Corners<Pixels>,
@@ -174,7 +180,7 @@ impl Page {
             (f32::from(viewport.height) * scale).round().max(1.) as u32,
         );
         let context = Rc::new(
-            SceneRenderingContext::new(size)
+            SceneRenderingContext::for_window(size)
                 .map_err(|error| anyhow!("rendering context: {error:?}"))?,
         );
         context
@@ -242,6 +248,8 @@ impl Page {
                 opened: Vec::new(),
                 favicon: None,
                 tint: None,
+                tint_task: None,
+                refresh_scheduled: false,
                 corners: Corners::default(),
                 _subscriptions: subscriptions,
             }
@@ -320,6 +328,7 @@ impl Page {
         if visible {
             self.webview.show();
         } else {
+            self.tint_task = None;
             self.release_buttons();
             self.webview.hide();
         }
@@ -339,7 +348,7 @@ impl Page {
         for event in self.delegate.take_events() {
             match event {
                 ServoEvent::Frame => {
-                    self.read_tint(cx);
+                    self.schedule_tint(cx);
                     cx.notify();
                 }
                 ServoEvent::Favicon => self.read_favicon(cx),
@@ -375,6 +384,30 @@ impl Page {
                 ServoEvent::Download(url) => cx.emit(PageEvent::Download(url)),
             }
         }
+        self.schedule_refresh(window, cx);
+    }
+
+    /// Deliver Servo's refresh observers on GPUI's display tick. Pump Servo
+    /// before GPUI draws so ready contents can be painted in this same frame.
+    /// This is demand-driven: static pages register no further callbacks.
+    fn schedule_refresh(&mut self, window: &Window, cx: &Context<Self>) {
+        if self.refresh_scheduled || !self.context.needs_refresh() {
+            return;
+        }
+        self.refresh_scheduled = true;
+        let page = cx.entity().downgrade();
+        window.on_next_frame(move |window, cx| {
+            let _ = page.update(cx, |page, cx| {
+                page.refresh_scheduled = false;
+                page.context.refresh();
+                {
+                    #[cfg(feature = "performance-check")]
+                    let _measure = crate::performance::Span::new("servo_spin");
+                    Engine::servo(cx).spin_event_loop();
+                }
+                page.drain(window, cx);
+            });
+        });
     }
 
     pub fn fill_form_info(&self, script: &str) {
@@ -452,8 +485,24 @@ impl Page {
             });
     }
 
-    /// Take the color along the top of the page from each frame, as the page
-    /// loads, restyles or scrolls under a header that is not fixed.
+    /// Coalesce painted frames into at most eight tint samples per second.
+    /// The timer is trailing, so even a page that stops painting gets its final
+    /// color. Pixel-buffer access happens after the frame callback returns.
+    fn schedule_tint(&mut self, cx: &mut Context<Self>) {
+        if self.tint_task.is_some() {
+            return;
+        }
+        self.tint_task = Some(cx.spawn(async move |page, cx| {
+            cx.background_executor()
+                .timer(Duration::from_millis(125))
+                .await;
+            let _ = page.update(cx, |page, cx| {
+                page.tint_task = None;
+                page.read_tint(cx);
+            });
+        }));
+    }
+
     fn read_tint(&mut self, cx: &mut Context<Self>) {
         let tint = self.context.top_color().map(|[r, g, b]| {
             Hsla::from(Rgba {
@@ -465,7 +514,7 @@ impl Page {
         });
         if tint.is_some() && tint != self.tint {
             self.tint = tint;
-            cx.emit(PageEvent::Changed);
+            cx.emit(PageEvent::TintChanged);
         }
     }
 
@@ -887,7 +936,13 @@ impl Focusable for Page {
 }
 
 impl Render for Page {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("page_render");
+        #[cfg(feature = "performance-check")]
+        let _inactive = (!window.is_window_active())
+            .then(|| crate::performance::Span::new("inactive_page_render"));
+        self.schedule_refresh(window, cx);
         let page = cx.entity();
         let placed = page.downgrade();
         let focus_handle = self.focus_handle.clone();

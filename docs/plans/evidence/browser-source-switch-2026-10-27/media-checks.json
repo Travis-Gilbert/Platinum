@@ -1,0 +1,14 @@
+[
+  {
+    "check": "standard-media",
+    "exit_code": 0
+  },
+  {
+    "check": "mse-media",
+    "exit_code": 0
+  },
+  {
+    "check": "software-diagnostic",
+    "exit_code": 1
+  }
+]

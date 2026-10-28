@@ -1,0 +1,89 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1245,
+      "total_ms": 10.407076999999992,
+      "p50_ms": 0.008042,
+      "p95_ms": 0.01175,
+      "max_ms": 0.033667
+    },
+    "page_render_interval": {
+      "count": 1244,
+      "total_ms": 12084.246541,
+      "p50_ms": 8.385625000000001,
+      "p95_ms": 16.570125,
+      "max_ms": 17.897875
+    },
+    "servo_frame": {
+      "count": 1233,
+      "total_ms": 1575.4028150000015,
+      "p50_ms": 1.237083,
+      "p95_ms": 1.753375,
+      "max_ms": 5.8715
+    },
+    "servo_frame_interval": {
+      "count": 1232,
+      "total_ms": 12080.58625,
+      "p50_ms": 10.061333000000001,
+      "p95_ms": 10.116334,
+      "max_ms": 15.452125
+    },
+    "servo_spin": {
+      "count": 4887,
+      "total_ms": 1676.1595549999975,
+      "p50_ms": 0.036417,
+      "p95_ms": 1.520583,
+      "max_ms": 5.887667
+    },
+    "surface_present": {
+      "count": 1233,
+      "total_ms": 600.0163669999997,
+      "p50_ms": 0.472917,
+      "p95_ms": 0.686542,
+      "max_ms": 1.187125
+    },
+    "surface_present_interval": {
+      "count": 1232,
+      "total_ms": 12080.614333000005,
+      "p50_ms": 9.869292,
+      "p95_ms": 10.482375000000001,
+      "max_ms": 15.887833
+    },
+    "tint_sample": {
+      "count": 88,
+      "total_ms": 26.024663,
+      "p50_ms": 0.012625,
+      "p95_ms": 1.661375,
+      "max_ms": 5.7239580000000005
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1242,
+    "interval_count": 1242,
+    "p50_ms": 10.030000000000655,
+    "p95_ms": 10.199999999999818,
+    "over_33_ms": 0,
+    "scroll_y": 11520,
+    "video": null
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.5490196347236633,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "mode": "wheel",
+  "variant": "baseline",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.636794624999311,
+  "cpu_s": 9.379571,
+  "host_load": [
+    8.2412109375,
+    17.47119140625,
+    19.87451171875
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

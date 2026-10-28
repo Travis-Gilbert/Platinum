@@ -126,7 +126,11 @@ async fn spin(mut wakes: UnboundedReceiver<()>, pending: Arc<AtomicBool>, cx: &m
                 return;
             };
             let servo = engine.servo.clone();
-            servo.spin_event_loop();
+            {
+                #[cfg(feature = "performance-check")]
+                let _measure = crate::performance::Span::new("servo_spin");
+                servo.spin_event_loop();
+            }
             // Take the callbacks out so they can reach `cx` mutably.
             let mut callbacks = std::mem::take(&mut cx.global_mut::<Engine>().after_spin);
             callbacks.retain_mut(|callback| callback(cx));

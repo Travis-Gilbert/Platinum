@@ -130,8 +130,9 @@ script/media-env python3 tests/profiles/check_native.py /path/to/target/debug/ex
 
 ## Search providers
 
-Keyless providers (GDELT, Bluesky) are always on. Keyed general-web providers
-are used when their key is present in the environment or in a `.env` file,
+Bluesky is the keyless default. GDELT is disabled, including in explicit provider
+lists. Keyed general-web providers are used when their key is present in the
+environment or in a `.env` file,
 either in the checkout (while developing) or in
 `~/Library/Application Support/Frame/.env`. `RUSTYWEB_SEARCH_PROVIDERS` names
 an explicit list instead. Ask needs `THEOREM_WEB_SYNTHESIS_CONFIG`.

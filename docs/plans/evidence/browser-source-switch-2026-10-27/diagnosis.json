@@ -1,0 +1,24 @@
+{
+  "before_fix": {
+    "source_replacements": "All three replacement sources advanced and resolved play().",
+    "actual_failure": "EOS pause rewound to zero and left readyState=2; subsequent play promise stayed pending.",
+    "evidence": [
+      "baseline-diagnostic.log",
+      "baseline-replay.log",
+      "native-before/video-transition-0.json"
+    ]
+  },
+  "separate_mp4_resize_limitation": {
+    "hardware_pipeline_duration_s": 0.984923583,
+    "software_pipeline_duration_s": 1.967895584,
+    "expected_media_duration_s": 1.964,
+    "hardware_resize_observed": false,
+    "software_resize_observed": true,
+    "evidence": [
+      "resize-hardware.log",
+      "resize-software.log"
+    ],
+    "native_software_rank_diagnostic": "Still failed in the native browser when vtdec factories were disabled; the standalone avdec_h264 pipeline succeeds. No claim that disabling hardware fixes the native limitation."
+  },
+  "intermediate_run_note": "candidate-regressions.log launched before build completion was confirmed and is excluded. candidate-confirmed.log used the rebuilt binary, passed replay and exposed paused-seek auto-resume, addressed by the final patch."
+}

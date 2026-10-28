@@ -141,6 +141,10 @@ fn is_download(url: &Url) -> bool {
 
 impl WebViewDelegate for Delegate {
     fn notify_new_frame_ready(&self, webview: WebView) {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("servo_frame");
+        #[cfg(feature = "performance-check")]
+        let _paint = crate::performance::Span::new("webview_paint");
         webview.paint();
         webview.rendering_context().present();
         self.push(ServoEvent::Frame);
@@ -222,7 +226,7 @@ impl WebViewDelegate for Delegate {
         // its opener's size.
         let opener = parent.size();
         let size = PhysicalSize::new(opener.width.max(1.) as u32, opener.height.max(1.) as u32);
-        let context = match SceneRenderingContext::new(size) {
+        let context = match SceneRenderingContext::for_window(size) {
             Ok(context) => Rc::new(context),
             Err(error) => {
                 log::error!("new tab's rendering context: {error:?}");

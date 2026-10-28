@@ -1,6 +1,11 @@
 //! Exercise Frame's actual Servo configuration and GPU context, without the
 //! search service or the user's profile. See docs/plans/youtube.md.
 extern crate gpui_kit as gpui;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
+
 
 #[allow(dead_code)]
 #[path = "../src/engine.rs"]

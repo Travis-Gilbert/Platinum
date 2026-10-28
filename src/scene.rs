@@ -6,7 +6,8 @@
 //! Servo's own `SoftwareRenderingContext` is but on the hardware adapter, and
 //! CoreVideo's `CVPixelBufferCreateWithIOSurface`. Written here because none
 //! of Servo's rendering contexts hands out its front buffer. Ported
-//! unchanged from Theorem UI's desktop host (`desktop/src/scene.rs`).
+//! from Theorem UI's desktop host (`desktop/src/scene.rs`). Window-backed pages
+//! add a refresh-driver adapter for GPUI's display clock.
 
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
@@ -24,7 +25,7 @@ use objc2_core_video::{
     CVPixelBufferLockBaseAddress, CVPixelBufferLockFlags, CVPixelBufferUnlockBaseAddress,
     kCVReturnSuccess,
 };
-use servo::{DeviceIntRect, RenderingContext, RgbaImage};
+use servo::{DeviceIntRect, RefreshDriver, RenderingContext, RgbaImage};
 use surfman::chains::{PreserveBuffer, SwapChain, SwapChainAPI as _};
 use surfman::{
     Connection, Context, ContextAttributeFlags, ContextAttributes, Device, Error, GLApi, GLVersion,
@@ -35,8 +36,22 @@ use surfman::{
 /// may still be drawing the one before the newest when Servo presents again.
 const FRAMES_IN_FLIGHT: usize = 3;
 
+// Servo's refresh-driver hook, following servoshell's VsyncRefreshDriver.
+// GPUI supplies the clock; this adapter only retains its one-shot observers.
+#[derive(Default)]
+struct SceneRefreshDriver {
+    callbacks: RefCell<Vec<Box<dyn Fn() + Send>>>,
+}
+
+impl RefreshDriver for SceneRefreshDriver {
+    fn observe_next_frame(&self, callback: Box<dyn Fn() + Send + 'static>) {
+        self.callbacks.borrow_mut().push(callback);
+    }
+}
+
 pub struct SceneRenderingContext {
     size: Cell<PhysicalSize<u32>>,
+    refresh: Option<Rc<SceneRefreshDriver>>,
     gleam: Rc<dyn Gl>,
     glow: Arc<glow::Context>,
     device: RefCell<Device>,
@@ -90,6 +105,7 @@ impl SceneRenderingContext {
         let swap_chain = SwapChain::create_attached(&device, &mut context, SurfaceAccess::GPUOnly)?;
         Ok(Self {
             size: Cell::new(size),
+            refresh: None,
             gleam,
             glow: Arc::new(glow),
             device: RefCell::new(device),
@@ -98,6 +114,31 @@ impl SceneRenderingContext {
             shown: RefCell::default(),
             frame: RefCell::default(),
         })
+    }
+
+    /// Window pages use GPUI's display clock. Standalone media/profile probes
+    /// have no GPUI window and keep Servo's default timer through `new`.
+    pub fn for_window(size: PhysicalSize<u32>) -> Result<Self, Error> {
+        let mut context = Self::new(size)?;
+        context.refresh = Some(Rc::default());
+        Ok(context)
+    }
+
+    pub fn needs_refresh(&self) -> bool {
+        self.refresh
+            .as_ref()
+            .is_some_and(|driver| !driver.callbacks.borrow().is_empty())
+    }
+
+    pub fn refresh(&self) {
+        let Some(driver) = &self.refresh else {
+            return;
+        };
+        // Release the borrow before callbacks can register their next observer.
+        let callbacks = std::mem::take(&mut *driver.callbacks.borrow_mut());
+        for callback in callbacks {
+            callback();
+        }
     }
 
     /// The last presented frame, for `gpui::surface()`.
@@ -109,6 +150,8 @@ impl SceneRenderingContext {
     /// under the toolbar. Sampled across the row, so a logo or a link in a
     /// page's header does not decide it.
     pub fn top_color(&self) -> Option<[u8; 3]> {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("tint_sample");
         const SAMPLES: usize = 32;
         let frame = self.frame()?;
         let (width, height) = (
@@ -182,6 +225,12 @@ impl Drop for SceneRenderingContext {
 }
 
 impl RenderingContext for SceneRenderingContext {
+    fn refresh_driver(&self) -> Option<Rc<dyn RefreshDriver>> {
+        self.refresh
+            .as_ref()
+            .map(|driver| driver.clone() as Rc<dyn RefreshDriver>)
+    }
+
     fn prepare_for_rendering(&self) {
         self.gleam
             .bind_framebuffer(gl::FRAMEBUFFER, self.framebuffer());
@@ -232,6 +281,8 @@ impl RenderingContext for SceneRenderingContext {
     /// the oldest shown buffer back to Servo, or destroys it if the page has
     /// since been resized.
     fn present(&self) {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("surface_present");
         let device = self.device.borrow();
         let mut context = self.context.borrow_mut();
         if let Err(error) = self

@@ -8,11 +8,10 @@
 //! `capture` adds a page the person finished loading to the same store, so the
 //! local lanes search what they have read; the next search indexes it.
 //!
-//! Providers are passed to the async `programmable_search` explicitly, so the
-//! process environment is only read (never written). Each search builds its own
-//! single-threaded tokio runtime, the same way the substrate's blocking entry
-//! point does, because reqwest-based providers need one and GPUI's executor
-//! does not provide it.
+//! Providers and their HTTP pools share a profile-lifetime Tokio runtime.
+//! The substrate prepares an owned search snapshot under the store lock, runs
+//! network/model work without it, then retains the completed session under it.
+//! At most four searches execute at once; queued callers wait asynchronously.
 
 use std::{
     collections::HashSet,
@@ -39,7 +38,7 @@ const SESSION_ID: &str = "frame";
 
 /// Providers that need no key. They are always on unless the environment names
 /// an explicit list.
-const KEYLESS_PROVIDERS: &[&str] = &["gdelt", "bluesky"];
+const KEYLESS_PROVIDERS: &[&str] = &["bluesky"];
 
 /// Keyed providers that search the general web. Each is used only when its key
 /// is present. `github` and `gitlab` are code-search providers and are left out
@@ -57,7 +56,7 @@ const KEYED_PROVIDERS: &[&str] = &[
 ];
 
 /// Providers whose results are general web pages. Without one of these, search
-/// reaches only news and social sources.
+/// reaches only social sources.
 const GENERAL_WEB_PROVIDERS: &[&str] = &[
     "brave",
     "mojeek",
@@ -141,8 +140,9 @@ pub struct SerpResult {
 #[derive(Clone)]
 struct SearchService {
     store: Arc<Mutex<RedCoreBrowserSessionStore>>,
-    /// Provider names to build for each search (keys already checked at init).
-    providers: Arc<[String]>,
+    providers: Arc<[Arc<dyn SearchProvider>]>,
+    runtime: Arc<tokio::runtime::Runtime>,
+    searches: Arc<tokio::sync::Semaphore>,
     /// Set when the durable store could not be opened and search runs in memory.
     store_note: Option<Arc<str>>,
 }
@@ -173,9 +173,25 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
 
     let providers = select_providers();
     log::info!("search: providers {providers:?}");
+    let runtime = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => Arc::new(runtime),
+        Err(error) => {
+            log::error!("Could not start search runtime: {error}");
+            return;
+        }
+    };
+    let providers: Vec<_> = providers
+        .iter()
+        .filter_map(|name| configured_search_provider_from_env(name))
+        .collect();
     cx.set_global(SearchService {
         store: Arc::new(Mutex::new(store)),
         providers: providers.into(),
+        runtime,
+        searches: Arc::new(tokio::sync::Semaphore::new(4)),
         store_note,
     });
 }
@@ -220,6 +236,8 @@ pub fn capture(page: VisitedPage, cx: &mut App) {
 
 impl SearchService {
     fn capture(&self, page: VisitedPage) -> anyhow::Result<()> {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("capture");
         if !capturable(&page.url) {
             return Ok(());
         }
@@ -238,32 +256,43 @@ impl SearchService {
 
     fn search(&self, query: &str, ask: bool) -> anyhow::Result<SerpResult> {
         let started = Instant::now();
-        let providers: Vec<Arc<dyn SearchProvider>> = self
+        let used = self
             .providers
             .iter()
-            .filter_map(|name| configured_search_provider_from_env(name))
+            .map(|p| p.name().to_string())
             .collect();
-        let used: Vec<String> = providers.iter().map(|p| p.name().to_string()).collect();
-
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .context("could not start the search runtime")?;
-        let mut store = self.store.lock().map_err(|_| {
-            anyhow!("The search store stopped after an earlier failure. Restart Frame.")
+        let session = self.runtime.block_on(async {
+            let _permit = self
+                .searches
+                .acquire()
+                .await
+                .context("Search service stopped")?;
+            let pending = {
+                let mut store = self.store.lock().map_err(|_| {
+                    anyhow!("The search store stopped after an earlier failure. Restart Frame.")
+                })?;
+                store
+                    .prepare_programmable_search(
+                        query,
+                        ProgrammableQueryOptions {
+                            synthesize: ask,
+                            ..Default::default()
+                        },
+                    )
+                    .map_err(|error| anyhow!("{} ({})", error.message, error.code))?
+            };
+            let completed = pending
+                .execute(&self.providers)
+                .await
+                .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+            self.store
+                .lock()
+                .map_err(|_| {
+                    anyhow!("The search store stopped after an earlier failure. Restart Frame.")
+                })?
+                .finish_programmable_search(completed)
+                .map_err(|error| anyhow!("{} ({})", error.message, error.code))
         })?;
-        let session = runtime
-            .block_on(store.programmable_search(
-                query,
-                // Only Ask runs a model; RustyWeb plans no answer otherwise.
-                ProgrammableQueryOptions {
-                    synthesize: ask,
-                    ..Default::default()
-                },
-                &providers,
-            ))
-            .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
-        drop(store);
 
         let mut result = map_session(&session, ask, used);
         result
@@ -277,8 +306,8 @@ impl SearchService {
 /// Provider names to build for each search.
 ///
 /// An explicit `RUSTYWEB_SEARCH_PROVIDERS` (or `RUSTY_RED_SEARCH_PROVIDERS`)
-/// list wins. Otherwise: the keyless providers plus every keyed general-web
-/// provider whose key is present.
+/// list wins, with GDELT excluded. Otherwise: the keyless provider plus every
+/// keyed general-web provider whose key is present.
 fn select_providers() -> Vec<String> {
     let explicit = PROVIDER_ENV_VARS
         .iter()
@@ -299,17 +328,23 @@ fn select_providers() -> Vec<String> {
             .collect(),
     };
 
+    usable_providers(candidates, |name| {
+        configured_search_provider_from_env(name).is_some()
+    })
+}
+
+fn usable_providers(candidates: Vec<String>, configured: impl Fn(&str) -> bool) -> Vec<String> {
     let mut seen = HashSet::new();
     let selected: Vec<String> = candidates
         .into_iter()
         .filter(|name| seen.insert(name.clone()))
-        .filter(|name| configured_search_provider_from_env(name).is_some())
+        .filter(|name| name != "gdelt" && configured(name))
         .collect();
 
     if selected.is_empty() {
         // An explicit list whose providers all lack keys would leave nothing to
-        // search with. Fall back to the keyless pair.
-        log::warn!("search: no configured provider is usable; falling back to gdelt and bluesky");
+        // search with. Fall back to the keyless provider.
+        log::warn!("search: no configured provider is usable; falling back to bluesky");
         return KEYLESS_PROVIDERS.iter().map(|n| n.to_string()).collect();
     }
     selected
@@ -535,13 +570,13 @@ fn normalize_date(raw: &str) -> String {
     text.to_string()
 }
 
-/// A note when only news and social sources are searched.
+/// A note when no general-web provider is configured.
 fn weak_web_note(providers: &[String]) -> Option<String> {
     let general = providers
         .iter()
         .any(|name| GENERAL_WEB_PROVIDERS.contains(&name.as_str()));
     (!general).then(|| {
-        "Only news and social sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Frame for general web results.".to_string()
+        "General web search is not configured. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Frame for general web results.".to_string()
     })
 }
 
@@ -602,7 +637,7 @@ mod tests {
             "url": url,
             "title": "A title",
             "snippet": "A  snippet\nwith   gaps",
-            "providers": ["gdelt"],
+            "providers": ["bluesky"],
             "lane": lane,
             "score": 1.0,
         });
@@ -611,6 +646,20 @@ mod tests {
             .unwrap()
             .extend(extra.as_object().cloned().unwrap_or_default());
         serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn gdelt_is_excluded_even_when_explicitly_configured() {
+        assert_eq!(
+            usable_providers(vec!["gdelt".into(), "brave".into()], |_| true),
+            vec!["brave"]
+        );
+        assert_eq!(
+            usable_providers(vec!["gdelt".into()], |_| true),
+            vec!["bluesky"]
+        );
+        assert_eq!(usable_providers(vec![], |_| false), vec!["bluesky"]);
+        assert!(!KEYLESS_PROVIDERS.contains(&"gdelt"));
     }
 
     #[test]
@@ -701,8 +750,8 @@ mod tests {
         );
         // Another provider's error is not borrowed.
         assert_eq!(
-            describe_degradation("provider_error:gdelt", &errors),
-            "gdelt did not answer (error)."
+            describe_degradation("provider_error:mojeek", &errors),
+            "mojeek did not answer (error)."
         );
     }
 
@@ -733,11 +782,131 @@ mod tests {
     const TIDES: &str = "<html><head><title>Why the moon pulls the tides</title></head>\
         <body><p>The moon's gravity pulls the ocean toward it, raising a bulge of water.</p></body></html>";
 
+    struct GatedProvider {
+        entered: std::sync::mpsc::Sender<String>,
+        release: tokio::sync::watch::Receiver<bool>,
+    }
+    impl SearchProvider for GatedProvider {
+        fn name(&self) -> &str {
+            "fixture"
+        }
+        fn search<'a>(
+            &'a self,
+            query: &'a str,
+            _: &'a rustyred_web::SearchOpts,
+        ) -> std::pin::Pin<
+            Box<
+                dyn std::future::Future<
+                        Output = Result<
+                            Vec<rustyred_web::SearchCandidate>,
+                            rustyred_web::SearchProviderError,
+                        >,
+                    > + Send
+                    + 'a,
+            >,
+        > {
+            Box::pin(async move {
+                let mut release = self.release.clone();
+                self.entered.send(query.to_string()).unwrap();
+                while !*release.borrow_and_update() {
+                    if release.changed().await.is_err() {
+                        break;
+                    }
+                }
+                Ok(Vec::new())
+            })
+        }
+    }
+
+    #[test]
+    fn network_searches_overlap_and_do_not_block_page_capture() {
+        let (entered, calls) = std::sync::mpsc::channel();
+        let (release, gate) = tokio::sync::watch::channel(false);
+        let mut store = memory_browser_session(SESSION_ID);
+        store.set_search_opts(rustyred_web::SearchOpts {
+            provider_timeout_ms: 30_000,
+            ..Default::default()
+        });
+        let service = SearchService {
+            store: Arc::new(Mutex::new(store)),
+            providers: vec![Arc::new(GatedProvider {
+                entered,
+                release: gate,
+            }) as Arc<dyn SearchProvider>]
+            .into(),
+            runtime: Arc::new(
+                tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap(),
+            ),
+            searches: Arc::new(tokio::sync::Semaphore::new(4)),
+            store_note: None,
+        };
+        let first = {
+            let service = service.clone();
+            std::thread::spawn(move || service.search("ocean tides", false))
+        };
+        let timeout = std::time::Duration::from_secs(5);
+        let first_started = calls
+            .recv_timeout(timeout)
+            .is_ok_and(|query| query.contains("ocean"));
+        let second = {
+            let service = service.clone();
+            std::thread::spawn(move || service.search("lunar tides", false))
+        };
+        let second_started = calls
+            .recv_timeout(timeout)
+            .is_ok_and(|query| query.contains("lunar"));
+        let (captured, receipt) = std::sync::mpsc::channel();
+        let capture = {
+            let service = service.clone();
+            std::thread::spawn(move || {
+                let result = service.capture(VisitedPage {
+                    url: Url::parse("https://example.test/tides").unwrap(),
+                    html: TIDES.into(),
+                });
+                let _ = captured.send(result);
+            })
+        };
+        let capture_finished = receipt
+            .recv_timeout(timeout)
+            .is_ok_and(|result| result.is_ok());
+        // Release even on failure, so the regression never leaves blocked workers.
+        release.send_replace(true);
+        first.join().unwrap().unwrap();
+        second.join().unwrap().unwrap();
+        capture.join().unwrap();
+        assert!(
+            first_started && second_started,
+            "provider waits must overlap"
+        );
+        assert!(
+            capture_finished,
+            "capture must finish before providers are released"
+        );
+        assert!(
+            service
+                .search("moon tides", false)
+                .unwrap()
+                .hits
+                .iter()
+                .any(|hit| hit.url.as_str() == "https://example.test/tides")
+        );
+    }
+
     #[test]
     fn a_visited_page_is_found_by_local_search() {
         let service = SearchService {
             store: Arc::new(Mutex::new(memory_browser_session(SESSION_ID))),
             providers: Arc::from(Vec::new()),
+            runtime: Arc::new(
+                tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap(),
+            ),
+            searches: Arc::new(tokio::sync::Semaphore::new(4)),
             store_note: None,
         };
         let query = "why the moon pulls the tides";
@@ -785,8 +954,8 @@ mod tests {
     #[test]
     fn weak_web_note_depends_on_keyed_providers() {
         let names = |n: &[&str]| n.iter().map(|s| s.to_string()).collect::<Vec<_>>();
-        assert!(weak_web_note(&names(&["gdelt", "bluesky"])).is_some());
-        assert!(weak_web_note(&names(&["gdelt", "brave"])).is_none());
+        assert!(weak_web_note(&names(&["bluesky"])).is_some());
+        assert!(weak_web_note(&names(&["bluesky", "brave"])).is_none());
     }
 
     #[test]
@@ -795,3 +964,7 @@ mod tests {
         assert!(!is_synthesis_code("provider_error:brave"));
     }
 }
+
+#[cfg(feature = "performance-check")]
+#[path = "search/performance.rs"]
+pub mod performance;

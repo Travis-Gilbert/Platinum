@@ -1,0 +1,64 @@
+{
+  "parser_suite": {
+    "passed": 42,
+    "baseline_fails_new_regression": true,
+    "evidence": "parser-suite-final.log"
+  },
+  "source_replay_resize": {
+    "passed": 9,
+    "evidence": "native-after.json"
+  },
+  "native_resize": {
+    "passed_runs": 3,
+    "dimensions": [
+      [
+        400,
+        300
+      ],
+      [
+        200,
+        150
+      ]
+    ],
+    "final_time_seconds": 1.964,
+    "evidence": "native-resize/results.json"
+  },
+  "application_tests": {
+    "passed": 62,
+    "evidence": "unit-tests.log"
+  },
+  "standard_media": {
+    "passed": true,
+    "evidence": "standard-media.json"
+  },
+  "mse_media": {
+    "passed": true,
+    "evidence": "mse-media.json"
+  },
+  "private_runtime_bootstrap": {
+    "passed": true,
+    "evidence": "bootstrap-media.log"
+  },
+  "performance_build": {
+    "passed": true,
+    "evidence": "performance-build.log"
+  },
+  "plugin_link_safety": {
+    "passed_cases": 4,
+    "evidence": "plugin-setup-checks.json"
+  },
+  "dependency_patches": {
+    "forward_and_reverse_checks_passed": 3,
+    "evidence": "patch-checks.json"
+  },
+  "strict_clippy": "13 preexisting errors recorded in prior performance evidence; not a clean Clippy claim",
+  "smoothness": {
+    "passed": true,
+    "paired_runs": 3,
+    "foreground_valid_runs": 6,
+    "excluded_runs": 0,
+    "evidence": "video-ready-paired/results.json",
+    "summary": "selected-summary.json",
+    "no_material_regression": true
+  }
+}

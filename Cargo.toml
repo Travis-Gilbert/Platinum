@@ -12,6 +12,10 @@ publish = false
 members = ["crates/profile"]
 exclude = ["deps"]
 
+[features]
+# Opt-in native performance harness; absent from ordinary builds.
+performance-check = []
+
 [dependencies]
 gpui-kit = "=0.8.0"
 # Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
@@ -22,9 +26,9 @@ servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "we
 theorem-browser-substrate = { path = "deps/theorem-rustyweb-pw2/apps/browser-substrate" }
 # The search sessions' query and provider types, from the same branch.
 rustyred-web = { path = "deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-web" }
-# reqwest-based search providers need a Tokio runtime; `search.rs` builds a
-# small one per search, off GPUI's executor.
-tokio = { version = "1", features = ["rt", "time", "net"] }
+# Search providers share a profile-lifetime runtime off GPUI's UI executor;
+# watch coalesces session writes and Semaphore bounds search concurrency.
+tokio = { version = "1", features = ["rt", "time", "net", "sync"] }
 
 anyhow = "1"
 # Downloads: the server's file name, made safe for the disk.

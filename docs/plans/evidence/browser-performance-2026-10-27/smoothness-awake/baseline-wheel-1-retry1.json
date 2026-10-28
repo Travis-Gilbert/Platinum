@@ -1,0 +1,89 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1183,
+      "total_ms": 9.981049999999998,
+      "p50_ms": 0.007875,
+      "p95_ms": 0.0125,
+      "max_ms": 0.074917
+    },
+    "page_render_interval": {
+      "count": 1182,
+      "total_ms": 12011.095166000006,
+      "p50_ms": 8.463833000000001,
+      "p95_ms": 16.815,
+      "max_ms": 70.945792
+    },
+    "servo_frame": {
+      "count": 1172,
+      "total_ms": 1444.2161469999985,
+      "p50_ms": 1.093542,
+      "p95_ms": 2.621125,
+      "max_ms": 5.325125
+    },
+    "servo_frame_interval": {
+      "count": 1171,
+      "total_ms": 12001.082540999985,
+      "p50_ms": 10.058208,
+      "p95_ms": 12.441042,
+      "max_ms": 71.366458
+    },
+    "servo_spin": {
+      "count": 5044,
+      "total_ms": 1647.4684360000008,
+      "p50_ms": 0.015417000000000002,
+      "p95_ms": 1.378333,
+      "max_ms": 10.13175
+    },
+    "surface_present": {
+      "count": 1172,
+      "total_ms": 517.2701630000004,
+      "p50_ms": 0.392042,
+      "p95_ms": 0.959083,
+      "max_ms": 1.8788340000000001
+    },
+    "surface_present_interval": {
+      "count": 1171,
+      "total_ms": 12001.773916000006,
+      "p50_ms": 9.941375,
+      "p95_ms": 12.761458999999999,
+      "max_ms": 72.06400000000001
+    },
+    "tint_sample": {
+      "count": 87,
+      "total_ms": 28.431744000000005,
+      "p50_ms": 0.011167,
+      "p95_ms": 1.6445839999999998,
+      "max_ms": 3.521958
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1176,
+    "interval_count": 1176,
+    "p50_ms": 10.030000000000655,
+    "p95_ms": 13.170000000000073,
+    "over_33_ms": 1,
+    "scroll_y": 11480,
+    "video": null
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.5254902839660645,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "mode": "wheel",
+  "variant": "baseline",
+  "repeat": 1,
+  "attempt": 1,
+  "wall_s": 15.457706083998346,
+  "cpu_s": 8.78703999999999,
+  "host_load": [
+    13.73486328125,
+    20.79052734375,
+    26.05224609375
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

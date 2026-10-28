@@ -501,6 +501,11 @@ fn history_command_opens_native_profile_library_and_session_restores_tab_selecti
     let (browser, cx) = open(cx);
     assert_eq!(tabs(&browser, cx), (3, 1));
     keys(cx, "cmd-t");
+    // Disk writes are debounced; the tab UI still updates immediately.
+    assert_eq!(tabs(&browser, cx), (4, 3));
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(250));
+    cx.run_until_parked();
     let saved = store.session().unwrap();
     assert_eq!(saved.tabs.len(), 4);
     assert_eq!(saved.active, 3);
@@ -558,4 +563,37 @@ fn home_status_bar_pins_import_to_bottom_left_and_opens_importer(cx: &mut TestAp
     keys(cx, "cmd-1");
     assert!(cx.debug_bounds("home-status-bar-0").is_none());
     assert!(cx.debug_bounds("home-status-bar-1").is_none());
+}
+
+#[gpui_kit::test]
+fn visual_chrome_updates_do_not_schedule_session_writes(cx: &mut TestAppContext) {
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+    let (browser, cx) = open(cx);
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(250));
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            assert!(browser.pending_session.is_none());
+            for _ in 0..100 {
+                browser.sync_chrome(window, cx);
+            }
+            assert!(browser.pending_session.is_none());
+        })
+    });
+}
+
+#[gpui_kit::test]
+fn closing_before_debounce_preserves_latest_tabs(cx: &mut TestAppContext) {
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store.clone())));
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t");
+    cx.update(|_, cx| browser.update(cx, |browser, cx| browser.flush_session(cx)));
+    let saved = store.session().unwrap();
+    assert_eq!(saved.tabs.len(), 3);
+    assert_eq!(saved.active, 2);
 }

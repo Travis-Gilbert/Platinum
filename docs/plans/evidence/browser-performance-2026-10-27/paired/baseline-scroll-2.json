@@ -1,0 +1,60 @@
+{
+  "native": {
+    "chrome_sync": {
+      "count": 367,
+      "total_ms": 16.25766999999999,
+      "p50_ms": 0.041625,
+      "p95_ms": 0.069083,
+      "max_ms": 0.1095
+    },
+    "servo_frame": {
+      "count": 576,
+      "total_ms": 922.7590379999998,
+      "p50_ms": 1.067959,
+      "p95_ms": 4.7124999999999995,
+      "max_ms": 7.469833
+    },
+    "servo_frame_interval": {
+      "count": 575,
+      "total_ms": 12183.713459,
+      "p50_ms": 13.204916,
+      "p95_ms": 52.416041,
+      "max_ms": 67.261875
+    },
+    "session_snapshot": {
+      "count": 367,
+      "total_ms": 13.461160000000003,
+      "p50_ms": 0.034499999999999996,
+      "p95_ms": 0.057791,
+      "max_ms": 0.08841700000000001
+    },
+    "tint_sample": {
+      "count": 576,
+      "total_ms": 595.3404629999999,
+      "p50_ms": 1.1046669999999998,
+      "p95_ms": 1.454167,
+      "max_ms": 7.316042
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 750,
+    "interval_count": 750,
+    "p50_ms": 13.409999999999854,
+    "p95_ms": 28.590000000000146,
+    "over_33_ms": 0,
+    "scroll_y": 7613,
+    "video": null
+  },
+  "mode": "scroll",
+  "variant": "baseline",
+  "repeat": 2,
+  "wall_s": 16.104014125001413,
+  "cpu_s": 5.487856000000008,
+  "host_load": [
+    123.2060546875,
+    109.3154296875,
+    115.91015625
+  ],
+  "session_restored_after_exit": true
+}

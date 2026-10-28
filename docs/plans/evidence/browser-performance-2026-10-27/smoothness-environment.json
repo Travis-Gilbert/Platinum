@@ -1,0 +1,66 @@
+{
+  "frame_head": "2e135c046d2feba70b57980c8d70e5bb7667822d",
+  "servo_head": "5c8325a389555f3b1adc476106d8529791afe13e",
+  "theorem_head": "6e57dbb39124f472d8619fb20a9984e89eb225e8",
+  "sources": {
+    "src/page.rs": "eade607641f42a15cbe2370eee6be9b6285b35bdb65b4640a90f044ca0529035",
+    "src/scene.rs": "102c6563c432401798fca3d197b6f6213e21e18380085548bb475d1ed11dc2bb",
+    "src/delegate.rs": "7b3765d988d5cb51b253956dcbf23347812f5b21464f1b8d3bec669cd9668db1",
+    "src/engine.rs": "017e541bdcd18630fa213a2bbd0df3d4356aed61a5523e24ddc9fb36fae52956",
+    "src/search.rs": "8d8335c12fbb42c4c17e771e8f78988bff7c13e9a80f3a80db8fc47370ccbf15",
+    "src/browser/performance.rs": "bceeac541720dd91b27e325e09115ae63d3e7b16706dd7bcf764c16a66ceac90",
+    "src/search/performance.rs": "9ce3bc61cd3409c641488e67b40c6f9e6c6c029cdd628d3d90dd843480a14698",
+    "src/performance.rs": "539e22db142906d625b0c0bd43055d89efaddfea93386f0aeb1ca040f403af57",
+    "tests/performance/compare.py": "72c525af2118f05dad707c774debd6fb454bf074ba5461ae1c342169e9f29b8c",
+    "tests/performance/page.html": "bf2111cb171c5616dfca1e9266ee17109e50e4ffedfa2f1640bd3dda3bb619f9",
+    "tests/performance/summarize.py": "aeb0454dfd7674aa412fea886add756614b1be76828b10166481bdba4d0d5f7f",
+    "patches/servo-video-frame-pacing.patch": "dbb6a44fa771966dd8c8651f35b8a70d50e9631673d26abc9b3a93e7c9607177",
+    "script/bootstrap-media": "ad8809712f3c556402163b750eb6cc408af0cffb0a4becc321315bd09310d160"
+  },
+  "binaries": {
+    "frame-active-baseline": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-active-baseline",
+      "sha256": "0d622d1ed6d3e928a47a84032032fbb22634827f5055840f592d6ba97253090b"
+    },
+    "frame-active-candidate": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-active-candidate",
+      "sha256": "63621fd7f4bc06c426472ec4a609a53d03e99985b36b0859147b63052d4ab5fa"
+    },
+    "frame-video-candidate": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-video-candidate",
+      "sha256": "a5e9f0c1316afdeb92b687e94b23f0098c79eb10a13bfc3e03f255d440030d7f"
+    },
+    "frame-direct-candidate": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-direct-candidate",
+      "sha256": "bfd709a515db5ab6a09f1e372f240062eda0a3873d4895546c71b5f18c7b3b1d"
+    },
+    "frame": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame",
+      "sha256": "96b0d0ea5dc4e310e3abc709c7cae0176194c4ebc85084023273a74ff6bb2521"
+    }
+  },
+  "fixtures": {
+    "motion-1080p60.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/motion-1080p60.mp4",
+      "sha256": "70ed06971bce39b24d0c0aaa508c83d0ea34d9a4078cdeda4bdd5e6c70928a09",
+      "bytes": 55448182
+    },
+    "green.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/green.mp4",
+      "sha256": "6039aff2e5724d37a2dab7ba2721d16685561d8eb9c046f08ee0e99466bf13b6",
+      "bytes": 3040
+    },
+    "green-small.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/green-small.mp4",
+      "sha256": "b61e9dbb50748324d7319af7780daa271de4495f5af07bd561bbd912d0685ba4",
+      "bytes": 2913
+    }
+  },
+  "hardware": "Apple M1 Max, 10 logical CPUs, 32 GiB RAM",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434\n",
+  "rust": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "profile": "dev, application and dependencies opt-level=2, debug=0",
+  "selected_baseline": "frame-active-baseline",
+  "selected_candidate": "frame-direct-candidate",
+  "production_binary": "frame"
+}

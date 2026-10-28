@@ -1,0 +1,112 @@
+diff --git a/components/media/backends/gstreamer/player.rs b/components/media/backends/gstreamer/player.rs
+index e8b08bb720d..588d2e0d3a2 100644
+--- a/components/media/backends/gstreamer/player.rs
++++ b/components/media/backends/gstreamer/player.rs
+@@ -231,7 +231,11 @@ impl PlayerInner {
+
+         self.paused.set(true);
+         self.can_resume.set(true);
+-        self.player.pause();
++        // GstPlay's pause() after EOS seeks back to the beginning. The HTML
++        // element must keep its final position until an explicit seek/replay.
++        if self.play_state != gstreamer_play::PlayState::Stopped {
++            self.player.pause();
++        }
+         Ok(())
+     }
+
+@@ -271,6 +275,12 @@ impl PlayerInner {
+             return Err(PlayerError::SeekOutOfRange);
+         }
+
++        // EOS leaves GstPlay's pipeline target PLAYING. When script seeks an
++        // ended, paused element, restore the PAUSED target before the explicit
++        // seek so it prerolls without silently resuming playback.
++        if self.paused.get() && self.play_state == gstreamer_play::PlayState::Stopped {
++            self.player.pause();
++        }
+         let time = time * 1_000_000_000.;
+         self.player
+             .seek(gstreamer::ClockTime::from_nseconds(time as u64));
+@@ -660,7 +670,11 @@ impl GStreamerPlayer {
+         let inner = inner.as_ref().unwrap();
+         let observer = self.observer.clone();
+         // Handle `end-of-stream` signal.
++        let inner_clone = inner.clone();
+         signal_adapter.connect_end_of_stream(move |_| {
++            // Mark EOS before notifying script: its pause request can arrive
++            // before GstPlay emits the following Stopped state change.
++            inner_clone.lock().unwrap().play_state = gstreamer_play::PlayState::Stopped;
+             let _ = notify!(observer, PlayerEvent::EndOfStream);
+         });
+
+diff --git a/components/script/dom/html/embedded_content/htmlmediaelement.rs b/components/script/dom/html/embedded_content/htmlmediaelement.rs
+index 475295a8b13..cc2a3ceefc1 100644
+--- a/components/script/dom/html/embedded_content/htmlmediaelement.rs
++++ b/components/script/dom/html/embedded_content/htmlmediaelement.rs
+@@ -561,6 +561,11 @@ pub(crate) struct HTMLMediaElement {
+     #[conditional_malloc_size_of]
+     #[no_trace]
+     video_renderer: Arc<Mutex<MediaFrameRenderer>>,
++    /// The image referenced by the last video display-list update. New pixels
++    /// for the same image need a repaint, not another style/layout traversal.
++    #[ignore_malloc_size_of = "WebRender resource handle"]
++    #[no_trace]
++    last_video_image_key: Cell<Option<ImageKey>>,
+     #[ignore_malloc_size_of = "servo_media"]
+     #[no_trace]
+     audio_renderer: DomRefCell<Option<Arc<Mutex<dyn AudioRenderer>>>>,
+@@ -704,6 +709,7 @@ impl HTMLMediaElement {
+                 document.window().paint_api().clone(),
+                 document.window().get_player_context(),
+             ))),
++            last_video_image_key: Cell::new(None),
+             audio_renderer: Default::default(),
+             event_handler: Default::default(),
+             show_poster: Cell::new(true),
+@@ -3064,16 +3070,22 @@ impl HTMLMediaElement {
+         }
+
+         if let Some(frame) = self.video_renderer.lock().unwrap().current_frame {
++            let image_changed = self.last_video_image_key.replace(Some(frame.image_key)) != Some(frame.image_key);
+             if video_element.set_natural_dimensions(
+                 no_gc,
+                 Some(frame.width as u32),
+                 Some(frame.height as u32),
+             ) {
+                 self.queue_media_element_task_to_fire_event(atom!("resize"));
+-            } else {
+-                // If the natural dimensions have not been changed, the node should be marked as
+-                // damaged to force a repaint with the new frame contents.
++            } else if image_changed {
++                // A new source/poster transition can replace the image without
++                // changing its dimensions. Rebuild that display-list reference.
+                 self.upcast::<Node>().dirty(no_gc, NodeDamage::Other);
++            } else {
++                // MediaFrameRenderer has already queued UpdateImage for these
++                // pixels. Reuse the existing display list and request a frame.
++                let window = self.owner_window();
++                window.paint_api().generate_frame(vec![window.webview_id().into()]);
+             }
+         }
+     }
+@@ -3187,13 +3199,17 @@ impl HTMLMediaElement {
+         match *state {
+             PlaybackState::Paused => {
+                 media_session_playback_state = MediaSessionPlaybackState::Paused;
+-                if self.ready_state.get() == ReadyState::HaveMetadata {
++                if matches!(self.ready_state.get(), ReadyState::HaveMetadata | ReadyState::HaveCurrentData) &&
++                    !self.ended_playback(LoopCondition::Included)
++                {
+                     self.change_ready_state(cx, ReadyState::HaveEnoughData);
+                 }
+             },
+             PlaybackState::Playing => {
+                 media_session_playback_state = MediaSessionPlaybackState::Playing;
+-                if self.ready_state.get() == ReadyState::HaveMetadata {
++                if matches!(self.ready_state.get(), ReadyState::HaveMetadata | ReadyState::HaveCurrentData) &&
++                    !self.ended_playback(LoopCondition::Included)
++                {
+                     self.change_ready_state(cx, ReadyState::HaveEnoughData);
+                 }
+             },

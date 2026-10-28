@@ -1,0 +1,37 @@
+{
+  "native": {
+    "servo_spin": {
+      "count": 1526,
+      "total_ms": 1074.4812869999996,
+      "p50_ms": 0.018667,
+      "p95_ms": 10.105833,
+      "max_ms": 10.529583
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 468,
+    "interval_count": 468,
+    "p50_ms": 26.30999999999949,
+    "p95_ms": 29.5,
+    "over_33_ms": 1,
+    "scroll_y": 7577,
+    "video": null
+  },
+  "tint_rgb": null,
+  "window_active": false,
+  "mode": "scroll",
+  "variant": "candidate",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.88604291700176,
+  "cpu_s": 3.956759,
+  "host_load": [
+    32.94287109375,
+    24.630859375,
+    28.46533203125
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": false,
+  "excluded_reason": "Window was inactive/occluded; validation strengthened before continuing."
+}

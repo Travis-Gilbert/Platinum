@@ -1,0 +1,122 @@
+{
+  "native": {
+    "page_render": {
+      "count": 300,
+      "total_ms": 2.768424999999997,
+      "p50_ms": 0.009166,
+      "p95_ms": 0.010958,
+      "max_ms": 0.015583
+    },
+    "page_render_interval": {
+      "count": 299,
+      "total_ms": 12033.254125000003,
+      "p50_ms": 33.383416,
+      "p95_ms": 42.61775,
+      "max_ms": 525.05375
+    },
+    "servo_frame": {
+      "count": 282,
+      "total_ms": 289.41178599999995,
+      "p50_ms": 1.007708,
+      "p95_ms": 1.237875,
+      "max_ms": 3.172209
+    },
+    "servo_frame_interval": {
+      "count": 281,
+      "total_ms": 10170.904249999998,
+      "p50_ms": 33.679167,
+      "p95_ms": 42.952459,
+      "max_ms": 149.21224999999998
+    },
+    "servo_spin": {
+      "count": 878,
+      "total_ms": 302.612484,
+      "p50_ms": 0.023333,
+      "p95_ms": 1.135292,
+      "max_ms": 3.179459
+    },
+    "surface_present": {
+      "count": 282,
+      "total_ms": 116.79303499999996,
+      "p50_ms": 0.400958,
+      "p95_ms": 0.55775,
+      "max_ms": 2.429666
+    },
+    "surface_present_interval": {
+      "count": 281,
+      "total_ms": 10171.116166999998,
+      "p50_ms": 33.709666,
+      "p95_ms": 42.99675,
+      "max_ms": 149.314958
+    },
+    "tint_sample": {
+      "count": 70,
+      "total_ms": 16.102669,
+      "p50_ms": 0.017292,
+      "p95_ms": 1.5965829999999999,
+      "max_ms": 3.978125
+    },
+    "webview_paint": {
+      "count": 282,
+      "total_ms": 289.06537400000013,
+      "p50_ms": 1.00675,
+      "p95_ms": 1.235958,
+      "max_ms": 3.171834
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 200,
+      "height": 150,
+      "current": 0,
+      "duration": 3,
+      "ended": false,
+      "sources": [
+        {
+          "src": "/green.mp4",
+          "maxTime": 2.50895525,
+          "playResolved": true
+        },
+        {
+          "src": "/movie.webm",
+          "maxTime": 3.48775,
+          "playResolved": true
+        },
+        {
+          "src": "/resize.mp4",
+          "maxTime": 2.516363292,
+          "playResolved": true
+        }
+      ],
+      "ready": 2,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.0,
+    0.4901961088180542,
+    0.00392150366678834
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [
+    [
+      0.0,
+      0.4901961088180542,
+      0.00392150366678834
+    ],
+    [
+      0.9921568632125854,
+      0.0,
+      0.003921503201127052
+    ]
+  ]
+}

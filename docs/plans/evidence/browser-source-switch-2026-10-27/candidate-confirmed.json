@@ -1,0 +1,874 @@
+{
+  "mode": "source-switch",
+  "cases": [
+    {
+      "name": "initial MP4",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.447936507,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      },
+      "final": {
+        "current": 0.447936507,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "replace playing MP4 with WebM",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.484916666,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      },
+      "final": {
+        "current": 0.484916666,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "replace paused WebM with MP4",
+      "events": [
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": true,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": true,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": true,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.446349206,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      },
+      "final": {
+        "current": 0.446349206,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "rapid replacement cancels stale sources",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.49,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      },
+      "final": {
+        "current": 0.49,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "explicit load resets and plays",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.477375,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      },
+      "final": {
+        "current": 0.477375,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "end position is retained and replay resolves",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "ended",
+          "current": 5.153333333,
+          "ready": 2,
+          "paused": true,
+          "ended": true,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "seeking",
+          "current": 0,
+          "ready": 2,
+          "paused": false,
+          "ended": false,
+          "seeking": true,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 2,
+          "paused": false,
+          "ended": false,
+          "seeking": true,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "seeked",
+          "current": 0,
+          "ready": 2,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.153333333,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.501950113,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      },
+      "afterEnd": {
+        "current": 5.153333333,
+        "ready": 2,
+        "paused": true,
+        "ended": true,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      },
+      "final": {
+        "current": 0.501950113,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.153333333,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "seek from ended and resume",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "seeking",
+          "current": 4.708,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": true,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "seeked",
+          "current": 4.708,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "ended",
+          "current": 5.008,
+          "ready": 2,
+          "paused": true,
+          "ended": true,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "seeking",
+          "current": 1,
+          "ready": 2,
+          "paused": true,
+          "ended": false,
+          "seeking": true,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        },
+        {
+          "event": "seeked",
+          "current": 1,
+          "ready": 2,
+          "paused": true,
+          "ended": false,
+          "seeking": false,
+          "duration": 5.008,
+          "width": 320,
+          "height": 240
+        }
+      ],
+      "passed": false,
+      "playback": {
+        "current": 0.439708333,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      },
+      "error": "Error: Seeking a paused ended element started playback",
+      "final": {
+        "current": 1.496583333,
+        "ready": 4,
+        "paused": true,
+        "ended": false,
+        "seeking": false,
+        "duration": 5.008,
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "name": "intrinsic resolution change mp4",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 1.964,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 1.964,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 1.964,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 1.964,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "ended",
+          "current": 0.983,
+          "ready": 2,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 1.964,
+          "width": 400,
+          "height": 300
+        }
+      ],
+      "passed": false,
+      "playback": {
+        "current": 0.505343791,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 1.964,
+        "width": 400,
+        "height": 300
+      },
+      "error": "Error: Timed out: intrinsic resize to 200x150",
+      "final": {
+        "current": 0.983,
+        "ready": 2,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 1.964,
+        "width": 400,
+        "height": 300
+      }
+    },
+    {
+      "name": "intrinsic resolution change webm",
+      "events": [
+        {
+          "event": "waiting",
+          "current": 0,
+          "ready": 0,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": null,
+          "width": 0,
+          "height": 0
+        },
+        {
+          "event": "resize",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 0.986000001,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "loadedmetadata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 0.986000001,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "loadeddata",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 0.986000001,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "playing",
+          "current": 0,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 0.986000001,
+          "width": 400,
+          "height": 300
+        },
+        {
+          "event": "resize",
+          "current": 0.504,
+          "ready": 4,
+          "paused": false,
+          "ended": false,
+          "seeking": false,
+          "duration": 0.986000001,
+          "width": 200,
+          "height": 150
+        }
+      ],
+      "passed": true,
+      "playback": {
+        "current": 0.504,
+        "ready": 4,
+        "paused": false,
+        "ended": false,
+        "seeking": false,
+        "duration": 0.986000001,
+        "width": 400,
+        "height": 300
+      },
+      "pixel": [
+        0,
+        128,
+        10,
+        255
+      ],
+      "final": {
+        "current": 1.01022975,
+        "ready": 4,
+        "paused": false,
+        "ended": true,
+        "seeking": false,
+        "duration": 0.986000001,
+        "width": 200,
+        "height": 150
+      }
+    }
+  ],
+  "passed": false
+}

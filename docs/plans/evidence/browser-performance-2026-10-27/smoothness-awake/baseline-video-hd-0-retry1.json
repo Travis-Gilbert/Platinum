@@ -1,0 +1,94 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1231,
+      "total_ms": 9.029540999999986,
+      "p50_ms": 0.007167,
+      "p95_ms": 0.00925,
+      "max_ms": 0.025292000000000002
+    },
+    "page_render_interval": {
+      "count": 1230,
+      "total_ms": 12000.772083000002,
+      "p50_ms": 8.362875,
+      "p95_ms": 16.63475,
+      "max_ms": 74.943333
+    },
+    "servo_frame": {
+      "count": 1213,
+      "total_ms": 1183.84634,
+      "p50_ms": 1.1752500000000001,
+      "p95_ms": 1.412666,
+      "max_ms": 4.5244159999999995
+    },
+    "servo_frame_interval": {
+      "count": 1212,
+      "total_ms": 12009.075707999991,
+      "p50_ms": 10.0555,
+      "p95_ms": 10.098042,
+      "max_ms": 94.772291
+    },
+    "servo_spin": {
+      "count": 4336,
+      "total_ms": 1234.064746999998,
+      "p50_ms": 0.018042000000000002,
+      "p95_ms": 1.316042,
+      "max_ms": 4.534167
+    },
+    "surface_present": {
+      "count": 1213,
+      "total_ms": 377.13537899999994,
+      "p50_ms": 0.349458,
+      "p95_ms": 0.48604200000000003,
+      "max_ms": 0.9625
+    },
+    "surface_present_interval": {
+      "count": 1212,
+      "total_ms": 12009.690749999982,
+      "p50_ms": 9.797375,
+      "p95_ms": 10.717792000000001,
+      "max_ms": 95.386709
+    },
+    "tint_sample": {
+      "count": 88,
+      "total_ms": 29.158210999999994,
+      "p50_ms": 0.010292,
+      "p95_ms": 1.906792,
+      "max_ms": 4.147542
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 1227,
+    "interval_count": 1227,
+    "p50_ms": 10.049999999999272,
+    "p95_ms": 10.1200000000008,
+    "over_33_ms": 2,
+    "scroll_y": 0,
+    "video": {
+      "current": 14.106788042,
+      "ready": 4,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.8705883026123047,
+    0.43137258291244507,
+    0.49019619822502136
+  ],
+  "window_active": true,
+  "mode": "video-hd",
+  "variant": "baseline",
+  "repeat": 0,
+  "attempt": 1,
+  "wall_s": 15.551294708999194,
+  "cpu_s": 12.28653100000001,
+  "host_load": [
+    17.234375,
+    23.55810546875,
+    27.56640625
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "patch": "servo-video-frame-pacing.patch",
+    "reverse_applied_check": true,
+    "forward_pristine_check": true
+  },
+  {
+    "patch": "browser-search-concurrency.patch",
+    "reverse_applied_check": true,
+    "forward_pristine_check": true
+  },
+  {
+    "patch": "gstreamer-mse.patch",
+    "reverse_applied_check": true,
+    "forward_pristine_check": true
+  }
+]

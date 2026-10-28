@@ -19,6 +19,8 @@
 //! `Button`, `Input`, `Kbd`, `Spinner`, `Popover` and `Progress`; the navigator is GPUI Kit's `Command` (`navigator.rs`).
 
 mod dock;
+#[cfg(feature = "performance-check")]
+pub mod performance;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -99,6 +101,7 @@ struct Tab {
     page_shown: bool,
     /// A page opened the tab, for a link with a target or `window.open`.
     opened: bool,
+    session_url: Option<Url>,
     _page_events: Option<Subscription>,
     _serp_events: Option<Subscription>,
 }
@@ -114,6 +117,7 @@ impl Tab {
             requested: None,
             page_shown: false,
             opened: false,
+            session_url: None,
             _page_events: None,
             _serp_events: None,
         }
@@ -247,11 +251,13 @@ pub struct Browser {
     /// Where each tab's Share button was last drawn, for the share sheet.
     share_anchors: Rc<RefCell<HashMap<u64, Bounds<Pixels>>>>,
     window_title: SharedString,
-    last_session: Option<Session>,
+    session_writer: Option<crate::session::SessionWriter>,
+    pending_session: Option<gpui_kit::Task<()>>,
     restoring: bool,
     profile_panel: Option<Entity<ProfilePanel>>,
     profile_events: Option<Subscription>,
     _quit_events: Subscription,
+    _release_events: Subscription,
     _omnibox_events: Subscription,
     _dock_events: Subscription,
     _downloads_events: Subscription,
@@ -278,9 +284,14 @@ impl Browser {
         let appearance_events =
             cx.observe_window_appearance(window, |_, window, cx| theme::system_changed(window, cx));
         let quit_events = cx.on_app_quit(|this, cx| {
-            this.persist_session(cx);
+            this.flush_session(cx);
             async {}
         });
+        let release_events = cx.on_release(|this, cx| this.flush_session(cx));
+        let session_writer = cx
+            .try_global::<ActiveProfile>()
+            .map(|profile| profile.0.clone())
+            .map(|store| crate::session::SessionWriter::new(store, cx));
         let mut browser = Self {
             focus_handle: cx.focus_handle(),
             tabs: vec![Tab::start(0, panel)],
@@ -302,11 +313,13 @@ impl Browser {
             downloads_open: None,
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
-            last_session: None,
+            session_writer,
+            pending_session: None,
             restoring: true,
             profile_panel: None,
             profile_events: None,
             _quit_events: quit_events,
+            _release_events: release_events,
             _omnibox_events: omnibox_events,
             _dock_events: dock_events,
             _downloads_events: downloads_events,
@@ -392,13 +405,36 @@ impl Browser {
         }
     }
 
+    /// Called only when navigation, selected tabs or dock layout can change.
     fn persist_session(&mut self, cx: &mut Context<Self>) {
-        if self.restoring {
+        if self.restoring || self.session_writer.is_none() {
             return;
         }
-        let Some(store) = cx.try_global::<ActiveProfile>().map(|p| p.0.clone()) else {
+        self.pending_session = Some(cx.spawn(async move |browser, cx| {
+            cx.background_executor()
+                .timer(std::time::Duration::from_millis(200))
+                .await;
+            let _ = browser.update(cx, |browser, cx| browser.save_session_now(cx));
+        }));
+    }
+
+    /// Final drain is synchronous only when closing/quitting. GPUI allows
+    /// just 200 ms for async quit hooks, less than SQLite's busy timeout.
+    /// The worker still owns disk I/O; it never needs the UI to finish.
+    fn flush_session(&mut self, cx: &App) {
+        self.save_session_now(cx);
+        if let Some(writer) = self.session_writer.take() {
+            cx.foreground_executor().block_on(writer.finish());
+        }
+    }
+
+    fn save_session_now(&mut self, cx: &App) {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("session_snapshot");
+        self.pending_session = None;
+        if self.restoring || self.session_writer.is_none() {
             return;
-        };
+        }
         let tabs = self
             .tabs
             .iter()
@@ -422,11 +458,8 @@ impl Browser {
             tabs,
             active: self.active,
         };
-        if self.last_session.as_ref() != Some(&session) {
-            match store.save_session(&session) {
-                Ok(()) => self.last_session = Some(session),
-                Err(_) => log::warn!("Could not preserve the browser session"),
-            }
+        if let Some(writer) = &self.session_writer {
+            writer.save(session);
         }
     }
 
@@ -696,6 +729,7 @@ impl Browser {
             self.focus_content(window, cx);
         }
         self.apply_visibility(cx);
+        self.persist_session(cx);
         self.sync_chrome(window, cx);
     }
 
@@ -748,6 +782,7 @@ impl Browser {
         self.active = self.tab_index(id).unwrap_or(self.active);
         self.editing = false;
         self.apply_visibility(cx);
+        self.persist_session(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
     }
@@ -788,6 +823,7 @@ impl Browser {
         if index != self.active && self.displayed.contains(&panel) {
             self.active = index;
             self.editing = false;
+            self.persist_session(cx);
             self.sync_chrome(window, cx);
         }
         if itself && index == self.active {
@@ -832,6 +868,7 @@ impl Browser {
         }
         self.editing = false;
         self.apply_visibility(cx);
+        self.persist_session(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
     }
@@ -1055,9 +1092,24 @@ impl Browser {
                     }
                 }
             }
+            PageEvent::TintChanged => {
+                // Both the card toolbar and its selected tab use the tint.
+                self.tabs[index].panel.update(cx, |_, cx| cx.notify());
+                self.dock.update(cx, |_, cx| cx.notify());
+                if self.compact {
+                    cx.notify();
+                }
+            }
             PageEvent::Changed => {
                 if !page.read(cx).is_loading() {
                     self.tabs[index].requested = None;
+                }
+                // Persist the same URL the snapshot uses. During a redirect,
+                // the requested URL remains visible until loading completes.
+                let url = self.tabs[index].url(cx);
+                if url != self.tabs[index].session_url {
+                    self.tabs[index].session_url = url;
+                    self.persist_session(cx);
                 }
                 self.sync_chrome(window, cx);
             }
@@ -1217,6 +1269,7 @@ impl Browser {
 
     /// The active tab now shows something else.
     fn after_switch(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.persist_session(cx);
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
@@ -1331,7 +1384,8 @@ impl Browser {
 
     /// The address bar's text and the window's title follow the active tab.
     fn sync_chrome(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.persist_session(cx);
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("chrome_sync");
         let tab = &self.tabs[self.active];
         if !self.editing {
             let summary = tab.summary(cx);

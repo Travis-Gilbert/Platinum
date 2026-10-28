@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Prepares a Frame checkout to build.
 #
-# Frame's RustyWeb crates are path dependencies under deps/, a read-only
-# checkout of Theorem at a pinned commit of claude/rustyweb-synthesis-on-request,
-# which builds on codex/rustyweb-programmable-web-2.
+# Frame's RustyWeb crates are pinned path dependencies under deps/. The small
+# detached-search API patch is applied idempotently without replacing local work.
 # deps/ and the Cargo target directory can live on another disk: a Servo build
 # needs about 25 GB.
 #
@@ -13,8 +12,8 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="7ef4dfe0c20def5dbc91705f051a6a846946ec54"
-theorem_branch="claude/rustyweb-synthesis-on-request"
+theorem_rev="6e57dbb39124f472d8619fb20a9984e89eb225e8"
+theorem_branch="claude/rustyweb-full-frame"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"
@@ -41,6 +40,16 @@ fi
 actual="$(git -C "$checkout" rev-parse HEAD)"
 if [[ "$actual" != "$theorem_rev" ]]; then
   echo "deps/theorem-rustyweb-pw2 is at $actual, Frame pins $theorem_rev" >&2
+  exit 1
+fi
+
+patch="$root/patches/browser-search-concurrency.patch"
+if git -C "$checkout" apply --reverse --check "$patch" 2>/dev/null; then
+  : # Already applied.
+elif git -C "$checkout" apply --check "$patch"; then
+  git -C "$checkout" apply "$patch"
+else
+  echo "Search patch conflicts with local dependency changes; leaving them untouched." >&2
   exit 1
 fi
 

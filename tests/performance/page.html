@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><title>Frame performance fixture</title>
+<style>body{margin:0;font:20px system-ui}section{height:320px;padding:24px}video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover}#banner{position:fixed;top:0;width:100%;height:80px;opacity:.8}</style>
+<script>
+if(location.search.includes("redirect"))location.replace("/page.html?scroll");
+const videoMode = location.search.includes('video');
+const wheelMode = location.search.includes('wheel');
+const hdMode = location.search.includes('-hd');
+const resizeMode = location.search.includes('video-resize');
+const dimensions=[];
+const transitionMode = location.search.includes('video-transition');
+const videoOnly = location.search.includes('video-only') || transitionMode || resizeMode;
+const settleMode = location.search.includes('settle');
+for(let i=0;i<100;i++){const section=document.createElement('section');section.style.background=`hsl(${i*13%360},60%,60%)`;section.innerHTML=`<h2>Section ${i}</h2>`+'<p>Browser scrolling performance with native chrome, text and GPU surfaces.</p>'.repeat(4);document.documentElement.append(section);}
+let video;
+const sources=[];
+function setVideoSource(src){const sample={src,maxTime:0,playResolved:false};sources.push(sample);video.src=src;video.play().then(()=>sample.playResolved=true,error=>sample.error=String(error));}
+if(videoMode){video=document.createElement('video');video.src=resizeMode?'/intrinsic.mp4':transitionMode?'/green.mp4':hdMode?'/motion.mp4':'/movie.webm';video.muted=true;video.autoplay=true;video.loop=!resizeMode;video.addEventListener('resize',()=>dimensions.push([video.videoWidth,video.videoHeight]));document.documentElement.append(video);video.play().catch(()=>{});}
+if(transitionMode){setVideoSource('/green.mp4');setTimeout(()=>setVideoSource('/movie.webm'),6000);setTimeout(()=>{video.loop=false;setVideoSource('/resize.mp4');},10000);}
+const banner=document.createElement('div');banner.id='banner';document.documentElement.append(banner);
+const start=performance.now();let last, intervals=[], frames=0, videoTimes=[];
+function step(now){const elapsed=now-start;if(settleMode && elapsed>4000){banner.style.opacity=1;banner.style.background="rgb(30,160,70)";return;}banner.style.background=`hsl(${(elapsed/40)%360},60%,60%)`;if(!videoMode && !wheelMode)scrollTo(0,(elapsed*.5)%24000);if(elapsed>=3000){if(last)intervals.push(now-last);frames++;if(video)videoTimes.push(video.currentTime);}last=now;requestAnimationFrame(step);}
+if(videoOnly){banner.remove();setInterval(()=>{videoTimes.push(video.currentTime);const source=sources[sources.length-1];if(source)source.maxTime=Math.max(source.maxTime,video.currentTime);},100);}else{requestAnimationFrame(step);}
+window.perfResults=()=>{const sorted=intervals.slice().sort((a,b)=>a-b);return {mode:videoMode?'video':'scroll',frames,interval_count:sorted.length,p50_ms:sorted[Math.floor(sorted.length*.5)]??null,p95_ms:sorted[Math.floor(sorted.length*.95)]??null,over_33_ms:sorted.filter(x=>x>33.34).length,scroll_y:scrollY,video:video?{width:video.videoWidth,height:video.videoHeight,current:video.currentTime,duration:video.duration,ended:video.ended,sources,dimensions,ready:video.readyState,error:video.error?.code,advancing:videoTimes.some(t=>t!==videoTimes[0]),quality:video.getVideoPlaybackQuality?{total:video.getVideoPlaybackQuality().totalVideoFrames,dropped:video.getVideoPlaybackQuality().droppedVideoFrames}:null}:null};};
+</script>

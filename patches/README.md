@@ -34,3 +34,43 @@ repositories for full licenses. No new container parser is introduced.
 
 See `docs/plans/youtube.md` for live evidence and known gaps. These patches are
 under validation and do not establish complete MSE conformance or Chrome parity.
+
+## Browser search concurrency
+
+`browser-search-concurrency.patch` is applied by `script/bootstrap` to Theorem
+`6e57dbb39124f472d8619fb20a9984e89eb225e8`, the revision already installed when the
+performance baseline was measured. It separates preparation and retention under
+the browser-store lock from provider/model I/O without that lock, preserving
+existing query, privacy and retention owners. Active index generations are
+leased until their queries complete. No search engine or HTTP client is copied.
+See `docs/plans/browser-performance.md` for validation and measurement evidence.
+
+
+## Video frame pacing
+
+`servo-video-frame-pacing.patch` applies to Servo
+`5c8325a389555f3b1adc476106d8529791afe13e` via `script/bootstrap-media`.
+Stable-size video frames with the same WebRender image key request a repaint
+through the existing Paint API instead of invalidating style/layout each time.
+New image keys and natural-dimension changes still rebuild layout, preserving
+source/poster transitions and resize events. The patch does not change decoding
+or media buffering. It also prevents GstPlay.pause() from rewinding after EOS
+and lets HAVE_CURRENT_DATA recover after an explicit replay/seek. The stopped
+state is recorded before sending EOS to script, avoiding a callback race. Native
+transition and pacing evidence is recorded in
+`docs/plans/evidence/browser-performance-2026-10-27/smoothness-report.md`.
+
+End-of-stream/replay and per-source playback regressions are documented in
+`docs/plans/evidence/browser-source-switch-2026-10-27/report.md`.
+
+
+## H.264 resolution changes
+
+`gstreamer-mse.patch` also fixes h264parse's output dimensions after an in-band
+SPS change. Container caps can retain the initial size; parsed cropped dimensions
+must accompany the updated codec data so the decoder renegotiates correctly.
+The existing GStreamer parser and hardware decoder are reused. Bootstrap builds
+the videoparsers plugin, and setup-media refreshes recognized development
+symlinks to use it while refusing to replace real files or arbitrary symlinks.
+The upstream GstCheck regression and native playback/smoothness evidence are in
+`docs/plans/evidence/browser-mp4-resize-2026-10-27/report.md`.
