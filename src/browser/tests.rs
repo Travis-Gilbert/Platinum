@@ -1101,3 +1101,16 @@ fn a_split_survives_a_restart(cx: &mut TestAppContext) {
     assert!((share - 0.6).abs() < 0.02, "saved at its share: {share}");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[gpui_kit::test]
+fn console_panel_opens_and_closes(cx: &mut TestAppContext) {
+    let (_browser, cx) = open(cx);
+    assert!(cx.debug_bounds("Console").is_none());
+    keys(cx, "alt-cmd-j");
+    assert!(cx.debug_bounds("Console").is_some());
+    assert!(cx.debug_bounds("Elements").is_some());
+    assert!(cx.debug_bounds("Network").is_some());
+    assert!(cx.debug_bounds("Tools").is_some());
+    keys(cx, "alt-cmd-j");
+    assert!(cx.debug_bounds("Console").is_none());
+}

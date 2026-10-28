@@ -57,6 +57,9 @@ impl Engine {
         let preferences = Preferences {
             layout_css_has_selector_enabled: true,
             dom_media_source_enabled: true,
+            // The CDP server owns the inspection channel. The Firefox server stays off.
+            cdp_server_enabled: true,
+            cdp_server_listen_address: "127.0.0.1:9333".to_owned(),
             ..Preferences::default()
         };
         let servo = ServoBuilder::default()

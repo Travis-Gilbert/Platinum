@@ -22,22 +22,18 @@ use gpui_kit::component::{ActiveTheme as _, Theme as ChromeTheme};
 use gpui_kit::{
     App, AppContext as _, Bounds, Context, Corners, CursorStyle, ElementInputHandler, Entity,
     EntityInputHandler, EventEmitter, FocusHandle, Focusable, Hsla, InteractiveElement as _,
-    IntoElement,
-    KeyUpEvent, Keystroke, ModifiersChangedEvent, MouseButton as GpuiButton, MouseDownEvent,
-    MouseExitEvent, MouseMoveEvent, MouseUpEvent, NavigationDirection, ObjectFit,
+    IntoElement, KeyUpEvent, Keystroke, ModifiersChangedEvent, MouseButton as GpuiButton,
+    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, NavigationDirection, ObjectFit,
     ParentElement as _, PinchEvent, Pixels, Point, Render, RenderImage, Rgba, ScrollDelta,
-    ScrollWheelEvent,
-    SharedString, Styled as _, Subscription, UTF16Selection, Window, canvas, div, point, px, size,
-    surface,
+    ScrollWheelEvent, SharedString, Styled as _, Subscription, UTF16Selection, Window, canvas, div,
+    point, px, size, surface,
 };
 use servo::{
     ClipboardAction, CompositionEvent, CompositionState, ContextMenuAction, Cursor, DevicePoint,
     Image, ImeEvent, InputEvent, InputEventId, InputEventResult, InputMethodControl, JSValue,
-    KeyState,
-    LoadStatus, MouseButton as ServoButton, MouseButtonAction, MouseButtonEvent,
+    KeyState, LoadStatus, MouseButton as ServoButton, MouseButtonAction, MouseButtonEvent,
     MouseLeftViewportEvent, MouseMoveEvent as ServoMouseMove, PixelFormat, RenderingContext as _,
-    Theme,
-    WebView, WebViewBuilder, WheelDelta, WheelEvent, WheelMode,
+    Theme, WebView, WebViewBuilder, WheelDelta, WheelEvent, WheelMode,
 };
 use url::Url;
 
@@ -257,6 +253,11 @@ impl Page {
 
     pub fn url(&self) -> Option<Url> {
         self.webview.url()
+    }
+
+    /// CDP target id. It is the webview id, which stays put across navigation.
+    pub(crate) fn webview_id(&self) -> String {
+        self.webview.id().to_string()
     }
 
     /// The site's icon, while the page is still on the site it came from.

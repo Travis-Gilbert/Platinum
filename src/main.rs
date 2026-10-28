@@ -14,6 +14,7 @@ mod embedder;
 mod engine;
 mod glass;
 mod icons;
+mod inspector;
 mod keys;
 mod navigator;
 mod page;
@@ -35,8 +36,8 @@ use gpui_kit::{
 
 use crate::actions::{
     ActivateTab, CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, NextTab, OpenPalette,
-    PinTab, PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowDownloads, ToggleAsk,
-    ToggleCompact, ToggleSidebar,
+    PinTab, PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowConsole, ShowDownloads,
+    ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
@@ -100,6 +101,7 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
         KeyBinding::new("ctrl-cmd-s", ToggleSidebar, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
+        KeyBinding::new("alt-cmd-j", ShowConsole, None),
         KeyBinding::new("cmd-q", Quit, None),
         KeyBinding::new("cmd-z", Undo, Some(page::CONTEXT)),
         KeyBinding::new("cmd-shift-z", Redo, Some(page::CONTEXT)),
@@ -154,6 +156,7 @@ fn install_menus(cx: &mut App) {
             MenuItem::submenu(Menu::new("Appearance").items(appearances)),
             MenuItem::separator(),
             MenuItem::action("Show Downloads", ShowDownloads),
+            MenuItem::action("Show Console", ShowConsole),
             MenuItem::separator(),
             MenuItem::action("Ask AI", ToggleAsk),
         ]),

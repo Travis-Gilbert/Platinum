@@ -1,0 +1,37 @@
+# Inspection pin
+
+The Platinum prototype is a CDP client of the Servo fork. It does not pin a
+Chrome revision and it does not load the Chrome DevTools frontend.
+
+WebMCP page API: `document.modelContext`, Community Group draft of 27 October
+2026. Tool schemas and arguments are JSON strings. Declarative form
+attributes are not implemented.
+
+The prototype sends these methods. The server answers anything else with
+JSON-RPC -32601.
+
+- Runtime.enable
+- Runtime.evaluate
+- Log.enable
+- Page.enable
+- Page.getFrameTree
+- DOM.enable
+- DOM.getDocument
+- DOM.requestChildNodes
+- DOM.setAttributeValue
+- CSS.enable
+- CSS.getComputedStyleForNode
+- Overlay.enable
+- Overlay.highlightNode
+- Network.enable
+- Network.getResponseBody
+- WebMCP.enable
+- WebMCP.invokeTool
+
+Events the prototype shows: `Log.entryAdded`, `Runtime.executionContextCreated`,
+`Runtime.executionContextDestroyed`, `DOM.setChildNodes`,
+`Network.requestWillBeSent`, `Network.responseReceived`,
+`Network.loadingFailed`, `WebMCP.toolsAdded`, `WebMCP.toolsRemoved`,
+`WebMCP.toolResponded`.
+
+Listen address: 127.0.0.1:9333 (`cdp_server_listen_address`).
