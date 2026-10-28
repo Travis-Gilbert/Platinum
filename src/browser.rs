@@ -74,7 +74,7 @@ use crate::icons;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
 use crate::serp::{Serp, SerpEvent, SerpMode};
-use crate::session::{Content, Pin, SavedTab, Session, Store};
+use crate::session::{Content, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
@@ -715,8 +715,31 @@ impl Browser {
     }
 
     fn close_tab(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+        if self.remove_tab(index, window, cx) {
+            self.after_closing(window, cx);
+        }
+    }
+
+    /// Close `id` and every tab under it in the tree. Only the tab left
+    /// active at the end wakes: one of the branch's own, active for a moment
+    /// on the way, would load its page just to close it.
+    fn close_branch(&mut self, id: u64, window: &mut Window, cx: &mut Context<Self>) {
+        let mut closed = false;
+        for id in self.tree.remove_branch(id) {
+            if let Some(index) = self.tab_index(id) {
+                closed |= self.remove_tab(index, window, cx);
+            }
+        }
+        if closed {
+            self.after_closing(window, cx);
+        }
+    }
+
+    /// Take the tab at `index` out of the window, passing the active tab on
+    /// if it was this one, without waking that tab yet.
+    fn remove_tab(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) -> bool {
         if index >= self.tabs.len() {
-            return;
+            return false;
         }
         self.close_navigator(window, cx);
         let closing = self.tabs[index].id;
@@ -760,20 +783,16 @@ impl Browser {
             }
         }
         self.editing = false;
+        true
+    }
+
+    /// Show the tab now active, once tabs have closed.
+    fn after_closing(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.sync_tree(cx);
         self.wake(self.active, window, cx);
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
-    }
-
-    /// Close `id` and every tab under it in the tree.
-    fn close_branch(&mut self, id: u64, window: &mut Window, cx: &mut Context<Self>) {
-        for id in self.tree.remove_branch(id) {
-            if let Some(index) = self.tab_index(id) {
-                self.close_tab(index, window, cx);
-            }
-        }
     }
 
     /// Load what an asleep tab shows. Its page or results replace nothing:
@@ -1252,16 +1271,30 @@ impl Browser {
         }
         self._save = cx.spawn(async move |browser, cx| {
             cx.background_executor().timer(SAVE_AFTER).await;
-            let _ = browser.update(cx, |browser, cx| browser.save(cx));
+            // Gathered here, written off the window's thread, which a slow
+            // disk would otherwise stall.
+            let Ok(Some((store, snapshot))) =
+                browser.update(cx, |browser, cx| browser.snapshot(cx))
+            else {
+                return;
+            };
+            cx.background_executor()
+                .spawn(async move { store.save(&snapshot) })
+                .await;
         });
     }
 
-    /// Write the tabs, their tree and the icons of the sites they and the
-    /// pins name.
+    /// Write the session now: Frame is quitting or the window is going.
     fn save(&mut self, cx: &App) {
-        let Some(store) = self.store.clone() else {
-            return;
-        };
+        if let Some((store, snapshot)) = self.snapshot(cx) {
+            store.save(&snapshot);
+        }
+    }
+
+    /// The tabs, their tree and the icons of the sites they and the pins
+    /// name, as the store keeps them.
+    fn snapshot(&mut self, cx: &App) -> Option<(Store, Snapshot)> {
+        let store = self.store.clone()?;
         for index in 0..self.tabs.len() {
             self.remember_icon(index, cx);
         }
@@ -1296,19 +1329,25 @@ impl Browser {
             .chain(tabs.iter().filter_map(|tab| tab.content.url()))
             .filter_map(|url| url.host_str().map(str::to_owned))
             .collect();
-        store.save_session(&Session {
+        let icons = hosts
+            .iter()
+            .filter_map(|host| Some((host.clone(), self.icons.get(host)?.clone())))
+            .collect();
+        let session = Session {
             sidebar: self.sidebar,
             sidebar_width: Some(f32::from(self.sidebar_width)),
             active: self.tabs.get(self.active).map(|tab| tab.id),
             tabs,
             dock: self.tabs.iter().map(|tab| tab.id).collect(),
-        });
-        for host in &hosts {
-            if let Some(icon) = self.icons.get(host) {
-                store.save_favicon(host, icon);
-            }
-        }
-        store.keep_favicons(&hosts);
+        };
+        Some((
+            store,
+            Snapshot {
+                session,
+                icons,
+                hosts,
+            },
+        ))
     }
 
     /// Keep the icon of the site a tab shows, for while its page loads or

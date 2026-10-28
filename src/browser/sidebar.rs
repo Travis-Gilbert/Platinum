@@ -738,8 +738,11 @@ impl Browser {
             .node(id)
             .and_then(|node| node.name.clone())
             .unwrap_or_else(|| self.tabs[index].title(cx).to_string());
-        // The field is in the sidebar's row.
+        // The field is in the sidebar's row, which a folded branch above it
+        // would hide; a tab in the rows can be renamed with the sidebar shut.
         self.sidebar = true;
+        self.tree.reveal(id);
+        self.sync_tree(cx);
         let input = cx.new(|cx| InputState::new(window, cx).default_value(current));
         let events = cx.subscribe_in(
             &input,

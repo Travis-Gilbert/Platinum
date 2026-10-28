@@ -14,8 +14,9 @@ mod format;
 
 use std::collections::HashSet;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use gpui_kit::{App, Global, RenderImage};
 use serde_json::Value;
@@ -29,14 +30,25 @@ const FAVICONS: &str = "favicons";
 #[derive(Clone)]
 pub struct Store {
     dir: PathBuf,
+    writing: Arc<Mutex<()>>,
 }
 
 impl Global for Store {}
+
+/// What one save writes: the session, and the icons of the sites it and the
+/// pins name, gathered on the UI thread.
+pub struct Snapshot {
+    pub session: Session,
+    pub icons: Vec<(String, Arc<RenderImage>)>,
+    /// Every site whose icon is kept; the others' are forgotten.
+    pub hosts: HashSet<String>,
+}
 
 /// Keep Frame's state under `data_dir`.
 pub fn init(data_dir: &Path, cx: &mut App) {
     cx.set_global(Store {
         dir: data_dir.to_owned(),
+        writing: Arc::default(),
     });
 }
 
@@ -45,12 +57,23 @@ impl Store {
         cx.try_global::<Self>().cloned()
     }
 
+    /// The pins kept, or none. A file that is there but is not pins Frame
+    /// can read, broken JSON included, is set aside before the next save
+    /// could write over it.
     pub fn load_pins(&self) -> Vec<Pin> {
         let path = self.dir.join(PINS);
-        let Some(value) = read_json(&path) else {
-            return Vec::new();
+        let text = match fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) if error.kind() == ErrorKind::NotFound => return Vec::new(),
+            Err(error) => {
+                log::warn!("reading {}: {error}", path.display());
+                String::new()
+            }
         };
-        format::pins_from_json(&value).unwrap_or_else(|| {
+        let pins = serde_json::from_str(&text)
+            .ok()
+            .and_then(|value| format::pins_from_json(&value));
+        pins.unwrap_or_else(|| {
             let aside = path.with_extension("json.unreadable");
             log::warn!(
                 "{} is not Frame's; moved to {}",
@@ -70,8 +93,19 @@ impl Store {
         format::session_from_json(&read_json(&self.dir.join(SESSION))?)
     }
 
-    pub fn save_session(&self, session: &Session) {
-        write_json(&self.dir.join(SESSION), &format::session_to_json(session));
+    /// Write what one save gathered. Off the UI thread as a rule; a save at
+    /// quit may start while the one before is still writing, so the two
+    /// take turns.
+    pub fn save(&self, snapshot: &Snapshot) {
+        let _turn = self.writing.lock().unwrap_or_else(PoisonError::into_inner);
+        write_json(
+            &self.dir.join(SESSION),
+            &format::session_to_json(&snapshot.session),
+        );
+        for (host, icon) in &snapshot.icons {
+            self.save_favicon(host, icon);
+        }
+        self.keep_favicons(&snapshot.hosts);
     }
 
     pub fn load_favicon(&self, host: &str) -> Option<Arc<RenderImage>> {
@@ -135,6 +169,32 @@ fn read_json(path: &Path) -> Option<Value> {
             log::warn!("reading {}: {error}", path.display());
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_broken_pins_file_is_set_aside_before_it_can_be_written_over() {
+        let dir = std::env::temp_dir().join(format!("frame-pins-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let store = Store {
+            dir: dir.clone(),
+            writing: Arc::default(),
+        };
+        assert!(store.load_pins().is_empty(), "no file, no pins");
+        assert!(!dir.join("pins.json.unreadable").exists());
+
+        let broken = r#"[{"id": 1, "url": "https://example.org/","#;
+        fs::write(dir.join(PINS), broken).unwrap();
+        assert!(store.load_pins().is_empty());
+        assert!(!dir.join(PINS).exists());
+        let aside = fs::read_to_string(dir.join("pins.json.unreadable")).unwrap();
+        assert_eq!(aside, broken);
+        let _ = fs::remove_dir_all(&dir);
     }
 }
 

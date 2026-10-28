@@ -743,6 +743,68 @@ fn closing_a_tab_moves_the_tabs_under_it_up(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn closing_a_branch_wakes_only_the_tab_left(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t cmd-t cmd-t");
+    let [a, b, c, d, e] = ids(&browser, cx)[..] else {
+        panic!("five tabs")
+    };
+    assert_eq!(active_id(&browser, cx), e);
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.tree.move_to(b, Place::Into(a));
+            browser.tree.move_to(c, Place::Into(a));
+            for id in [b, c, d] {
+                let index = browser.tab_index(id).unwrap();
+                browser.tabs[index].asleep = Some(Content::Start);
+            }
+            // Taking a tab out passes the active tab on without waking it.
+            let index = browser.tab_index(e).unwrap();
+            assert!(browser.remove_tab(index, window, cx));
+            assert!(browser.tabs[browser.active].asleep.is_some());
+            let index = browser.tab_index(a).unwrap();
+            browser.activate(index, window, cx);
+        })
+    });
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.picked(Pick::Tab(TabAction::CloseBranch(a)), window, cx)
+        })
+    });
+    cx.run_until_parked();
+    assert_eq!(ids(&browser, cx), [d]);
+    let woke = cx.update(|_, cx| browser.read(cx).tabs[0].asleep.is_none());
+    assert!(woke, "the tab left is shown");
+}
+
+#[gpui_kit::test]
+fn renaming_a_tab_in_a_folded_branch_shows_its_row(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    let [a, b] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.tree.move_to(b, Place::Into(a));
+            browser.tree.set_collapsed(a, true);
+            browser.sync_tree(cx);
+        })
+    });
+    // From its tab in the rows, with the sidebar shut.
+    let tab = center_of(cx, format!("tab-{b}"));
+    right_click(cx, tab);
+    cx.simulate_input("rename");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    assert!(cx.update(|_, cx| browser.read(cx).sidebar));
+    assert!(
+        drawn(cx, format!("tree-tab-{b}")),
+        "the row with the name field"
+    );
+}
+
+#[gpui_kit::test]
 fn kept_site_icons_show_for_pins_and_unloaded_tabs(cx: &mut TestAppContext) {
     let (browser, cx) = open(cx);
     keys(cx, "cmd-t");
