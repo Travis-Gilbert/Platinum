@@ -12161,6 +12161,7 @@ dependencies = [
  "stylo",
  "stylo_traits",
  "surfman",
+ "tempfile",
  "tokio",
  "url",
  "webrender",
