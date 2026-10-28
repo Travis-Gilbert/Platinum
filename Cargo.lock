@@ -11801,6 +11801,7 @@ dependencies = [
  "servo-net-traits",
  "servo-url",
  "sha1 0.11.0",
+ "tungstenite",
 ]
 
 [[package]]

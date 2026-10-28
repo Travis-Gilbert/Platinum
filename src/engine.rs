@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use futures::StreamExt as _;
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender, unbounded};
 use gpui_kit::{App, AsyncApp, Global};
-use servo::{CookieSource, EventLoopWaker, Opts, Preferences, Servo, ServoBuilder};
+use servo::{BuiltinClient, CookieSource, EventLoopWaker, Opts, Preferences, Servo, ServoBuilder};
 use url::Url;
 
 /// Servo calls `wake` from its own threads; this only posts to the foreground.
@@ -37,6 +37,8 @@ impl EventLoopWaker for ChannelWaker {
 
 pub struct Engine {
     pub servo: Servo,
+    /// The in-process inspection client. The panel takes it once.
+    inspection: Option<BuiltinClient>,
     /// Runs after every turn of Servo's event loop, so the delegates' queued
     /// events reach their views once Servo has let go of them. A callback
     /// that returns false is dropped, as a closed tab's does.
@@ -57,9 +59,9 @@ impl Engine {
         let preferences = Preferences {
             layout_css_has_selector_enabled: true,
             dom_media_source_enabled: true,
-            // The CDP server owns the inspection channel. The Firefox server stays off.
-            cdp_server_enabled: true,
-            cdp_server_listen_address: "127.0.0.1:9333".to_owned(),
+            // Inspection stays in-process. A TCP listener is a separate
+            // development option and stays off for ordinary browsing.
+            cdp_builtin_enabled: true,
             ..Preferences::default()
         };
         let servo = ServoBuilder::default()
@@ -71,8 +73,10 @@ impl Engine {
             }))
             .build();
         servo.setup_logging();
+        let inspection = servo::take_builtin_client();
         cx.set_global(Engine {
             servo,
+            inspection,
             after_spin: Vec::new(),
         });
         cx.spawn(async move |cx| spin(receiver, pending, cx).await)
@@ -81,6 +85,11 @@ impl Engine {
 
     pub fn servo(cx: &App) -> Servo {
         cx.global::<Engine>().servo.clone()
+    }
+
+    /// The panel's inspection client. Only the first caller receives it.
+    pub fn take_inspection(&mut self) -> Option<BuiltinClient> {
+        self.inspection.take()
     }
 
     /// The `Cookie` header Servo would send to `url`, for a request Frame

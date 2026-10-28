@@ -22,6 +22,23 @@ use crate::session::{self, Content, Layout, Pin};
 use crate::tabtree::Place;
 use crate::theme::{self, Appearance};
 
+#[test]
+fn search_results_do_not_keep_the_inspected_page() {
+    assert_eq!(
+        super::displayed_page_id(Showing::Serp, Some("page-a".into())),
+        None
+    );
+    assert_eq!(
+        super::displayed_page_id(Showing::Start, Some("page-a".into())),
+        None
+    );
+    assert_eq!(
+        super::displayed_page_id(Showing::Page, Some("page-a".into())).as_deref(),
+        Some("page-a")
+    );
+    assert_eq!(super::displayed_page_id(Showing::Page, None), None);
+}
+
 fn open(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
     cx.update(|cx| {
         gpui_kit::init(cx);

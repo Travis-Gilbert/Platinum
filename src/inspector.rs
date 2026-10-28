@@ -1,19 +1,18 @@
 //! The inspection prototype: a log, a document tree, a request list, and the
 //! page's WebMCP tools, for the active tab.
 //!
-//! It is a CDP client of the server in the Servo fork (`127.0.0.1:9333`).
-//! Nothing here launches Chrome or loads the Chrome DevTools frontend.
-//! `Model::apply` is the state the panel shows; the socket only delivers
-//! JSON. The methods this client sends are listed in `devtools/PIN`.
+//! It is a CDP client of the in-process session in the Servo fork. Nothing
+//! here launches Chrome, loads the Chrome DevTools frontend, or opens a
+//! socket. `Model::apply` is the state the panel shows; the client only
+//! delivers JSON. The methods this client sends are listed in `devtools/PIN`.
 
-use std::io::{self, Read, Write};
-use std::net::TcpStream;
-use std::sync::mpsc::{self, Receiver, RecvTimeoutError, TryRecvError};
+use std::collections::HashMap;
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
 use std::time::Duration;
 
 use futures::StreamExt as _;
-use futures::channel::mpsc::{self as futures_mpsc, UnboundedSender};
+use futures::channel::mpsc::{self as futures_mpsc};
 use gpui_kit::component::input::{Input, InputEvent, InputState};
 use gpui_kit::component::{
     ActiveTheme as _, Sizable as _, h_flex, scroll::ScrollableElement as _, v_flex,
@@ -25,7 +24,6 @@ use gpui_kit::{
 };
 use serde_json::{Value, json};
 
-const ADDRESS: &str = "127.0.0.1:9333";
 const MAX_LINES: usize = 200;
 const MAX_REQUESTS: usize = 100;
 
@@ -88,12 +86,25 @@ pub(crate) struct Model {
     tools: Vec<ToolRow>,
     styles: Vec<(String, String)>,
     selected_node: Option<i64>,
-    /// The request whose body the next `Network.getResponseBody` fills.
-    pending_body: Option<String>,
+    /// Replies are matched by JSON-RPC id, not by result shape.
+    pending: HashMap<i64, Pending>,
     context_id: Option<i64>,
     target: String,
+    /// Bumped on every attach and detach. Late events from the previous
+    /// page carry the old generation and are dropped.
+    generation: u64,
+    attached: bool,
     status: String,
     next_id: i64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Pending {
+    Ignore,
+    Eval,
+    Root,
+    Style(i64),
+    Body(String),
 }
 
 impl Model {
@@ -106,9 +117,11 @@ impl Model {
             tools: Vec::new(),
             styles: Vec::new(),
             selected_node: None,
-            pending_body: None,
+            pending: HashMap::new(),
             context_id: None,
             target: String::new(),
+            generation: 0,
+            attached: false,
             status: "Not connected".to_owned(),
             next_id: 1,
         }
@@ -144,15 +157,21 @@ pub(crate) struct FollowUp {
     pub expand: Vec<i64>,
 }
 
-/// Fold one CDP message into the panel. A response is recognized by its
-/// result shape, so the socket thread can send `enable` without the panel
-/// remembering those ids.
+/// Fold one CDP message into the panel. Command replies are applied only
+/// when their id is one this model is still waiting on.
 pub(crate) fn apply(model: &mut Model, message: &Value) -> FollowUp {
     let mut follow = FollowUp { expand: Vec::new() };
     if let Some(method) = message.get("method").and_then(Value::as_str) {
         apply_event(model, method, message.get("params").unwrap_or(&Value::Null));
         return follow;
     }
+    let id = message.get("id").and_then(Value::as_i64);
+    let Some(id) = id else {
+        return follow;
+    };
+    let Some(pending) = model.pending.remove(&id) else {
+        return follow;
+    };
     if let Some(error) = message.get("error") {
         let text = error
             .get("message")
@@ -161,42 +180,47 @@ pub(crate) fn apply(model: &mut Model, message: &Value) -> FollowUp {
         model.push(Level::Error, text);
         return follow;
     }
-    let Some(result) = message.get("result") else {
-        return follow;
-    };
-    if let Some(details) = result.get("exceptionDetails") {
-        let text = details
-            .get("text")
-            .and_then(Value::as_str)
-            .unwrap_or("exception");
-        model.push(Level::Error, text);
-        return follow;
-    }
-    if result.get("result").is_some() {
-        model.push(Level::Result, describe_remote(&result["result"]));
-        return follow;
-    }
-    if let Some(root) = result.get("root").filter(|root| !root.is_null()) {
-        if let Some(id) = adopt_root(model, root) {
-            follow.expand.push(id);
+    let result = message.get("result").unwrap_or(&Value::Null);
+    match pending {
+        Pending::Ignore => {}
+        Pending::Eval => {
+            if let Some(details) = result.get("exceptionDetails") {
+                let text = details
+                    .get("text")
+                    .and_then(Value::as_str)
+                    .unwrap_or("exception");
+                model.push(Level::Error, text);
+            } else if result.get("result").is_some() {
+                model.push(Level::Result, describe_remote(&result["result"]));
+            }
         }
-        return follow;
-    }
-    if let Some(styles) = result.get("computedStyle").and_then(Value::as_array) {
-        model.styles = styles
-            .iter()
-            .filter_map(|style| {
-                Some((
-                    style.get("name")?.as_str()?.to_owned(),
-                    style.get("value")?.as_str()?.to_owned(),
-                ))
-            })
-            .collect();
-    }
-    if let Some(body) = result.get("body").and_then(Value::as_str) {
-        if let Some(id) = model.pending_body.take() {
-            if let Some(request) = model.requests.iter_mut().find(|row| row.id == id) {
-                request.body = body.to_owned();
+        Pending::Root => {
+            if let Some(root) = result.get("root").filter(|root| !root.is_null())
+                && let Some(id) = adopt_root(model, root)
+            {
+                follow.expand.push(id);
+            }
+        }
+        Pending::Style(node) => {
+            if model.selected_node == Some(node)
+                && let Some(styles) = result.get("computedStyle").and_then(Value::as_array)
+            {
+                model.styles = styles
+                    .iter()
+                    .filter_map(|style| {
+                        Some((
+                            style.get("name")?.as_str()?.to_owned(),
+                            style.get("value")?.as_str()?.to_owned(),
+                        ))
+                    })
+                    .collect();
+            }
+        }
+        Pending::Body(request) => {
+            if let Some(body) = result.get("body").and_then(Value::as_str)
+                && let Some(row) = model.requests.iter_mut().find(|row| row.id == request)
+            {
+                row.body = body.to_owned();
             }
         }
     }
@@ -227,6 +251,7 @@ fn apply_event(model: &mut Model, method: &str, params: &Value) {
             model.styles.clear();
             model.tools.clear();
             model.selected_node = None;
+            model.pending.clear();
         }
         "DOM.setChildNodes" => {
             let parent = params.get("parentId").and_then(Value::as_i64).unwrap_or(0);
@@ -343,15 +368,15 @@ fn apply_event(model: &mut Model, method: &str, params: &Value) {
             }
         }
         "WebMCP.toolsRemoved" => {
-            let names = params
-                .get("names")
+            let tools = params
+                .get("tools")
                 .and_then(Value::as_array)
                 .cloned()
                 .unwrap_or_default();
             model.tools.retain(|tool| {
-                !names
+                !tools
                     .iter()
-                    .any(|name| name.as_str() == Some(tool.name.as_str()))
+                    .any(|removed| removed.get("name").and_then(Value::as_str) == Some(&tool.name))
             });
         }
         "WebMCP.toolResponded" => {
@@ -359,26 +384,19 @@ fn apply_event(model: &mut Model, method: &str, params: &Value) {
                 .get("invocationId")
                 .and_then(Value::as_str)
                 .unwrap_or("tool");
-            let text = if params.get("success").and_then(Value::as_bool) == Some(true) {
-                format!(
-                    "{name} → {}",
-                    params.get("result").and_then(Value::as_str).unwrap_or("")
-                )
+            let status = params.get("status").and_then(Value::as_str).unwrap_or("");
+            if status == "success" {
+                model.push(
+                    Level::Result,
+                    format!("{name} → {}", params.get("output").unwrap_or(&Value::Null)),
+                );
             } else {
-                format!(
-                    "{name} failed: {}",
-                    params
-                        .get("error")
-                        .and_then(Value::as_str)
-                        .unwrap_or("error")
-                )
-            };
-            let level = if text.contains("failed") {
-                Level::Error
-            } else {
-                Level::Result
-            };
-            model.push(level, text);
+                let error = params
+                    .get("errorText")
+                    .and_then(Value::as_str)
+                    .unwrap_or(status);
+                model.push(Level::Error, format!("{name} failed: {error}"));
+            }
         }
         _ => {}
     }
@@ -478,13 +496,14 @@ fn describe_remote(value: &Value) -> String {
 }
 
 enum Command {
-    Attach(String),
-    Send(Value),
+    Attach { generation: u64, target: String },
+    Detach { generation: u64 },
+    Send { generation: u64, message: Value },
 }
 
 enum Wire {
-    Status(String),
-    Message(Value),
+    Status { generation: u64, status: String },
+    Message { generation: u64, message: Value },
 }
 
 pub(crate) struct Inspector {
@@ -501,9 +520,14 @@ impl Inspector {
         let input = cx.subscribe_in(&expression, window, Self::on_input);
         let (commands_tx, commands_rx) = mpsc::channel();
         let (events_tx, mut events_rx) = futures_mpsc::unbounded();
+        let client = cx
+            .try_global::<crate::engine::Engine>()
+            .is_some()
+            .then(|| cx.global_mut::<crate::engine::Engine>().take_inspection())
+            .flatten();
         thread::Builder::new()
             .name("cdp-client".to_owned())
-            .spawn(move || drive(commands_rx, events_tx))
+            .spawn(move || drive(commands_rx, events_tx, client))
             .expect("cdp client");
         let events = cx.spawn(async move |inspector, cx| {
             while let Some(event) = events_rx.next().await {
@@ -524,28 +548,83 @@ impl Inspector {
         }
     }
 
-    /// Follow the active tab. The same webview id survives navigation.
+    /// Follow the page on screen. `None` detaches, including a Start tab or
+    /// search results that still hold an old `Page`.
     pub(crate) fn attach(&mut self, target: Option<String>, cx: &mut Context<Self>) {
         let Some(target) = target.filter(|target| !target.is_empty()) else {
-            self.model.status = "No page".to_owned();
-            cx.notify();
+            self.detach(cx);
             return;
         };
-        if self.model.target == target {
+        if self.model.attached && self.model.target == target {
             return;
         }
+        self.model.generation += 1;
+        let generation = self.model.generation;
         self.model.reset_for_target(&target);
-        let _ = self.commands.send(Command::Attach(target));
+        self.model.generation = generation;
+        self.model.attached = true;
+        let _ = self.commands.send(Command::Attach { generation, target });
+        self.enable_domains();
         cx.notify();
+    }
+
+    fn detach(&mut self, cx: &mut Context<Self>) {
+        if !self.model.attached && self.model.status == "No page" {
+            return;
+        }
+        self.model.generation += 1;
+        let generation = self.model.generation;
+        self.model.attached = false;
+        self.model.target.clear();
+        self.model.context_id = None;
+        self.model.pending.clear();
+        self.model.nodes.clear();
+        self.model.styles.clear();
+        self.model.tools.clear();
+        self.model.selected_node = None;
+        self.model.status = "No page".to_owned();
+        let _ = self.commands.send(Command::Detach { generation });
+        cx.notify();
+    }
+
+    fn enable_domains(&mut self) {
+        for method in [
+            "Runtime.enable",
+            "Log.enable",
+            "Page.enable",
+            "DOM.enable",
+            "CSS.enable",
+            "Overlay.enable",
+            "Network.enable",
+            "WebMCP.enable",
+        ] {
+            self.command_pending(Pending::Ignore, method, json!({}));
+        }
+        self.command_pending(Pending::Ignore, "Page.getFrameTree", json!({}));
+        self.command_pending(Pending::Root, "DOM.getDocument", json!({}));
     }
 
     fn on_wire(&mut self, event: Wire, cx: &mut Context<Self>) {
         match event {
-            Wire::Status(status) => self.model.status = status,
-            Wire::Message(message) => {
+            Wire::Status { generation, status } => {
+                if generation == self.model.generation {
+                    self.model.status = status;
+                }
+            }
+            Wire::Message {
+                generation,
+                message,
+            } => {
+                if generation != self.model.generation {
+                    return;
+                }
                 let follow = apply(&mut self.model, &message);
                 for node in follow.expand {
-                    self.command("DOM.requestChildNodes", json!({ "nodeId": node }));
+                    self.command_pending(
+                        Pending::Ignore,
+                        "DOM.requestChildNodes",
+                        json!({ "nodeId": node }),
+                    );
                 }
             }
         }
@@ -569,6 +648,11 @@ impl Inspector {
         self.expression.update(cx, |input, cx| {
             input.set_value("", window, cx);
         });
+        if !self.model.attached {
+            self.model.push(Level::Error, "No page");
+            cx.notify();
+            return;
+        }
         match self.model.section {
             Section::Console => self.evaluate(&text),
             Section::Elements => self.edit_attribute(&text),
@@ -583,7 +667,7 @@ impl Inspector {
         if let Some(context) = self.model.context_id {
             params["contextId"] = json!(context);
         }
-        self.command("Runtime.evaluate", params);
+        self.command_pending(Pending::Eval, "Runtime.evaluate", params);
     }
 
     fn edit_attribute(&mut self, text: &str) {
@@ -595,7 +679,8 @@ impl Inspector {
             self.model.push(Level::Error, "Use name=value");
             return;
         };
-        self.command(
+        self.command_pending(
+            Pending::Ignore,
             "DOM.setAttributeValue",
             json!({ "nodeId": node, "name": name.trim(), "value": value }),
         );
@@ -606,33 +691,58 @@ impl Inspector {
             .split_once(' ')
             .map(|(name, rest)| (name, rest.to_owned()))
             .unwrap_or((text, "{}".to_owned()));
-        self.command(
+        let arguments = serde_json::from_str::<Value>(&arguments).unwrap_or(json!({}));
+        self.command_pending(
+            Pending::Ignore,
             "WebMCP.invokeTool",
-            json!({ "name": name, "arguments": arguments }),
+            json!({ "toolName": name, "input": arguments }),
         );
     }
 
-    fn command(&mut self, method: &str, params: Value) {
+    fn command_pending(&mut self, pending: Pending, method: &str, params: Value) {
+        if !self.model.attached {
+            return;
+        }
         let id = self.model.alloc_id();
-        let _ = self.commands.send(Command::Send(json!({
-            "id": id,
-            "method": method,
-            "params": params,
-        })));
+        let generation = self.model.generation;
+        self.model.pending.insert(id, pending);
+        let _ = self.commands.send(Command::Send {
+            generation,
+            message: json!({
+                "id": id,
+                "method": method,
+                "params": params,
+            }),
+        });
     }
 
     fn select_node(&mut self, id: i64, cx: &mut Context<Self>) {
         self.model.selected_node = Some(id);
         self.model.styles.clear();
-        self.command("CSS.getComputedStyleForNode", json!({ "nodeId": id }));
-        self.command("DOM.requestChildNodes", json!({ "nodeId": id }));
-        self.command("Overlay.highlightNode", json!({ "nodeId": id }));
+        self.command_pending(
+            Pending::Style(id),
+            "CSS.getComputedStyleForNode",
+            json!({ "nodeId": id }),
+        );
+        self.command_pending(
+            Pending::Ignore,
+            "DOM.requestChildNodes",
+            json!({ "nodeId": id }),
+        );
+        self.command_pending(
+            Pending::Ignore,
+            "Overlay.highlightNode",
+            json!({ "nodeId": id }),
+        );
         cx.notify();
     }
 
     fn load_body(&mut self, id: &str) {
-        self.model.pending_body = Some(id.to_owned());
-        self.command("Network.getResponseBody", json!({ "requestId": id }));
+        self.command_pending(
+            Pending::Body(id.to_owned()),
+            "Network.getResponseBody",
+            json!({ "requestId": id }),
+        );
     }
 }
 
@@ -825,298 +935,74 @@ impl Inspector {
     }
 }
 
-fn drive(commands: Receiver<Command>, events: UnboundedSender<Wire>) {
-    let mut target = String::new();
-    let mut socket: Option<FrameSocket> = None;
+fn drive(
+    commands: Receiver<Command>,
+    events: futures_mpsc::UnboundedSender<Wire>,
+    client: Option<servo::BuiltinClient>,
+) {
+    let mut generation = 0u64;
+    let mut attached = false;
     loop {
-        let incoming = if socket.is_some() {
-            match commands.try_recv() {
-                Ok(command) => Some(command),
-                Err(TryRecvError::Empty) => None,
-                Err(TryRecvError::Disconnected) => break,
-            }
-        } else {
-            match commands.recv_timeout(Duration::from_millis(400)) {
+        let incoming = if attached {
+            match commands.recv_timeout(Duration::from_millis(30)) {
                 Ok(command) => Some(command),
                 Err(RecvTimeoutError::Timeout) => None,
                 Err(RecvTimeoutError::Disconnected) => break,
             }
+        } else {
+            match commands.recv() {
+                Ok(command) => Some(command),
+                Err(_) => break,
+            }
         };
         if let Some(command) = incoming {
             match command {
-                Command::Attach(id) if id != target => {
-                    target = id;
-                    socket = None;
-                }
-                Command::Attach(_) => {}
-                Command::Send(message) => {
-                    if let Some(sock) = socket.as_mut() {
-                        let _ = sock.write_text(&message.to_string());
+                Command::Attach {
+                    generation: next,
+                    target,
+                } => {
+                    generation = next;
+                    attached = true;
+                    if let Some(client) = &client {
+                        client.attach(&target);
+                        let _ = events.unbounded_send(Wire::Status {
+                            generation,
+                            status: "Connected".to_owned(),
+                        });
+                    } else {
+                        let _ = events.unbounded_send(Wire::Status {
+                            generation,
+                            status: "Not connected".to_owned(),
+                        });
                     }
                 }
-            }
-        }
-        if target.is_empty() {
-            continue;
-        }
-        if socket.is_none() {
-            match connect(&target) {
-                Ok(stream) => {
-                    let _ = events.unbounded_send(Wire::Status("Connected".to_owned()));
-                    let mut stream = FrameSocket::new(stream);
-                    greet(&mut stream);
-                    socket = Some(stream);
-                }
-                Err(error) => {
-                    let _ = events.unbounded_send(Wire::Status(error));
-                }
-            }
-        }
-        let mut pending = true;
-        if let Some(sock) = socket.as_mut() {
-            match sock.drain() {
-                Ok(messages) => {
-                    pending = messages.is_empty();
-                    for text in messages {
-                        if let Ok(message) = serde_json::from_str::<Value>(&text) {
-                            let _ = events.unbounded_send(Wire::Message(message));
-                        }
+                Command::Detach { generation: next } => {
+                    generation = next;
+                    attached = false;
+                    if let Some(client) = &client {
+                        client.detach();
                     }
                 }
-                Err(_) => {
-                    socket = None;
-                    let _ = events.unbounded_send(Wire::Status("Reconnecting".to_owned()));
-                    pending = false;
+                Command::Send {
+                    generation: sent,
+                    message,
+                } if sent == generation && attached => {
+                    if let Some(client) = &client {
+                        client.send(&message);
+                    }
                 }
+                Command::Send { .. } => {}
             }
         }
-        if pending {
-            thread::sleep(Duration::from_millis(30));
-        }
-    }
-}
-
-fn greet(socket: &mut FrameSocket) {
-    for (id, method) in [
-        (1_000_001, "Runtime.enable"),
-        (1_000_002, "Log.enable"),
-        (1_000_003, "Page.enable"),
-        (1_000_004, "DOM.enable"),
-        (1_000_005, "CSS.enable"),
-        (1_000_006, "Overlay.enable"),
-        (1_000_007, "Network.enable"),
-        (1_000_008, "WebMCP.enable"),
-    ] {
-        let _ = socket.write_text(&json!({ "id": id, "method": method }).to_string());
-    }
-    let _ =
-        socket.write_text(&json!({ "id": 1_000_009, "method": "Page.getFrameTree" }).to_string());
-    let _ = socket.write_text(&json!({ "id": 1_000_010, "method": "DOM.getDocument" }).to_string());
-}
-
-fn connect(target: &str) -> Result<TcpStream, String> {
-    let body = http_get("/json/list")?;
-    let list: Value = serde_json::from_str(&body).map_err(|error| error.to_string())?;
-    let path = list
-        .as_array()
-        .and_then(|entries| {
-            entries
-                .iter()
-                .find(|entry| entry["id"].as_str() == Some(target))
-        })
-        .and_then(|entry| entry["webSocketDebuggerUrl"].as_str())
-        .and_then(|url| url.find("/devtools/").map(|index| url[index..].to_owned()))
-        .ok_or_else(|| "Waiting for the page".to_owned())?;
-    let mut stream = TcpStream::connect(ADDRESS).map_err(|error| error.to_string())?;
-    let key = "dGhlIHNhbXBsZSBub25jZQ==";
-    write!(
-        stream,
-        "GET {path} HTTP/1.1\r\nHost: {ADDRESS}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
-    )
-    .map_err(|error| error.to_string())?;
-    let (header, _) = read_http(&mut stream).map_err(|error| error.to_string())?;
-    if !header.starts_with("HTTP/1.1 101") {
-        return Err("CDP did not upgrade".to_owned());
-    }
-    stream
-        .set_nonblocking(true)
-        .map_err(|error| error.to_string())?;
-    Ok(stream)
-}
-
-fn http_get(path: &str) -> Result<String, String> {
-    let mut stream = TcpStream::connect(ADDRESS).map_err(|error| error.to_string())?;
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(2)));
-    write!(
-        stream,
-        "GET {path} HTTP/1.1\r\nHost: {ADDRESS}\r\nConnection: close\r\n\r\n"
-    )
-    .map_err(|error| error.to_string())?;
-    let (_, body) = read_http(&mut stream).map_err(|error| error.to_string())?;
-    Ok(body)
-}
-
-fn read_http(stream: &mut TcpStream) -> io::Result<(String, String)> {
-    let mut buffer = Vec::new();
-    let mut byte = [0u8; 1];
-    loop {
-        if stream.read(&mut byte)? == 0 {
-            break;
-        }
-        buffer.push(byte[0]);
-        if buffer.ends_with(b"\r\n\r\n") || buffer.len() > 64 * 1024 {
-            break;
-        }
-    }
-    let split = buffer
-        .windows(4)
-        .position(|window| window == b"\r\n\r\n")
-        .map(|index| index + 4)
-        .unwrap_or(buffer.len());
-    let header = String::from_utf8_lossy(&buffer[..split]).into_owned();
-    let mut body = buffer[split..].to_vec();
-    let length = header
-        .lines()
-        .find_map(|line| {
-            let (name, value) = line.split_once(':')?;
-            name.eq_ignore_ascii_case("content-length")
-                .then(|| value.trim().parse::<usize>().ok())
-                .flatten()
-        })
-        .unwrap_or(0);
-    while body.len() < length {
-        let mut chunk = [0u8; 1024];
-        let read = stream.read(&mut chunk)?;
-        if read == 0 {
-            break;
-        }
-        body.extend_from_slice(&chunk[..read]);
-    }
-    Ok((header, String::from_utf8_lossy(&body).into_owned()))
-}
-
-struct FrameSocket {
-    stream: TcpStream,
-    incoming: Vec<u8>,
-    mask: u8,
-}
-
-impl FrameSocket {
-    fn new(stream: TcpStream) -> Self {
-        Self {
-            stream,
-            incoming: Vec::new(),
-            mask: 1,
-        }
-    }
-
-    fn write_text(&mut self, text: &str) -> io::Result<()> {
-        let payload = text.as_bytes();
-        let mask = [self.mask, self.mask.wrapping_add(2), 3, 4];
-        self.mask = self.mask.wrapping_add(1);
-        let mut frame = Vec::with_capacity(payload.len() + 8);
-        frame.push(0x81);
-        let length = payload.len();
-        if length < 126 {
-            frame.push(0x80 | length as u8);
-        } else if length <= u16::MAX as usize {
-            frame.push(0x80 | 126);
-            frame.extend_from_slice(&(length as u16).to_be_bytes());
-        } else {
-            frame.push(0x80 | 127);
-            frame.extend_from_slice(&(length as u64).to_be_bytes());
-        }
-        frame.extend_from_slice(&mask);
-        for (index, byte) in payload.iter().enumerate() {
-            frame.push(byte ^ mask[index % 4]);
-        }
-        self.stream.write_all(&frame)?;
-        self.stream.flush()
-    }
-
-    fn drain(&mut self) -> io::Result<Vec<String>> {
-        let mut buf = [0u8; 4096];
-        loop {
-            match self.stream.read(&mut buf) {
-                Ok(0) => return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "closed")),
-                Ok(n) => self.incoming.extend_from_slice(&buf[..n]),
-                Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
-                Err(error) => return Err(error),
+        if let Some(client) = &client {
+            while let Ok(message) = client.try_recv() {
+                let _ = events.unbounded_send(Wire::Message {
+                    generation,
+                    message,
+                });
             }
         }
-        let mut messages = Vec::new();
-        while let Some(text) = take_text(&mut self.incoming, &mut self.stream)? {
-            messages.push(text);
-        }
-        Ok(messages)
     }
-}
-
-fn take_text(buffer: &mut Vec<u8>, stream: &mut impl Write) -> io::Result<Option<String>> {
-    if buffer.len() < 2 {
-        return Ok(None);
-    }
-    let opcode = buffer[0] & 0x0F;
-    let masked = buffer[1] & 0x80 != 0;
-    let mut length = (buffer[1] & 0x7F) as usize;
-    let mut cursor = 2;
-    if length == 126 {
-        if buffer.len() < cursor + 2 {
-            return Ok(None);
-        }
-        length = u16::from_be_bytes([buffer[cursor], buffer[cursor + 1]]) as usize;
-        cursor += 2;
-    } else if length == 127 {
-        if buffer.len() < cursor + 8 {
-            return Ok(None);
-        }
-        let mut wide = [0u8; 8];
-        wide.copy_from_slice(&buffer[cursor..cursor + 8]);
-        length = u64::from_be_bytes(wide) as usize;
-        cursor += 8;
-    }
-    let mask = if masked {
-        if buffer.len() < cursor + 4 {
-            return Ok(None);
-        }
-        let mask = [
-            buffer[cursor],
-            buffer[cursor + 1],
-            buffer[cursor + 2],
-            buffer[cursor + 3],
-        ];
-        cursor += 4;
-        Some(mask)
-    } else {
-        None
-    };
-    if buffer.len() < cursor + length {
-        return Ok(None);
-    }
-    let mut payload = buffer[cursor..cursor + length].to_vec();
-    buffer.drain(..cursor + length);
-    if let Some(mask) = mask {
-        for (index, byte) in payload.iter_mut().enumerate() {
-            *byte ^= mask[index % 4];
-        }
-    }
-    if opcode == 0x9 {
-        let mut pong = vec![0x8A, 0x80 | payload.len() as u8, 1, 2, 3, 4];
-        for (index, byte) in payload.iter().enumerate() {
-            pong.push(byte ^ [1, 2, 3, 4][index % 4]);
-        }
-        stream.write_all(&pong)?;
-        return Ok(None);
-    }
-    if opcode == 0x8 {
-        return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "close"));
-    }
-    if opcode != 0x1 && opcode != 0x0 {
-        return Ok(None);
-    }
-    let text = String::from_utf8(payload)
-        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-    Ok(Some(text))
 }
 
 #[cfg(test)]
@@ -1159,6 +1045,7 @@ mod tests {
     #[test]
     fn evaluate_exception_is_an_error_line() {
         let mut model = model();
+        model.pending.insert(1, Pending::Eval);
         apply(
             &mut model,
             &json!({
@@ -1176,6 +1063,7 @@ mod tests {
     #[test]
     fn evaluate_value_is_a_result_line() {
         let mut model = model();
+        model.pending.insert(2, Pending::Eval);
         apply(
             &mut model,
             &json!({ "id": 2, "result": { "result": { "type": "number", "value": 2 } } }),
@@ -1186,6 +1074,7 @@ mod tests {
     #[test]
     fn document_tree_and_children() {
         let mut model = model();
+        model.pending.insert(3, Pending::Root);
         let follow = apply(
             &mut model,
             &json!({
@@ -1219,6 +1108,7 @@ mod tests {
                 "params": { "entry": { "level": "info", "text": "before" } }
             }),
         );
+        model.pending.insert(1, Pending::Root);
         apply(
             &mut model,
             &json!({ "id": 1, "result": { "root": { "nodeId": 4, "nodeName": "#document" } } }),
@@ -1287,7 +1177,7 @@ mod tests {
             &mut model,
             &json!({
                 "method": "WebMCP.toolsRemoved",
-                "params": { "names": ["search_flights"] }
+                "params": { "tools": [{ "name": "search_flights", "frameId": "frame-1" }] }
             }),
         );
         assert!(model.tools.is_empty());
@@ -1314,12 +1204,52 @@ mod tests {
     }
 
     #[test]
-    fn unmasked_text_frame_parses() {
-        let mut buffer = vec![0x81, 5];
-        buffer.extend(b"hello");
-        let mut sink = Vec::new();
-        let text = take_text(&mut buffer, &mut sink).unwrap();
-        assert_eq!(text.as_deref(), Some("hello"));
-        assert!(buffer.is_empty());
+    fn response_bodies_follow_their_request_ids() {
+        let mut model = model();
+        model.requests.push(RequestRow {
+            id: "a".into(),
+            method: "GET".into(),
+            url: "https://example.test/a".into(),
+            status: Some(200),
+            mime: "text/plain".into(),
+            failed: false,
+            body: String::new(),
+        });
+        model.requests.push(RequestRow {
+            id: "b".into(),
+            method: "GET".into(),
+            url: "https://example.test/b".into(),
+            status: Some(200),
+            mime: "text/plain".into(),
+            failed: false,
+            body: String::new(),
+        });
+        model.pending.insert(1, Pending::Body("b".into()));
+        model.pending.insert(2, Pending::Body("a".into()));
+        apply(
+            &mut model,
+            &json!({ "id": 2, "result": { "body": "alpha" } }),
+        );
+        apply(
+            &mut model,
+            &json!({ "id": 1, "result": { "body": "beta" } }),
+        );
+        assert_eq!(model.requests[0].body, "alpha");
+        assert_eq!(model.requests[1].body, "beta");
+    }
+
+    #[test]
+    fn a_late_style_does_not_fill_a_different_node() {
+        let mut model = model();
+        model.selected_node = Some(2);
+        model.pending.insert(7, Pending::Style(1));
+        apply(
+            &mut model,
+            &json!({
+                "id": 7,
+                "result": { "computedStyle": [{ "name": "color", "value": "red" }] }
+            }),
+        );
+        assert!(model.styles.is_empty());
     }
 }

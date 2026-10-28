@@ -116,6 +116,14 @@ enum Showing {
     Serp,
 }
 
+/// The page commands may use, or none when the tab is not showing a webpage.
+fn displayed_page_id(showing: Showing, page_id: Option<String>) -> Option<String> {
+    match showing {
+        Showing::Page => page_id,
+        Showing::Start | Showing::Serp => None,
+    }
+}
+
 struct Tab {
     id: u64,
     /// The tab as the dock holds it.
@@ -665,6 +673,7 @@ impl Browser {
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
+        self.sync_inspector(cx);
     }
 
     /// Make the tab `id` the active one, for a control on its own card or
@@ -708,6 +717,7 @@ impl Browser {
                 self.apply_visibility(cx);
             }
             self.sync_chrome(window, cx);
+            self.sync_inspector(cx);
         }
         if itself && index == self.active {
             self.focus_content(window, cx);
@@ -793,6 +803,7 @@ impl Browser {
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
+        self.sync_inspector(cx);
     }
 
     /// Load what an asleep tab shows. Its page or results replace nothing:
@@ -897,9 +908,11 @@ impl Browser {
                 }
             },
         }
-        let tab = &mut self.tabs[index];
-        tab.requested = Some(url);
-        tab.showing = Showing::Page;
+        self.tabs[index].requested = Some(url);
+        self.tabs[index].showing = Showing::Page;
+        if index == self.active {
+            self.sync_inspector(cx);
+        }
         true
     }
 
@@ -964,9 +977,6 @@ impl Browser {
         tab.page = Some(page);
         tab.page_shown = true;
         tab._page_events = Some(events);
-        if index == self.active {
-            self.sync_inspector(cx);
-        }
     }
 
     fn page_event(
@@ -1553,22 +1563,24 @@ impl Browser {
 
     fn toggle_console(&mut self, cx: &mut Context<Self>) {
         self.console_open = !self.console_open;
-        if self.console_open {
-            self.sync_inspector(cx);
-        }
+        self.sync_inspector(cx);
         cx.notify();
     }
 
     fn sync_inspector(&mut self, cx: &mut Context<Self>) {
-        if !self.console_open {
-            return;
-        }
-        let target = self
-            .tabs
-            .get(self.active)
-            .and_then(|tab| tab.page.as_ref().map(|page| page.read(cx).webview_id()));
+        let target = self.console_open.then(|| self.displayed_page(cx)).flatten();
         self.inspector
             .update(cx, |inspector, cx| inspector.attach(target, cx));
+    }
+
+    /// The webview on screen. A Start tab or native results keep any old
+    /// page stored, and that page is not the one being displayed.
+    fn displayed_page(&self, cx: &App) -> Option<String> {
+        let tab = self.tabs.get(self.active)?;
+        displayed_page_id(
+            tab.showing,
+            tab.page.as_ref().map(|page| page.read(cx).webview_id()),
+        )
     }
 
     fn toggle_downloads(&mut self, cx: &mut Context<Self>) {
