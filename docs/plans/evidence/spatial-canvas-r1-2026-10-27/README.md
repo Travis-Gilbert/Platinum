@@ -1,5 +1,29 @@
 # R1 verification — 2026-10-27
 
+**Native zoom gate passed on 2026-10-28** ([receipts](zoom-native-2026-10-28/commands.json)).
+Servo `7a28fd822be` on `0ea861a20ac`, Frame `e811f07` on `babc913`; `canvas_check`
+sha256 `a3c66391…99412`, rebuilt from this worktree through the wrapper (33.4 s,
+only `frame-profile` and `frame` recompiled, every Servo path in its `.d` file under
+`deps/servo-r1`).
+
+- One run, no retry: the zoom case took **8.4 s**, the whole runner **9 s**. The
+  display was unlocked, the window kept the key window for all 203 foreground polls
+  (largest gap 120 ms), and `acceptance.json` passed its session, input and resize gates.
+- Zooms 1, 0.35, 2, 1: `innerWidth`×`innerHeight` stayed **1280×800** at every
+  gesture and settled snapshot and in all **100** animation-frame samples over
+  3.3 s. **Zero** `resize` events, the same document id, no navigation.
+- `devicePixelRatio` read 1.40625, 0.70, 1.40625, 1.40625. That is
+  `settled_scale`'s cap, not drift: the 900×650-point window at 2× holds 1800
+  device pixels across a 1280-CSS-pixel card, so the raster scale is capped at
+  1800 / 1280 at zoom 1 and 2.
+- The probe page's text renders near-white on the card's white background. M1's
+  `native-complete-2026-10-27` capture shows the same, so R1 did not cause it.
+  The page sets `color-scheme: light dark`, Frame runs dark, and the card is
+  painted white. It is a separate finding.
+
+The rest of this file is the 2026-10-27 record, written before the commits and
+before R1 was rebased onto the converged Servo.
+
 **Implemented and left uncommitted** in Servo `feat/viewport-css-size` (base
 `2b522612c4d`) and Frame `feat/canvas-viewport` (base `89264e4`). Frame's existing
 Cargo path change is preserved. No native window checks ran.
@@ -45,7 +69,8 @@ Wall times include Cargo overhead. Only these nine Servo tests were selected.
 - [x] Requested zoom dry-run: **0.179 s**, passed. Only `zoom-probe.html`,
   `127.0.0.1`, shared example binary, zooms `1,0.35,2,1`, a fresh evidence directory;
   stop on first failure. Zero windows; no server or caffeinate started.
-- [ ] Native zoom, surface, sign-in and measurement: **not run**, orchestrator-owned.
+- [x] Native zoom: **passed 2026-10-28**, see the top of this file. Surface,
+  sign-in and measurement cases were not part of R1's gate and did not run.
 
 Earlier receipts are retained: initial Servo loader failure **5.165 s**;
 combined Servo invocation **254.853 s** (one pass, eight process-global
