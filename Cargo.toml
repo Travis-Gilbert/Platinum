@@ -24,7 +24,7 @@ exclude = ["deps"]
 gpui-kit = "=0.8.0"
 gpui-whiteboard = { path = "vendor/gpui-whiteboard" }
 # Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
-servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
+servo = { path = "deps/servo-r1/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
