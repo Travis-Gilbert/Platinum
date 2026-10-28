@@ -16,8 +16,9 @@
 //!
 //! The sidebar (`browser/sidebar.rs`), when it is open, shows the same tabs
 //! as a tree instead of rows, under the pinned sites. A pinned site owns one
-//! tab, outside the tree. Tabs come back after a restart asleep: each loads
-//! its page once it is the active tab.
+//! tab, outside the tree. Tabs come back after a restart in the groups and
+//! splits they were in, asleep: each loads its page once it is the active
+//! tab.
 //!
 //! SOURCING: GPUI Kit's base `DockArea` for the tab layout, drag and drop
 //! and splits; GPUI Kit's `TitleBar`, folder `TabBar`/`Tab`, `Toolbar`,
@@ -32,9 +33,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
-use gpui_kit::base::dock::{
-    DockArea, DockEvent, DockLayout, DragPanel, NodeId, PanelId, TabGroupContext,
-};
+use gpui_kit::base::dock::{DockArea, DockEvent, DragPanel, NodeId, PanelId, TabGroupContext};
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::command::CommandState;
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
@@ -74,7 +73,7 @@ use crate::icons;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
 use crate::serp::{Serp, SerpEvent, SerpMode};
-use crate::session::{Content, Pin, SavedTab, Session, Snapshot, Store};
+use crate::session::{Content, Layout, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
@@ -457,8 +456,8 @@ impl Browser {
         browser
     }
 
-    /// The tabs `session` saved, asleep, in their dock order and their tree;
-    /// or a start tab when there are none.
+    /// The tabs `session` saved, asleep, laid out as the dock held them and
+    /// in their tree; or a start tab when there are none.
     fn restore(
         session: Session,
         pins: &[Pin],
@@ -485,33 +484,27 @@ impl Browser {
             tree.set_collapsed(tab.id, tab.collapsed);
             tree.rename(tab.id, tab.name.clone());
         }
-        // The dock's order as it was, then any tab it missed.
-        let mut order: Vec<u64> = Vec::new();
-        for id in session.dock.iter().chain(saved.iter().map(|tab| &tab.id)) {
-            if !order.contains(id) && saved.iter().any(|tab| tab.id == *id) {
-                order.push(*id);
-            }
-        }
+        // The dock's groups and splits as they were, any tab they missed in
+        // the last group.
+        let ids: Vec<u64> = saved.iter().map(|tab| tab.id).collect();
+        let layout = session.dock.settle(&ids);
         let browser = cx.weak_entity();
-        let mut tabs = Vec::with_capacity(order.len());
-        let mut previous: Option<PanelId> = None;
-        for id in order {
+        let mut tabs = Vec::with_capacity(ids.len());
+        let mut panels = HashMap::new();
+        for id in layout.tabs() {
             let Some(saved) = saved.iter().find(|tab| tab.id == id) else {
                 continue;
             };
             let panel = cx.new(|cx| TabPanel::new(browser.clone(), window, cx));
-            dock.update(cx, |dock, cx| match previous {
-                None => {
-                    dock.set_center(DockLayout::tabs().panel(panel.clone()), window, cx);
-                }
-                Some(anchor) => dock::place(dock, panel.clone(), anchor, true, window, cx),
-            });
-            previous = Some(PanelId::from(panel.entity_id()));
+            panels.insert(id, panel.clone());
             let mut tab = Tab::start(id, panel);
             tab.pin = pinned(saved);
             tab.asleep = (saved.content != Content::Start).then(|| saved.content.clone());
             tabs.push(tab);
         }
+        dock.update(cx, |dock, cx| {
+            dock.set_center(dock::build(&layout, &panels), window, cx)
+        });
         Restored {
             tabs,
             tree,
@@ -1338,10 +1331,16 @@ impl Browser {
             sidebar_width: Some(f32::from(self.sidebar_width)),
             active: self.tabs.get(self.active).map(|tab| tab.id),
             tabs,
-            dock: self.tabs.iter().map(|tab| tab.id).collect(),
+            dock: self.layout(cx),
         };
         let snapshot = store.snapshot(session, icons, hosts);
         Some((store, snapshot))
+    }
+
+    /// How the dock holds the tabs, as the session keeps it.
+    fn layout(&self, cx: &App) -> Layout {
+        let tab_of = |panel| Some(self.tabs[self.panel_index(panel)?].id);
+        dock::layout(self.dock.read(cx), tab_of, cx)
     }
 
     /// Keep the icon of the site a tab shows, for while its page loads or

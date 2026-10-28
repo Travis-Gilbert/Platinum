@@ -60,8 +60,9 @@ default search engine, with its results page drawn natively.
   on the tray or the sidebar's pins pins a site; right-click a pin to Unpin
   it.
 - Frame reopens the tabs it had, in their tree with their names and folds,
-  and the sidebar as it was, at its width. Each tab loads its page once it
-  is the active tab, showing its site's icon kept from before.
+  side by side as they were, and the sidebar as it was, at its width. Each
+  tab loads its page once it is the active tab, showing its site's icon kept
+  from before.
 - Drag a tab along its row to reorder it, onto another row to move it there,
   or onto the left, right, top or bottom of a page to see the two side by
   side. Each side keeps its own row of tabs; click a page to make it current.

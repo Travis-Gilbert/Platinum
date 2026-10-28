@@ -9,11 +9,13 @@
 //! does not fit: it has no segmented tabs, no room for the traffic lights,
 //! no window-drag strip, and it draws panel chrome of its own.
 
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use gpui_kit::base::dock::{
-    DockArea, DockAreaRenderer, DockPlacement, DropIndicator, InsertTarget, NodeId, PaneNode,
-    PaneRef, Panel, PanelEvent, PanelId, TabGroupContext, TabGroupRenderer,
+    DockArea, DockAreaRenderer, DockLayout, DockPlacement, DropIndicator, InsertTarget, NodeId,
+    PaneNode, PaneRef, Panel, PanelEvent, PanelId, PanelInfo, PanelState, TabGroupContext,
+    TabGroupRenderer,
 };
 use gpui_kit::base::{ResizeHandleContext, spring};
 use gpui_kit::component::ActiveTheme as _;
@@ -25,6 +27,7 @@ use gpui_kit::{
 };
 
 use super::Browser;
+use crate::session::Layout;
 
 /// The frame of window chrome around each card.
 pub const FRAME: f32 = 6.;
@@ -35,6 +38,7 @@ pub const DRAG_PREVIEW: gpui_kit::Size<Pixels> = size(px(120.), px(28.));
 /// A tab, as the dock holds it. What it draws is the browser's.
 pub struct TabPanel {
     browser: WeakEntity<Browser>,
+    id: PanelId,
     focus_handle: FocusHandle,
     _focus: [Subscription; 2],
 }
@@ -55,6 +59,7 @@ impl TabPanel {
         });
         Self {
             browser,
+            id,
             focus_handle,
             _focus: [focused, focus_in],
         }
@@ -74,6 +79,13 @@ impl Panel for TabPanel {
 
     fn zoomable(&self, _: &App) -> bool {
         false
+    }
+
+    /// Its id, which `layout` reads back as its tab.
+    fn dump(&self, _: &App) -> PanelState {
+        let mut state = PanelState::new(self.panel_name());
+        state.info = PanelInfo::panel(self.id.as_u64().into());
+        state
     }
 }
 
@@ -159,6 +171,74 @@ pub fn top_row(dock: &DockArea) -> Vec<NodeId> {
         walk(tree.root(), true, &mut out);
     }
     out
+}
+
+/// The dock's layout, with each tab by `tab_of` its panel and each split's
+/// children at the sizes they were last drawn, which the dock's own dump
+/// measures: its layout tree learns of a resize only from a drag.
+pub fn layout(dock: &DockArea, tab_of: impl Fn(PanelId) -> Option<u64>, cx: &App) -> Layout {
+    fn read(state: &PanelState, tab_of: &dyn Fn(PanelId) -> Option<u64>) -> Layout {
+        match &state.info {
+            PanelInfo::Stack { sizes, .. } => {
+                let mut children: Vec<(Layout, Option<f32>)> = state
+                    .children
+                    .iter()
+                    .zip(sizes)
+                    .map(|(child, size)| (read(child, tab_of), Some(size.as_f32())))
+                    .collect();
+                // The window's whole area is a split, of one group or more.
+                if children.len() == 1 {
+                    return children.remove(0).0;
+                }
+                Layout::Split {
+                    vertical: state.info.axis() == Some(Axis::Vertical),
+                    children,
+                }
+            }
+            PanelInfo::Tabs { active_index } => {
+                let tabs: Vec<Option<u64>> = state
+                    .children
+                    .iter()
+                    .map(|panel| match &panel.info {
+                        PanelInfo::Panel(id) => tab_of(PanelId::from_u64(id.as_u64()?)),
+                        _ => None,
+                    })
+                    .collect();
+                let shown = tabs.get(*active_index).copied().flatten();
+                let tabs: Vec<u64> = tabs.into_iter().flatten().collect();
+                Layout::Group {
+                    shown: shown
+                        .and_then(|shown| tabs.iter().position(|id| *id == shown))
+                        .unwrap_or(0),
+                    tabs,
+                }
+            }
+            PanelInfo::Panel(_) => Layout::default(),
+        }
+    }
+    read(&dock.dump(cx).center, &tab_of)
+}
+
+/// What the dock takes to lay out the tabs as `layout` says, with each tab's
+/// panel from `panels`.
+pub fn build(layout: &Layout, panels: &HashMap<u64, Entity<TabPanel>>) -> DockLayout {
+    match layout {
+        Layout::Split { vertical, children } => {
+            let split = if *vertical {
+                DockLayout::v_split()
+            } else {
+                DockLayout::h_split()
+            };
+            children.iter().fold(split, |split, (child, size)| {
+                split.child(build(child, panels), size.map(px))
+            })
+        }
+        Layout::Group { tabs, shown } => tabs
+            .iter()
+            .filter_map(|id| panels.get(id).cloned())
+            .fold(DockLayout::tabs(), |group, panel| group.panel(panel))
+            .active_index(*shown),
+    }
 }
 
 /// Put a new tab in `anchor`'s group, right after it or at the end of the

@@ -22,7 +22,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 use gpui_kit::{App, Global, RenderImage};
 use serde_json::Value;
 
-pub use self::format::{Content, Pin, SavedTab, Session};
+pub use self::format::{Content, Layout, Pin, SavedTab, Session};
 
 const PINS: &str = "pins.json";
 const SESSION: &str = "session.json";
@@ -222,7 +222,7 @@ mod tests {
             sidebar_width: Some(sidebar_width),
             active: None,
             tabs: Vec::new(),
-            dock: Vec::new(),
+            dock: Layout::default(),
         }
     }
 

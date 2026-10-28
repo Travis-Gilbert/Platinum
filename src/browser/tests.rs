@@ -18,7 +18,7 @@ use url::Url;
 use super::{Browser, Showing};
 use crate::downloads::DownloadState;
 use crate::navigator::{Pick, Placement, TabAction};
-use crate::session::{self, Content, Pin};
+use crate::session::{self, Content, Layout, Pin};
 use crate::tabtree::Place;
 use crate::theme::{self, Appearance};
 
@@ -1019,5 +1019,85 @@ fn the_tree_and_the_sidebar_survive_a_restart(cx: &mut TestAppContext) {
     let saved = session::parse_session(&saved).expect("Frame's session");
     assert_eq!(saved.tabs.len(), 4);
     assert!(saved.sidebar);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A layout's two side-by-side groups, and the left one's share of the width.
+fn halves(layout: &Layout) -> (&Layout, &Layout, f32) {
+    let Layout::Split {
+        vertical: false,
+        children,
+    } = layout
+    else {
+        panic!("side by side: {layout:?}")
+    };
+    let [(left, Some(l)), (right, Some(r))] = &children[..] else {
+        panic!("two groups, each drawn at a size: {children:?}")
+    };
+    (left, right, l / (l + r))
+}
+
+#[gpui_kit::test]
+fn a_split_survives_a_restart(cx: &mut TestAppContext) {
+    let dir = data_dir("split-restart");
+    // Saved from a wider window than the test's 1000pt.
+    std::fs::write(
+        dir.join("session.json"),
+        r#"{
+            "version": 1,
+            "active": 3,
+            "tabs": [{ "id": 1 }, { "id": 2 }, { "id": 3 }],
+            "dock": {
+                "split": "horizontal",
+                "sizes": [900, 600],
+                "children": [
+                    { "tabs": [1, 2], "shown": 1 },
+                    { "tabs": [3], "shown": 0 }
+                ]
+            }
+        }"#,
+    )
+    .unwrap();
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+
+    assert_eq!(ids(&browser, cx), [1, 2, 3]);
+    assert_eq!(active_id(&browser, cx), 3);
+    let shown: Vec<u64> = cx.update(|_, cx| {
+        let browser = browser.read(cx);
+        let tab_of = |panel| Some(browser.tabs[browser.panel_index(panel)?].id);
+        browser
+            .displayed
+            .iter()
+            .filter_map(|panel| tab_of(*panel))
+            .collect()
+    });
+    assert_eq!(shown, [2, 3], "each group shows the tab it did");
+    let layout = cx.update(|_, cx| browser.read(cx).layout(cx));
+    let (left, right, share) = halves(&layout);
+    let group = |tabs: &[u64], shown| Layout::Group {
+        tabs: tabs.to_vec(),
+        shown,
+    };
+    assert_eq!(left, &group(&[1, 2], 1));
+    assert_eq!(right, &group(&[3], 0));
+    assert!(
+        (share - 0.6).abs() < 0.02,
+        "the left card keeps its share of a narrower window: {share}"
+    );
+
+    // A new tab joins the right-hand group; the split is written as it is.
+    keys(cx, "cmd-t");
+    cx.executor().advance_clock(Duration::from_secs(2));
+    cx.run_until_parked();
+    let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
+    let saved = session::parse_session(&saved).expect("Frame's session");
+    let (left, right, share) = halves(&saved.dock);
+    assert_eq!(left, &group(&[1, 2], 1));
+    let Layout::Group { tabs, shown: 1 } = right else {
+        panic!("the new tab shown beside 3: {right:?}")
+    };
+    assert_eq!(tabs[0], 3);
+    assert!((share - 0.6).abs() < 0.02, "saved at its share: {share}");
     let _ = std::fs::remove_dir_all(&dir);
 }
