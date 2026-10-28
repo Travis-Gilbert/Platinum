@@ -10,8 +10,10 @@ default search engine, with its results page drawn natively.
 ## Using it
 
 - **Right-click** anywhere: a menu opens at the pointer with its search field
-  first and already focused. Type to filter the page's own entries, your tabs
-  and Frame's commands, or to open an address, search the web, or Ask.
+  first and already focused, over the page's own entries and Frame's tools.
+  Type to filter those and find your tabs and every command, or to open an
+  address, search the web, or Ask. Right-click a tab for its own entries:
+  Rename, Pin Tab, Close Tab and, for a branch, Close Branch.
 - **⌘K** opens the same search as a palette, also when the toolbar is hidden.
 - **⌘L** focuses the address bar. An address opens; anything else searches.
   A leading `?` always searches. ⌘Return opens in a new tab. Away from the
@@ -43,8 +45,8 @@ default search engine, with its results page drawn natively.
   icons, and under them the tabs as a tree, in place of the rows along the
   top. A page's links that open new tabs, and results opened in a new tab,
   hang under the tab they came from; ⌘T starts a new branch at the top. A
-  row's chevron folds its branch. Right-click a row to Rename it, Pin its
-  site, Close it, or Close Branch: it and every tab under it. Drag a row
+  row's chevron folds its branch. Right-click a row to fold it, Pin it,
+  Rename it, Close it, or Close Branch: it and every tab under it. Drag a row
   onto another's top or bottom edge to put it beside that one, onto its
   middle to put it inside, onto New Tab to bring it to the top level, onto
   the pins to pin it, or onto a page's edge to see the two side by side, as
@@ -54,8 +56,9 @@ default search engine, with its results page drawn natively.
   Without the sidebar they sit in a tray at the start of the first row of
   tabs, as in Dia. A pin's button opens the site, or goes to its tab once
   open; closing that tab leaves the pin. The tray's pin button, File > Pin
-  Tab, the palette, a row's Pin Site, or dropping a tab on the tray or the
-  sidebar's pins pins a site; right-click a pin to Unpin it.
+  Tab, the palette, Pin Tab in a tab's right-click menu, or dropping a tab
+  on the tray or the sidebar's pins pins a site; right-click a pin to Unpin
+  it.
 - Frame reopens the tabs it had, in their tree with their names and folds,
   and the sidebar as it was, at its width. Each tab loads its page once it
   is the active tab, showing its site's icon kept from before.

@@ -658,8 +658,9 @@ impl Browser {
         }
     }
 
-    /// The navigator at the pointer, with the entries for the tab `id`.
-    fn open_tab_menu(
+    /// The navigator at the pointer, with the entries for the tab `id`, from
+    /// its sidebar row or its tab in a row.
+    pub(super) fn open_tab_menu(
         &mut self,
         id: u64,
         position: Point<Pixels>,
@@ -671,7 +672,8 @@ impl Browser {
         };
         let branch = self.tree.has_children(id);
         let mut actions = Vec::new();
-        if branch {
+        // Only the sidebar shows a branch folded.
+        if branch && self.sidebar {
             let collapsed = self.tree.node(id).is_some_and(|node| node.collapsed);
             actions.push(if collapsed {
                 TabAction::Unfold(id)

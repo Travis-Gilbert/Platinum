@@ -1423,6 +1423,33 @@ impl Browser {
         cx.notify();
     }
 
+    /// The open tabs, as the navigator lists them.
+    fn navigator_tabs(&self, cx: &App) -> Vec<TabEntry> {
+        self.tabs
+            .iter()
+            .enumerate()
+            .map(|(index, tab)| TabEntry {
+                id: tab.id,
+                title: tab.title(cx),
+                address: tab.address(cx),
+                icon: tab.icon(),
+                active: index == self.active,
+            })
+            .collect()
+    }
+
+    fn navigator_state<'a>(&self, tabs: &'a [TabEntry], cx: &App) -> navigator::BrowserState<'a> {
+        navigator::BrowserState {
+            tabs,
+            compact: self.compact,
+            appearance: theme::appearance(cx),
+            ask: self.ask,
+            shareable: self.share_url(self.active, cx).is_some(),
+            sidebar: self.sidebar,
+            pinnable: self.tabs[self.active].pinnable_url(cx).is_some(),
+        }
+    }
+
     fn picked(&mut self, pick: Pick, window: &mut Window, cx: &mut Context<Self>) {
         match pick {
             Pick::Page(action) => {
@@ -1731,6 +1758,16 @@ impl Browser {
                     .on_click(cx.listener(move |browser, _, window, cx| {
                         browser.activate_id(id, window, cx)
                     }))
+                    .on_mouse_down(
+                        MouseButton::Right,
+                        cx.listener(move |browser, event: &MouseDownEvent, window, cx| {
+                            // Not the window's menu, and the cursor stays in
+                            // the navigator's search field.
+                            window.prevent_default();
+                            cx.stop_propagation();
+                            browser.open_tab_menu(id, event.position, window, cx);
+                        }),
+                    )
                     .when_some(drag, |item, drag| {
                         item.on_drag(drag, move |drag, offset, _, cx| {
                             cx.stop_propagation();
@@ -2503,27 +2540,8 @@ impl Render for Browser {
         let theme = cx.theme().clone();
         let browser = cx.entity().downgrade();
         let navigator = self.navigator.as_ref().map(|(navigator, _)| {
-            let tabs: Vec<TabEntry> = self
-                .tabs
-                .iter()
-                .enumerate()
-                .map(|(index, tab)| TabEntry {
-                    id: tab.id,
-                    title: tab.title(cx),
-                    address: tab.address(cx),
-                    icon: tab.icon(),
-                    active: index == self.active,
-                })
-                .collect();
-            let state = navigator::BrowserState {
-                tabs: &tabs,
-                compact: self.compact,
-                appearance: theme::appearance(cx),
-                ask: self.ask,
-                shareable: self.share_url(self.active, cx).is_some(),
-                sidebar: self.sidebar,
-                pinnable: self.tabs[self.active].pinnable_url(cx).is_some(),
-            };
+            let tabs = self.navigator_tabs(cx);
+            let state = self.navigator_state(&tabs, cx);
             let on_pick = {
                 let browser = browser.clone();
                 move |pick, window: &mut Window, cx: &mut App| {

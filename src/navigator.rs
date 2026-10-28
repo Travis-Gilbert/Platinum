@@ -5,9 +5,10 @@
 //! is on screen.
 //!
 //! The list is local first: the page's own context menu entries, or those
-//! of the tab or pinned site under the pointer, the open tabs (Switch),
-//! Frame's commands, and only then the web (RustyWeb search, and Ask, which
-//! is the one explicit AI entry).
+//! of the tab or pinned site under the pointer, the open tabs (Switch; in
+//! the right-click menu only once the person types), Frame's commands, and
+//! only then the web (RustyWeb search, and Ask, which is the one explicit AI
+//! entry).
 //!
 //! SOURCING: GPUI Kit's `Command` (search field, groups, keyboard selection,
 //! filtering, keybinding hints) inside GPUI's `anchored` / `deferred`
@@ -81,7 +82,7 @@ impl TabAction {
             Self::Fold(_) => "Collapse Branch",
             Self::Unfold(_) => "Expand Branch",
             Self::Rename(_) => "Rename...",
-            Self::Pin(_) => "Pin Site",
+            Self::Pin(_) => "Pin Tab",
             Self::Unpin(_) => "Unpin Site",
         }
     }
@@ -188,8 +189,11 @@ impl Navigator {
             picks.push(menu.actions.iter().copied().map(Pick::Tab).collect());
         }
 
+        let pointer = matches!(self.placement, Placement::Pointer(_));
+        // The right-click menu leads with what can be done: its tabs show only
+        // once the person types. The palette keeps them, as a switcher.
         let mut tabs = None;
-        if !browser.tabs.is_empty() {
+        if !browser.tabs.is_empty() && (typing || !pointer) {
             let mut group = CommandGroup::new().label("Tabs");
             let mut group_picks = Vec::new();
             for tab in browser.tabs {
@@ -205,15 +209,14 @@ impl Navigator {
             tabs = Some((group, group_picks));
         }
         // Filtering keeps the groups' order and Enter takes the first match.
-        // Untyped, the tabs come first as a switcher; typed, a query that
-        // names a command means the command ("new tab" over a start tab
+        // Untyped, the palette's tabs come first as a switcher; typed, a query
+        // that names a command means the command ("new tab" over a start tab
         // titled "New Tab"), and one that only matches tabs still finds them.
         if !typing && let Some((group, group_picks)) = tabs.take() {
             groups.push(group);
             picks.push(group_picks);
         }
 
-        let pointer = matches!(self.placement, Placement::Pointer(_));
         // (label, icon, action, shown untyped in the right-click menu, checked)
         let mut commands: Vec<(SharedString, Icon, Box<dyn Action>, bool, bool)> = vec![
             ("New Tab".into(), icons::page(), Box::new(NewTab), true, false),
@@ -246,7 +249,8 @@ impl Navigator {
                 false,
             ),
         ];
-        if browser.pinnable {
+        // A tab's own menu pins that tab, which may not be the active one.
+        if browser.pinnable && self.tab.is_none() {
             commands.push((
                 "Pin Tab".into(),
                 icons::pin(),

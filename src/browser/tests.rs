@@ -76,6 +76,25 @@ fn query(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> String {
     })
 }
 
+/// What the open navigator offers for `query`, group by group.
+fn offered(browser: &Entity<Browser>, query: &str, cx: &mut VisualTestContext) -> Vec<Vec<Pick>> {
+    cx.update(|_, cx| {
+        let browser = browser.read(cx);
+        let (navigator, _) = browser.navigator.as_ref().expect("navigator open");
+        let tabs = browser.navigator_tabs(cx);
+        navigator
+            .entries(query, &browser.navigator_state(&tabs, cx))
+            .1
+    })
+}
+
+fn lists_tabs(groups: &[Vec<Pick>]) -> bool {
+    groups
+        .iter()
+        .flatten()
+        .any(|pick| matches!(pick, Pick::SwitchTab(_)))
+}
+
 fn in_address_bar(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> bool {
     cx.update(|window, cx| browser.read(cx).omnibox.focus_handle(cx).is_focused(window))
 }
@@ -179,6 +198,85 @@ fn right_click_opens_search_at_the_pointer_ready_to_type(cx: &mut TestAppContext
     assert!(cx.debug_bounds("navigator").is_none());
     // The cursor goes back to where it was: the start tab's address bar.
     assert!(in_address_bar(&browser, cx));
+}
+
+#[gpui_kit::test]
+fn the_right_click_menu_leads_with_tools_and_finds_tabs_once_typed(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    right_click(cx, point(px(500.), px(300.)));
+    let untyped = offered(&browser, "", cx);
+    assert!(
+        untyped[0].iter().all(|pick| matches!(pick, Pick::Command)),
+        "Frame's tools come first"
+    );
+    assert!(!lists_tabs(&untyped), "no list of tabs until typing");
+    assert!(lists_tabs(&offered(&browser, "example", cx)));
+
+    // The palette stays a switcher.
+    keys(cx, "escape");
+    keys(cx, "cmd-k");
+    let palette = offered(&browser, "", cx);
+    assert!(
+        palette[0]
+            .iter()
+            .all(|pick| matches!(pick, Pick::SwitchTab(_)))
+    );
+}
+
+#[gpui_kit::test]
+fn a_tabs_right_click_menu_pins_that_tab(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    let [a, b] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    // A page, as a restored session leaves it before it loads, in the tab
+    // that is not active.
+    cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            let index = browser.tab_index(a).unwrap();
+            browser.tabs[index].asleep = Some(Content::Page {
+                url: Url::parse("https://example.org/").unwrap(),
+                title: "Example".into(),
+            });
+            cx.notify();
+        })
+    });
+    assert_eq!(active_id(&browser, cx), b);
+
+    let tab = center_of(cx, format!("tab-{a}"));
+    right_click(cx, tab);
+    let menu = offered(&browser, "", cx);
+    assert!(
+        matches!(
+            menu[0][..],
+            [
+                Pick::Tab(TabAction::Rename(x)),
+                Pick::Tab(TabAction::Pin(y)),
+                Pick::Tab(TabAction::Close(z)),
+            ] if [x, y, z] == [a; 3]
+        ),
+        "the tab's own entries come first"
+    );
+    assert!(!lists_tabs(&menu));
+    assert!(typing_in_navigator(&browser, cx));
+
+    cx.simulate_input("pin");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    let pinned = cx.update(|_, cx| {
+        let pins = &browser.read(cx).pins;
+        pins.iter()
+            .map(|pin| pin.url.to_string())
+            .collect::<Vec<_>>()
+    });
+    assert_eq!(
+        pinned,
+        ["https://example.org/"],
+        "the tab clicked, not the active one"
+    );
+    assert!(!drawn(cx, format!("tab-{a}")), "its tab left the row");
 }
 
 #[gpui_kit::test]
