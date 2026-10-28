@@ -16,6 +16,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use gpui_kit::{App, Global, RenderImage};
@@ -30,7 +31,11 @@ const FAVICONS: &str = "favicons";
 #[derive(Clone)]
 pub struct Store {
     dir: PathBuf,
-    writing: Arc<Mutex<()>>,
+    /// How many snapshots have been gathered.
+    gathered: Arc<AtomicU64>,
+    /// The newest snapshot written, by when it was gathered; writes take
+    /// turns holding it.
+    written: Arc<Mutex<u64>>,
 }
 
 impl Global for Store {}
@@ -38,21 +43,28 @@ impl Global for Store {}
 /// What one save writes: the session, and the icons of the sites it and the
 /// pins name, gathered on the UI thread.
 pub struct Snapshot {
-    pub session: Session,
-    pub icons: Vec<(String, Arc<RenderImage>)>,
+    /// Its place among the snapshots gathered, from 1.
+    order: u64,
+    session: Session,
+    icons: Vec<(String, Arc<RenderImage>)>,
     /// Every site whose icon is kept; the others' are forgotten.
-    pub hosts: HashSet<String>,
+    hosts: HashSet<String>,
 }
 
 /// Keep Frame's state under `data_dir`.
 pub fn init(data_dir: &Path, cx: &mut App) {
-    cx.set_global(Store {
-        dir: data_dir.to_owned(),
-        writing: Arc::default(),
-    });
+    cx.set_global(Store::new(data_dir.to_owned()));
 }
 
 impl Store {
+    fn new(dir: PathBuf) -> Self {
+        Self {
+            dir,
+            gathered: Arc::default(),
+            written: Arc::default(),
+        }
+    }
+
     pub fn global(cx: &App) -> Option<Self> {
         cx.try_global::<Self>().cloned()
     }
@@ -93,11 +105,31 @@ impl Store {
         format::session_from_json(&read_json(&self.dir.join(SESSION))?)
     }
 
-    /// Write what one save gathered. Off the UI thread as a rule; a save at
-    /// quit may start while the one before is still writing, so the two
-    /// take turns.
+    /// What one save writes, in its place among the others. Gather on the
+    /// UI thread, where the tabs change, so the order is theirs.
+    pub fn snapshot(
+        &self,
+        session: Session,
+        icons: Vec<(String, Arc<RenderImage>)>,
+        hosts: HashSet<String>,
+    ) -> Snapshot {
+        Snapshot {
+            order: self.gathered.fetch_add(1, Ordering::Relaxed) + 1,
+            session,
+            icons,
+            hosts,
+        }
+    }
+
+    /// Write what one save gathered. Off the UI thread as a rule, so a save
+    /// at quit can overlap one from before, or one from before can reach
+    /// its turn only after it: writes take turns, and one older than what
+    /// is written already is dropped.
     pub fn save(&self, snapshot: &Snapshot) {
-        let _turn = self.writing.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut written = self.written.lock().unwrap_or_else(PoisonError::into_inner);
+        if snapshot.order <= *written {
+            return;
+        }
         write_json(
             &self.dir.join(SESSION),
             &format::session_to_json(&snapshot.session),
@@ -106,6 +138,7 @@ impl Store {
             self.save_favicon(host, icon);
         }
         self.keep_favicons(&snapshot.hosts);
+        *written = snapshot.order;
     }
 
     pub fn load_favicon(&self, host: &str) -> Option<Arc<RenderImage>> {
@@ -176,15 +209,40 @@ fn read_json(path: &Path) -> Option<Value> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn a_broken_pins_file_is_set_aside_before_it_can_be_written_over() {
-        let dir = std::env::temp_dir().join(format!("frame-pins-{}", std::process::id()));
+    fn store(test: &str) -> (Store, PathBuf) {
+        let dir = std::env::temp_dir().join(format!("frame-{test}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
-        let store = Store {
-            dir: dir.clone(),
-            writing: Arc::default(),
-        };
+        (Store::new(dir.clone()), dir)
+    }
+
+    fn session(sidebar_width: f32) -> Session {
+        Session {
+            sidebar: false,
+            sidebar_width: Some(sidebar_width),
+            active: None,
+            tabs: Vec::new(),
+            dock: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn a_save_older_than_the_one_written_is_dropped() {
+        let (store, dir) = store("save-order");
+        let older = store.snapshot(session(200.), Vec::new(), HashSet::new());
+        let newer = store.snapshot(session(300.), Vec::new(), HashSet::new());
+        // The save at quit finishes first; the one from before reaches its
+        // turn after.
+        store.save(&newer);
+        store.save(&older);
+        let written = read_json(&dir.join(SESSION)).unwrap();
+        assert_eq!(written["sidebar_width"], 300.);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_broken_pins_file_is_set_aside_before_it_can_be_written_over() {
+        let (store, dir) = store("pins");
         assert!(store.load_pins().is_empty(), "no file, no pins");
         assert!(!dir.join("pins.json.unreadable").exists());
 

@@ -1340,14 +1340,8 @@ impl Browser {
             tabs,
             dock: self.tabs.iter().map(|tab| tab.id).collect(),
         };
-        Some((
-            store,
-            Snapshot {
-                session,
-                icons,
-                hosts,
-            },
-        ))
+        let snapshot = store.snapshot(session, icons, hosts);
+        Some((store, snapshot))
     }
 
     /// Keep the icon of the site a tab shows, for while its page loads or
