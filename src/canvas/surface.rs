@@ -1,5 +1,5 @@
 //! The page's raster scale is independent of its current screen transform.
-//! Servo's two-message resize is deliberately retained until R1.
+//! Servo receives the CSS viewport and settled raster scale in one update.
 use gpui_kit::{Bounds, Pixels, Point, Size, point, px};
 use servo::DevicePoint;
 
@@ -27,7 +27,8 @@ impl SurfaceTransform {
 }
 
 /// Reduce the raster scale uniformly at the device-pixel cap. Clamping the
-/// dimensions alone would change the CSS viewport on this pre-R1 Servo.
+/// dimensions alone would distort the raster. Servo keeps the CSS viewport exact
+/// and rounds the scaled surface dimensions up to whole device pixels.
 pub(crate) fn settled_scale(
     world: Size<Pixels>,
     zoom: f32,
@@ -71,5 +72,16 @@ mod tests {
         let window = size(px(1440.), px(900.));
         assert_eq!(settled_scale(world, 0.35, 2., window), 0.7);
         assert_eq!(settled_scale(world, 2., 2., window), 2.25);
+    }
+
+    #[test]
+    fn cap_reduces_both_axes_when_only_one_dimension_reaches_the_limit() {
+        let world = size(px(1280.), px(800.));
+        let window = size(px(900.), px(650.));
+        let scale = settled_scale(world, 2., 2., window);
+        assert_eq!(scale, 1.40625);
+        assert_eq!((f32::from(world.width) * scale).ceil(), 1800.);
+        assert_eq!((f32::from(world.height) * scale).ceil(), 1125.);
+        assert!(f32::from(world.height) * scale < f32::from(window.height) * 2.);
     }
 }

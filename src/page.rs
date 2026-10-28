@@ -18,7 +18,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use dpi::PhysicalSize;
-use euclid::Scale;
+use euclid::{Scale, Size2D};
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
 use gpui_kit::component::{ActiveTheme as _, Theme as ChromeTheme};
 use gpui_kit::{
@@ -152,7 +152,7 @@ pub struct Page {
     pub(crate) canvas_settled: bool,
     pub(crate) canvas_input: Option<crate::canvas::input::SharedInput>,
     pub(crate) canvas_focus: Option<FocusHandle>,
-    raster_size: Option<PhysicalSize<u32>>,
+    viewport_size: Option<gpui_kit::Size<Pixels>>,
     cursor: CursorStyle,
     /// Keys down now, so another key-down for one of them is a repeat.
     held: HashSet<String>,
@@ -256,7 +256,7 @@ impl Page {
                 canvas_settled: true,
                 canvas_input: None,
                 canvas_focus: None,
-                raster_size: None,
+                viewport_size: None,
                 webview,
                 delegate,
                 context,
@@ -920,17 +920,18 @@ impl Page {
             self.canvas_zoom = 1.;
             (bounds.size, scale)
         };
-        let pixels = PhysicalSize::new(
-            (f32::from(world.width) * scale).round().max(1.) as u32,
-            (f32::from(world.height) * scale).round().max(1.) as u32,
-        );
-        if self.scale == scale && self.raster_size == Some(pixels) { return; }
-        if self.scale != scale {
-            self.webview.set_hidpi_scale_factor(Scale::new(scale));
+        if self.scale == scale && self.viewport_size == Some(world) {
+            return;
         }
-        self.webview.resize(pixels);
+        let css_size = Size2D::new(f32::from(world.width), f32::from(world.height));
+        // `set_viewport` panics unless both sides are finite and positive.
+        let usable = |side: f32| side.is_finite() && side > 0.;
+        if !(usable(css_size.width) && usable(css_size.height)) {
+            return;
+        }
+        self.webview.set_viewport(css_size, Scale::new(scale));
         self.scale = scale;
-        self.raster_size = Some(pixels);
+        self.viewport_size = Some(world);
     }
 
     // Input method.

@@ -1,0 +1,939 @@
+   Compiling unicode-ident v1.0.26
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling libc v0.2.189
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling cfg-if v1.0.5
+   Compiling log v0.4.34
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling itoa v1.0.18
+   Compiling fastrand v2.5.0
+   Compiling autocfg v1.5.1
+   Compiling stable_deref_trait v1.2.1
+   Compiling equivalent v1.0.2
+   Compiling strsim v0.11.1
+   Compiling writeable v0.6.4
+   Compiling winnow v1.0.4
+   Compiling litemap v0.8.3
+   Compiling num-traits v0.2.19
+   Compiling siphasher v1.0.4
+   Compiling once_cell v1.21.4
+   Compiling bitflags v2.13.2
+   Compiling phf_shared v0.14.0
+   Compiling version_check v0.9.5
+   Compiling memchr v2.8.3
+   Compiling heck v0.5.0
+   Compiling phf_generator v0.14.0
+   Compiling icu_properties_data v2.1.2
+   Compiling fnv v1.0.7
+   Compiling jobserver v0.1.35
+   Compiling scopeguard v1.2.0
+   Compiling typenum v1.20.1
+   Compiling adler2 v2.0.1
+   Compiling syn v3.0.4
+   Compiling syn v2.0.119
+   Compiling cc v1.5.1
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling foldhash v0.2.0
+   Compiling zmij v1.0.23
+   Compiling crc32fast v1.5.2
+   Compiling rustversion v1.0.23
+   Compiling crossbeam-utils v0.8.23
+   Compiling pin-project-lite v0.2.17
+   Compiling hashbrown v0.17.1
+   Compiling errno v0.3.14
+   Compiling parking_lot_core v0.9.12
+   Compiling core-foundation-sys v0.8.7
+   Compiling simd-adler32 v0.3.10
+   Compiling arrayvec v0.7.8
+   Compiling serde_spanned v1.1.1
+   Compiling indexmap v2.14.2
+   Compiling ident_case v1.0.1
+   Compiling icu_locale_data v2.1.2
+   Compiling encoding_rs v0.8.42
+   Compiling miniz_oxide v0.8.9
+   Compiling new_debug_unreachable v1.0.6
+   Compiling signal-hook-registry v1.4.8
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.3
+   Compiling precomputed-hash v0.1.1
+   Compiling multiversion_no_op v1.0.0
+   Compiling rayon-core v1.13.0
+   Compiling simdutf8 v0.1.5
+   Compiling flate2 v1.1.9
+   Compiling string_cache_codegen v0.11.2
+   Compiling generic-array v0.14.7
+   Compiling libm v0.2.16
+   Compiling rustc-hash v2.1.3
+   Compiling phf_codegen v0.14.0
+   Compiling utf8_iter v1.0.4
+   Compiling thiserror v2.0.21
+   Compiling pkg-config v0.3.34
+   Compiling percent-encoding v2.3.2
+   Compiling crossbeam-epoch v0.9.21
+   Compiling icu_normalizer_data v2.1.1
+   Compiling same-file v1.0.6
+   Compiling walkdir v2.5.0
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling khronos_api v3.1.0
+   Compiling either v1.18.0
+   Compiling crossbeam-deque v0.8.8
+   Compiling rand_core v0.10.1
+   Compiling getrandom v0.4.1
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling form_urlencoded v1.2.2
+   Compiling polycool v0.4.0
+   Compiling fdeflate v0.3.7
+   Compiling dtoa v1.0.11
+   Compiling icu_segmenter_data v2.1.1
+   Compiling xml-rs v0.8.29
+   Compiling dtoa-short v0.3.5
+   Compiling digest v0.10.7
+   Compiling core_maths v0.1.1
+   Compiling synstructure v0.13.2
+   Compiling darling_core v0.20.11
+   Compiling png v0.18.1
+   Compiling web_atoms v0.3.0
+   Compiling aho-corasick v1.1.5
+   Compiling cpufeatures v0.2.17
+   Compiling gl_generator v0.14.0
+   Compiling regex-syntax v0.8.11
+   Compiling rayon v1.12.0
+   Compiling crossbeam-channel v0.5.17
+   Compiling core-foundation v0.9.4
+   Compiling time-core v0.1.9
+   Compiling serde_derive v1.0.229
+   Compiling zerovec-derive v0.11.6
+   Compiling displaydoc v0.2.7
+   Compiling bytemuck_derive v1.12.1
+   Compiling thiserror-impl v2.0.21
+   Compiling zerofrom-derive v0.1.7
+   Compiling yoke-derive v0.8.2
+   Compiling darling_macro v0.20.11
+   Compiling phf_macros v0.14.0
+   Compiling tokio-macros v2.7.2
+   Compiling bytemuck v1.25.2
+   Compiling derive_more-impl v2.1.1
+   Compiling darling v0.20.11
+   Compiling cssparser-macros v0.7.1
+   Compiling regex-automata v0.4.18
+   Compiling zerofrom v0.1.8
+   Compiling phf v0.14.0
+   Compiling foreign-types-macros v0.2.4
+   Compiling thin-vec v0.2.20
+   Compiling yoke v0.8.3
+   Compiling smallbitvec v2.6.1
+   Compiling num-conv v0.2.2
+   Compiling font-types v0.12.5
+   Compiling base64 v0.23.1
+   Compiling bitflags v1.3.2
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling lazy_static v1.5.0
+   Compiling mime v0.3.17
+   Compiling foreign-types-shared v0.3.1
+   Compiling core-graphics-types v0.1.3
+   Compiling foreign-types v0.5.0
+   Compiling toml v1.1.6+spec-1.1.0
+   Compiling zerovec v0.11.8
+   Compiling zerotrie v0.2.5
+   Compiling time-macros v0.2.32
+   Compiling read-fonts v0.41.0
+   Compiling to_shmem_derive v0.2.0
+   Compiling malloc_size_of_derive v0.1.3
+   Compiling stylo v0.22.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/support/downstream/vendor/stylo)
+   Compiling glslopt v0.1.14
+   Compiling deranged v0.5.8
+   Compiling num-integer v0.1.47
+   Compiling num_cpus v1.17.0
+   Compiling num_threads v0.1.7
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling derive_more v2.1.1
+   Compiling slotmap v1.1.1
+   Compiling powerfmt v0.2.0
+   Compiling icu_locale_core v2.3.0
+   Compiling icu_collections v2.1.1
+   Compiling zune-core v0.5.3
+   Compiling regex v1.13.1
+   Compiling weezl v0.1.12
+   Compiling base64 v0.22.1
+   Compiling quick-error v2.0.1
+   Compiling float-cmp v0.9.0
+   Compiling time v0.3.55
+   Compiling strict-num v0.1.1
+   Compiling zune-jpeg v0.5.15
+   Compiling stylo_static_prefs v0.22.0
+   Compiling core-graphics v0.23.2
+   Compiling color v0.3.3
+   Compiling icu_provider v2.3.1
+   Compiling smallvec v1.16.2
+   Compiling bytes v1.12.1
+   Compiling euclid v0.22.14
+   Compiling unicode-bidi v0.3.18
+   Compiling lock_api v0.4.14
+   Compiling icu_locale v2.1.1
+   Compiling icu_normalizer v2.1.1
+   Compiling parking_lot v0.12.5
+   Compiling icu_properties v2.1.2
+   Compiling http v1.5.0
+   Compiling string_cache v0.11.0
+   Compiling tokio v1.53.1
+   Compiling app_units v0.7.8
+   Compiling kurbo v0.13.1
+   Compiling cssparser v0.38.0
+   Compiling servo_arc v0.5.0
+   Compiling icu_segmenter v2.1.2
+   Compiling idna_adapter v1.2.1
+   Compiling idna v1.1.0
+   Compiling to_shmem v0.6.0
+   Compiling tendril v0.5.1
+   Compiling selectors v0.41.0
+   Compiling url v2.5.8
+   Compiling peek-poke-derive v0.3.0
+   Compiling chacha20 v0.10.2
+   Compiling stylo_atoms v0.22.0
+   Compiling serde_bytes v0.11.19
+   Compiling color_quant v1.1.0
+   Compiling linebender_resource_handle v0.1.1
+   Compiling byteorder v1.5.0
+   Compiling void v1.0.2
+   Compiling byteorder-lite v0.1.0
+   Compiling arrayref v0.3.9
+   Compiling sha1_smol v1.0.1
+   Compiling tiny-skia-path v0.12.0
+   Compiling peniko v0.6.1
+   Compiling image-webp v0.2.4
+   Compiling uuid v1.26.1
+   Compiling gif v0.14.2
+   Compiling rand v0.10.3
+   Compiling peek-poke v0.3.0
+   Compiling stylo_malloc_size_of v0.22.0
+   Compiling markup5ever v0.40.0
+   Compiling wr_malloc_size_of v0.2.2
+   Compiling guillotiere v0.7.0
+   Compiling build-parallel v0.1.2
+   Compiling webrender_build v0.70.0
+   Compiling strum_macros v0.28.0
+   Compiling gleam v0.15.1
+   Compiling malloc_buf v0.0.6
+   Compiling memmap2 v0.9.11
+   Compiling zeitstempel v0.2.2
+   Compiling cookie v0.18.2
+   Compiling unic-common v0.9.0
+   Compiling tinyvec v1.13.3
+   Compiling unic-char-range v0.9.0
+   Compiling fearless_simd v0.4.1
+   Compiling unic-char-property v0.9.0
+   Compiling fontdb v0.24.0
+   Compiling unic-ucd-version v0.9.0
+   Compiling webrender_api v0.70.0
+   Compiling objc v0.2.7
+   Compiling skrifa v0.44.0
+   Compiling harfrust v0.12.0
+   Compiling svgtypes v0.16.1
+   Compiling strum v0.28.0
+   Compiling core-text v20.1.0
+   Compiling cobs v0.3.0
+   Compiling itertools v0.14.0
+   Compiling roxmltree v0.21.1
+   Compiling vello_common v0.2.0
+   Compiling simplecss v0.2.2
+   Compiling imagesize v0.15.0
+   Compiling pico-args v0.5.0
+   Compiling tracy-rs v0.1.2
+   Compiling xmlwriter v0.1.0
+   Compiling data-url v0.3.2
+   Compiling unicode-vo v0.1.0
+   Compiling unicode-script v0.5.8
+   Compiling svg_fmt v0.4.5
+   Compiling postcard v1.1.3
+   Compiling etagere v0.2.15
+   Compiling stylo_traits v0.22.0
+   Compiling glifo v0.3.0
+   Compiling usvg v0.48.1
+   Compiling unic-ucd-ident v0.9.0
+   Compiling stylo_dom v0.22.0
+   Compiling tiny-skia v0.12.0
+   Compiling plane-split v0.18.0
+   Compiling bincode v1.3.3
+   Compiling allocator-api2 v0.2.21
+   Compiling rgb v0.8.53
+   Compiling stylo_derive v0.22.0
+   Compiling num-derive v0.4.2
+   Compiling ordered-channel v1.2.0
+   Compiling sha2 v0.10.9
+   Compiling uluru v3.1.0
+   Compiling thread_local v1.1.10
+   Compiling topological-sort v0.1.0
+   Compiling atomic_refcell v0.1.14
+   Compiling unicode-segmentation v1.13.3
+   Compiling static_assertions v1.1.0
+   Compiling content-security-policy v0.9.0
+   Compiling vello_cpu v0.2.0
+   Compiling keyboard-types v0.8.3
+   Compiling urlpattern v0.3.0
+   Compiling wr_glyph_rasterizer v0.70.0
+   Compiling resvg v0.48.1
+   Compiling ipc-channel v0.23.0
+   Compiling taffy v0.14.0
+   Compiling servo-allocator v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/allocator)
+   Compiling serde_json v1.0.151
+   Compiling toml_edit v0.25.15+spec-1.1.0
+   Compiling futures-core v0.3.34
+   Compiling objc2-encode v4.1.0
+   Compiling enumn v0.1.14
+   Compiling accesskit v0.24.0
+   Compiling tracing-attributes v0.1.31
+   Compiling servo-config-macro v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/config/macro)
+   Compiling proc-macro-crate v3.5.0
+   Compiling tracing-core v0.1.36
+   Compiling num_enum_derive v0.7.6
+   Compiling futures-sink v0.3.34
+   Compiling futures-macro v0.3.34
+   Compiling slab v0.4.12
+   Compiling mach2 v0.7.0
+   Compiling futures-task v0.3.34
+   Compiling rustix v1.1.5
+   Compiling objc2 v0.6.4
+   Compiling tracing v0.1.44
+   Compiling httparse v1.10.1
+   Compiling futures-util v0.3.34
+   Compiling atomic-waker v1.1.2
+   Compiling num_enum v0.7.6
+   Compiling futures-channel v0.3.34
+   Compiling servo-config v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/config)
+   Compiling http-body v1.1.0
+   Compiling cmake v0.1.58
+   Compiling dunce v1.0.5
+   Compiling httpdate v1.0.3
+   Compiling fs_extra v1.3.0
+   Compiling getrandom v0.3.4
+   Compiling zerocopy v0.8.59
+   Compiling try-lock v0.2.5
+   Compiling dispatch2 v0.3.1
+   Compiling block2 v0.6.2
+   Compiling want v0.3.1
+   Compiling aws-lc-sys v0.45.0
+   Compiling zerocopy-derive v0.8.59
+   Compiling utf8parse v0.2.2
+   Compiling tokio-util v0.7.19
+   Compiling objc2-core-foundation v0.3.2
+   Compiling unicase v2.9.0
+   Compiling tower-service v0.3.3
+   Compiling headers-core v0.3.0
+   Compiling zeroize_derive v1.5.0
+   Compiling sha1 v0.10.6
+   Compiling mime_guess v2.0.5
+   Compiling anstyle v1.0.14
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstyle-query v1.1.5
+   Compiling pxfm v0.1.30
+   Compiling fax v0.2.7
+   Compiling ipnet v2.12.2
+   Compiling aws-lc-rs v1.18.1
+   Compiling colorchoice v1.0.5
+   Compiling zeroize v1.9.0
+   Compiling h2 v0.4.19
+   Compiling headers v0.4.2
+   Compiling pin-project-internal v1.1.13
+   Compiling cookie v0.16.2
+   Compiling ryu v1.0.23
+   Compiling thiserror v1.0.69
+   Compiling serde_urlencoded v0.7.1
+   Compiling pin-project v1.1.13
+   Compiling anstyle-parse v1.0.0
+   Compiling http-body-util v0.1.5
+   Compiling thiserror-impl v1.0.69
+   Compiling scoped-tls v1.0.1
+   Compiling anstream v1.0.0
+   Compiling objc2-foundation v0.3.2
+   Compiling rustls-pki-types v1.15.1
+   Compiling moxcms v0.8.1
+   Compiling clap_lex v1.1.1
+   Compiling servo-embedder-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/embedder)
+   Compiling cfg_aliases v0.2.2
+   Compiling clap_builder v4.6.7
+   Compiling toml_datetime v0.7.5+spec-1.1.0
+   Compiling cbindgen v0.29.4
+   Compiling untrusted v0.9.0
+   Compiling winnow v0.7.15
+   Compiling inventory v0.3.24
+   Compiling vcpkg v0.2.15
+   Compiling rustls v0.23.45
+   Compiling tempfile v3.23.0
+   Compiling subtle v2.6.1
+   Compiling glob v0.3.4
+   Compiling surfman v0.14.0
+   Compiling raw-window-handle v0.6.2
+   Compiling glow v0.17.0
+   Compiling toml v0.9.12+spec-1.1.0
+   Compiling hyper v1.11.1
+   Compiling half v2.7.1
+   Compiling objc2-metal v0.3.2
+   Compiling clap v4.6.7
+   Compiling tiff v0.11.3
+   Compiling objc2-core-graphics v0.3.2
+   Compiling objc2-quartz-core v0.3.2
+   Compiling objc2-io-surface v0.3.2
+   Compiling cgl v0.3.2
+   Compiling dpi v0.1.2
+   Compiling servo-tracing v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/servo_tracing)
+   Compiling serde_with_macros v3.13.0
+   Compiling hyper-util v0.1.21
+   Compiling image v0.25.10
+   Compiling servo-hyper-serde v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/hyper_serde)
+   Compiling objc2-app-kit v0.3.2
+   Compiling objc2-core-video v0.3.2
+   Compiling serde_with v3.13.0
+   Compiling libz-sys v1.1.29
+   Compiling read-fonts v0.43.3
+   Compiling warp v0.4.3
+   Compiling alloc-no-stdlib v2.0.4
+   Compiling icu_casemap_data v2.1.1
+   Compiling sys-locale v0.3.2
+   Compiling alloc-stdlib v0.2.4
+   Compiling brotli-decompressor v5.0.3
+   Compiling strength_reduce v0.2.4
+   Compiling transpose v0.2.3
+   Compiling icu_casemap v2.1.1
+   Compiling primal-check v0.3.4
+   Compiling num-complex v0.4.6
+   Compiling foldhash v0.1.5
+   Compiling hashbrown v0.15.5
+   Compiling fixedbitset v0.5.7
+   Compiling rustfft v6.4.1
+   Compiling mozjs_icu_collections v153.3.0
+   Compiling wuff-capi v0.2.0
+   Compiling webdriver v0.54.0
+   Compiling petgraph v0.8.3
+   Compiling clang-sys v1.9.1
+   Compiling servo-media-derive v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/servo-media-derive)
+   Compiling speexdsp-resampler v0.1.0
+   Compiling byte-slice-cast v1.2.3
+   Compiling mozjs_icu_normalizer_data v153.3.0
+   Compiling wuff v0.2.9
+   Compiling fontsan v0.7.0
+   Compiling harfbuzz-sys v0.8.0
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling icu_calendar_data v2.1.1
+   Compiling minimal-lexical v0.2.1
+   Compiling nom v7.1.3
+   Compiling realfft v3.5.0
+   Compiling mozjs_utf8_iter v153.3.0
+   Compiling mozjs_utf16_iter v153.3.0
+   Compiling objc2-core-text v0.3.2
+   Compiling write16 v1.0.0
+   Compiling iana-time-zone v0.1.65
+   Compiling hybrid-array v0.4.15
+   Compiling libloading v0.8.9
+   Compiling bindgen v0.72.1
+   Compiling icu_time_data v2.1.1
+   Compiling ohos-deviceinfo-sys v0.1.7
+   Compiling mozjs_icu_collator_data v153.3.0
+   Compiling itertools v0.13.0
+   Compiling ohos-deviceinfo v0.1.0
+   Compiling mozjs_icu_normalizer v153.3.0
+   Compiling skrifa v0.46.2
+   Compiling cexpr v0.6.0
+   Compiling mozjs_locale_glue v153.3.0
+   Compiling mozjs_collator_glue v153.3.0
+   Compiling mozjs_properties_glue v153.3.0
+   Compiling mozjs_unicode_bidi_ffi v153.3.0
+   Compiling mozjs_normalizer_glue v153.3.0
+   Compiling libsqlite3-sys v0.36.0
+   Compiling xattr v1.6.1
+   Compiling calendrical_calculations v0.2.4
+   Compiling itertools v0.15.0
+   Compiling hashbrown v0.16.1
+   Compiling filetime v0.2.29
+   Compiling strck v1.0.0
+   Compiling shlex v1.3.0
+   Compiling webrender v0.70.0
+   Compiling zstd-safe v8.0.0
+   Compiling ixdtf v0.6.6
+   Compiling encoding_c v0.9.8
+   Compiling unicode-properties v0.1.4
+   Compiling encoding_c_mem v0.2.6
+   Compiling diplomat_core v0.14.0
+   Compiling icu_calendar v2.1.1
+   Compiling tar v0.4.46
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling nom v8.0.0
+   Compiling heck v0.4.1
+   Compiling const-oid v0.10.2
+   Compiling object v0.37.3
+   Compiling sea-query-derive v1.0.0
+   Compiling diplomat v0.14.0
+   Compiling digest v0.11.3
+   Compiling mozjs_icu_collator v153.3.0
+   Compiling icu_time v2.1.1
+   Compiling hashlink v0.11.1
+   Compiling html5ever v0.40.1
+   Compiling icu_provider_adapters v2.1.1
+   Compiling arraystring v0.3.0
+   Compiling cpufeatures v0.3.1
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling fallible-iterator v0.3.0
+   Compiling prettyplease v0.2.37
+   Compiling diplomat-runtime v0.14.0
+   Compiling objc-sys v0.3.5
+   Compiling gimli v0.32.3
+   Compiling icu_capi v2.1.2
+   Compiling rusqlite v0.38.0
+   Compiling sha1 v0.11.0
+   Compiling zstd v0.14.0
+   Compiling mozjs_sys v153.3.0-1
+   Compiling sea-query v1.0.1
+   Compiling chrono v0.4.45
+   Compiling brotli v8.0.4
+   Compiling webpki-roots v1.0.9
+   Compiling servo-script-bindings v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/script_bindings)
+   Compiling core-foundation v0.10.1
+   Compiling addr2line v0.25.1
+   Compiling security-framework-sys v2.17.0
+   Compiling futures-io v0.3.34
+   Compiling fst v0.4.7
+   Compiling compression-core v0.4.33
+   Compiling rustc-demangle v0.1.28
+   Compiling data-encoding v2.11.1
+   Compiling security-framework v3.7.0
+   Compiling sea-query-rusqlite v0.8.0
+   Compiling tower-layer v0.3.3
+   Compiling sync_wrapper v1.0.2
+   Compiling cmov v0.5.4
+   Compiling ctutils v0.4.2
+   Compiling tower v0.5.3
+   Compiling servo-dom-struct v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/dom_struct)
+   Compiling objc2 v0.5.2
+   Compiling compression-codecs v0.4.43
+   Compiling futures v0.3.34
+   Compiling nom-language v0.1.0
+   Compiling tokio-stream v0.1.19
+   Compiling backtrace v0.3.76
+   Compiling async-compression v0.4.48
+   Compiling xml5ever v0.40.0
+   Compiling servo-jstraceable-derive v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/jstraceable_derive)
+   Compiling servo-deny-public-fields v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/deny_public_fields)
+   Compiling async-recursion v1.1.1
+   Compiling quick_cache v0.7.0
+   Compiling servo-script v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/script)
+   Compiling cpubits v0.1.1
+   Compiling imsz v0.4.1
+   Compiling crypto-bigint v0.7.5
+   Compiling servo-devtools v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/devtools)
+   Compiling block2 v0.5.1
+   Compiling nom-rfc8288 v0.4.0
+   Compiling servo-webvtt v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/webvtt)
+   Compiling anstyle-parse v0.2.7
+   Compiling chardetng v1.0.0
+   Compiling jiff-core v0.1.1
+   Compiling buf-read-ext v0.4.0
+   Compiling base64ct v1.8.3
+   Compiling dispatch v0.2.0
+   Compiling swapper v0.1.0
+   Compiling objc2-foundation v0.2.2
+   Compiling anstream v0.6.21
+   Compiling winit v0.30.13
+   Compiling env_filter v0.1.4
+   Compiling gaol v0.2.1
+   Compiling unicode_categories v0.1.1
+   Compiling arboard v3.6.1
+   Compiling cursor-icon v1.2.0
+   Compiling smol_str v0.2.2
+   Compiling accesskit_consumer v0.35.0
+   Compiling jiff v0.2.37
+   Compiling mozjs v0.26.4
+   Compiling env_logger v0.11.8
+   Compiling objc2-app-kit v0.2.2
+   Compiling rustls-webpki v0.103.15
+   Compiling tokio-rustls v0.26.5
+   Compiling tungstenite v0.30.0
+   Compiling rustls-platform-verifier v0.7.1
+   Compiling hyper-rustls v0.27.10
+   Compiling async-tungstenite v0.35.0
+   Compiling servo-malloc-size-of v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/malloc_size_of)
+   Compiling servo-base v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/base)
+   Compiling servo-url v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/url)
+   Compiling servo-geometry v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/geometry)
+   Compiling servo-media-streams v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/streams)
+   Compiling servo-media-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/traits)
+   Compiling servo-timers v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/timers)
+   Compiling servo-xpath v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/xpath)
+   Compiling servo-media-webrtc v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/webrtc)
+   Compiling servo-pixels v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/pixels)
+   Compiling servo-profile-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/profile)
+   Compiling servo-media-player v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/player)
+   Compiling servo-background-hang-monitor-api v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/background_hang_monitor)
+   Compiling servo-background-hang-monitor v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/background_hang_monitor)
+   Compiling servo-media-audio v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/audio)
+warning: fields `stack_ptrs` and `count` are never read
+  --> components/background_hang_monitor/sampler.rs:27:5
+   |
+25 | pub struct NativeStack {
+   |            ----------- fields in this struct
+26 |     instruction_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+27 |     stack_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+   |     ^^^^^^^^^^
+28 |     count: usize,
+   |     ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `process_register` is never used
+  --> components/background_hang_monitor/sampler.rs:50:12
+   |
+41 | impl NativeStack {
+   | ---------------- method in this implementation
+...
+50 |     pub fn process_register(
+   |            ^^^^^^^^^^^^^^^^
+
+   Compiling servo-fonts-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/fonts)
+   Compiling servo-storage-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/storage)
+   Compiling servo-profile v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/profile)
+warning: `servo-background-hang-monitor` (lib) generated 2 warnings
+   Compiling servo-media v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/servo-media)
+   Compiling servo-media-dummy v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/backends/dummy)
+   Compiling servo-paint-api v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/paint)
+   Compiling servo-webxr-api v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/webxr)
+   Compiling servo-default-resources v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/default-resources)
+   Compiling servo-wakelock v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/wakelock)
+   Compiling servo-net-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/net)
+   Compiling servo-media-thread v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/media/media-thread)
+   Compiling servo-canvas-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/canvas)
+   Compiling servo-devtools-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/devtools)
+   Compiling servo-fonts v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/fonts)
+   Compiling servo-storage v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/storage)
+   Compiling servo-canvas v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/canvas)
+   Compiling servo-constellation-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/constellation)
+   Compiling servo-net v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/net)
+   Compiling servo-script-traits v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/script)
+   Compiling servo-paint v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/paint)
+warning: unused import: `WebRenderImageHandlerType`
+  --> components/paint/painter.rs:28:60
+   |
+28 |     SerializableImageData, WebRenderExternalImageHandlers, WebRenderImageHandlerType, WebViewTrait,
+   |                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling servo-layout-api v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/shared/layout)
+   Compiling servo-metrics v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/metrics)
+warning: `servo-paint` (lib) generated 1 warning (run `cargo fix --lib -p servo-paint` to apply 1 suggestion)
+   Compiling servo-constellation v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/constellation)
+warning: unused import: `storage_traits::cache_storage::CacheStorageThreadMessage`
+   --> components/constellation/constellation.rs:174:5
+    |
+174 | use storage_traits::cache_storage::CacheStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `storage_traits::client_storage::ClientStorageThreadMessage`
+   --> components/constellation/constellation.rs:175:5
+    |
+175 | use storage_traits::client_storage::ClientStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `IndexedDBThreadMsg` and `SyncOperation`
+   --> components/constellation/constellation.rs:176:33
+    |
+176 | use storage_traits::indexeddb::{IndexedDBThreadMsg, SyncOperation};
+    |                                 ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+warning: unused import: `WebStorageThreadMsg`
+   --> components/constellation/constellation.rs:177:41
+    |
+177 | use storage_traits::webstorage_thread::{WebStorageThreadMsg, WebStorageType};
+    |                                         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `super::Process`
+  --> components/constellation/process_manager.rs:99:9
+   |
+99 |     use super::Process;
+   |         ^^^^^^^^^^^^^^
+
+warning: associated function `sandboxed` is never used
+  --> components/constellation/process_manager.rs:20:19
+   |
+12 | impl Process {
+   | ------------ associated function in this implementation
+...
+20 |     pub(crate) fn sandboxed(pid: u32) -> Self {
+   |                   ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: variant `Sandboxed` is never constructed
+   --> components/constellation/process_manager.rs:123:5
+    |
+121 | enum ProcessKind {
+    |      ----------- variant in this enum
+122 |     Unsandboxed(Child),
+123 |     Sandboxed(u32),
+    |     ^^^^^^^^^
+
+warning: `servo-constellation` (lib) generated 7 warnings (run `cargo fix --lib -p servo-constellation` to apply 5 suggestions)
+warning: unused import: `GlobalScope`
+  --> components/script/dom/document/document_event_handler.rs:71:52
+   |
+71 |     CompositionEvent, Element, Event, EventTarget, GlobalScope, HTMLAnchorElement, HTMLElement,
+   |                                                    ^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods`
+  --> components/script/dom/document/documentorshadowroot.rs:17:5
+   |
+17 | use script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused doc comment
+   --> components/script/dom/html/embedded_content/htmlareaelement.rs:378:5
+    |
+378 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-coords>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+    = note: `#[warn(unused_doc_comments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused doc comment
+   --> components/script/dom/html/embedded_content/htmlareaelement.rs:382:5
+    |
+382 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-shape>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+
+warning: unused import: `script_bindings::error::Fallible`
+  --> components/script/dom/html/embedded_content/htmlvideoelement.rs:29:5
+   |
+29 | use script_bindings::error::Fallible;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UpgradeTransactionClearError`, `UpgradeTransactionClear`, and `classify_upgrade_transaction_clear`
+   --> components/script/dom/indexeddb/idbdatabase.rs:530:9
+    |
+530 |         UpgradeTransactionClear, UpgradeTransactionClearError, classify_upgrade_transaction_clear,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Theme`
+  --> components/script/event_loop/script_thread.rs:49:80
+   |
+49 |     JavaScriptEvaluationError, JavaScriptEvaluationId, MediaSessionActionType, Theme,
+   |                                                                                ^^^^^
+
+warning: unreachable pattern
+   --> components/script/dom/canvas/2d/canvas_state.rs:954:17
+    |
+954 |                 _ => return Err(Error::InvalidState(None)),
+    |                 ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> components/script/dom/canvas/2d/canvas_state.rs:954:17
+    |
+857 |                 RenderingContext::Context2d(ref context) => {
+    |                 ---------------------------------------- matches some of the same values
+...
+869 |                 RenderingContext::BitmapRenderer(ref context) => {
+    |                 --------------------------------------------- matches some of the same values
+...
+884 |                 RenderingContext::Placeholder(ref context) => {
+    |                 ------------------------------------------ matches some of the same values
+...
+954 |                 _ => return Err(Error::InvalidState(None)),
+    |                 ^ collectively making this unreachable
+    = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `cx`
+    --> components/script/dom/document/document.rs:2499:41
+     |
+2499 |     fn queue_document_completion(&self, cx: &mut JSContext) {
+     |                                         ^^ help: if this is intentional, prefix it with an underscore: `_cx`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `gamepad_task_source` is never used
+   --> components/script/tasks/task_manager.rs:145:34
+    |
+ 85 | impl TaskManager {
+    | ---------------- method in this implementation
+...
+145 |     task_source_functions!(self, gamepad_task_source, Gamepad);
+    |                                  ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+    = note: this warning originates in the macro `task_source_functions` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: method `context_id` is never used
+  --> components/script/dom/canvas/canvas_context.rs:75:8
+   |
+72 | pub(crate) trait CanvasContext {
+   |                  ------------- method in this trait
+...
+75 |     fn context_id(&self) -> Self::ID;
+   |        ^^^^^^^^^^
+
+warning: method `get_snapshot` is never used
+   --> components/script/dom/canvas/imagedata.rs:192:19
+    |
+ 48 | impl ImageData {
+    | -------------- method in this implementation
+...
+192 |     pub(crate) fn get_snapshot(&self, no_gc: &NoGC) -> Snapshot {
+    |                   ^^^^^^^^^^^^
+
+warning: methods `get_or_init_webgpu_context` and `is_valid` are never used
+   --> components/script/dom/html/embedded_content/htmlcanvaselement.rs:346:8
+    |
+190 | impl HTMLCanvasElement {
+    | ---------------------- methods in this implementation
+...
+346 |     fn get_or_init_webgpu_context(&self) -> Option<DomRoot<GPUCanvasContext>> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+398 |     pub(crate) fn is_valid(&self) -> bool {
+    |                   ^^^^^^^^
+
+warning: method `run_iteration` is never used
+   --> components/script/dom/indexeddb/idbcursor.rs:316:8
+    |
+ 98 | impl IDBCursor {
+    | -------------- method in this implementation
+...
+316 |     fn run_iteration(
+    |        ^^^^^^^^^^^^^
+
+warning: fields `requested` and `last_cleared` are never read
+  --> components/script/dom/indexeddb/idbdatabase.rs:65:9
+   |
+64 |     Missing {
+   |     ------- fields in this variant
+65 |         requested: u64,
+   |         ^^^^^^^^^
+66 |         last_cleared: Option<u64>,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `requested` and `current` are never read
+  --> components/script/dom/indexeddb/idbdatabase.rs:69:9
+   |
+68 |     Mismatch {
+   |     -------- fields in this variant
+69 |         requested: u64,
+   |         ^^^^^^^^^
+70 |         current: u64,
+   |         ^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: method `choose_browsing_context` is never used
+    --> components/script/dom/window/windowproxy.rs:1161:19
+     |
+ 168 | impl WindowProxy {
+     | ---------------- method in this implementation
+...
+1161 |     pub(crate) fn choose_browsing_context(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated function `find_window_proxy_by_name` is never used
+   --> components/script/event_loop/script_thread.rs:762:19
+    |
+532 | impl ScriptThread {
+    | ----------------- associated function in this implementation
+...
+762 |     pub(crate) fn find_window_proxy_by_name(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: this lint expectation is unfulfilled
+   --> components/script/dom/mod.rs:208:10
+    |
+208 | #[expect(unused)]
+    |          ^^^^^^
+    |
+    = note: `#[warn(unfulfilled_lint_expectations)]` on by default
+
+   Compiling servo-layout v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/layout)
+   Compiling servo v0.7.0 (/Volumes/SSD Samsung/frame-deps/servo-r1/components/servo)
+warning: `servo-script` (lib) generated 19 warnings (run `cargo fix --lib -p servo-script` to apply 6 suggestions)
+warning: linker stderr: ld: __eh_frame section too large (max 16MB) to encode dwarf unwind offsets in compact unwind table, performance of exception handling might be affected
+  |
+  = note: `#[warn(linker_messages)]` on by default
+
+warning: `servo` (test "webview") generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 4m 11s
+     Running tests/webview.rs (/Volumes/SSD Samsung/cargo-targets/servo-r1/debug/deps/webview-52b0367b6dbb0fdb)
+
+running 9 tests
+test test_negative_resize_to_request ... ok
+test test_page_zoom ... FAILED
+test test_pinch_zoom_update_dom_visual_viewport ... FAILED
+test test_resize_webview_zero ... FAILED
+test test_set_viewport_css_resize ... FAILED
+test test_set_viewport_scale_only ... FAILED
+test test_set_viewport_then_legacy_resize_and_scale ... FAILED
+test test_viewport_meta_tag_initial_scale ... FAILED
+test test_webview_resize_interactivity ... FAILED
+
+failures:
+
+---- test_page_zoom stdout ----
+
+thread 'test_page_zoom' (3023055) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- test_pinch_zoom_update_dom_visual_viewport stdout ----
+
+thread 'test_pinch_zoom_update_dom_visual_viewport' (3023060) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+---- test_resize_webview_zero stdout ----
+
+thread 'test_resize_webview_zero' (3023063) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+---- test_set_viewport_css_resize stdout ----
+
+thread 'test_set_viewport_css_resize' (3023066) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+---- test_set_viewport_scale_only stdout ----
+
+thread 'test_set_viewport_scale_only' (3023069) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+---- test_set_viewport_then_legacy_resize_and_scale stdout ----
+
+thread 'test_set_viewport_then_legacy_resize_and_scale' (3023072) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+---- test_viewport_meta_tag_initial_scale stdout ----
+
+thread 'test_viewport_meta_tag_initial_scale' (3023075) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+---- test_webview_resize_interactivity stdout ----
+
+thread 'test_webview_resize_interactivity' (3023078) panicked at components/config/opts.rs:279:23:
+Already initialized: Opts { time_profiling: None, time_profiler_trace_path: None, hard_fail: true, debug: DiagnosticsLogging { options: [false, false, false, false, false, false, false, false, false, false, false, false] }, multiprocess: false, force_ipc: false, background_hang_monitor: false, sandbox: false, random_pipeline_closure_probability: None, random_pipeline_closure_seed: None, shaders_path: None, config_dir: None, temporary_storage: false, certificate_path: None, host_file: None, ignore_certificate_errors: false, unminify_js: false, local_script_source: None, unminify_css: false }
+
+
+failures:
+    test_page_zoom
+    test_pinch_zoom_update_dom_visual_viewport
+    test_resize_webview_zero
+    test_set_viewport_css_resize
+    test_set_viewport_scale_only
+    test_set_viewport_then_legacy_resize_and_scale
+    test_viewport_meta_tag_initial_scale
+    test_webview_resize_interactivity
+
+test result: FAILED. 1 passed; 8 failed; 0 ignored; 0 measured; 24 filtered out; finished in 0.42s
+
+error: test failed, to rerun pass `-p servo --test webview`

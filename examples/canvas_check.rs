@@ -292,7 +292,7 @@ async fn run_body(
         pause(cx, 100).await;
     }
     let navigation_baseline = page.read_with(cx, |p, _| p.delegate.navigation_starts.get());
-    let baseline = evaluate(&view, "window.canvasProbe.snapshot()", cx).await?;
+    let baseline = evaluate(&view, "window.canvasProbe.startTrace()", cx).await?;
     record(
         &args.evidence,
         "navigation.json",
@@ -346,16 +346,29 @@ async fn run_body(
             "page did not render the requested camera zoom; this is not a valid resize-gate sample"
         );
     }
+    let trace = evaluate(&view, "window.canvasProbe.finishTrace()", cx).await?;
+    let constant_size = |sample: &Value| {
+        sample["innerWidth"] == baseline["innerWidth"]
+            && sample["innerHeight"] == baseline["innerHeight"]
+    };
     let gate_passed = steps.iter().all(|s| {
         s["camera_applied"] == true
             && s["resize_delta"] == 0
             && s["width_drift"] == 0
             && s["height_drift"] == 0
+            && s["during_gesture"]["resizeCount"] == baseline["resizeCount"]
+            && constant_size(&s["during_gesture"])
+            && constant_size(&s["settled"])
+    }) && trace.as_array().is_some_and(|samples| {
+        !samples.is_empty()
+            && samples
+                .iter()
+                .all(|sample| sample["kind"] != "resize" && constant_size(sample))
     });
     record(
         &args.evidence,
         "zoom.json",
-        &json!({"baseline": baseline, "steps": steps, "passed": gate_passed, "expected_blocker": "R1"}),
+        &json!({"baseline": baseline, "steps": steps, "trace": trace, "passed": gate_passed}),
     )?;
     if signin {
         // Restore keyboard focus without clicking away from the retained caret.
