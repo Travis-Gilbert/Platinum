@@ -49,6 +49,17 @@ available in the current keychain search list at the start of this task.
   arbitrary plugin subdirectories under Frameworks are interpreted as bundles.
   Plugins now live directly in Frameworks, with GIO's module in PlugIns; the
   signing fixture covers these directories and the internal plugin symlink.
+- Full dependency packaging from the prior debug executable passed: 109 native
+  code files, 39 pinned plugins, arm64, minimum macOS 27.0.0, valid ad-hoc
+  signatures, no non-system external linkage. This checks the packaging graph;
+  it does not claim that old executable contains the new bundle startup code.
+- A separate copy with a `gst-launch-1.0` probe decoded MP4 and WebM fixtures
+  through the packaged libraries to EOS. A GIO probe loaded GTlsBackendGnutls.
+  Both ran with reads denied under Homebrew, the development dependency tree,
+  Cargo, this checkout, and the ONNX download cache. The denial was independently
+  confirmed with a failing file read. This is native codec/module acceptance,
+  not in-browser playback. Results: [media](evidence/macos-packaging-2026-10-29/media.json),
+  [GIO](evidence/macos-packaging-2026-10-29/gio.txt).
 
 Certificate-dependent gates remain: timestamped Developer ID signatures,
 hardened-runtime execution, Apple notarization/stapling, and downloaded-artifact

@@ -69,7 +69,8 @@ ad-hoc signing deliberately does not claim hardened-runtime acceptance.
 Create a notarytool Keychain profile using Apple's interactive credential
 workflow, or your organization's supported App Store Connect API credentials.
 Only the profile name is passed to this pipeline; credentials stay in Keychain.
-Then explicitly submit the signed app:
+For interactive setup, run `xcrun notarytool store-credentials platinum-notary`
+and enter credentials at its prompts. Then explicitly submit the signed app:
 
 ```sh
 .packaging-venv/bin/python script/package-macos notarize dist/Platinum.app \
