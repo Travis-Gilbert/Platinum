@@ -1,7 +1,7 @@
 # Experimental MSE integration
 
 `script/bootstrap-media` checks out Servo commit
-`81d8e2999569a8a496142651a1d129aed22fda77` from `Travis-Gilbert/youtube-mse`
+`293afa921eaf2cc26050f98268e1de9a60bfc5fa` from `Travis-Gilbert/servo`
 and applies the GStreamer patch without discarding local work.
 `script/media-env` selects the native pkg-config files and plugin directory.
 The development runtime depends on the installed Homebrew GStreamer libraries;

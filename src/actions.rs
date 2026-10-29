@@ -23,6 +23,7 @@ actions!(
         PinTab,
         ToggleAsk,
         ShowDownloads,
+        ShowConsole,
         SharePage,
         Quit,
     ]

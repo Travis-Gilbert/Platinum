@@ -29,7 +29,7 @@ use url::Url;
 
 use crate::actions::{
     CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, PinTab, Quit, Reload, SetAppearance,
-    SharePage, ShowDownloads, ToggleAsk, ToggleCompact, ToggleSidebar,
+    SharePage, ShowConsole, ShowDownloads, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -219,7 +219,13 @@ impl Navigator {
 
         // (label, icon, action, shown untyped in the right-click menu, checked)
         let mut commands: Vec<(SharedString, Icon, Box<dyn Action>, bool, bool)> = vec![
-            ("New Tab".into(), icons::page(), Box::new(NewTab), true, false),
+            (
+                "New Tab".into(),
+                icons::page(),
+                Box::new(NewTab),
+                true,
+                false,
+            ),
             (
                 if browser.compact {
                     "Show Toolbar"
@@ -272,6 +278,13 @@ impl Navigator {
             "Downloads".into(),
             icons::downloads(),
             Box::new(ShowDownloads),
+            !pointer,
+            false,
+        ));
+        commands.push((
+            "Console".into(),
+            icons::page(),
+            Box::new(ShowConsole),
             !pointer,
             false,
         ));

@@ -22,6 +22,23 @@ use crate::session::{self, Content, Layout, Pin};
 use crate::tabtree::Place;
 use crate::theme::{self, Appearance};
 
+#[test]
+fn search_results_do_not_keep_the_inspected_page() {
+    assert_eq!(
+        super::displayed_page_id(Showing::Serp, Some("page-a".into())),
+        None
+    );
+    assert_eq!(
+        super::displayed_page_id(Showing::Start, Some("page-a".into())),
+        None
+    );
+    assert_eq!(
+        super::displayed_page_id(Showing::Page, Some("page-a".into())).as_deref(),
+        Some("page-a")
+    );
+    assert_eq!(super::displayed_page_id(Showing::Page, None), None);
+}
+
 fn open(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
     cx.update(|cx| {
         gpui_kit::init(cx);
@@ -1204,4 +1221,17 @@ fn a_stream_of_changes_cannot_put_the_save_off(cx: &mut TestAppContext) {
         .expect("written while the changes kept coming");
     assert!(session::parse_session(&saved).is_some());
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[gpui_kit::test]
+fn console_panel_opens_and_closes(cx: &mut TestAppContext) {
+    let (_browser, cx) = open(cx);
+    assert!(cx.debug_bounds("Console").is_none());
+    keys(cx, "alt-cmd-j");
+    assert!(cx.debug_bounds("Console").is_some());
+    assert!(cx.debug_bounds("Elements").is_some());
+    assert!(cx.debug_bounds("Network").is_some());
+    assert!(cx.debug_bounds("Tools").is_some());
+    keys(cx, "alt-cmd-j");
+    assert!(cx.debug_bounds("Console").is_none());
 }

@@ -61,8 +61,8 @@ use url::Url;
 use self::dock::{DRAG_PREVIEW, FRAME, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
     ActivateTab, CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, NextTab, OpenPalette,
-    PinTab, PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowDownloads, ToggleAsk,
-    ToggleCompact, ToggleSidebar,
+    PinTab, PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowConsole, ShowDownloads,
+    ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
@@ -70,6 +70,7 @@ use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
 use crate::glass;
 use crate::icons;
+use crate::inspector::Inspector;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
 use crate::serp::{Serp, SerpEvent, SerpMode};
@@ -113,6 +114,14 @@ enum Showing {
     Start,
     Page,
     Serp,
+}
+
+/// The page commands may use, or none when the tab is not showing a webpage.
+fn displayed_page_id(showing: Showing, page_id: Option<String>) -> Option<String> {
+    match showing {
+        Showing::Page => page_id,
+        Showing::Start | Showing::Serp => None,
+    }
 }
 
 struct Tab {
@@ -332,6 +341,9 @@ pub struct Browser {
     downloads: Entity<Downloads>,
     /// The tab whose toolbar shows the downloads list.
     downloads_open: Option<u64>,
+    /// The inspection prototype, under the active page.
+    console_open: bool,
+    inspector: Entity<Inspector>,
     /// Where each tab's Share button was last drawn, for the share sheet.
     share_anchors: Rc<RefCell<HashMap<u64, Bounds<Pixels>>>>,
     window_title: SharedString,
@@ -382,6 +394,7 @@ impl Browser {
         let dock_events = cx.subscribe_in(&dock, window, Self::dock_event);
         let downloads = cx.new(|_| Downloads::new(Downloads::default_folder()));
         let downloads_events = cx.observe(&downloads, |_, _, cx| cx.notify());
+        let inspector = cx.new(|cx| Inspector::new(window, cx));
         // Match System follows the system as it changes.
         let appearance_events =
             cx.observe_window_appearance(window, |_, window, cx| theme::system_changed(window, cx));
@@ -430,6 +443,8 @@ impl Browser {
             navigator: None,
             downloads,
             downloads_open: None,
+            console_open: false,
+            inspector,
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
             sidebar: restored.sidebar,
@@ -679,6 +694,7 @@ impl Browser {
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
+        self.sync_inspector(cx);
     }
 
     /// Make the tab `id` the active one, for a control on its own card or
@@ -722,6 +738,7 @@ impl Browser {
                 self.apply_visibility(cx);
             }
             self.sync_chrome(window, cx);
+            self.sync_inspector(cx);
         }
         if itself && index == self.active {
             self.focus_content(window, cx);
@@ -807,6 +824,7 @@ impl Browser {
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
+        self.sync_inspector(cx);
     }
 
     /// Load what an asleep tab shows. Its page or results replace nothing:
@@ -911,9 +929,11 @@ impl Browser {
                 }
             },
         }
-        let tab = &mut self.tabs[index];
-        tab.requested = Some(url);
-        tab.showing = Showing::Page;
+        self.tabs[index].requested = Some(url);
+        self.tabs[index].showing = Showing::Page;
+        if index == self.active {
+            self.sync_inspector(cx);
+        }
         true
     }
 
@@ -1163,6 +1183,7 @@ impl Browser {
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
+        self.sync_inspector(cx);
     }
 
     // The address bar.
@@ -1575,6 +1596,28 @@ impl Browser {
         self.editing || self.navigator.is_some() || self.downloads_open.is_some()
     }
 
+    fn toggle_console(&mut self, cx: &mut Context<Self>) {
+        self.console_open = !self.console_open;
+        self.sync_inspector(cx);
+        cx.notify();
+    }
+
+    fn sync_inspector(&mut self, cx: &mut Context<Self>) {
+        let target = self.console_open.then(|| self.displayed_page(cx)).flatten();
+        self.inspector
+            .update(cx, |inspector, cx| inspector.attach(target, cx));
+    }
+
+    /// The webview on screen. A Start tab or native results keep any old
+    /// page stored, and that page is not the one being displayed.
+    fn displayed_page(&self, cx: &App) -> Option<String> {
+        let tab = self.tabs.get(self.active)?;
+        displayed_page_id(
+            tab.showing,
+            tab.page.as_ref().map(|page| page.read(cx).webview_id()),
+        )
+    }
+
     fn toggle_downloads(&mut self, cx: &mut Context<Self>) {
         if self.downloads_open.is_some() {
             self.set_downloads_open(None, cx);
@@ -1977,6 +2020,14 @@ impl Browser {
                     .overflow_hidden()
                     .child(self.content(index, window, cx))
                     .children(self.status_bubble(index, cx)),
+            )
+            .when(
+                self.console_open
+                    && self
+                        .tabs
+                        .get(self.active)
+                        .is_some_and(|tab| tab.panel_id() == panel),
+                |card| card.child(self.inspector.clone()),
             )
             .into_any_element()
     }
@@ -2675,6 +2726,7 @@ impl Render for Browser {
             .on_action(
                 cx.listener(|browser, _: &ShowDownloads, _, cx| browser.toggle_downloads(cx)),
             )
+            .on_action(cx.listener(|browser, _: &ShowConsole, _, cx| browser.toggle_console(cx)))
             .on_action(cx.listener(|browser, _: &SharePage, window, cx| {
                 browser.share_tab(browser.tabs[browser.active].id, window, cx)
             }))
