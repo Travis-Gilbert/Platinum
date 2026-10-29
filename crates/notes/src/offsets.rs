@@ -122,6 +122,89 @@ impl Offsets {
     }
 }
 
+impl Offsets {
+    // The caller's generation changes on every text mutation. Retains only three
+    // integers; nearby IME queries scan from the last boundary with no text copy.
+    fn utf16_resume(
+        text: &str,
+        generation: u64,
+        target: usize,
+        by_byte: bool,
+        anchor: &std::cell::Cell<(u64, usize, usize)>,
+    ) -> (usize, usize) {
+        let (saved, byte, unit) = anchor.get();
+        if saved == generation
+            && (if by_byte { byte } else { unit }) <= target
+            && byte <= text.len()
+            && text.is_char_boundary(byte)
+        {
+            (byte, unit)
+        } else {
+            (0, 0)
+        }
+    }
+
+    /// Convert borrowed text using a generation-scoped `(generation, byte, unit)`
+    /// cache. Bump generation on EVERY text change, including document loads.
+    /// Clamp past the end and round an offset inside a surrogate pair down.
+    pub fn utf16_to_byte_cached(
+        text: &str,
+        generation: u64,
+        target: usize,
+        anchor: &std::cell::Cell<(u64, usize, usize)>,
+    ) -> usize {
+        let (mut byte, mut unit) = Self::utf16_resume(text, generation, target, false, anchor);
+        for ch in text[byte..].chars() {
+            if unit + ch.len_utf16() > target {
+                break;
+            }
+            unit += ch.len_utf16();
+            byte += ch.len_utf8();
+        }
+        anchor.set((generation, byte, unit));
+        byte
+    }
+
+    /// Borrowed-text counterpart of `byte_to_utf16`; see `utf16_to_byte_cached`.
+    /// Clamp past the end and round an offset inside a UTF-8 scalar down.
+    pub fn byte_to_utf16_cached(
+        text: &str,
+        generation: u64,
+        target: usize,
+        anchor: &std::cell::Cell<(u64, usize, usize)>,
+    ) -> usize {
+        let (mut byte, mut unit) = Self::utf16_resume(text, generation, target, true, anchor);
+        for ch in text[byte..].chars() {
+            if byte + ch.len_utf8() > target {
+                break;
+            }
+            byte += ch.len_utf8();
+            unit += ch.len_utf16();
+        }
+        anchor.set((generation, byte, unit));
+        unit
+    }
+}
+
+impl Offsets {
+    /// Convert a seam edit's old-text byte range to session scalar positions.
+    pub fn byte_range_to_scalar(&self, range: Range<usize>) -> Range<usize> {
+        self.byte_to_scalar(range.start)..self.byte_to_scalar(range.end)
+    }
+
+    pub fn scalar_range_to_byte(&self, range: Range<usize>) -> Range<usize> {
+        self.scalar_to_byte(range.start)..self.scalar_to_byte(range.end)
+    }
+
+    pub fn byte_range_to_utf16(&self, range: Range<usize>) -> Range<usize> {
+        self.byte_to_utf16(range.start)..self.byte_to_utf16(range.end)
+    }
+
+    pub fn utf16_range_to_byte(&self, range: Range<usize>) -> Range<usize> {
+        self.utf16_to_byte(range.start)..self.utf16_to_byte(range.end)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -135,6 +218,55 @@ mod tests {
         ("cjk", "日本語x", 9, 3, 3),
         ("right to left", "שלוםx", 8, 4, 4),
     ];
+
+    #[test]
+    fn cursor_matches_rope_for_every_byte_and_utf16_unit() {
+        for &(name, text, ..) in FIXTURES {
+            let offsets = Offsets::new(text);
+            let cursor = std::cell::Cell::new((0, 0, 0));
+            for target in 0..text.len() + 3 {
+                assert_eq!(
+                    Offsets::byte_to_utf16_cached(text, 1, target, &cursor),
+                    offsets.byte_to_utf16(target),
+                    "{name}: byte {target}"
+                );
+            }
+            for target in (0..text.encode_utf16().count() + 3).rev() {
+                assert_eq!(
+                    Offsets::utf16_to_byte_cached(text, 1, target, &cursor),
+                    offsets.utf16_to_byte(target),
+                    "{name}: utf16 {target}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn cursor_invalidates_across_loads_and_remote_generations() {
+        let cursor = std::cell::Cell::new((0, 0, 0));
+        assert_eq!(Offsets::byte_to_utf16_cached("ab😀", 1, 6, &cursor), 4);
+        assert_eq!(Offsets::byte_to_utf16_cached("😀ab", 2, 6, &cursor), 4);
+        assert_eq!(Offsets::utf16_to_byte_cached("😀ab", 2, 2, &cursor), 4);
+        assert_eq!(Offsets::byte_to_utf16_cached("👨‍👩‍👧", 3, 18, &cursor), 8);
+        assert_eq!(Offsets::utf16_to_byte_cached("e\u{301}", 4, 1, &cursor), 1);
+    }
+
+    #[test]
+    fn edit_ranges_round_trip_through_session_and_mac_units() {
+        for &(name, text, bytes, scalars, units) in FIXTURES {
+            let offsets = Offsets::new(text);
+            assert_eq!(offsets.byte_range_to_scalar(0..bytes), 0..scalars, "{name}");
+            assert_eq!(offsets.scalar_range_to_byte(0..scalars), 0..bytes, "{name}");
+            assert_eq!(offsets.byte_range_to_utf16(0..bytes), 0..units, "{name}");
+            assert_eq!(offsets.utf16_range_to_byte(0..units), 0..bytes, "{name}");
+            // Insertions must remain empty in all units.
+            assert_eq!(
+                offsets.byte_range_to_scalar(bytes..bytes),
+                scalars..scalars,
+                "{name}"
+            );
+        }
+    }
 
     #[test]
     fn units_agree_before_the_marker() {
