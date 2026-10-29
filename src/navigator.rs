@@ -1,4 +1,4 @@
-//! Frame's navigator: one searchable list shown two ways. Right-click puts it
+//! Platinum's navigator: one searchable list shown two ways. Right-click puts it
 //! at the pointer as a menu whose first row is the search field, already
 //! focused, so the person can just start typing; ⌘K shows the same list as a
 //! command palette at the top of the window, whether or not the address bar
@@ -6,7 +6,7 @@
 //!
 //! The list is local first: the page's own context menu entries, or those
 //! of the tab or pinned site under the pointer, the open tabs (Switch; in
-//! the right-click menu only once the person types), Frame's commands, and
+//! the right-click menu only once the person types), Platinum's commands, and
 //! only then the web (RustyWeb search, and Ask, which is the one explicit AI
 //! entry).
 //!
@@ -28,8 +28,10 @@ use servo::ContextMenuAction;
 use url::Url;
 
 use crate::actions::{
-    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, PinTab, Quit, Reload, SetAppearance,
-    SharePage, ShowDownloads, ToggleAsk, ToggleCompact, ToggleSidebar,
+    BookmarkPage, CloseTab, FillPassword, FocusAddressBar, GoBack, GoForward, ImportBrowserData,
+    NewTab, PinTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks,
+    ShowConsole, ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact,
+    ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -50,7 +52,7 @@ pub enum Placement {
 pub enum Pick {
     Page(ContextMenuAction),
     SwitchTab(u64),
-    /// A Frame command; its action already ran.
+    /// A Platinum command; its action already ran.
     Command,
     Go(Url),
     Search(String),
@@ -219,7 +221,13 @@ impl Navigator {
 
         // (label, icon, action, shown untyped in the right-click menu, checked)
         let mut commands: Vec<(SharedString, Icon, Box<dyn Action>, bool, bool)> = vec![
-            ("New Tab".into(), icons::page(), Box::new(NewTab), true, false),
+            (
+                "New Tab".into(),
+                icons::page(),
+                Box::new(NewTab),
+                true,
+                false,
+            ),
             (
                 if browser.compact {
                     "Show Toolbar"
@@ -275,6 +283,33 @@ impl Navigator {
             !pointer,
             false,
         ));
+        commands.push((
+            "Console".into(),
+            icons::page(),
+            Box::new(ShowConsole),
+            !pointer,
+            false,
+        ));
+        for (label, action) in [
+            (
+                "Import browser data…",
+                Box::new(ImportBrowserData) as Box<dyn Action>,
+            ),
+            ("Profiles…", Box::new(ShowProfiles)),
+            ("History…", Box::new(ShowHistory)),
+            ("Bookmarks…", Box::new(ShowBookmarks)),
+            ("Bookmark this page", Box::new(BookmarkPage)),
+            ("Fill saved password…", Box::new(FillPassword)),
+            ("Save or update password…", Box::new(SavePassword)),
+        ] {
+            commands.push((
+                label.into(),
+                Icon::new(IconName::Globe),
+                action,
+                !pointer,
+                false,
+            ));
+        }
         for appearance in Appearance::ALL {
             commands.push((
                 appearance.command(),
@@ -333,7 +368,7 @@ impl Navigator {
                 false,
             ),
             (
-                "Quit Frame".into(),
+                format!("Quit {}", crate::brand::NAME).into(),
                 Icon::new(IconName::WindowClose),
                 Box::new(Quit),
                 !pointer,
@@ -343,7 +378,7 @@ impl Navigator {
         // The right-click menu stays short until the person types; then every
         // command is reachable.
         commands.retain(|(_, _, _, shown, _)| *shown || typing);
-        let mut group = CommandGroup::new().label("Frame");
+        let mut group = CommandGroup::new().label(crate::brand::NAME);
         let mut group_picks = Vec::new();
         for (label, icon, action, _, checked) in commands {
             group = group.item(
@@ -471,7 +506,7 @@ impl Navigator {
     }
 }
 
-/// Frame fetches downloads itself, over the network.
+/// Platinum fetches downloads itself, over the network.
 fn downloadable(url: &Url) -> bool {
     matches!(url.scheme(), "http" | "https")
 }

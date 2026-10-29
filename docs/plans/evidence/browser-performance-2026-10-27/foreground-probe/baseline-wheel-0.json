@@ -1,0 +1,87 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1104,
+      "total_ms": 9.528424000000003,
+      "p50_ms": 0.008,
+      "p95_ms": 0.013291,
+      "max_ms": 0.033958
+    },
+    "page_render_interval": {
+      "count": 1103,
+      "total_ms": 12083.526249999997,
+      "p50_ms": 8.880374999999999,
+      "p95_ms": 17.063959,
+      "max_ms": 21.120709
+    },
+    "servo_frame": {
+      "count": 1090,
+      "total_ms": 1508.9498569999994,
+      "p50_ms": 1.296291,
+      "p95_ms": 2.150083,
+      "max_ms": 4.192667
+    },
+    "servo_frame_interval": {
+      "count": 1089,
+      "total_ms": 12086.316708999992,
+      "p50_ms": 11.689667,
+      "p95_ms": 12.207792,
+      "max_ms": 21.673041
+    },
+    "servo_spin": {
+      "count": 4320,
+      "total_ms": 1608.0656840000001,
+      "p50_ms": 0.030375,
+      "p95_ms": 1.618541,
+      "max_ms": 4.205708
+    },
+    "surface_present": {
+      "count": 1090,
+      "total_ms": 569.3268030000002,
+      "p50_ms": 0.47887500000000005,
+      "p95_ms": 0.879334,
+      "max_ms": 1.908833
+    },
+    "surface_present_interval": {
+      "count": 1089,
+      "total_ms": 12086.522667000005,
+      "p50_ms": 11.665125,
+      "p95_ms": 12.762958,
+      "max_ms": 19.910042
+    },
+    "tint_sample": {
+      "count": 89,
+      "total_ms": 36.768963,
+      "p50_ms": 0.013417,
+      "p95_ms": 3.0539159999999996,
+      "max_ms": 3.818
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1089,
+    "interval_count": 1089,
+    "p50_ms": 11.719999999999345,
+    "p95_ms": 12.579999999999927,
+    "over_33_ms": 0,
+    "scroll_y": 11520,
+    "video": null
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.5372549295425415,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "mode": "wheel",
+  "variant": "baseline",
+  "repeat": 0,
+  "wall_s": 15.663873541998328,
+  "cpu_s": 8.636094,
+  "host_load": [
+    8.88427734375,
+    20.75390625,
+    28.24365234375
+  ],
+  "session_restored_after_exit": true
+}

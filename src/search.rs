@@ -1,8 +1,8 @@
-//! RustyWeb search service for Frame.
+//! RustyWeb search service for Platinum.
 //!
 //! `init` opens the durable RedCore session store once and installs it as a
 //! GPUI `Global`. `run` performs one search on a background thread and returns
-//! Frame-owned plain data ([`SerpResult`]); nothing from `rustyred-web` crosses
+//! Platinum-owned plain data ([`SerpResult`]); nothing from `rustyred-web` crosses
 //! this module's public boundary.
 //!
 //! `capture` adds a page the person finished loading to the same store, so the
@@ -18,10 +18,10 @@
 //!
 //! Each search waits for providers for at most four seconds, or until 100
 //! results are in, whichever comes first. The fused results are reranked on
-//! OpenRouter when its key is in the login Keychain, and Frame's rank profile
+//! OpenRouter when its key is in the login Keychain, and Platinum's rank profile
 //! weighs Bluesky down. Searches for images, video or attachments
 //! (`SearchOpts::media`) are reranked by a model that also reads their
-//! pictures; nothing in Frame searches media yet.
+//! pictures; nothing in Platinum searches media yet.
 //!
 //! Providers are passed to the async `programmable_search` explicitly, so the
 //! process environment is only read (never written). They are built once, and
@@ -29,6 +29,11 @@
 //! providers need one and GPUI's executor does not provide it. Building a
 //! provider's HTTP client costs up to seconds, and a runtime that outlives each
 //! search keeps provider connections open for the next.
+//!
+//! A search holds the store only to take its snapshot and to keep its result.
+//! Provider and model work runs with the store unlocked, so pages are kept and
+//! other searches start meanwhile; at most four run at once, and the rest wait
+//! their turn.
 
 use std::{
     collections::HashSet,
@@ -58,7 +63,7 @@ const SESSION_ID: &str = "frame";
 /// an explicit list.
 const KEYLESS_PROVIDERS: &[&str] = &["bluesky"];
 
-/// How far Frame's rank profile weighs Bluesky down: a post's score is scaled
+/// How far Platinum's rank profile weighs Bluesky down: a post's score is scaled
 /// by 1 - 0.6, so a strong match can still surface.
 const BLUESKY_WEIGHT: f64 = -0.6;
 
@@ -72,6 +77,9 @@ const EMBED_BATCH: usize = 8;
 /// Searches waiting for their crawl campaign. A search made while this many
 /// are waiting gets none.
 const CAMPAIGN_QUEUE: usize = 4;
+
+/// Searches that run at once. The others wait for a turn.
+const RUNNING_SEARCHES: usize = 4;
 
 /// Keyed providers that search the general web. Each is used only when its key
 /// is present. `github` and `gitlab` are code-search providers and are left out
@@ -177,12 +185,14 @@ struct SearchService {
     providers: Arc<[Arc<dyn SearchProvider>]>,
     /// Set when the durable store could not be opened and search runs in memory.
     store_note: Option<Arc<str>>,
-    /// Frame's rank profile in the store, when it could be kept there.
+    /// Platinum's rank profile in the store, when it could be kept there.
     profile: Option<ProfileRef>,
     /// Tells the embedding worker a page was captured.
     embed_wake: Option<mpsc::Sender<()>>,
     /// Hands finished searches to the crawl campaign worker.
     campaigns: Option<mpsc::SyncSender<SearchSession>>,
+    /// The turns of the searches that run at once.
+    running: Arc<tokio::sync::Semaphore>,
 }
 
 impl Global for SearchService {}
@@ -215,7 +225,7 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
         Ok(profile) => Some(profile),
         Err(error) => {
             log::warn!(
-                "search: Frame's rank profile could not be kept, so Bluesky is not weighed down: {} ({})",
+                "search: Platinum's rank profile could not be kept, so Bluesky is not weighed down: {} ({})",
                 error.message,
                 error.code
             );
@@ -265,6 +275,7 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
         profile,
         embed_wake,
         campaigns,
+        running: Arc::new(tokio::sync::Semaphore::new(RUNNING_SEARCHES)),
     });
 }
 
@@ -280,12 +291,12 @@ fn search_opts() -> SearchOpts {
     }
 }
 
-/// Frame's rank profile: RustyWeb's default, with Bluesky weighed down and
+/// Platinum's rank profile: RustyWeb's default, with Bluesky weighed down and
 /// semantic matches allowed to seed graph expansion.
 fn frame_profile() -> RankProfile {
     let mut profile = RankProfile::builtin("default").expect("RustyWeb ships a default profile");
     profile.id = "frame".into();
-    profile.name = "Frame".into();
+    profile.name = crate::brand::NAME.into();
     profile.rules.push(RankRule::Provider {
         rule_id: "bluesky-down".into(),
         provider: "bluesky".into(),
@@ -319,7 +330,7 @@ fn openrouter_rerankers() -> anyhow::Result<Option<(Rerankers, Rerankers)>> {
 
 /// A generic password from the login Keychain, read through the `security`
 /// tool. The item's access list lets that tool read it without a prompt; a
-/// Security.framework read would be checked against each rebuilt Frame binary.
+/// Security.framework read would be checked against each rebuilt Platinum binary.
 fn keychain_secret(service: &str) -> anyhow::Result<Option<String>> {
     let output = std::process::Command::new("/usr/bin/security")
         .args(["find-generic-password", "-s", service, "-w"])
@@ -477,7 +488,7 @@ fn run_campaign(
 pub fn run(query: String, ask: bool, cx: &mut App) -> Task<anyhow::Result<SerpResult>> {
     let Some(service) = cx.try_global::<SearchService>().cloned() else {
         return Task::ready(Err(anyhow!(
-            "Search is not ready yet. Restart Frame and try again."
+            "Search is not ready yet. Restart Platinum and try again."
         )));
     };
     cx.background_spawn(async move { service.search(&query, ask) })
@@ -541,23 +552,40 @@ impl SearchService {
         let runtime = SEARCH_RUNTIME
             .as_ref()
             .map_err(|error| anyhow!("could not start the search runtime: {error}"))?;
-        let mut store = self.store.lock().map_err(|_| {
-            anyhow!("The search store stopped after an earlier failure. Restart Frame.")
+        let stopped =
+            || anyhow!("The search store stopped after an earlier failure. Restart Platinum.");
+        let (session, locked) = runtime.block_on(async {
+            let _turn = self
+                .running
+                .acquire()
+                .await
+                .context("the search service stopped")?;
+            let mut store = self.store.lock().map_err(|_| stopped())?;
+            let locked = started.elapsed();
+            let pending = store
+                .prepare_programmable_search(
+                    query,
+                    // Only Ask runs a model; RustyWeb plans no answer otherwise.
+                    ProgrammableQueryOptions {
+                        synthesize: ask,
+                        profile: self.profile.clone(),
+                        ..Default::default()
+                    },
+                )
+                .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+            drop(store);
+            let completed = pending
+                .execute(&self.providers)
+                .await
+                .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+            let session = self
+                .store
+                .lock()
+                .map_err(|_| stopped())?
+                .finish_programmable_search(completed)
+                .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+            anyhow::Ok((session, locked))
         })?;
-        let locked = started.elapsed();
-        let session = runtime
-            .block_on(store.programmable_search(
-                query,
-                // Only Ask runs a model; RustyWeb plans no answer otherwise.
-                ProgrammableQueryOptions {
-                    synthesize: ask,
-                    profile: self.profile.clone(),
-                    ..Default::default()
-                },
-                &self.providers,
-            ))
-            .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
-        drop(store);
         let receipt = &session.response.receipt;
         let phases = &receipt.phase_latency_ms;
         log::debug!(
@@ -641,7 +669,7 @@ fn select_providers() -> Vec<Arc<dyn SearchProvider>> {
     selected
 }
 
-/// Map one finished RustyWeb session to Frame-owned data.
+/// Map one finished RustyWeb session to Platinum-owned data.
 fn map_session(session: &SearchSession, ask: bool, providers: Vec<String>) -> SerpResult {
     let receipt = &session.response.receipt;
     let hits = map_hits(&session.response.hits);
@@ -749,16 +777,16 @@ fn answer_note(codes: &[String]) -> String {
     let has = |code: &str| codes.iter().any(|c| c == code);
     if has("synthesis_model_unavailable") {
         return format!(
-            "Answers need a model. Set {SYNTHESIS_ENV_VAR} to a model config file, then restart Frame."
+            "Answers need a model. Set {SYNTHESIS_ENV_VAR} to a model config file, then restart Platinum."
         );
     }
     if has("synthesis_model_configuration_invalid") {
         return format!(
-            "The model config at {SYNTHESIS_ENV_VAR} could not be loaded. Check the path and the file, then restart Frame."
+            "The model config at {SYNTHESIS_ENV_VAR} could not be loaded. Check the path and the file, then restart Platinum."
         );
     }
     if has("synthesis_evidence_minimum_unmet") {
-        return "There is not enough captured page text to answer with citations yet. Open a few of these results so Frame can capture them, then ask again.".to_string();
+        return "There is not enough captured page text to answer with citations yet. Open a few of these results so Platinum can capture them, then ask again.".to_string();
     }
     if let Some(code) = codes.iter().find(|code| is_synthesis_code(code)) {
         return format!("The answer could not be generated ({}).", humanize(code));
@@ -870,7 +898,7 @@ fn weak_web_note(providers: &[String]) -> Option<String> {
         .iter()
         .any(|name| GENERAL_WEB_PROVIDERS.contains(&name.as_str()));
     (!general).then(|| {
-        "Only social and video sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Frame for general web results.".to_string()
+        "Only social and video sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Platinum for general web results.".to_string()
     })
 }
 
@@ -1071,6 +1099,116 @@ mod tests {
         <body><p>The moon's gravity pulls the ocean toward it, raising a bulge of water.</p>\
         <a href=\"https://example.com/moon\">More about the moon</a></body></html>";
 
+    /// A provider that waits until the test lets it answer, with no results.
+    struct GatedProvider {
+        entered: std::sync::mpsc::Sender<String>,
+        release: tokio::sync::watch::Receiver<bool>,
+    }
+
+    impl SearchProvider for GatedProvider {
+        fn name(&self) -> &str {
+            "fixture"
+        }
+
+        fn search<'a>(
+            &'a self,
+            query: &'a str,
+            _: &'a SearchOpts,
+        ) -> std::pin::Pin<
+            Box<
+                dyn std::future::Future<
+                        Output = Result<
+                            Vec<rustyred_web::SearchCandidate>,
+                            rustyred_web::SearchProviderError,
+                        >,
+                    > + Send
+                    + 'a,
+            >,
+        > {
+            Box::pin(async move {
+                let mut release = self.release.clone();
+                self.entered.send(query.to_string()).unwrap();
+                while !*release.borrow_and_update() {
+                    if release.changed().await.is_err() {
+                        break;
+                    }
+                }
+                Ok(Vec::new())
+            })
+        }
+    }
+
+    #[test]
+    fn network_searches_overlap_and_do_not_block_page_capture() {
+        let (entered, calls) = std::sync::mpsc::channel();
+        let (release, gate) = tokio::sync::watch::channel(false);
+        let mut store = memory_browser_session(SESSION_ID);
+        store.set_search_opts(SearchOpts {
+            provider_timeout_ms: 30_000,
+            ..Default::default()
+        });
+        let service = SearchService {
+            store: Arc::new(Mutex::new(store)),
+            providers: vec![Arc::new(GatedProvider {
+                entered,
+                release: gate,
+            }) as Arc<dyn SearchProvider>]
+            .into(),
+            store_note: None,
+            profile: None,
+            embed_wake: None,
+            campaigns: None,
+            running: Arc::new(tokio::sync::Semaphore::new(RUNNING_SEARCHES)),
+        };
+        let first = {
+            let service = service.clone();
+            std::thread::spawn(move || service.search("ocean tides", false))
+        };
+        let timeout = std::time::Duration::from_secs(5);
+        let first_started = calls
+            .recv_timeout(timeout)
+            .is_ok_and(|query| query.contains("ocean"));
+        let second = {
+            let service = service.clone();
+            std::thread::spawn(move || service.search("lunar tides", false))
+        };
+        let second_started = calls
+            .recv_timeout(timeout)
+            .is_ok_and(|query| query.contains("lunar"));
+        let (captured, receipt) = std::sync::mpsc::channel();
+        let capture = {
+            let service = service.clone();
+            std::thread::spawn(move || {
+                let result = service.capture(VisitedPage {
+                    url: Url::parse("https://example.test/tides").unwrap(),
+                    html: TIDES.into(),
+                });
+                let _ = captured.send(result);
+            })
+        };
+        let capture_finished = receipt
+            .recv_timeout(timeout)
+            .is_ok_and(|result| result.is_ok());
+        // Release even on failure, so the test never leaves blocked workers.
+        release.send_replace(true);
+        first.join().unwrap().unwrap();
+        second.join().unwrap().unwrap();
+        capture.join().unwrap();
+        assert!(first_started && second_started, "provider waits must overlap");
+        assert!(
+            capture_finished,
+            "capture must finish before providers are released"
+        );
+        assert!(
+            service
+                .search("moon tides", false)
+                .unwrap()
+                .hits
+                .iter()
+                .any(|hit| hit.url.as_str() == "https://example.test/tides")
+        );
+    }
+
     #[test]
     fn a_visited_page_is_found_by_local_search() {
         let service = SearchService {
@@ -1080,6 +1218,7 @@ mod tests {
             profile: None,
             embed_wake: None,
             campaigns: None,
+            running: Arc::new(tokio::sync::Semaphore::new(RUNNING_SEARCHES)),
         };
         let query = "why the moon pulls the tides";
         let before = service.search(query, false).unwrap();
@@ -1183,3 +1322,6 @@ mod tests {
         assert!(!is_synthesis_code("provider_error:brave"));
     }
 }
+
+#[cfg(feature = "performance-check")]
+pub mod performance;

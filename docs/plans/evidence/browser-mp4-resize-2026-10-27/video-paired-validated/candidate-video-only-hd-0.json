@@ -1,0 +1,114 @@
+{
+  "native": {
+    "page_render": {
+      "count": 739,
+      "total_ms": 6.749721000000021,
+      "p50_ms": 0.009000000000000001,
+      "p95_ms": 0.010417000000000001,
+      "max_ms": 0.049125
+    },
+    "page_render_interval": {
+      "count": 738,
+      "total_ms": 12117.456041999982,
+      "p50_ms": 16.663667,
+      "p95_ms": 25.000167,
+      "max_ms": 33.406125
+    },
+    "servo_frame": {
+      "count": 727,
+      "total_ms": 982.333394000001,
+      "p50_ms": 1.33,
+      "p95_ms": 1.546333,
+      "max_ms": 2.6830830000000003
+    },
+    "servo_frame_interval": {
+      "count": 726,
+      "total_ms": 12094.988541999983,
+      "p50_ms": 16.649375000000003,
+      "p95_ms": 22.850292,
+      "max_ms": 30.268584
+    },
+    "servo_spin": {
+      "count": 2199,
+      "total_ms": 1011.1937710000002,
+      "p50_ms": 0.022709,
+      "p95_ms": 1.468917,
+      "max_ms": 2.6883749999999997
+    },
+    "surface_present": {
+      "count": 727,
+      "total_ms": 310.43753599999985,
+      "p50_ms": 0.40912499999999996,
+      "p95_ms": 0.547916,
+      "max_ms": 1.006834
+    },
+    "surface_present_interval": {
+      "count": 726,
+      "total_ms": 12095.014833000001,
+      "p50_ms": 16.680417,
+      "p95_ms": 22.815375,
+      "max_ms": 30.17775
+    },
+    "tint_sample": {
+      "count": 88,
+      "total_ms": 12.908294999999999,
+      "p50_ms": 0.0185,
+      "p95_ms": 0.948375,
+      "max_ms": 2.8597919999999997
+    },
+    "webview_paint": {
+      "count": 727,
+      "total_ms": 981.2661319999987,
+      "p50_ms": 1.328917,
+      "p95_ms": 1.545041,
+      "max_ms": 2.682
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 1920,
+      "height": 1080,
+      "current": 13.601559084,
+      "duration": 16,
+      "ended": false,
+      "sources": [],
+      "dimensions": [
+        [
+          1920,
+          1080
+        ]
+      ],
+      "ready": 4,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    1.0,
+    0.14117646217346191,
+    1.0
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [],
+  "mode": "video-only-hd",
+  "variant": "candidate",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.952606583996385,
+  "cpu_s": 10.752849999999999,
+  "host_load": [
+    44.740234375,
+    48.8798828125,
+    48.77490234375
+  ],
+  "valid_foreground": true,
+  "session_restored_after_exit": true
+}

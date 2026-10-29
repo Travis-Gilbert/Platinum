@@ -1,0 +1,519 @@
+[
+  {
+    "mode": "wheel",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 10.482375000000001,
+        "runs": [
+          10.482375000000001,
+          10.480375,
+          10.484416999999999
+        ]
+      },
+      "surface_presents": {
+        "median": 1229,
+        "runs": [
+          1233,
+          1229,
+          1224
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 16.633665999999998,
+        "runs": [
+          16.570125,
+          16.645417,
+          16.633665999999998
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 10.124125,
+        "runs": [
+          10.116334,
+          10.124125,
+          10.139291
+        ]
+      },
+      "raf_interval_p95_ms": {
+        "median": 10.200000000000728,
+        "runs": [
+          10.199999999999818,
+          10.200000000000728,
+          10.229999999999563
+        ]
+      },
+      "raf_over_33_fraction": {
+        "median": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "tint_reads": {
+        "median": 89,
+        "runs": [
+          88,
+          89,
+          89
+        ]
+      },
+      "tint_total_ms": {
+        "median": 27.012088000000006,
+        "runs": [
+          26.024663,
+          27.342088999999998,
+          27.012088000000006
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 9.379571,
+        "runs": [
+          9.379571,
+          9.43100299999999,
+          9.280727999999996
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 9.220084,
+        "runs": [
+          9.375583,
+          9.220084,
+          9.199083
+        ]
+      },
+      "surface_presents": {
+        "median": 1452,
+        "runs": [
+          1453,
+          1452,
+          1447
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 9.224708999999999,
+        "runs": [
+          9.259834,
+          9.213625,
+          9.224708999999999
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 9.237208,
+        "runs": [
+          9.251834,
+          9.231375,
+          9.237208
+        ]
+      },
+      "raf_interval_p95_ms": {
+        "median": 9.25,
+        "runs": [
+          9.270000000000437,
+          9.219999999999345,
+          9.25
+        ]
+      },
+      "raf_over_33_fraction": {
+        "median": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "tint_reads": {
+        "median": 89,
+        "runs": [
+          88,
+          89,
+          90
+        ]
+      },
+      "tint_total_ms": {
+        "median": 4.958627000000002,
+        "runs": [
+          3.9098789999999997,
+          4.958627000000002,
+          8.543132
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 9.603891000000012,
+        "runs": [
+          10.17853,
+          9.603891000000012,
+          9.092031999999989
+        ]
+      }
+    }
+  },
+  {
+    "mode": "video-hd",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 10.727584,
+        "runs": [
+          10.727584,
+          10.733583,
+          10.714416
+        ]
+      },
+      "surface_presents": {
+        "median": 1233,
+        "runs": [
+          1233,
+          1228,
+          1235
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 16.678124999999998,
+        "runs": [
+          16.678124999999998,
+          16.636458,
+          16.688792
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 10.0935,
+        "runs": [
+          10.0935,
+          10.1005,
+          10.091166000000001
+        ]
+      },
+      "raf_interval_p95_ms": {
+        "median": 10.110000000000582,
+        "runs": [
+          10.110000000000582,
+          10.1200000000008,
+          10.109999999999673
+        ]
+      },
+      "raf_over_33_fraction": {
+        "median": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "tint_reads": {
+        "median": 89,
+        "runs": [
+          89,
+          88,
+          89
+        ]
+      },
+      "tint_total_ms": {
+        "median": 29.495166,
+        "runs": [
+          35.452504999999995,
+          29.358709,
+          29.495166
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 12.036785000000009,
+        "runs": [
+          11.980862000000002,
+          12.062559000000007,
+          12.036785000000009
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 9.654667,
+        "runs": [
+          9.614833999999998,
+          9.753916,
+          9.654667
+        ]
+      },
+      "surface_presents": {
+        "median": 1432,
+        "runs": [
+          1430,
+          1443,
+          1432
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 9.242625,
+        "runs": [
+          9.242625,
+          9.238167,
+          9.257792
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 9.236667,
+        "runs": [
+          9.236667,
+          9.230875,
+          9.2435
+        ]
+      },
+      "raf_interval_p95_ms": {
+        "median": 9.2599999999984,
+        "runs": [
+          9.2599999999984,
+          9.229999999999563,
+          9.270000000000437
+        ]
+      },
+      "raf_over_33_fraction": {
+        "median": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "tint_reads": {
+        "median": 90,
+        "runs": [
+          89,
+          90,
+          90
+        ]
+      },
+      "tint_total_ms": {
+        "median": 18.136704,
+        "runs": [
+          18.136704,
+          19.300206999999997,
+          16.723336999999997
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 12.968561999999991,
+        "runs": [
+          12.659655,
+          13.172388999999995,
+          12.968561999999991
+        ]
+      }
+    }
+  },
+  {
+    "mode": "video-only-hd",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 23.105207999999998,
+        "runs": [
+          23.084917,
+          23.139791,
+          23.105207999999998
+        ]
+      },
+      "surface_presents": {
+        "median": 565,
+        "runs": [
+          565,
+          563,
+          565
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 25.474292,
+        "runs": [
+          25.400292,
+          25.673083,
+          25.474292
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 23.075917,
+        "runs": [
+          23.09475,
+          23.075917,
+          22.991999999999997
+        ]
+      },
+      "tint_reads": {
+        "median": 82,
+        "runs": [
+          82,
+          82,
+          82
+        ]
+      },
+      "tint_total_ms": {
+        "median": 27.076499,
+        "runs": [
+          22.776711,
+          27.076499,
+          32.399454999999996
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 9.05013900000003,
+        "runs": [
+          9.163908999999997,
+          8.483913000000001,
+          9.05013900000003
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 24.926292,
+        "runs": [
+          17.524,
+          24.926292,
+          25.011667000000003
+        ]
+      },
+      "surface_presents": {
+        "median": 721,
+        "runs": [
+          720,
+          721,
+          724
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 24.965584,
+        "runs": [
+          17.525041,
+          24.965584,
+          25.044916999999998
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 17.687791,
+        "runs": [
+          18.523457999999998,
+          17.687791,
+          17.265666999999997
+        ]
+      },
+      "tint_reads": {
+        "median": 87,
+        "runs": [
+          87,
+          87,
+          88
+        ]
+      },
+      "tint_total_ms": {
+        "median": 42.360119000000005,
+        "runs": [
+          42.360119000000005,
+          44.527204999999995,
+          27.007123999999997
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 8.716001999999996,
+        "runs": [
+          8.716001999999996,
+          8.095539000000002,
+          8.77561499999996
+        ]
+      }
+    }
+  }
+]

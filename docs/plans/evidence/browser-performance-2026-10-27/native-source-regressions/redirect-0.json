@@ -1,0 +1,98 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1391,
+      "total_ms": 1507.8738610000012,
+      "p50_ms": 1.0759999999999998,
+      "p95_ms": 1.2575830000000001,
+      "max_ms": 2.674375
+    },
+    "page_render_interval": {
+      "count": 1390,
+      "total_ms": 12016.65774999997,
+      "p50_ms": 8.330292,
+      "p95_ms": 9.320333999999999,
+      "max_ms": 41.659875
+    },
+    "servo_frame": {
+      "count": 1398,
+      "total_ms": 3.796049000000002,
+      "p50_ms": 0.0027089999999999996,
+      "p95_ms": 0.003333,
+      "max_ms": 0.020083
+    },
+    "servo_frame_interval": {
+      "count": 1397,
+      "total_ms": 12016.669750000008,
+      "p50_ms": 8.333458,
+      "p95_ms": 9.309916999999999,
+      "max_ms": 78.753167
+    },
+    "servo_spin": {
+      "count": 4746,
+      "total_ms": 141.8081179999998,
+      "p50_ms": 0.012667,
+      "p95_ms": 0.033167,
+      "max_ms": 10.053709
+    },
+    "surface_present": {
+      "count": 1385,
+      "total_ms": 562.1331959999994,
+      "p50_ms": 0.392958,
+      "p95_ms": 0.523292,
+      "max_ms": 1.40275
+    },
+    "surface_present_interval": {
+      "count": 1384,
+      "total_ms": 12016.627083999983,
+      "p50_ms": 8.329625,
+      "p95_ms": 9.411208,
+      "max_ms": 76.736167
+    },
+    "tint_sample": {
+      "count": 87,
+      "total_ms": 1.6020040000000002,
+      "p50_ms": 0.013708,
+      "p95_ms": 0.021667000000000002,
+      "max_ms": 0.21937500000000001
+    },
+    "webview_paint": {
+      "count": 1385,
+      "total_ms": 1488.4864780000016,
+      "p50_ms": 1.063333,
+      "p95_ms": 1.242083,
+      "max_ms": 2.659292
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1326,
+    "interval_count": 1326,
+    "p50_ms": 8.330000000001746,
+    "p95_ms": 9.430000000000291,
+    "over_33_ms": 1,
+    "scroll_y": 7231,
+    "video": null
+  },
+  "tint_rgb": [
+    0.7529412508010864,
+    0.3607843518257141,
+    0.45490190386772156
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [],
+  "mode": "redirect",
+  "variant": "single",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.882020124998235,
+  "cpu_s": 9.585094999999999,
+  "host_load": [
+    33.57763671875,
+    27.271484375,
+    23.23681640625
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

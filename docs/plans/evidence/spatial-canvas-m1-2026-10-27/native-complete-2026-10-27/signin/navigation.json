@@ -1,0 +1,10 @@
+{
+  "initial_navigation": {
+    "source": "Page::open",
+    "url": "http://127.0.0.1:56064/signin/",
+    "webview_id": "WebViewId(PainterId(1), (0,1))",
+    "document_id": "1793129946881:0.3889029053060671"
+  },
+  "started_notifications_at_baseline": 0,
+  "note": "Servo starts a new WebView in Started, so the initial load does not generate a status-change notification. Subsequent Started transitions are counted by the production delegate."
+}

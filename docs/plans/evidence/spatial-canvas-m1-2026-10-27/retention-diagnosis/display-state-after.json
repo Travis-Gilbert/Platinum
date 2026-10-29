@@ -1,0 +1,15 @@
+{
+  "command": [
+    "ioreg",
+    "-n",
+    "Root",
+    "-d1",
+    "-a"
+  ],
+  "elapsed_seconds": 0.03939275000084308,
+  "states": [
+    {
+      "IOConsoleLocked": false
+    }
+  ]
+}

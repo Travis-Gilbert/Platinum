@@ -1,0 +1,103 @@
+{
+  "native": {
+    "page_render": {
+      "count": 268,
+      "total_ms": 466.80550400000004,
+      "p50_ms": 1.564083,
+      "p95_ms": 3.420166,
+      "max_ms": 5.922125
+    },
+    "page_render_interval": {
+      "count": 267,
+      "total_ms": 11525.662084000003,
+      "p50_ms": 33.283874999999995,
+      "p95_ms": 50.072875,
+      "max_ms": 526.017917
+    },
+    "servo_frame": {
+      "count": 251,
+      "total_ms": 0.6391219999999995,
+      "p50_ms": 0.002333,
+      "p95_ms": 0.00475,
+      "max_ms": 0.008042
+    },
+    "servo_frame_interval": {
+      "count": 250,
+      "total_ms": 7975.562125000001,
+      "p50_ms": 34.372333,
+      "p95_ms": 44.604958,
+      "max_ms": 122.348833
+    },
+    "servo_spin": {
+      "count": 762,
+      "total_ms": 17.003663000000014,
+      "p50_ms": 0.015083,
+      "p95_ms": 0.055375,
+      "max_ms": 0.565458
+    },
+    "surface_present": {
+      "count": 246,
+      "total_ms": 151.70919999999995,
+      "p50_ms": 0.582125,
+      "p95_ms": 1.102958,
+      "max_ms": 1.471
+    },
+    "surface_present_interval": {
+      "count": 245,
+      "total_ms": 7975.1547089999995,
+      "p50_ms": 33.698667,
+      "p95_ms": 44.972417,
+      "max_ms": 124.778
+    },
+    "tint_sample": {
+      "count": 52,
+      "total_ms": 14.470667,
+      "p50_ms": 0.020874999999999998,
+      "p95_ms": 2.189292,
+      "max_ms": 2.6159999999999997
+    },
+    "webview_paint": {
+      "count": 246,
+      "total_ms": 461.3212919999999,
+      "p50_ms": 1.60775,
+      "p95_ms": 3.440125,
+      "max_ms": 5.904709
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 400,
+      "height": 300,
+      "current": 0,
+      "ready": 2,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.9921568632125854,
+    0.0,
+    0.007843006402254105
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [
+    [
+      0.0,
+      0.4901961088180542,
+      0.00392150366678834
+    ],
+    [
+      0.9921568632125854,
+      0.0,
+      0.003921503201127052
+    ]
+  ]
+}

@@ -1,0 +1,34 @@
+   Compiling frame-profile v0.1.0 (/Users/travisgilbert/Tech Dev Local/Creative/Frame/crates/profile)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.59s
+     Running unittests src/lib.rs (/Volumes/SSD Samsung/cargo-targets/frame-profile/debug/deps/frame_profile-6267fe0b2d33e6c6)
+
+running 1 test
+test credentials::tests::native_keychain_roundtrip ... ignored, explicit local OS-Keychain smoke test; creates and removes one synthetic item
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/migration.rs (/Volumes/SSD Samsung/cargo-targets/frame-profile/debug/deps/migration-e5004052cb23d8b9)
+
+running 14 tests
+test direct_chrome_password_import_uses_native_keychain_and_a_real_login_database ... ignored, explicit native migration smoke test; uses synthetic source/destination Keychain items
+test fill_serialization_cannot_turn_password_into_script_and_rechecks_origin ... ok
+test discovers_names_accounts_and_rejects_traversal ... ok
+test chrome_decrypts_external_openssl_vector_and_rejects_unknown_or_corrupt_formats ... ok
+test keychain_denial_never_creates_a_phantom_credential ... ok
+test credentials_are_bound_to_exact_scheme_host_port_and_update_in_place ... ok
+test broken_category_does_not_block_other_categories_and_batch_report_is_durable ... ok
+test selective_form_import_excludes_payment_and_password_fields ... ok
+test bookmarks_include_account_bookmarks_preserve_folders_and_deduplicate ... ok
+test password_csv_handles_quotes_unicode_newlines_and_keeps_secrets_out_of_sqlite ... ok
+test html_bookmarks_use_a_real_html_parser_and_session_survives_reopen ... ok
+test history_snapshot_includes_committed_wal_and_import_is_idempotent ... ok
+test session_import_uses_newest_file_ignores_closed_tabs_and_is_retry_safe ... ok
+test imported_profiles_remain_separate_and_retries_reuse_destination ... ok
+
+test result: ok. 13 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+   Doc-tests frame_profile
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

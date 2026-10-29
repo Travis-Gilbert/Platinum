@@ -1,0 +1,22 @@
+[
+  {
+    "image": "frame-media-movie_5.mp4.png",
+    "pixel": [
+      255,
+      0,
+      0,
+      255
+    ],
+    "passed": true
+  },
+  {
+    "image": "frame-media-movie_5.webm.png",
+    "pixel": [
+      254,
+      0,
+      1,
+      255
+    ],
+    "passed": true
+  }
+]

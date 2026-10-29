@@ -1,0 +1,17 @@
+{
+  "events": [
+    {
+      "elapsed_ms": 0.043084000000000004,
+      "source": "start",
+      "active": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    }
+  ],
+  "polls": 181,
+  "max_poll_gap_ms": 156.773584,
+  "failure": null,
+  "monitor": "GPUI activation/visibility observers plus 16 ms polling; failures latch",
+  "allow_owned_native_panel_focus": false
+}

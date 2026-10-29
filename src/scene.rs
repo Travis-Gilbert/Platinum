@@ -6,7 +6,8 @@
 //! Servo's own `SoftwareRenderingContext` is but on the hardware adapter, and
 //! CoreVideo's `CVPixelBufferCreateWithIOSurface`. Written here because none
 //! of Servo's rendering contexts hands out its front buffer. Ported
-//! unchanged from Theorem UI's desktop host (`desktop/src/scene.rs`).
+//! from Theorem UI's desktop host (`desktop/src/scene.rs`). Window-backed pages
+//! add a refresh-driver adapter for GPUI's display clock.
 
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
@@ -24,7 +25,7 @@ use objc2_core_video::{
     CVPixelBufferLockBaseAddress, CVPixelBufferLockFlags, CVPixelBufferUnlockBaseAddress,
     kCVReturnSuccess,
 };
-use servo::{DeviceIntRect, RenderingContext, RgbaImage};
+use servo::{DeviceIntRect, RefreshDriver, RenderingContext, RgbaImage};
 use surfman::chains::{PreserveBuffer, SwapChain, SwapChainAPI as _};
 use surfman::{
     Connection, Context, ContextAttributeFlags, ContextAttributes, Device, Error, GLApi, GLVersion,
@@ -35,8 +36,22 @@ use surfman::{
 /// may still be drawing the one before the newest when Servo presents again.
 const FRAMES_IN_FLIGHT: usize = 3;
 
+// Servo's refresh-driver hook, following servoshell's VsyncRefreshDriver.
+// GPUI supplies the clock; this adapter only retains its one-shot observers.
+#[derive(Default)]
+struct SceneRefreshDriver {
+    callbacks: RefCell<Vec<Box<dyn Fn() + Send>>>,
+}
+
+impl RefreshDriver for SceneRefreshDriver {
+    fn observe_next_frame(&self, callback: Box<dyn Fn() + Send + 'static>) {
+        self.callbacks.borrow_mut().push(callback);
+    }
+}
+
 pub struct SceneRenderingContext {
     size: Cell<PhysicalSize<u32>>,
+    refresh: Option<Rc<SceneRefreshDriver>>,
     gleam: Rc<dyn Gl>,
     glow: Arc<glow::Context>,
     device: RefCell<Device>,
@@ -90,6 +105,7 @@ impl SceneRenderingContext {
         let swap_chain = SwapChain::create_attached(&device, &mut context, SurfaceAccess::GPUOnly)?;
         Ok(Self {
             size: Cell::new(size),
+            refresh: None,
             gleam,
             glow: Arc::new(glow),
             device: RefCell::new(device),
@@ -98,6 +114,31 @@ impl SceneRenderingContext {
             shown: RefCell::default(),
             frame: RefCell::default(),
         })
+    }
+
+    /// Window pages use GPUI's display clock. Standalone media/profile probes
+    /// have no GPUI window and keep Servo's default timer through `new`.
+    pub fn for_window(size: PhysicalSize<u32>) -> Result<Self, Error> {
+        let mut context = Self::new(size)?;
+        context.refresh = Some(Rc::default());
+        Ok(context)
+    }
+
+    pub fn needs_refresh(&self) -> bool {
+        self.refresh
+            .as_ref()
+            .is_some_and(|driver| !driver.callbacks.borrow().is_empty())
+    }
+
+    pub fn refresh(&self) {
+        let Some(driver) = &self.refresh else {
+            return;
+        };
+        // Release the borrow before callbacks can register their next observer.
+        let callbacks = std::mem::take(&mut *driver.callbacks.borrow_mut());
+        for callback in callbacks {
+            callback();
+        }
     }
 
     /// The last presented frame, for `gpui::surface()`.
@@ -109,6 +150,8 @@ impl SceneRenderingContext {
     /// under the toolbar. Sampled across the row, so a logo or a link in a
     /// page's header does not decide it.
     pub fn top_color(&self) -> Option<[u8; 3]> {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("tint_sample");
         const SAMPLES: usize = 32;
         let frame = self.frame()?;
         let (width, height) = (
@@ -139,6 +182,38 @@ impl SceneRenderingContext {
             .iter()
             .max_by_key(|sample| samples.iter().filter(|other| other == sample).count())?;
         Some([most[2], most[1], most[0]])
+    }
+
+    /// The last frame's pixels, for `read` to look at while the buffer is
+    /// locked: BGRA bytes, rows bottom first, with the width, the height and
+    /// the bytes to a row. `None` before the first frame.
+    pub fn with_pixels<R>(&self, read: impl FnOnce(&[u8], usize, usize, usize) -> R) -> Option<R> {
+        let frame = self.frame()?;
+        let (width, height) = (
+            CVPixelBufferGetWidth(&frame),
+            CVPixelBufferGetHeight(&frame),
+        );
+        let flags = CVPixelBufferLockFlags::ReadOnly;
+        // SAFETY: the buffer is locked while its memory is read, a locked
+        // buffer's base address covers every row, and `read` cannot keep the
+        // slice past the unlock.
+        unsafe {
+            if CVPixelBufferLockBaseAddress(&frame, flags) != kCVReturnSuccess {
+                return None;
+            }
+            let base = CVPixelBufferGetBaseAddress(&frame).cast::<u8>();
+            let read = (!base.is_null()).then(|| {
+                let stride = CVPixelBufferGetBytesPerRow(&frame);
+                read(
+                    std::slice::from_raw_parts(base, stride * height),
+                    width,
+                    height,
+                    stride,
+                )
+            });
+            CVPixelBufferUnlockBaseAddress(&frame, flags);
+            read
+        }
     }
 
     fn framebuffer(&self) -> gl::GLuint {
@@ -182,6 +257,12 @@ impl Drop for SceneRenderingContext {
 }
 
 impl RenderingContext for SceneRenderingContext {
+    fn refresh_driver(&self) -> Option<Rc<dyn RefreshDriver>> {
+        self.refresh
+            .as_ref()
+            .map(|driver| driver.clone() as Rc<dyn RefreshDriver>)
+    }
+
     fn prepare_for_rendering(&self) {
         self.gleam
             .bind_framebuffer(gl::FRAMEBUFFER, self.framebuffer());
@@ -232,6 +313,8 @@ impl RenderingContext for SceneRenderingContext {
     /// the oldest shown buffer back to Servo, or destroys it if the page has
     /// since been resized.
     fn present(&self) {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("surface_present");
         let device = self.device.borrow();
         let mut context = self.context.borrow_mut();
         if let Err(error) = self
@@ -388,5 +471,55 @@ mod tests {
         context.present();
 
         assert_eq!(context.top_color(), Some([255, 0, 0]));
+    }
+
+    /// The palette reads a real frame: BGRA bytes, a row's stride, either
+    /// half of the picture.
+    #[test]
+    fn a_presented_frame_hands_its_pixels_over_for_a_palette() {
+        let context = SceneRenderingContext::new(PhysicalSize::new(64, 8)).unwrap();
+        assert!(
+            context.with_pixels(|_, _, _, _| ()).is_none(),
+            "nothing presented yet"
+        );
+        context.make_current().unwrap();
+        context.prepare_for_rendering();
+        let gl = context.gleam_gl_api();
+        gl.clear_color(0.0, 0.0, 1.0, 1.0);
+        gl.clear(gl::COLOR_BUFFER_BIT);
+        gl.enable(gl::SCISSOR_TEST);
+        gl.scissor(0, 4, 64, 4);
+        gl.clear_color(1.0, 0.0, 0.0, 1.0);
+        gl.clear(gl::COLOR_BUFFER_BIT);
+        gl.disable(gl::SCISSOR_TEST);
+        gl.finish();
+        context.present();
+
+        let (width, height, stride, swatches) = context
+            .with_pixels(|pixels, width, height, stride| {
+                (
+                    width,
+                    height,
+                    stride,
+                    crate::site::palette(pixels, width, height, stride),
+                )
+            })
+            .expect("a frame");
+        assert_eq!((width, height), (64, 8));
+        assert!(stride >= 64 * 4);
+        let colors: Vec<_> = swatches.iter().map(|swatch| swatch.color).collect();
+        assert_eq!(swatches.len(), 2, "{colors:?}");
+        // Lab and back moves a channel by a step at most.
+        let has = |want: [u8; 3]| {
+            colors
+                .iter()
+                .any(|color| color.iter().zip(want).all(|(a, b)| a.abs_diff(b) <= 2))
+        };
+        assert!(has([255, 0, 0]) && has([0, 0, 255]), "{colors:?}");
+        assert!(
+            swatches
+                .iter()
+                .all(|swatch| (swatch.share - 0.5).abs() < 0.05)
+        );
     }
 }

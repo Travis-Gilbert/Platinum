@@ -1,4 +1,4 @@
-//! Frame's tabs on GPUI Kit's Dock. Each tab is a panel and each tab group is
+//! Platinum's tabs on GPUI Kit's Dock. Each tab is a panel and each tab group is
 //! a row of tabs over a card that holds the tab's toolbar and content.
 //! Dragging a tab reorders it, moves it to another group, or drops it on a
 //! card's edge to split the window.

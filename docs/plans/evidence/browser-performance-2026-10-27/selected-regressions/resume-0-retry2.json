@@ -1,0 +1,42 @@
+{
+  "native": {
+    "servo_spin": {
+      "count": 1747,
+      "total_ms": 64.30028199999997,
+      "p50_ms": 0.007917,
+      "p95_ms": 0.038292,
+      "max_ms": 6.758125000000001
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 574,
+    "interval_count": 574,
+    "p50_ms": 23.840000000000146,
+    "p95_ms": 26.229999999999563,
+    "over_33_ms": 4,
+    "scroll_y": 9341,
+    "video": null
+  },
+  "tint_rgb": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "window_active": false,
+  "hidden_surface_presents": 0,
+  "transition_tints": [],
+  "mode": "resume",
+  "variant": "single",
+  "repeat": 0,
+  "attempt": 2,
+  "wall_s": 19.1965295839982,
+  "cpu_s": 2.7655540000000007,
+  "host_load": [
+    61.3017578125,
+    31.7890625,
+    21.93603515625
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": false
+}

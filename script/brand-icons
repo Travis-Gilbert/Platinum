@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Rebuilds the app icon in assets/brand/icons/ from the painting in
+# assets/brand/source/platinum-painting.png: the 1024 px PNG, Platinum.icns
+# (through iconutil) and Platinum.ico.
+#
+# The painting fills its canvas, so it is scaled to the footprint the v1 icon
+# kept on its 1024 px grid (about 83% of the height, centered), which leaves
+# the margin macOS expects around an icon and keeps it the size of its
+# neighbours in the Dock. Each size is resampled from the painting itself.
+#
+# Needs uv (for Pillow) and macOS's iconutil.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+src="$root/assets/brand/source/platinum-painting.png"
+out="$root/assets/brand/icons"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+uv run --quiet --with pillow python - "$src" "$out" "$work/Platinum.iconset" <<'EOF'
+import os, sys
+from PIL import Image
+
+src, out, iconset = sys.argv[1:]
+HEIGHT = 0.826  # the v1 icon's height on its grid
+
+painting = Image.open(src).convert("RGBA")
+painting = painting.crop(painting.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox())
+
+def icon(size):
+    scale = HEIGHT * size / painting.height
+    art = painting.resize(
+        (max(1, round(painting.width * scale)), max(1, round(painting.height * scale))),
+        Image.LANCZOS,
+    )
+    canvas = Image.new("RGBA", (size, size))
+    canvas.alpha_composite(art, ((size - art.width) // 2, (size - art.height) // 2))
+    return canvas
+
+icon(1024).save(os.path.join(out, "platinum-1024.png"))
+os.makedirs(iconset)
+for points in (16, 32, 128, 256, 512):
+    icon(points).save(os.path.join(iconset, f"icon_{points}x{points}.png"))
+    icon(points * 2).save(os.path.join(iconset, f"icon_{points}x{points}@2x.png"))
+sizes = (16, 24, 32, 48, 64, 128, 256)
+icon(256).save(os.path.join(out, "Platinum.ico"), sizes=[(s, s) for s in sizes])
+EOF
+
+iconutil -c icns "$work/Platinum.iconset" -o "$out/Platinum.icns"

@@ -1,0 +1,336 @@
+[
+  {
+    "mode": "wheel",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 12.387291999999999,
+        "runs": [
+          11.631874999999999,
+          12.387291999999999,
+          12.615166
+        ]
+      },
+      "surface_presents": {
+        "median": 1194,
+        "runs": [
+          1195,
+          765,
+          1194
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 16.74225,
+        "runs": [
+          16.74225,
+          16.450875,
+          16.924125
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 11.935625,
+        "runs": [
+          11.239667,
+          11.935625,
+          12.397083
+        ]
+      },
+      "raf_interval_p95_ms": {
+        "median": 13.1899999999996,
+        "runs": [
+          11.730000000000473,
+          13.19000000000051,
+          13.1899999999996
+        ]
+      },
+      "raf_over_33_fraction": {
+        "median": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "tint_reads": {
+        "median": 87,
+        "runs": [
+          87,
+          57,
+          89
+        ]
+      },
+      "tint_total_ms": {
+        "median": 20.134254,
+        "runs": [
+          20.134254,
+          19.027665000000002,
+          26.783753999999995
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          1,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 8.877277000000007,
+        "runs": [
+          9.168416,
+          7.220602999999997,
+          8.877277000000007
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 9.276042,
+        "runs": [
+          9.319583,
+          9.276042,
+          9.185
+        ]
+      },
+      "surface_presents": {
+        "median": 1442,
+        "runs": [
+          1455,
+          1433,
+          1442
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 9.347291,
+        "runs": [
+          9.473916000000001,
+          9.347291,
+          9.312666
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 9.234333000000001,
+        "runs": [
+          9.234333000000001,
+          9.241,
+          9.1665
+        ]
+      },
+      "raf_interval_p95_ms": {
+        "median": 9.260000000000218,
+        "runs": [
+          9.260000000000218,
+          9.269999999999982,
+          9.200000000000728
+        ]
+      },
+      "raf_over_33_fraction": {
+        "median": 0.0,
+        "runs": [
+          0.0,
+          0.000693000693000693,
+          0.0
+        ]
+      },
+      "tint_reads": {
+        "median": 89,
+        "runs": [
+          89,
+          89,
+          88
+        ]
+      },
+      "tint_total_ms": {
+        "median": 1.387625,
+        "runs": [
+          1.387625,
+          1.5320010000000002,
+          1.1549959999999997
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 9.146059999999999,
+        "runs": [
+          9.146059999999999,
+          9.111057000000002,
+          9.386085999999992
+        ]
+      }
+    }
+  },
+  {
+    "mode": "video-only-hd",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 23.247500000000002,
+        "runs": [
+          23.247500000000002,
+          23.076834,
+          23.280874999999998
+        ]
+      },
+      "surface_presents": {
+        "median": 563,
+        "runs": [
+          564,
+          563,
+          561
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 25.526042,
+        "runs": [
+          25.792417,
+          25.228375,
+          25.526042
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 23.074208,
+        "runs": [
+          23.074208,
+          23.048792,
+          23.222832999999998
+        ]
+      },
+      "tint_reads": {
+        "median": 81,
+        "runs": [
+          82,
+          81,
+          81
+        ]
+      },
+      "tint_total_ms": {
+        "median": 19.165457,
+        "runs": [
+          18.913832999999997,
+          24.287292,
+          19.165457
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 9.029328999999997,
+        "runs": [
+          9.244824000000001,
+          9.029328999999997,
+          8.838639
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 17.931584,
+        "runs": [
+          17.797125,
+          17.931584,
+          19.380125000000003
+        ]
+      },
+      "surface_presents": {
+        "median": 722,
+        "runs": [
+          614,
+          726,
+          722
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 17.468042,
+        "runs": [
+          17.536541,
+          17.10375,
+          17.468042
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 17.945209,
+        "runs": [
+          17.698041,
+          17.945209,
+          19.387999999999998
+        ]
+      },
+      "tint_reads": {
+        "median": 90,
+        "runs": [
+          77,
+          91,
+          90
+        ]
+      },
+      "tint_total_ms": {
+        "median": 5.503246000000001,
+        "runs": [
+          3.6802960000000002,
+          5.503246000000001,
+          14.625128000000002
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 8.547075,
+        "runs": [
+          7.994498,
+          8.547075,
+          8.757401000000002
+        ]
+      }
+    }
+  }
+]

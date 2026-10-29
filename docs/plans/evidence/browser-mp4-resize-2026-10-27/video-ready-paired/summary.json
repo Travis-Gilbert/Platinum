@@ -1,0 +1,153 @@
+[
+  {
+    "mode": "video-only-hd",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 20.936041999999997,
+        "runs": [
+          21.506041,
+          20.474334,
+          20.936041999999997
+        ]
+      },
+      "surface_presents": {
+        "median": 727,
+        "runs": [
+          727,
+          728,
+          721
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 25.007875,
+        "runs": [
+          25.027,
+          25.007875,
+          24.715459
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 20.921625,
+        "runs": [
+          21.621167,
+          20.441292,
+          20.921625
+        ]
+      },
+      "tint_reads": {
+        "median": 88,
+        "runs": [
+          87,
+          88,
+          88
+        ]
+      },
+      "tint_total_ms": {
+        "median": 20.108960999999997,
+        "runs": [
+          31.77233,
+          20.108960999999997,
+          17.618252
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 11.401265,
+        "runs": [
+          11.401265,
+          11.181894999999997,
+          12.326973000000002
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 20.898291,
+        "runs": [
+          20.898291,
+          21.201625,
+          20.455792
+        ]
+      },
+      "surface_presents": {
+        "median": 722,
+        "runs": [
+          722,
+          721,
+          722
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 24.451708,
+        "runs": [
+          17.8785,
+          24.451708,
+          24.963124999999998
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 20.938791,
+        "runs": [
+          20.938791,
+          21.194958,
+          20.485583000000002
+        ]
+      },
+      "tint_reads": {
+        "median": 87,
+        "runs": [
+          88,
+          87,
+          87
+        ]
+      },
+      "tint_total_ms": {
+        "median": 18.815293,
+        "runs": [
+          19.231795999999996,
+          16.502211,
+          18.815293
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 11.452778,
+        "runs": [
+          11.452778,
+          11.106531,
+          12.399510000000006
+        ]
+      }
+    }
+  }
+]

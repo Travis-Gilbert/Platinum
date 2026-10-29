@@ -1,0 +1,49 @@
+{
+  "native": {
+    "servo_frame": {
+      "count": 484,
+      "total_ms": 535.4336380000002,
+      "p50_ms": 1.086208,
+      "p95_ms": 1.9918330000000002,
+      "max_ms": 2.99
+    },
+    "servo_frame_interval": {
+      "count": 483,
+      "total_ms": 11940.67299999999,
+      "p50_ms": 17.555833,
+      "p95_ms": 53.98375,
+      "max_ms": 93.143209
+    },
+    "tint_sample": {
+      "count": 82,
+      "total_ms": 9.814041,
+      "p50_ms": 0.022958,
+      "p95_ms": 0.28579099999999996,
+      "max_ms": 3.1068749999999996
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 653,
+    "interval_count": 653,
+    "p50_ms": 17.56999999999971,
+    "p95_ms": 32.99000000000069,
+    "over_33_ms": 30,
+    "scroll_y": 0,
+    "video": {
+      "current": 3.54675,
+      "ready": 4,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "mode": "video",
+  "repeat": 0,
+  "wall_s": 15.853476166998007,
+  "cpu_s": 4.51981,
+  "host_load": [
+    209.828125,
+    172.57568359375,
+    131.7822265625
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "cssTheme": "",
+  "theme": "moonstone",
+  "accentColor": "#7b6cd9",
+  "enabledCssSnippets": [
+    "callouts",
+    "folder-colours"
+  ],
+  "baseFontSize": 16
+}

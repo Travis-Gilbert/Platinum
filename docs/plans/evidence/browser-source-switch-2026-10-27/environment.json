@@ -1,0 +1,56 @@
+{
+  "frame_head": "2e135c046d2feba70b57980c8d70e5bb7667822d",
+  "servo_head": "5c8325a389555f3b1adc476106d8529791afe13e",
+  "theorem_head": "6e57dbb39124f472d8619fb20a9984e89eb225e8",
+  "fixtures": {
+    "motion-1080p60.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/motion-1080p60.mp4",
+      "sha256": "70ed06971bce39b24d0c0aaa508c83d0ea34d9a4078cdeda4bdd5e6c70928a09",
+      "bytes": 55448182
+    },
+    "green.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/green.mp4",
+      "sha256": "6039aff2e5724d37a2dab7ba2721d16685561d8eb9c046f08ee0e99466bf13b6",
+      "bytes": 3040
+    },
+    "green-small.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/green-small.mp4",
+      "sha256": "b61e9dbb50748324d7319af7780daa271de4495f5af07bd561bbd912d0685ba4",
+      "bytes": 2913
+    }
+  },
+  "hardware": "Apple M1 Max, 10 logical CPUs, 32 GiB RAM",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434\n",
+  "rust": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "profile": "dev, application and dependencies opt-level=2, debug=0",
+  "sources": {
+    "patches/servo-video-frame-pacing.patch": "f8d8994becf9a23c4fbba1a41c31ef20aaed007597f614a381642b4929a4011d",
+    "tests/media/source-switch.js": "e54086a768734b9854ede0e629e1b836dbc72263c2f0fcdcea8da5c7b5caf9e5",
+    "tests/performance/page.html": "352f8ad60b0e82cff431dfec46a9f691d18ba466dbe22792b235d69f18ad2f83",
+    "tests/performance/compare.py": "737cec78e21f928fa8f05a45c6855373946d952866b6dad493b177dbbf2c3b6b",
+    "deps/servo-mse/components/media/backends/gstreamer/player.rs": "724e22ee9d13e405f183cb66a9228df3fbe3bb7fdfee572eea67e5722cdc5cbe",
+    "deps/servo-mse/components/script/dom/html/embedded_content/htmlmediaelement.rs": "9d284844117264b567e942c3ee2e35afca74aa0a068a14b73bc1e9de656ed561"
+  },
+  "binaries": {
+    "frame-direct-candidate": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-direct-candidate",
+      "sha256": "bfd709a515db5ab6a09f1e372f240062eda0a3873d4895546c71b5f18c7b3b1d"
+    },
+    "frame-source-switch-final": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-source-switch-final",
+      "sha256": "12a2ac3ace6aa2702991f33d4c2372b9ed3da798c442274b26028589f15b62fc"
+    },
+    "frame": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame",
+      "sha256": "52780818d5e8c1900bbf8e2ee65d3a48af176024b444dbd19d032e0bcbc95611"
+    },
+    "examples/media_check-before-replay": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/examples/media_check-before-replay",
+      "sha256": "675704b7cb49f630667d2e2c73cab87080b15bb014fac6c787ab2a2ac7ceddd4"
+    },
+    "examples/media_check-source-switch-final": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/examples/media_check-source-switch-final",
+      "sha256": "b2a57e3a075a0bf8f7a05076835d825bb46ffea8dccf786869a8c91ab063ede4"
+    }
+  }
+}

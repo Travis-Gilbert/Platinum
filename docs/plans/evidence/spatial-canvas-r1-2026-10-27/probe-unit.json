@@ -1,0 +1,13 @@
+{
+  "name": "probe-unit",
+  "cwd": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport",
+  "command": [
+    "node",
+    "/Volumes/SSD Samsung/tmp/r1-probe-test.cjs"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.046103708002192434,
+  "environment": {
+    "TMPDIR": "/Volumes/SSD Samsung/tmp"
+  }
+}

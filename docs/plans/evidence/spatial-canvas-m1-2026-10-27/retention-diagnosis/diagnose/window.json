@@ -1,0 +1,17 @@
+{
+  "visible": false,
+  "visibility": "Hidden",
+  "active": false,
+  "viewport_points": [
+    900.0,
+    650.0
+  ],
+  "native_windows": [
+    {
+      "on_active_space": true,
+      "shown": true,
+      "miniaturized": false,
+      "occlusion": "NSWindowOcclusionState(8192)"
+    }
+  ]
+}

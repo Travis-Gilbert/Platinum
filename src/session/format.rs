@@ -69,6 +69,33 @@ pub struct Session {
     pub dock: Layout,
 }
 
+impl Session {
+    /// Add a tab for each of `contents` after the others, at the top of the
+    /// tree, leaving out what a tab shows already.
+    pub fn add_tabs(&mut self, contents: impl IntoIterator<Item = Content>) {
+        let mut id = self.tabs.iter().map(|tab| tab.id + 1).max().unwrap_or(0);
+        for content in contents {
+            let shown = self.tabs.iter().any(|tab| match content.url() {
+                Some(url) => tab.content.url() == Some(url),
+                None => tab.content == content,
+            });
+            if shown {
+                continue;
+            }
+            self.tabs.push(SavedTab {
+                id,
+                content,
+                pin: None,
+                parent: None,
+                opener: None,
+                collapsed: false,
+                name: None,
+            });
+            id += 1;
+        }
+    }
+}
+
 /// Tab groups, side by side or stacked, as the dock holds them.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Layout {
@@ -161,7 +188,7 @@ pub fn pins_to_json(pins: &[Pin]) -> Value {
     json!({ "version": VERSION, "pins": pins })
 }
 
-/// None when the file is not one Frame wrote.
+/// None when the file is not one Platinum wrote.
 pub fn pins_from_json(value: &Value) -> Option<Vec<Pin>> {
     let pins = value.get("pins")?.as_array()?;
     pins.iter()
@@ -277,7 +304,7 @@ fn layout_from_json(value: &Value) -> Option<Layout> {
     Some(Layout::Split { vertical, children })
 }
 
-/// None when the file is not one Frame wrote. A tab whose address no longer
+/// None when the file is not one Platinum wrote. A tab whose address no longer
 /// parses comes back as a new tab, and one without an id is left out,
 /// rather than losing the rest.
 pub fn session_from_json(value: &Value) -> Option<Session> {

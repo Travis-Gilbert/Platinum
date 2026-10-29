@@ -1,0 +1,52 @@
+{
+  "sequential": [
+    {
+      "ms": 786,
+      "hits": 1,
+      "degraded": [
+        "warm_index_shadow"
+      ]
+    },
+    {
+      "ms": 606,
+      "hits": 1,
+      "degraded": [
+        "warm_index_shadow"
+      ]
+    }
+  ],
+  "concurrent": [
+    {
+      "ms": 612,
+      "hits": 1,
+      "degraded": [
+        "warm_index_shadow"
+      ]
+    },
+    {
+      "ms": 613,
+      "hits": 1,
+      "degraded": [
+        "warm_index_shadow"
+      ]
+    },
+    {
+      "ms": 611,
+      "hits": 1,
+      "degraded": [
+        "warm_index_shadow"
+      ]
+    }
+  ],
+  "batch_ms": 614.060791,
+  "capture_ms": 194.119416,
+  "mode": "search",
+  "repeat": 0,
+  "wall_s": 6.342471249998198,
+  "cpu_s": 0.9041349999999999,
+  "host_load": [
+    211.16162109375,
+    169.0498046875,
+    129.13232421875
+  ]
+}

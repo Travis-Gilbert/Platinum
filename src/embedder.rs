@@ -1,4 +1,4 @@
-//! EmbeddingGemma 2, in process, for every Frame feature that embeds text.
+//! EmbeddingGemma 2, in process, for every Platinum feature that embeds text.
 //!
 //! One copy of the model is loaded per process and shared through [`shared`]:
 //! search embeds queries and visited pages with it, and later features reuse
@@ -71,10 +71,10 @@ pub fn load() -> anyhow::Result<Arc<EmbeddingGemma>> {
     if let Some(model) = shared() {
         return Ok(model);
     }
-    let cache = dirs::cache_dir()
-        .context("no cache directory for the embedding model")?
-        .join("Frame")
-        .join("models");
+    let cache = crate::brand::app_dir(
+        &dirs::cache_dir().context("no cache directory for the embedding model")?,
+    )
+    .join("models");
     let model = Arc::new(EmbeddingGemma::open(&cache)?);
     Ok(MODEL.get_or_init(|| model).clone())
 }

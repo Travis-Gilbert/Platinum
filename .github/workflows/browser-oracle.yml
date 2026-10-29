@@ -1,0 +1,104 @@
+# Nightly acceptance oracle for Frame (Travis-Gilbert/Platinum).
+# Rows and pins: docs/plans/oracle-spec.json. Setup, live rows and the rules:
+# docs/plans/oracle.md. Adapted from Theorem's theorem-browser nightly
+# acceptance oracle; window/GPU acceptance stays live-only and is never
+# claimed by a hosted runner.
+name: frame nightly acceptance oracle
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      preflight_only:
+        description: Verify pins and archival patch identity without building
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frame-oracle
+  cancel-in-progress: true
+
+jobs:
+  oracle:
+    name: Frame oracle (macos-26-aarch64)
+    runs-on: macos-26
+    timeout-minutes: 360
+    env:
+      CARGO_INCREMENTAL: "0"
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+    steps:
+      - name: Check out Frame
+        uses: actions/checkout@v4
+
+      - name: Refuse without a Theorem read token
+        env:
+          THEOREM_TOKEN: ${{ secrets.THEOREM_READONLY_TOKEN }}
+        run: |
+          if [ -z "$THEOREM_TOKEN" ]; then
+            echo "THEOREM_READONLY_TOKEN is not set."
+            echo "Frame's RustyWeb crates are path dependencies on the private"
+            echo "Travis-Gilbert/Theorem repository, so this workflow needs a"
+            echo "read-only fine-grained token for it as an Actions secret."
+            echo "Setup steps: docs/plans/oracle.md"
+            exit 1
+          fi
+
+      - name: Check out the pinned Theorem substrate
+        uses: actions/checkout@v4
+        with:
+          repository: Travis-Gilbert/Theorem
+          ref: 7eb1ba024b6ccab8146f7857535dcdc6334eb39b
+          token: ${{ secrets.THEOREM_READONLY_TOKEN }}
+          path: deps/theorem-consolidated
+
+      - name: Install media build dependencies
+        run: brew install gstreamer libnice-gstreamer meson ninja
+
+      - name: Prepare the pinned Servo fork and patched GStreamer MSE runtime
+        run: |
+          script/bootstrap
+          script/bootstrap-media
+
+      - name: Verify pin unity and patch identity without execution
+        env:
+          ORACLE_OUT: ${{ runner.temp }}/frame-oracle/run
+        run: |
+          mkdir -p "$ORACLE_OUT"
+          status=0
+          python3 script/oracle-run.py run --check --output "$ORACLE_OUT" || status=$?
+          cat "$ORACLE_OUT/preflight.json"
+          exit "$status"
+
+      - name: Run exact-pin build and headless acceptance rows
+        if: ${{ !inputs.preflight_only }}
+        env:
+          ORACLE_OUT: ${{ runner.temp }}/frame-oracle/run
+        run: python3 script/oracle-run.py run --output "$ORACLE_OUT"
+
+      - name: Validate the observed receipt and write the readiness report
+        if: ${{ always() && !inputs.preflight_only }}
+        env:
+          ORACLE_OUT: ${{ runner.temp }}/frame-oracle/run
+        run: |
+          if [ ! -f "$ORACLE_OUT/receipt.json" ]; then
+            echo "No receipt was produced; inspect preflight.json or the row logs."
+            exit 1
+          fi
+          python3 script/oracle-run.py validate \
+            --spec docs/plans/oracle-spec.json \
+            --receipt "$ORACLE_OUT/receipt.json" \
+            --report "$ORACLE_OUT/readiness.md"
+
+      - name: Upload the receipt, report and row logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frame-oracle-macos-26-aarch64-${{ github.run_id }}
+          path: ${{ runner.temp }}/frame-oracle/run/**
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,4 @@
+media check: document 0 HeadParsed
+media check: document 0 Complete
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+frame screenshot: $DARWIN_USER_TEMP_DIR/frame-media-svg-initial.png

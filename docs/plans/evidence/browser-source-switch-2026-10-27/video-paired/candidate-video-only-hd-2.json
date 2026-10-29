@@ -1,0 +1,108 @@
+{
+  "native": {
+    "page_render": {
+      "count": 732,
+      "total_ms": 6.461375000000003,
+      "p50_ms": 0.008667,
+      "p95_ms": 0.010583,
+      "max_ms": 0.060417
+    },
+    "page_render_interval": {
+      "count": 731,
+      "total_ms": 11999.959083000009,
+      "p50_ms": 16.661333,
+      "p95_ms": 17.105625,
+      "max_ms": 17.645792
+    },
+    "servo_frame": {
+      "count": 721,
+      "total_ms": 959.2119909999993,
+      "p50_ms": 1.316375,
+      "p95_ms": 1.5696670000000001,
+      "max_ms": 3.298792
+    },
+    "servo_frame_interval": {
+      "count": 720,
+      "total_ms": 11999.597041999992,
+      "p50_ms": 16.636167,
+      "p95_ms": 17.875792,
+      "max_ms": 19.891041
+    },
+    "servo_spin": {
+      "count": 2183,
+      "total_ms": 987.0684629999989,
+      "p50_ms": 0.022375,
+      "p95_ms": 1.450666,
+      "max_ms": 3.3058330000000002
+    },
+    "surface_present": {
+      "count": 721,
+      "total_ms": 318.03412099999997,
+      "p50_ms": 0.41362499999999996,
+      "p95_ms": 0.600125,
+      "max_ms": 2.424416
+    },
+    "surface_present_interval": {
+      "count": 720,
+      "total_ms": 11999.722457999993,
+      "p50_ms": 16.646416000000002,
+      "p95_ms": 18.021124999999998,
+      "max_ms": 20.016959
+    },
+    "tint_sample": {
+      "count": 91,
+      "total_ms": 3.1494590000000002,
+      "p50_ms": 0.013541,
+      "p95_ms": 0.018625,
+      "max_ms": 1.872708
+    },
+    "webview_paint": {
+      "count": 721,
+      "total_ms": 958.3645089999997,
+      "p50_ms": 1.3155409999999998,
+      "p95_ms": 1.568125,
+      "max_ms": 3.2977499999999997
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 1920,
+      "height": 1080,
+      "current": 14.105712958,
+      "duration": 16,
+      "ended": false,
+      "sources": [],
+      "ready": 4,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    1.0,
+    0.14117646217346191,
+    1.0
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [],
+  "mode": "video-only-hd",
+  "variant": "candidate",
+  "repeat": 2,
+  "attempt": 0,
+  "wall_s": 15.67897775000165,
+  "cpu_s": 9.057798999999996,
+  "host_load": [
+    8.599609375,
+    9.6044921875,
+    11.16357421875
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

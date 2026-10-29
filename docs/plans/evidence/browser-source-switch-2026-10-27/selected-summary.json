@@ -1,0 +1,33 @@
+{
+  "baseline": {
+    "valid_runs": 3,
+    "redraw_p95_ms": 17.230166,
+    "surface_p95_ms": 18.113542,
+    "surfaces_per_s": 60.001245235843,
+    "cpu_s": 8.837837,
+    "load": [
+      9.88037109375,
+      9.0419921875,
+      9.63232421875
+    ]
+  },
+  "candidate": {
+    "valid_runs": 3,
+    "redraw_p95_ms": 17.464833,
+    "surface_p95_ms": 18.107125000000003,
+    "surfaces_per_s": 60.001387742096426,
+    "cpu_s": 9.021763999999997,
+    "load": [
+      9.7099609375,
+      8.5244140625,
+      8.599609375
+    ]
+  },
+  "excluded": [
+    {
+      "variant": "baseline",
+      "repeat": 0,
+      "attempt": 0
+    }
+  ]
+}

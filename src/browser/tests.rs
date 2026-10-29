@@ -1,5 +1,5 @@
 //! UI integration tests of the chrome in headless windows. Pages need Servo
-//! and results need the network, so these cover what is Frame's own: the
+//! and results need the network, so these cover what is Platinum's own: the
 //! right-click search, the palette, tab shortcuts, dragging tabs, the Ask
 //! button, the appearance button, the downloads list, compact mode, the
 //! sidebar's tree, pinned sites and restoring the session.
@@ -21,6 +21,23 @@ use crate::navigator::{Pick, Placement, TabAction};
 use crate::session::{self, Content, Layout, Pin};
 use crate::tabtree::Place;
 use crate::theme::{self, Appearance};
+
+#[test]
+fn search_results_do_not_keep_the_inspected_page() {
+    assert_eq!(
+        super::displayed_page_id(Showing::Serp, Some("page-a".into())),
+        None
+    );
+    assert_eq!(
+        super::displayed_page_id(Showing::Start, Some("page-a".into())),
+        None
+    );
+    assert_eq!(
+        super::displayed_page_id(Showing::Page, Some("page-a".into())).as_deref(),
+        Some("page-a")
+    );
+    assert_eq!(super::displayed_page_id(Showing::Page, None), None);
+}
 
 fn open(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
     cx.update(|cx| {
@@ -208,7 +225,7 @@ fn the_right_click_menu_leads_with_tools_and_finds_tabs_once_typed(cx: &mut Test
     let untyped = offered(&browser, "", cx);
     assert!(
         untyped[0].iter().all(|pick| matches!(pick, Pick::Command)),
-        "Frame's tools come first"
+        "Platinum's tools come first"
     );
     assert!(!lists_tabs(&untyped), "no list of tabs until typing");
     assert!(lists_tabs(&offered(&browser, "example", cx)));
@@ -1016,7 +1033,7 @@ fn the_tree_and_the_sidebar_survive_a_restart(cx: &mut TestAppContext) {
     cx.executor().advance_clock(Duration::from_secs(2));
     cx.run_until_parked();
     let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
-    let saved = session::parse_session(&saved).expect("Frame's session");
+    let saved = session::parse_session(&saved).expect("Platinum's session");
     assert_eq!(saved.tabs.len(), 4);
     assert!(saved.sidebar);
     let _ = std::fs::remove_dir_all(&dir);
@@ -1091,7 +1108,7 @@ fn a_split_survives_a_restart(cx: &mut TestAppContext) {
     cx.executor().advance_clock(Duration::from_secs(2));
     cx.run_until_parked();
     let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
-    let saved = session::parse_session(&saved).expect("Frame's session");
+    let saved = session::parse_session(&saved).expect("Platinum's session");
     let (left, right, share) = halves(&saved.dock);
     assert_eq!(left, &group(&[1, 2], 1));
     let Layout::Group { tabs, shown: 1 } = right else {
@@ -1203,5 +1220,162 @@ fn a_stream_of_changes_cannot_put_the_save_off(cx: &mut TestAppContext) {
     let saved = std::fs::read_to_string(dir.join("session.json"))
         .expect("written while the changes kept coming");
     assert!(session::parse_session(&saved).is_some());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[gpui_kit::test]
+fn console_panel_opens_and_closes(cx: &mut TestAppContext) {
+    let (_browser, cx) = open(cx);
+    assert!(cx.debug_bounds("Console").is_none());
+    keys(cx, "alt-cmd-j");
+    assert!(cx.debug_bounds("Console").is_some());
+    assert!(cx.debug_bounds("Elements").is_some());
+    assert!(cx.debug_bounds("Network").is_some());
+    assert!(cx.debug_bounds("Tools").is_some());
+    keys(cx, "alt-cmd-j");
+    assert!(cx.debug_bounds("Console").is_none());
+}
+
+#[gpui_kit::test]
+fn imported_history_appears_when_typing_in_address_bar_and_has_a_keyboard_path(
+    cx: &mut TestAppContext,
+) {
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    store
+        .visit(
+            "https://docs.example.test/",
+            "Familiar project documentation",
+        )
+        .unwrap();
+    store
+        .bookmark("https://bookmarks.example.test/", "Familiar bookmark")
+        .unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-l");
+    cx.simulate_input("Familiar");
+    cx.run_until_parked();
+    let suggestions = cx.update(|_, cx| {
+        browser
+            .read(cx)
+            .suggestions
+            .iter()
+            .map(|e| e.url.clone())
+            .collect::<Vec<_>>()
+    });
+    assert_eq!(suggestions.len(), 2);
+    assert!(suggestions.contains(&"https://docs.example.test/".into()));
+    keys(cx, "down");
+    assert!(cx.update(|window, cx| {
+        browser
+            .read(cx)
+            .suggestion_state
+            .focus_handle(cx)
+            .is_focused(window)
+    }));
+    keys(cx, "escape");
+    assert!(cx.update(|_, cx| browser.read(cx).suggestions.is_empty()));
+    assert!(in_address_bar(&browser, cx));
+}
+
+#[gpui_kit::test]
+fn history_command_opens_native_profile_library(cx: &mut TestAppContext) {
+    use gpui_kit::component::WindowExt as _;
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-y");
+    assert!(cx.update(|window, cx| window.has_active_sheet(cx)));
+    assert!(cx.update(|_, cx| browser.read(cx).profile_panel.is_some()));
+    keys(cx, "escape");
+    assert!(!cx.update(|window, cx| window.has_active_sheet(cx)));
+}
+
+#[gpui_kit::test]
+fn home_status_bar_pins_import_to_bottom_left_and_opens_importer(cx: &mut TestAppContext) {
+    use gpui_kit::component::WindowExt as _;
+    let temp = tempfile::tempdir().unwrap();
+    cx.update(|cx| {
+        cx.set_global(crate::profile_ui::ActiveProfile(
+            frame_profile::ProfileStore::open(temp.path()).unwrap(),
+        ))
+    });
+    let (browser, cx) = open(cx);
+    let bar = bounds_of(cx, "home-status-bar-0".into());
+    let button = bounds_of(cx, "import-browser-data-0".into());
+    assert!(
+        bar.origin.y > px(600.),
+        "bar is at the bottom of the home pane"
+    );
+    assert!(
+        button.origin.x < bar.origin.x + px(16.),
+        "import is pinned to the left"
+    );
+    assert!(button.bottom() <= bar.bottom());
+    click(cx, button.center());
+    assert!(cx.update(|window, cx| window.has_active_sheet(cx)));
+    assert!(cx.update(|_, cx| browser.read(cx).profile_panel.is_some()));
+    keys(cx, "escape");
+    assert!(!cx.update(|window, cx| window.has_active_sheet(cx)));
+
+    // Search results use a real native Serp; without a search service the
+    // fixture settles into its unavailable state without any network access.
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.search(
+                "fixture".into(),
+                crate::serp::SerpMode::Search,
+                false,
+                window,
+                cx,
+            )
+        })
+    });
+    cx.run_until_parked();
+    assert!(cx.debug_bounds("home-status-bar-0").is_none());
+    keys(cx, "cmd-t");
+    assert!(cx.debug_bounds("home-status-bar-1").is_some());
+    keys(cx, "cmd-1");
+    assert!(cx.debug_bounds("home-status-bar-0").is_none());
+    assert!(cx.debug_bounds("home-status-bar-1").is_none());
+}
+
+#[gpui_kit::test]
+fn visual_chrome_updates_do_not_write_the_session(cx: &mut TestAppContext) {
+    let dir = data_dir("visual-chrome");
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            // What is written now is what the next save compares with.
+            assert!(browser.snapshot(true, cx).is_some());
+            for _ in 0..100 {
+                browser.sync_chrome(window, cx);
+            }
+            assert!(browser.snapshot(false, cx).is_none());
+        })
+    });
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[gpui_kit::test]
+fn closing_before_the_save_keeps_the_latest_tabs(cx: &mut TestAppContext) {
+    let dir = data_dir("close-before-save");
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t");
+    let active = cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.save(cx);
+            browser.tabs[browser.active].id
+        })
+    });
+    let saved = cx
+        .update(|_, cx| cx.global::<session::Store>().load_session())
+        .expect("written on close");
+    assert_eq!(saved.tabs.len(), 3);
+    assert_eq!(saved.active, Some(active));
     let _ = std::fs::remove_dir_all(&dir);
 }

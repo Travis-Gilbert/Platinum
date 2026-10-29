@@ -1,0 +1,59 @@
+filters:
+  and:
+    - file.ext == "md"
+    - '!file.inFolder("templates")'
+    - '!file.inFolder("daily")'
+formulas:
+  rating_label: 'if(rating, rating + " / 5", "unrated")'
+  size_kb: '(file.size / 1024).round(1)'
+  tag_list: 'file.tags.join(", ")'
+  has_status: 'if(status, "yes", "no")'
+  name_lower: file.name.lower()
+properties:
+  status:
+    displayName: Status
+  formula.rating_label:
+    displayName: Rating
+  formula.size_kb:
+    displayName: Size (KB)
+  file.name:
+    displayName: Name
+summaries:
+  averageRating: 'values.mean().round(2)'
+views:
+  - type: table
+    name: All notes
+    order:
+      - file.name
+      - status
+      - rating
+      - formula.rating_label
+      - formula.size_kb
+    sort:
+      - property: file.name
+        direction: ASC
+    limit: 200
+    summaries:
+      rating: averageRating
+      formula.size_kb: Sum
+      status: Filled
+  - type: cards
+    name: Cards
+    filters:
+      and:
+        - 'file.hasTag("project")'
+    order:
+      - file.name
+      - status
+      - rating
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: list
+    name: With a status
+    filters:
+      and:
+        - status
+    order:
+      - file.name
+      - status

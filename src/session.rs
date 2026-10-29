@@ -1,10 +1,10 @@
-//! What Frame keeps between launches, in its data directory: the pinned
+//! What Platinum keeps between launches, in its data directory: the pinned
 //! sites (`pins.json`), the tabs with their tree (`session.json`), and the
 //! icons of the sites those name (`favicons/`), so a pin or a restored tab
 //! shows its site's icon before its page has loaded.
 //!
 //! Each file is written whole, through a temporary file, a moment after a
-//! change, and read once at launch. A file Frame cannot make sense of is set
+//! change, and read once at launch. A file Platinum cannot make sense of is set
 //! aside rather than written over, and one it cannot read at all is left
 //! alone. Icons are kept only for the sites the pins and the session name,
 //! so the folder is not a record of browsing.
@@ -56,9 +56,56 @@ pub struct Snapshot {
     hosts: HashSet<String>,
 }
 
-/// Keep Frame's state under `data_dir`.
+/// Keep Platinum's state under `data_dir`.
 pub fn init(data_dir: &Path, cx: &mut App) {
     cx.set_global(Store::new(data_dir.to_owned()));
+}
+
+/// Move what Platinum kept in `from`, the data folder itself, before each
+/// profile had its own, into `into`, the default profile's folder. A file
+/// already in `into` is kept; the older one stays where it was.
+pub fn adopt(from: &Path, into: &Path) {
+    for name in [SESSION, PINS, FAVICONS] {
+        let (old, new) = (from.join(name), into.join(name));
+        if !old.exists() || new.exists() {
+            continue;
+        }
+        if let Err(error) = fs::create_dir_all(into).and_then(|()| fs::rename(&old, &new)) {
+            log::warn!("moving {} to {}: {error}", old.display(), new.display());
+        }
+    }
+}
+
+/// Open the tabs an import left in `profile`: they join the saved session,
+/// and the profile lets go of them once they are in it, so they open once.
+pub fn open_imported_tabs(profile: &frame_profile::ProfileStore, cx: &App) {
+    let Some(store) = Store::global(cx) else {
+        return;
+    };
+    let imported = match profile.session() {
+        Ok(imported) if !imported.tabs.is_empty() => imported,
+        Ok(_) => return,
+        Err(error) => {
+            log::warn!("reading the imported tabs: {error}");
+            return;
+        }
+    };
+    let contents = imported
+        .tabs
+        .into_iter()
+        .filter_map(|tab| match (tab.url, tab.query) {
+            (Some(url), _) => url::Url::parse(&url).ok().map(|url| Content::Page {
+                url,
+                title: String::new(),
+            }),
+            (None, Some(query)) => Some(Content::Search { query, ask: false }),
+            (None, None) => None,
+        });
+    if store.add_tabs(contents)
+        && let Err(error) = profile.save_session(&frame_profile::Session::default())
+    {
+        log::warn!("clearing the imported tabs: {error}");
+    }
 }
 
 impl Store {
@@ -85,7 +132,7 @@ impl Store {
     }
 
     /// The file `name` as `parse` reads it, or none. A file that is there
-    /// but is not one Frame can read, broken JSON included, is set aside
+    /// but is not one Platinum can read, broken JSON included, is set aside
     /// before the next save could write over it. One that cannot be read
     /// now, for want of permission say, is left alone and not written over.
     fn load<T>(&self, name: &'static str, parse: impl FnOnce(&Value) -> Option<T>) -> Option<T> {
@@ -108,7 +155,7 @@ impl Store {
         if parsed.is_none() {
             let aside = path.with_extension("json.unreadable");
             log::warn!(
-                "{} is not Frame's; moved to {}",
+                "{} is not Platinum's; moved to {}",
                 path.display(),
                 aside.display()
             );
@@ -117,12 +164,19 @@ impl Store {
         parsed
     }
 
-    /// Write `value` as the file `name`, unless it could not be read.
-    fn write(&self, name: &'static str, value: &Value) {
+    /// Write `value` as the file `name`, unless it could not be read. True
+    /// once it is written.
+    fn write(&self, name: &'static str, value: &Value) -> bool {
         let unread = self.unread.lock().unwrap_or_else(PoisonError::into_inner);
-        if !unread.contains(name) {
-            write_json(&self.dir.join(name), value);
-        }
+        !unread.contains(name) && write_json(&self.dir.join(name), value)
+    }
+
+    /// Add a tab for each of `contents` to the saved session, after the
+    /// others. True once they are in the file.
+    pub fn add_tabs(&self, contents: impl IntoIterator<Item = Content>) -> bool {
+        let mut session = self.load_session().unwrap_or_default();
+        session.add_tabs(contents);
+        self.write(SESSION, &format::session_to_json(&session))
     }
 
     /// What one save writes, in its place among the others. Gather on the
@@ -208,7 +262,7 @@ impl Store {
     }
 }
 
-/// A session file's text, as Frame reads it at launch.
+/// A session file's text, as Platinum reads it at launch.
 #[cfg(test)]
 pub fn parse_session(text: &str) -> Option<Session> {
     format::session_from_json(&serde_json::from_str(text).ok()?)
@@ -298,6 +352,71 @@ mod tests {
     }
 
     #[test]
+    fn the_data_folders_own_files_move_into_the_default_profile() {
+        let (_, root) = store("adopt");
+        let profile = root.join("profile");
+        fs::create_dir_all(root.join(FAVICONS)).unwrap();
+        fs::write(root.join(FAVICONS).join("example.org"), b"icon").unwrap();
+        fs::write(root.join(SESSION), "old session").unwrap();
+        fs::write(root.join(PINS), "old pins").unwrap();
+        fs::create_dir_all(&profile).unwrap();
+        fs::write(profile.join(PINS), "newer pins").unwrap();
+        adopt(&root, &profile);
+        assert_eq!(
+            fs::read_to_string(profile.join(SESSION)).unwrap(),
+            "old session"
+        );
+        assert!(profile.join(FAVICONS).join("example.org").exists());
+        assert!(!root.join(SESSION).exists() && !root.join(FAVICONS).exists());
+        assert_eq!(
+            fs::read_to_string(profile.join(PINS)).unwrap(),
+            "newer pins",
+            "a file already there is kept"
+        );
+        assert_eq!(fs::read_to_string(root.join(PINS)).unwrap(), "old pins");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn added_tabs_join_the_saved_session_once() {
+        let (store, dir) = store("add-tabs");
+        let page = |url: &str| Content::Page {
+            url: url::Url::parse(url).unwrap(),
+            title: String::new(),
+        };
+        let mut saved = session(240.);
+        saved.add_tabs([page("https://example.org/")]);
+        store.save(&store.snapshot(saved, Vec::new(), Vec::new(), HashSet::new()));
+        let search = Content::Search {
+            query: "rounded selection".into(),
+            ask: false,
+        };
+        let imported = [
+            page("https://example.org/"),
+            page("https://example.com/"),
+            search.clone(),
+        ];
+        assert!(store.add_tabs(imported.clone()));
+        assert!(store.add_tabs(imported));
+        let session = store.load_session().unwrap();
+        let tabs: Vec<_> = session
+            .tabs
+            .iter()
+            .map(|tab| (tab.id, tab.content.clone()))
+            .collect();
+        assert_eq!(
+            tabs,
+            [
+                (0, page("https://example.org/")),
+                (1, page("https://example.com/")),
+                (2, search)
+            ]
+        );
+        assert_eq!(session.sidebar_width, Some(240.), "the rest is kept");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn a_broken_session_is_set_aside() {
         let (store, dir) = store("session-aside");
         fs::write(dir.join(SESSION), "{ not json").unwrap();
@@ -323,13 +442,12 @@ mod tests {
     }
 }
 
-fn write_json(path: &Path, value: &Value) {
-    let result = serde_json::to_vec_pretty(value)
+fn write_json(path: &Path, value: &Value) -> bool {
+    serde_json::to_vec_pretty(value)
         .map_err(std::io::Error::other)
-        .and_then(|bytes| write_whole(path, &bytes));
-    if let Err(error) = result {
-        log::warn!("writing {}: {error}", path.display());
-    }
+        .and_then(|bytes| write_whole(path, &bytes))
+        .inspect_err(|error| log::warn!("writing {}: {error}", path.display()))
+        .is_ok()
 }
 
 /// Write through a temporary file, so a crash mid-write leaves the old file.
