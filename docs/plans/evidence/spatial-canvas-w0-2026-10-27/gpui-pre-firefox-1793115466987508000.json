@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "stack": "gpui-pre",
+  "browser": "firefox",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:158.0) Gecko/20100101 Firefox/158.0",
+  "timestamp": "2026-10-27T15:37:46.632Z",
+  "devicePixelRatio": 2,
+  "viewport": [
+    1783,
+    1324
+  ],
+  "checks": {},
+  "errors": [
+    "RuntimeError: unreachable executed",
+    "RuntimeError: unreachable executed"
+  ],
+  "snapshots": {},
+  "manual": {
+    "japaneseCandidateWindow": "manual",
+    "trackpadPinch": "manual",
+    "realTabEscape": "manual",
+    "textQuality": "manual"
+  },
+  "console": [
+    {
+      "level": "warn",
+      "message": "[WARN] gpui_wgpu::wgpu_context: Dual-source blending not available on this GPU. Subpixel text antialiasing will be disabled."
+    },
+    {
+      "level": "info",
+      "message": "[INFO] gpui_wgpu::wgpu_context: Browser graphics initialized: requested=WebGl, selected=Gl, adapter=\"Apple M1, or similar\", limits=Limits { max_texture_dimension_1d: 8192, max_texture_dimension_2d: 8192, max_texture_dimension_3d: 2048, max_texture_array_layers: 256, max_bind_groups: 4, max_bindings_per_bind_group: 1000, max_dynamic_uniform_buffers_per_pipeline_layout: 8, max_dynamic_storage_buffers_per_pipeline_layout: 0, max_sampled_textures_per_shader_stage: 16, max_samplers_per_shader_stage: 16, max_storage_buffers_per_shader_stage: 0, max_storage_textures_per_shader_stage: 0, max_uniform_buffers_per_shader_stage: 11, max_binding_array_elements_per_shader_stage: 0, max_binding_array_acceleration_structure_elements_per_shader_stage: 0, max_binding_array_sampler_elements_per_shader_stage: 0, max_uniform_buffer_binding_size: 16384, max_storage_buffer_binding_size: 0, max_vertex_buffers: 8, max_buffer_size: 268435456, max_vertex_attributes: 16, max_vertex_buffer_array_stride: 255, max_inter_stage_shader_variables: 15, min_uniform_buffer_offset_alignment: 256, min_storage_buffer_offset_alignment: 256, max_color_attachments: 4, max_color_attachment_bytes_per_sample: 32, max_compute_workgroup_storage_size: 0, max_compute_invocations_per_workgroup: 0, max_compute_workgroup_size_x: 0, max_compute_workgroup_size_y: 0, max_compute_workgroup_size_z: 0, max_compute_workgroups_per_dimension: 0, max_immediate_size: 0, max_non_sampler_bindings: 1000000, max_task_mesh_workgroup_total_count: 0, max_task_mesh_workgroups_per_dimension: 0, max_task_invocations_per_workgroup: 0, max_task_invocations_per_dimension: 0, max_mesh_invocations_per_workgroup: 0, max_mesh_invocations_per_dimension: 0, max_task_payload_size: 0, max_mesh_output_vertices: 0, max_mesh_output_primitives: 0, max_mesh_output_layers: 0, max_mesh_multiview_view_count: 0, max_blas_primitive_count: 0, max_blas_geometry_count: 0, max_tlas_instance_count: 0, max_acceleration_structures_per_shader_stage: 0, max_multiview_view_count: 0 }, dual_source_blending=false"
+    },
+    {
+      "level": "info",
+      "message": "[INFO] gpui_web::platform: Browser graphics initialized successfully with Gl"
+    },
+    {
+      "level": "error",
+      "message": "panicked at /Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/vendor/gpui-pre/src/text_system.rs:380:9:\nfailed to resolve font '.SystemUIFont' or any of the fallbacks: .ZedMono, .ZedSans, Helvetica, Segoe UI, Ubuntu, Adwaita Sans, Cantarell, Noto Sans, DejaVu Sans, Arial\n\nStack:\n\n__wbg_new_227d7c05414eb861@http://127.0.0.1:8765/bundles/gpui-pre/viewer.js:1466:25\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[5139]:0x6108aa\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[8997]:0x6796df\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[4386]:0x5e30d7\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[808]:0x136d47\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[744]:0x1ffc7\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[749]:0x406fc\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[1164]:0x2e87ab\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[744]:0x106c4\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[744]:0x19d35\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[744]:0x19d35\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[749]:0x44427\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[1164]:0x2e87ab\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[744]:0x106c4\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[892]:0x1c0aa0\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[3017]:0x519fd1\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[745]:0x20d93\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[755]:0x70419\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[1133]:0x2d4512\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[3778]:0x58b314\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[7811]:0x667420\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[9681]:0x68909b\nwasm_bindgen_ca9eeabfe8ed99cd___convert__closures_____invoke___wasm_bindgen_ca9eeabfe8ed99cd___JsValue__core_9b3796e30d99ddb7___result__Result_____wasm_bindgen_ca9eeabfe8ed99cd___JsError___true_@http://127.0.0.1:8765/bundles/gpui-pre/viewer.js:2811:22\nreal@http://127.0.0.1:8765/bundles/gpui-pre/viewer.js:3106:20\n\n\n"
+    },
+    {
+      "level": "error",
+      "message": "panicked at /Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/vendor/gpui-pre/src/app.rs:164:33:\nRefCell already borrowed\n\nStack:\n\n__wbg_new_227d7c05414eb861@http://127.0.0.1:8765/bundles/gpui-pre/viewer.js:1466:25\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[5139]:0x6108aa\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[8997]:0x6796df\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[11653]:0x6b7051\n@http://127.0.0.1:8765/bundles/gpui-pre/viewer_bg.wasm:wasm-function[9897]:0x68b17e\nsnapshot@http://127.0.0.1:8765/bundles/gpui-pre/viewer.js:12:22\nrun@http://127.0.0.1:8765/checks.js:74:90\n\n\n"
+    }
+  ],
+  "runStatus": "blocked_or_failed"
+}

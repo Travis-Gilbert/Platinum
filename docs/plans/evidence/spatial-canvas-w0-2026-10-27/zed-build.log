@@ -1,0 +1,127 @@
+Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk5s1   927Gi   846Gi    81Gi    92%    9.7M  847M    1%   /Volumes/SSD Samsung
+[0.014s, exit 0] df -h '/Volumes/SSD Samsung'
+   Compiling typeid v1.0.3
+   Compiling erased-serde v0.4.10
+   Compiling serde_fmt v1.1.0
+   Compiling futures-io v0.3.34
+   Compiling serde_core v1.0.229
+   Compiling memchr v2.8.3
+   Compiling glob v0.3.4
+   Compiling getrandom v0.4.3
+   Compiling prettyplease v0.2.37
+   Compiling rustc-hash v2.1.3
+   Compiling futures-util v0.3.34
+   Compiling libc v0.2.191
+   Compiling anyhow v1.0.104
+   Compiling tracing-core v0.1.36
+   Compiling regex-syntax v0.8.11
+   Compiling cfg-if v1.0.5
+   Compiling clang-sys v1.9.1
+   Compiling minimal-lexical v0.2.1
+   Compiling fastrand v2.5.0
+   Compiling libloading v0.8.9
+   Compiling nom v7.1.3
+   Compiling zmij v1.0.23
+   Compiling bindgen v0.72.1
+   Compiling value-bag-serde1 v1.14.1
+   Compiling value-bag v1.14.1
+   Compiling either v1.19.0
+   Compiling libbz2-rs-sys v0.2.5
+   Compiling serde v1.0.229
+   Compiling lazy_static v1.5.1
+   Compiling sharded-slab v0.1.7
+   Compiling log v0.4.34
+   Compiling itertools v0.13.0
+   Compiling naga v29.0.4
+   Compiling gpui_util v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling collections v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling tracing-log v0.2.0
+   Compiling indexmap v2.14.2
+   Compiling bzip2 v0.6.1
+   Compiling fontdb v0.23.0
+   Compiling regex-automata v0.4.18
+   Compiling serde_json v1.0.154
+   Compiling thread_local v1.1.10
+   Compiling unicode-properties v0.1.4
+   Compiling shlex v1.3.0
+   Compiling cexpr v0.6.0
+   Compiling bitflags v2.13.2
+   Compiling thiserror v1.0.69
+   Compiling ztracing v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling nu-ansi-term v0.50.3
+   Compiling unicode-xid v0.2.6
+   Compiling foldhash v0.2.0
+   Compiling compression-core v0.4.34
+   Compiling itoa v1.0.18
+   Compiling rustybuzz v0.20.1
+   Compiling compression-codecs v0.4.46
+   Compiling tracing-subscriber v0.3.23
+   Compiling derive_more-impl v2.1.1
+   Compiling tracing v0.1.44
+   Compiling simplecss v0.2.2
+   Compiling js-sys v0.3.104
+   Compiling futures-executor v0.3.34
+   Compiling thiserror-impl v1.0.69
+   Compiling futures v0.3.34
+   Compiling event-listener v5.4.2
+   Compiling ztracing_macro v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling smol_str v0.3.7
+   Compiling sha1_smol v1.0.1
+   Compiling regex v1.13.1
+   Compiling uuid v1.29.0
+   Compiling event-listener-strategy v0.5.4
+   Compiling schemars v1.2.3
+   Compiling futures-lite v2.6.1
+   Compiling flume v0.12.0
+   Compiling perf v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling usvg v0.46.0
+   Compiling rand v0.9.5
+   Compiling derive_more v2.1.1
+   Compiling tiny-skia v0.11.4
+   Compiling async-compression v0.4.51
+   Compiling concurrent-queue v2.5.0
+   Compiling crossbeam-queue v0.3.14
+   Compiling derive_refineable v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling atomic v0.5.3
+   Compiling pollster v0.2.5
+   Compiling fixedbitset v0.5.7
+   Compiling postage v0.5.0
+   Compiling futures-concurrency v7.7.1
+   Compiling refineable v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling accesskit v0.24.1
+   Compiling http_client v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling async-channel v2.5.0
+   Compiling gpui_shared_string v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling util_macros v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling gpui_macros v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling taffy v0.13.0
+   Compiling spin v0.10.1
+   Compiling pollster v0.4.0
+   Compiling cosmic-text v0.19.0
+   Compiling resvg v0.46.0
+   Compiling gpui v0.2.2 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling web-sys v0.3.104
+   Compiling chrono v0.4.45
+   Compiling wasm-bindgen-futures v0.4.77
+   Compiling web-time v1.1.0
+   Compiling zlog v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling scheduler v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling sum_tree v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling wgpu-types v29.0.4
+   Compiling glow v0.17.0
+   Compiling wgpu-naga-bridge v29.0.4
+   Compiling wgpu-hal v29.0.4
+   Compiling wgpu-core-deps-wasm v29.0.4
+   Compiling wgpu-core v29.0.4
+   Compiling wgpu v29.0.4
+   Compiling gpui_wgpu v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling gpui-whiteboard v0.5.1 (/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer-zed/whiteboard)
+   Compiling gpui_web v0.1.0 (https://github.com/Travis-Gilbert/zed?rev=6d4d90754f7dde3e62afb6fe74a632c0b4660396#6d4d9075)
+   Compiling frame-web-viewer-zed-spike v0.1.0 (/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer-zed)
+    Finished `release` profile [optimized] target(s) in 7m 41s
+[461.846s, exit 0] cargo build --offline --locked --release --target wasm32-unknown-unknown --manifest-path '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer-zed/Cargo.toml'
+wasm-bindgen 0.2.127
+[0.011s, exit 0] /Users/travisgilbert/.cargo/bin/wasm-bindgen --version
+[0.835s, exit 0] /Users/travisgilbert/.cargo/bin/wasm-bindgen --target web --out-dir '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer-zed/pkg' --out-name viewer '/Volumes/SSD Samsung/cargo-targets/frame-canvas/wasm32-unknown-unknown/release/frame_web_viewer_zed_spike.wasm'
+[15.838s, exit 0] /opt/homebrew/bin/wasm-opt -Oz --all-features '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer-zed/pkg/viewer_bg.raw.wasm' -o '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer-zed/pkg/viewer_bg.wasm'

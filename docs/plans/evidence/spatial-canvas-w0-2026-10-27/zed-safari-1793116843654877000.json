@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "stack": "zed",
+  "browser": "safari",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0.1 Safari/605.1.15",
+  "timestamp": "2026-10-27T15:59:43.537Z",
+  "devicePixelRatio": 2,
+  "viewport": [
+    2080,
+    1097
+  ],
+  "checks": {},
+  "errors": [
+    "Error: Automated run exceeded 45 seconds"
+  ],
+  "snapshots": {},
+  "manual": {
+    "japaneseCandidateWindow": "manual",
+    "trackpadPinch": "manual",
+    "realTabEscape": "manual",
+    "textQuality": "manual"
+  },
+  "console": [
+    {
+      "level": "warn",
+      "message": "[WARN] gpui_wgpu::wgpu_context: Dual-source blending not available on this GPU. Subpixel text antialiasing will be disabled."
+    },
+    {
+      "level": "info",
+      "message": "[INFO] gpui_wgpu::wgpu_context: Browser graphics initialized: requested=WebGl, selected=Gl, adapter=\"Apple GPU\", limits=Limits { max_texture_dimension_1d: 16384, max_texture_dimension_2d: 16384, max_texture_dimension_3d: 2048, max_texture_array_layers: 256, max_bind_groups: 4, max_bindings_per_bind_group: 1000, max_dynamic_uniform_buffers_per_pipeline_layout: 8, max_dynamic_storage_buffers_per_pipeline_layout: 0, max_sampled_textures_per_shader_stage: 16, max_samplers_per_shader_stage: 16, max_storage_buffers_per_shader_stage: 0, max_storage_textures_per_shader_stage: 0, max_uniform_buffers_per_shader_stage: 11, max_binding_array_elements_per_shader_stage: 0, max_binding_array_acceleration_structure_elements_per_shader_stage: 0, max_binding_array_sampler_elements_per_shader_stage: 0, max_uniform_buffer_binding_size: 16384, max_storage_buffer_binding_size: 0, max_vertex_buffers: 8, max_buffer_size: 268435456, max_vertex_attributes: 16, max_vertex_buffer_array_stride: 255, max_inter_stage_shader_variables: 15, min_uniform_buffer_offset_alignment: 32, min_storage_buffer_offset_alignment: 256, max_color_attachments: 4, max_color_attachment_bytes_per_sample: 32, max_compute_workgroup_storage_size: 0, max_compute_invocations_per_workgroup: 0, max_compute_workgroup_size_x: 0, max_compute_workgroup_size_y: 0, max_compute_workgroup_size_z: 0, max_compute_workgroups_per_dimension: 0, max_immediate_size: 0, max_non_sampler_bindings: 1000000, max_task_mesh_workgroup_total_count: 0, max_task_mesh_workgroups_per_dimension: 0, max_task_invocations_per_workgroup: 0, max_task_invocations_per_dimension: 0, max_mesh_invocations_per_workgroup: 0, max_mesh_invocations_per_dimension: 0, max_task_payload_size: 0, max_mesh_output_vertices: 0, max_mesh_output_primitives: 0, max_mesh_output_layers: 0, max_mesh_multiview_view_count: 0, max_blas_primitive_count: 0, max_blas_geometry_count: 0, max_tlas_instance_count: 0, max_acceleration_structures_per_shader_stage: 0, max_multiview_view_count: 0 }, dual_source_blending=false"
+    },
+    {
+      "level": "info",
+      "message": "[INFO] gpui_web::platform: Browser graphics initialized successfully with Gl"
+    },
+    {
+      "level": "info",
+      "message": "[INFO] gpui_web::window: html-in-canvas: editable leaves are gpui-painted"
+    },
+    {
+      "level": "info",
+      "message": "[INFO] gpui::window: Accessibility activated"
+    }
+  ],
+  "visibilityAtStart": "hidden",
+  "url": "http://127.0.0.1:8765/?stack=zed&browser=safari&autoclose=1&attempt=verified",
+  "phase": "mount-called",
+  "font": {
+    "family": "Noto Sans JP",
+    "asset": "/assets/NotoSansJP.ttf",
+    "bytes": 9589900
+  },
+  "runStatus": "blocked_or_failed"
+}

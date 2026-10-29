@@ -1,0 +1,20 @@
+{
+  "head": "b4695cfb0d076c6ef042cb0fdfa14162dd71486f",
+  "branch": "spike/web-viewer",
+  "source_sha256": {
+    "spikes/web-viewer/src/lib.rs": "9f41a2b2a293384affa0602ef2e13a4a079b80e5a5b07454a191612805e9e05a",
+    "spikes/web-viewer/checks.js": "0635fc9aac81e8e159e95e27409af8a4a4bd229596359a6417bfcd1b31cc4ffc",
+    "spikes/web-viewer/run.py": "d6d08648711b6d8dec87a4aa1edb25edb9b8c0920f1890c2976eb9844879496d",
+    "spikes/web-viewer/Cargo.toml": "bff7db7a2b3ed0f6eed0e9653601ca57b2c6b3e3f478c1ed0aa07f9a5a7a71f5",
+    "spikes/web-viewer/Cargo.lock": "772bbc7ed75d36a0def22b6195d1ebced21c51d978eead76e04a4b17dcafec7b",
+    "spikes/web-viewer-zed/Cargo.toml": "54e32a61b3804acc4bb8db6870a1373c0daf5bbda87cb8a0052b1489ba67e9b1",
+    "spikes/web-viewer-zed/Cargo.lock": "4102c9e1a9e94d58f6a4ca90520e387ca432773b860de8604f253ada829a9cd2",
+    "spikes/web-viewer-zed/whiteboard/Cargo.toml": "dbe2bc520d0f6fd373df66e5f0a501ee974fa1ae5e4e63bd55e7b6ce9d54ca32"
+  },
+  "protected_paths_diff_empty": true,
+  "server_stopped": true,
+  "manual_checks_executed": false,
+  "tab_cleanup_complete": false,
+  "note": "Final harness visibility diagnostics were added after the four completed Firefox/Arc suites; interaction logic and compiled bundles are unchanged.",
+  "disk_check": "Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on\n/dev/disk5s1   927Gi   852Gi    75Gi    92%    9.7M  786M    1%   /Volumes/SSD Samsung\n"
+}

@@ -1,0 +1,4 @@
+LAUNCH gpui-pre
+TIMEOUT gpui-pre
+LAUNCH zed
+TIMEOUT zed

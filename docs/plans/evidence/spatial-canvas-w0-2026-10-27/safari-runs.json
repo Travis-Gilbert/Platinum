@@ -1,0 +1,32 @@
+[
+  {
+    "stack": "gpui-pre",
+    "browser": "safari",
+    "command": [
+      "open",
+      "-a",
+      "Safari",
+      "http://127.0.0.1:8765/?stack=gpui-pre&browser=safari&autoclose=1&attempt=verified"
+    ],
+    "launch_exit": 0,
+    "started": 1793116709.794611,
+    "blocked": "open returned 0; no browser result received within 55 seconds",
+    "elapsed_seconds": 55.52872109413147,
+    "delayed_result": "gpui-pre-safari-1793116843647957000.json"
+  },
+  {
+    "stack": "zed",
+    "browser": "safari",
+    "command": [
+      "open",
+      "-a",
+      "Safari",
+      "http://127.0.0.1:8765/?stack=zed&browser=safari&autoclose=1&attempt=verified"
+    ],
+    "launch_exit": 0,
+    "started": 1793116765.323905,
+    "blocked": "open returned 0; no browser result received within 55 seconds",
+    "elapsed_seconds": 55.50157809257507,
+    "delayed_result": "zed-safari-1793116843654877000.json"
+  }
+]

@@ -1,0 +1,4 @@
+pkg/
+__pycache__/
+# Fetched from the URL in assets/provenance.json; 9.6 MB.
+assets/NotoSansJP.ttf

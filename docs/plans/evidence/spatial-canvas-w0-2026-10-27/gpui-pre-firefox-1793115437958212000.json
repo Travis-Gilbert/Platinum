@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "stack": "gpui-pre",
+  "browser": "firefox",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:158.0) Gecko/20100101 Firefox/158.0",
+  "timestamp": "2026-10-27T15:37:17.642Z",
+  "devicePixelRatio": 2,
+  "viewport": [
+    1783,
+    1324
+  ],
+  "checks": {},
+  "errors": [
+    "RuntimeError: unreachable executed",
+    "RuntimeError: unreachable executed"
+  ],
+  "snapshots": {},
+  "manual": {
+    "japaneseCandidateWindow": "manual",
+    "trackpadPinch": "manual",
+    "realTabEscape": "manual",
+    "textQuality": "manual"
+  },
+  "runStatus": "blocked_or_failed"
+}
