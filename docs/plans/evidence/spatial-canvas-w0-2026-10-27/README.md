@@ -148,6 +148,8 @@ SIL OFL licence is beside it. The source is pinned to Google Fonts revision
 `66a36c8c94b1a5d992ee4e7f392fccfe4945767c`; exact official download URLs, hashes,
 and sizes are in
 [font provenance](../../../../spikes/web-viewer/assets/provenance.json).
+The font itself is not in git: `run.py` downloads it from that URL on its
+first run and checks its size and hash.
 The final Firefox/Arc readbacks contain Japanese glyphs. This is not acceptance
 of text quality at every zoom or of an OS IME candidate window.
 
@@ -224,7 +226,8 @@ and environment blockers are preserved in `initial-handoff.md` and
 
 ## Resume and manual checks for the user
 
-The server is stopped at session end. From this retained worktree:
+The server is stopped at session end. From this retained worktree (the first
+run downloads the board font):
 
 ```sh
 python3 spikes/web-viewer/run.py serve --port 8765

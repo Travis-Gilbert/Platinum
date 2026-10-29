@@ -4,6 +4,7 @@ import argparse
 import base64
 import functools
 import gzip
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,10 +14,13 @@ import subprocess
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
+from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE = ROOT / "docs/plans/evidence/spatial-canvas-w0-2026-10-27"
 TARGET = Path("/Volumes/SSD Samsung/cargo-targets/frame-canvas")
+# Not in git (9.6 MB); fetched from the pinned URL in assets/provenance.json.
+FONT = ROOT / "spikes/web-viewer/assets/NotoSansJP.ttf"
 STACKS = {"gpui-pre": ("web-viewer", "frame_web_viewer_spike"),
           "zed": ("web-viewer-zed", "frame_web_viewer_zed_spike")}
 
@@ -41,6 +45,20 @@ def command(args, env=None):
     print(f"[{elapsed:.3f}s, exit {process.returncode}] {record['command']}", flush=True)
     if process.returncode:
         raise SystemExit(process.returncode)
+
+
+def fetch_font():
+    if FONT.exists():
+        return
+    pinned = json.loads((FONT.parent / "provenance.json").read_text())["files"][FONT.name]
+    print(f"Fetching {pinned['url']}", flush=True)
+    with urlopen(pinned["url"], timeout=60) as response:
+        font = response.read()
+    if len(font) != pinned["bytes"] or hashlib.sha256(font).hexdigest() != pinned["sha256"]:
+        raise SystemExit(f"{pinned['url']} does not match assets/provenance.json")
+    partial = FONT.with_name(FONT.name + ".part")
+    partial.write_bytes(font)
+    partial.replace(FONT)
 
 
 def build(stack):
@@ -76,9 +94,8 @@ def measure_sizes(stack):
     compressed = gzip.compress(optimized, mtime=0)
     (pkg / "viewer_bg.wasm.gz").write_bytes(compressed)
     js = (pkg / "viewer.js").read_bytes()
-    font_path = ROOT / "spikes/web-viewer/assets/NotoSansJP.ttf"
-    font = font_path.read_bytes() if font_path.exists() else b""
-    font_gzip = len(gzip.compress(font, mtime=0)) if font else 0
+    font = FONT.read_bytes()
+    font_gzip = len(gzip.compress(font, mtime=0))
     sizes = {"stack": stack, "compiler_wasm_bytes": compiled.stat().st_size,
              "raw_bindgen_wasm_bytes": raw.stat().st_size, "wasm_opt_bytes": len(optimized),
              "gzip_wasm_bytes": len(compressed), "js_bytes": len(js),
@@ -145,6 +162,7 @@ def main():
     parser.add_argument("--stack", choices=STACKS, default="gpui-pre")
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
+    fetch_font()
     if args.action == "build":
         build(args.stack)
     elif args.action == "sizes":
