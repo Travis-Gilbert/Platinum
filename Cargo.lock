@@ -302,6 +302,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ammonia"
+version = "4.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f45dfa685e1ec33b1bf1a3b93b8047cbdbef41b6040deebbe6bea7720a45574"
+dependencies = [
+ "cssparser 0.38.0",
+ "html5ever 0.40.1",
+ "maplit",
+ "url",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4142,6 +4154,7 @@ dependencies = [
 name = "frame-notes"
 version = "0.1.0"
 dependencies = [
+ "ammonia",
  "anyhow",
  "comrak",
  "granit-parser",
@@ -4162,6 +4175,7 @@ dependencies = [
  "theorem-ide-runtime",
  "typed-path",
  "ulid",
+ "unicode-bidi",
  "walkdir",
 ]
 
@@ -7919,6 +7933,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
+
+[[package]]
 name = "markdown"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8670,6 +8690,7 @@ dependencies = [
  "rand_chacha 0.9.0",
  "regex",
  "rustix 1.1.5",
+ "scraper",
  "serde",
  "serde_json",
  "serde_yaml_ng",

@@ -1,8 +1,10 @@
 //! `notes-fixtures generate` writes a deterministic vault; `notes-fixtures reference` records
-//! Obsidian 1.14.5's answers for one.
+//! Obsidian 1.14.5's answers for one; `notes-fixtures compare-dom` compares two recordings of the
+//! reading view's DOM.
 use anyhow::{Context, Result};
 use clap::{ArgGroup, Parser, Subcommand};
 use notes_fixtures::{
+    compare,
     generate::{self, Options},
     launch,
     obsidian::Obsidian,
@@ -68,6 +70,42 @@ enum Command {
         /// With --app: an extra Electron or Chromium flag for the app, e.g. `--app-arg=--force-device-scale-factor=1`.
         #[arg(long = "app-arg", requires = "app", allow_hyphen_values = true)]
         app_args: Vec<String>,
+    },
+    /// Compare two directories of reading-view DOM recordings, laid out like
+    /// `reference/fixture-vault/dom/`, and print each note's differences with their path in the
+    /// tree. Exits non-zero when a note differs or has no actual recording.
+    CompareDom {
+        /// The reference recordings (Obsidian's).
+        #[arg(long)]
+        expected: PathBuf,
+        /// The recordings to check (Frame's).
+        #[arg(long)]
+        actual: PathBuf,
+        /// Compare only recordings whose path contains this text.
+        #[arg(long)]
+        note: Option<String>,
+        /// Drop the elements matching this CSS selector from both sides: what a page script
+        /// adds and the renderer does not emit. Repeatable.
+        #[arg(long)]
+        ignore: Vec<String>,
+        /// Compare the elements matching this CSS selector by tag, classes and `data-*` alone
+        /// (a script such as MathJax owns their subtree). Repeatable.
+        #[arg(long)]
+        opaque: Vec<String>,
+        /// Compare the elements matching this CSS selector by tag, classes, `data-*` and the
+        /// text of their subtree (a script such as Prism wraps the text). Repeatable.
+        #[arg(long)]
+        opaque_text: Vec<String>,
+        /// Let an expected recording end before the actual one: Obsidian renders a long note's
+        /// sections as they scroll into view.
+        #[arg(long)]
+        allow_truncated_expected: bool,
+        /// The URL prefix under which the actual side serves vault files.
+        #[arg(long, default_value = "/files/")]
+        resource_prefix: String,
+        /// Differences printed per note.
+        #[arg(long, default_value_t = 12)]
+        max_differences: usize,
     },
     /// Start an isolated Obsidian, ask it a few read-only questions, print the answers and quit
     /// it: a short check that the launch works and that the CLI reaches the instance.
@@ -153,6 +191,35 @@ fn main() -> Result<()> {
                 m.notes,
                 cfg.out.display()
             );
+        }
+        Command::CompareDom {
+            expected,
+            actual,
+            note,
+            ignore,
+            opaque,
+            opaque_text,
+            allow_truncated_expected,
+            resource_prefix,
+            max_differences,
+        } => {
+            let report = compare::compare_dirs(
+                &expected,
+                &actual,
+                &compare::Options {
+                    ignore,
+                    opaque,
+                    opaque_text,
+                    allow_truncated_expected,
+                    resource_prefix,
+                    max_differences,
+                },
+                note.as_deref(),
+            )?;
+            print!("{}", report.render());
+            if !report.passes() {
+                std::process::exit(1);
+            }
         }
         Command::Probe {
             app,

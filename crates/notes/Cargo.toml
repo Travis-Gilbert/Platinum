@@ -13,6 +13,8 @@ rustyred-thg-vfs = { path = "../../deps/theorem-search/rustyredcore_THG/crates/r
 
 rustyred-thg-core = { path = "../../deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core" }
 
+# Raw HTML in a note is sanitised, not hand-filtered.
+ammonia = "4"
 anyhow = "1"
 libc = "0.2"
 comrak = { version = "=0.58.0", default-features = false }
@@ -27,6 +29,8 @@ serde-saphyr = "1.3"
 serde_json = { version = "1", features = ["raw_value"] }
 tempfile = "3"
 typed-path = "0.12"
+# The reading view sets `dir` on table cells the way Obsidian does: by the first strong character.
+unicode-bidi = "0.3"
 ulid = "1"
 walkdir = "2"
 
