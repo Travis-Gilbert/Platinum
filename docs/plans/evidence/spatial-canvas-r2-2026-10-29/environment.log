@@ -1,0 +1,17 @@
+$ uname -a
+Darwin MacBookPro.hsd1.mi.comcast.net 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:22:49 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6000 arm64
+$ rustc -V   (run in the Servo checkout, honours its rust-toolchain.toml)
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+$ cargo -V
+cargo 1.97.1 (c980f4866 2026-06-30)
+$ git rev-parse HEAD
+eca10114b4f3d43feab0ce5b385cbd22711e2428
+$ git branch --show-current
+feat/request-activity
+$ git tag --points-at HEAD
+archive/Travis-Gilbert/request-activity
+$ git status --short | wc -l
+       0
+$ git log --format=%h %s 7a28fd822be..HEAD
+eca10114b4f fix(servo): finish fetches an embedder navigation or webview drop used to leave running
+35948a4a1ac feat(servo): report when each request starts and ends

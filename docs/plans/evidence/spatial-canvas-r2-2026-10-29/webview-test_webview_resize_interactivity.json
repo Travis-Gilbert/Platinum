@@ -1,0 +1,33 @@
+{
+  "name": "webview-test_webview_resize_interactivity",
+  "cwd": "/Volumes/SSD Samsung/frame-deps/servo-r2",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "servo",
+    "--test",
+    "webview",
+    "test_webview_resize_interactivity",
+    "--",
+    "--exact"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.029139791004127,
+  "started": "2026-10-29T17:58:14-0400",
+  "free_gib_before": 52.25,
+  "free_gib_after": 52.25,
+  "df_before": [
+    "Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on",
+    "/dev/disk5s1   927Gi   874Gi    52Gi    95%     11M  548M    2%   /Volumes/SSD Samsung"
+  ],
+  "environment": {
+    "TMPDIR": "/Volumes/SSD Samsung/tmp",
+    "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/servo-r1",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_STRIP": "none",
+    "CARGO_PROFILE_TEST_STRIP": "none"
+  }
+}

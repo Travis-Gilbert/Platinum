@@ -1999,3 +1999,14 @@ in `tests/canvas/MANUAL.md`.
     frontier: M2, then R2's Frame half with M3.
   - Tracking issue: #12. The next session starts from
     [briefs/handoff-2026-10-29-vault-canvas.md](briefs/handoff-2026-10-29-vault-canvas.md).
+- 2026-10-29, evening: R2's Servo half passes on this Mac. Evidence:
+  [evidence/spatial-canvas-r2-2026-10-29/](evidence/spatial-canvas-r2-2026-10-29/README.md).
+  - `frame-deps/servo-r2` is fast-forwarded to the tag
+    `archive/Travis-Gilbert/request-activity` (`eca10114`). The tests built in
+    `cargo-targets/servo-r1`, one process per test.
+  - 21 of 21 pass: the nine `request_activity` tests, R1's nine viewport
+    tests and the three interception unit tests. The brief listed eight
+    request-activity tests; the ninth, `test_drop_webview_finishes_upload`,
+    came with `eca10114`. Two more passes of the nine also passed.
+  - Not run: `network_manager.rs` and net's own integration tests, which bind
+    `0.0.0.0`. Frame's half of R2 still waits for M3.
