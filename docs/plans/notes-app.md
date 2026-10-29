@@ -1338,3 +1338,14 @@ One gap remains, and it predates this work. Servo replaces a float texture that
 has linear filtering but no linear-float support with RGBA8 black at upload
 time. It should substitute black at draw time instead. That replacement accounts
 for the remaining float blending failures and is left for its own change.
+
+### Servo convergence (2026-10-27)
+
+`script/bootstrap-media` now pins `0ea861a20ac`, fork branch
+`Travis-Gilbert/frame-converged`, which merges `feat/webgl2-cosmos` with
+`Travis-Gilbert/navigation-action` (the storage partitions and the embedder's
+navigation actions). The spatial canvas plan's P0 asked for it, so notes-app,
+the canvas branches and the Arc branch build on one Servo. The checkout keeps
+its name, `deps/servo-mse`. One lock line is new, because Servo's crate now
+depends on `tempfile`. All 28 of the workspace's test binaries pass on it.
+Theorem stays at `7eb1ba024`.
