@@ -38,13 +38,15 @@ under validation and do not establish complete MSE conformance or Chrome parity.
 
 ## Browser search concurrency
 
-`browser-search-concurrency.patch` is applied by `script/bootstrap` to Theorem
-`7eb1ba024b6ccab8146f7857535dcdc6334eb39b`. It was measured against `6e57dbb3`,
-the revision installed for the performance baseline, and applies unchanged to
-the pinned revision. It separates preparation and retention under
-the browser-store lock from provider/model I/O without that lock, preserving
-existing query, privacy and retention owners. Active index generations are
-leased until their queries complete. No search engine or HTTP client is copied.
+This is commit `8c5d22bd6fea76dde197d0b9e73149d037d374d3` in the pinned Theorem
+(branch `claude/browser-search-concurrency`, one commit on
+`claude/notes-foundations` `7eb1ba02`). Until then `script/bootstrap` applied it
+as `browser-search-concurrency.patch`. It was measured against `6e57dbb3`, the
+revision installed for the performance baseline. It separates preparation and
+retention under the browser-store lock from provider/model I/O without that
+lock, preserving existing query, privacy and retention owners. Active index
+generations are leased until their queries complete. No search engine or HTTP
+client is copied.
 See `docs/plans/browser-performance.md` for validation and measurement evidence.
 
 

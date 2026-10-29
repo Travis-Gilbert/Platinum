@@ -32,7 +32,7 @@ ttf-parser = "0.25"
 # renderer-neutral Space, its gestures returned as SpaceCommands (Canvas 2.5
 # 8.2). Default-features only, so the fork still builds standalone with
 # `--no-default-features`. Wasm-safe: the `canonical` feature stays off.
-theorem-space = { path = "../../deps/theorem-consolidated/rustyredcore_THG/crates/theorem-space", optional = true, default-features = false }
+theorem-space = { path = "../../deps/theorem-search/rustyredcore_THG/crates/theorem-space", optional = true, default-features = false }
 
 [features]
 default = ["space"]

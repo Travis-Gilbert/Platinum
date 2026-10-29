@@ -30,9 +30,9 @@ servo = { path = "deps/servo-consolidated/components/servo", features = ["webcry
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
-theorem-browser-substrate = { path = "deps/theorem-consolidated/apps/browser-substrate" }
+theorem-browser-substrate = { path = "deps/theorem-search/apps/browser-substrate" }
 # The search sessions' query and provider types, from the same branch.
-rustyred-web = { path = "deps/theorem-consolidated/rustyredcore_THG/crates/rustyred-web" }
+rustyred-web = { path = "deps/theorem-search/rustyredcore_THG/crates/rustyred-web" }
 # reqwest-based search providers need a Tokio runtime; `search.rs` keeps one
 # for every search, off GPUI's executor, and a semaphore bounds how many run.
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "time", "net", "sync"] }

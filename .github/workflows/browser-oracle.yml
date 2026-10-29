@@ -52,9 +52,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Travis-Gilbert/Theorem
-          ref: 7eb1ba024b6ccab8146f7857535dcdc6334eb39b
+          ref: 8c5d22bd6fea76dde197d0b9e73149d037d374d3
           token: ${{ secrets.THEOREM_READONLY_TOKEN }}
-          path: deps/theorem-consolidated
+          path: deps/theorem-search
 
       - name: Install media build dependencies
         run: brew install gstreamer libnice-gstreamer meson ninja
