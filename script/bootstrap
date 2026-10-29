@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Prepares a Frame checkout to build.
+# Prepares a Platinum checkout to build.
 #
-# Frame's RustyWeb and notes crates are path dependencies under deps/, a
+# Platinum's RustyWeb and notes crates are path dependencies under deps/, a
 # read-only checkout of Theorem at a pinned commit of claude/notes-foundations,
 # which builds on claude/rustyweb-synthesis-on-request and
 # codex/rustyweb-programmable-web-2.
@@ -41,7 +41,7 @@ if [[ ! -d "$checkout" ]]; then
 fi
 actual="$(git -C "$checkout" rev-parse HEAD)"
 if [[ "$actual" != "$theorem_rev" ]]; then
-  echo "deps/theorem-rustyweb-pw2 is at $actual, Frame pins $theorem_rev" >&2
+  echo "deps/theorem-rustyweb-pw2 is at $actual, Platinum pins $theorem_rev" >&2
   exit 1
 fi
 

@@ -1,10 +1,10 @@
-//! What Servo tells Frame about one tab's web view, queued for that tab's
+//! What Servo tells Platinum about one tab's web view, queued for that tab's
 //! page, plus the one decision made on the spot: where a navigation may go.
 //!
 //! SOURCING: Servo's `WebViewDelegate`. Adapted from Theorem UI's desktop host
 //! (`desktop/src/delegate.rs`): there is one delegate per tab here, and a new
 //! window (`window.open`, `target="_blank"`, "Open link in new tab") becomes a
-//! Frame tab instead of going to the system browser.
+//! Platinum tab instead of going to the system browser.
 //! The navigation policy is ours: it is this app's rule, not a library's.
 //! So is the list of file types that are downloads: Servo cannot report a
 //! download, so a link to an installer or an archive is caught here, before

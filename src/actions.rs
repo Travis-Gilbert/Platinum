@@ -1,4 +1,4 @@
-//! Frame's commands. The window binds their shortcuts (`main.rs`); the
+//! Platinum's commands. The window binds their shortcuts (`main.rs`); the
 //! browser view handles them, from a shortcut, the menu bar, the toolbar or
 //! the navigator.
 

@@ -1,4 +1,4 @@
-# Frame
+# Platinum
 
 A standalone browser. [Servo](https://github.com/Travis-Gilbert/servo/tree/Travis-Gilbert/youtube-mse)
 renders the web, [GPUI Kit](https://gpui-kit.com) draws everything around it,
@@ -10,7 +10,7 @@ default search engine, with its results page drawn natively.
 ## Using it
 
 - **Right-click** anywhere: a menu opens at the pointer with its search field
-  first and already focused, over the page's own entries and Frame's tools.
+  first and already focused, over the page's own entries and Platinum's tools.
   Type to filter those and find your tabs and every command, or to open an
   address, search the web, or Ask. Right-click a tab for its own entries:
   Rename, Pin Tab, Close Tab and, for a branch, Close Branch.
@@ -73,17 +73,20 @@ icons of the sites those name (`favicons/`) are kept in
 `~/Library/Application Support/Frame`.
 
 Search is local first. Every web page you open is kept in a local index in
-`~/Library/Application Support/Frame`, and search looks there before the web;
+`~/Library/Application Support/Platinum`, and search looks there before the web;
+The app was called Frame before it was Platinum; a `Frame` folder there (and
+in `~/Library/Caches`) is moved to the new name on first launch, with a `Frame`
+link left in its place for builds from before the rename.
 Ask answers from those kept pages. Queries and pages are embedded on this Mac
 by Google's EmbeddingGemma 2 (about 314 MB, fetched from Hugging Face on first
 run), on the GPU when there is one. A search waits at most four seconds for
-the web, and afterwards Frame fetches the results it has not kept yet, so the
+the web, and afterwards Platinum fetches the results it has not kept yet, so the
 next search on the topic finds them locally.
 The chrome uses the Asciinema theme in dark mode and GitHub Sharp in light,
 with the frame around each page drawn in the title-bar color (`#e1e4e8` in
 light). On macOS 26 and later that frame, the row of tabs included, is
 Liquid Glass: the title-bar color over the glass, at 55% in dark and 30% in
-light, so the desktop shows through it. The glass follows Frame's appearance,
+light, so the desktop shows through it. The glass follows Platinum's appearance,
 not the system's. Pages, their toolbars and the selected tab stay opaque.
 With Reduce Transparency on, or on an older macOS, the frame is solid.
 As in Dia, the selected tab rises out of its page's toolbar, and both
@@ -171,7 +174,7 @@ script/media-env python3 tests/profiles/check_native.py /path/to/target/debug/ex
 Bluesky, which needs no key, is always on, ranked below the other providers.
 Keyed general-web providers are used when their key is present in the
 environment or in a `.env` file, either in the checkout (while developing) or
-in `~/Library/Application Support/Frame/.env`. `RUSTYWEB_SEARCH_PROVIDERS`
+in `~/Library/Application Support/Platinum/.env`. `RUSTYWEB_SEARCH_PROVIDERS`
 names an explicit list instead. Ask needs `THEOREM_WEB_SYNTHESIS_CONFIG`.
 Results are reranked on OpenRouter (Voyage Rerank 3 Lite, then Cohere Rerank
 4 Pro) when an OpenRouter key is in the login Keychain under
@@ -251,3 +254,17 @@ text color as single-color masks.
 The home status bar’s import icon is the supplied Streamline Ultimate
 `App-Window-Download` PNG, embedded unchanged in an SVG so GPUI can tint its
 alpha mask with the current theme.
+
+## Brand
+
+The app icon is the watercolor floppy painting,
+`assets/brand/source/platinum-painting.png`. `script/brand-icons` rebuilds
+`assets/brand/icons/` from it: `Platinum.icns`, `Platinum.ico` and a 1024 px
+PNG. The logos are the Platinum brand kit (v1, 26 October 2026), a vector
+drawing of the same disk, also kept in `assets/brand/`: `logos/` (horizontal
+and stacked lockups, wordmark and one-color mark; names ending in `dark` are
+dark ink for light backgrounds, `light` the reverse) and `source/` (the
+editable master, compact and micro drawings). `src/brand.rs`
+sets the `.icns` as the Dock icon at launch, since Platinum runs as a bare
+binary; a bundle would name the same file in its `Info.plist`. The wordmark
+is DejaVu Sans Bold, outlined to paths (`assets/brand/DejaVu-font-notice.txt`).

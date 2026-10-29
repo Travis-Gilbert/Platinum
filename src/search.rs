@@ -1,8 +1,8 @@
-//! RustyWeb search service for Frame.
+//! RustyWeb search service for Platinum.
 //!
 //! `init` opens the durable RedCore session store once and installs it as a
 //! GPUI `Global`. `run` performs one search on a background thread and returns
-//! Frame-owned plain data ([`SerpResult`]); nothing from `rustyred-web` crosses
+//! Platinum-owned plain data ([`SerpResult`]); nothing from `rustyred-web` crosses
 //! this module's public boundary.
 //!
 //! `capture` adds a page the person finished loading to the same store, so the
@@ -18,10 +18,10 @@
 //!
 //! Each search waits for providers for at most four seconds, or until 100
 //! results are in, whichever comes first. The fused results are reranked on
-//! OpenRouter when its key is in the login Keychain, and Frame's rank profile
+//! OpenRouter when its key is in the login Keychain, and Platinum's rank profile
 //! weighs Bluesky down. Searches for images, video or attachments
 //! (`SearchOpts::media`) are reranked by a model that also reads their
-//! pictures; nothing in Frame searches media yet.
+//! pictures; nothing in Platinum searches media yet.
 //!
 //! Providers are passed to the async `programmable_search` explicitly, so the
 //! process environment is only read (never written). They are built once, and
@@ -58,7 +58,7 @@ const SESSION_ID: &str = "frame";
 /// an explicit list.
 const KEYLESS_PROVIDERS: &[&str] = &["bluesky"];
 
-/// How far Frame's rank profile weighs Bluesky down: a post's score is scaled
+/// How far Platinum's rank profile weighs Bluesky down: a post's score is scaled
 /// by 1 - 0.6, so a strong match can still surface.
 const BLUESKY_WEIGHT: f64 = -0.6;
 
@@ -177,7 +177,7 @@ struct SearchService {
     providers: Arc<[Arc<dyn SearchProvider>]>,
     /// Set when the durable store could not be opened and search runs in memory.
     store_note: Option<Arc<str>>,
-    /// Frame's rank profile in the store, when it could be kept there.
+    /// Platinum's rank profile in the store, when it could be kept there.
     profile: Option<ProfileRef>,
     /// Tells the embedding worker a page was captured.
     embed_wake: Option<mpsc::Sender<()>>,
@@ -215,7 +215,7 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
         Ok(profile) => Some(profile),
         Err(error) => {
             log::warn!(
-                "search: Frame's rank profile could not be kept, so Bluesky is not weighed down: {} ({})",
+                "search: Platinum's rank profile could not be kept, so Bluesky is not weighed down: {} ({})",
                 error.message,
                 error.code
             );
@@ -280,12 +280,12 @@ fn search_opts() -> SearchOpts {
     }
 }
 
-/// Frame's rank profile: RustyWeb's default, with Bluesky weighed down and
+/// Platinum's rank profile: RustyWeb's default, with Bluesky weighed down and
 /// semantic matches allowed to seed graph expansion.
 fn frame_profile() -> RankProfile {
     let mut profile = RankProfile::builtin("default").expect("RustyWeb ships a default profile");
     profile.id = "frame".into();
-    profile.name = "Frame".into();
+    profile.name = crate::brand::NAME.into();
     profile.rules.push(RankRule::Provider {
         rule_id: "bluesky-down".into(),
         provider: "bluesky".into(),
@@ -319,7 +319,7 @@ fn openrouter_rerankers() -> anyhow::Result<Option<(Rerankers, Rerankers)>> {
 
 /// A generic password from the login Keychain, read through the `security`
 /// tool. The item's access list lets that tool read it without a prompt; a
-/// Security.framework read would be checked against each rebuilt Frame binary.
+/// Security.framework read would be checked against each rebuilt Platinum binary.
 fn keychain_secret(service: &str) -> anyhow::Result<Option<String>> {
     let output = std::process::Command::new("/usr/bin/security")
         .args(["find-generic-password", "-s", service, "-w"])
@@ -477,7 +477,7 @@ fn run_campaign(
 pub fn run(query: String, ask: bool, cx: &mut App) -> Task<anyhow::Result<SerpResult>> {
     let Some(service) = cx.try_global::<SearchService>().cloned() else {
         return Task::ready(Err(anyhow!(
-            "Search is not ready yet. Restart Frame and try again."
+            "Search is not ready yet. Restart Platinum and try again."
         )));
     };
     cx.background_spawn(async move { service.search(&query, ask) })
@@ -542,7 +542,7 @@ impl SearchService {
             .as_ref()
             .map_err(|error| anyhow!("could not start the search runtime: {error}"))?;
         let mut store = self.store.lock().map_err(|_| {
-            anyhow!("The search store stopped after an earlier failure. Restart Frame.")
+            anyhow!("The search store stopped after an earlier failure. Restart Platinum.")
         })?;
         let locked = started.elapsed();
         let session = runtime
@@ -641,7 +641,7 @@ fn select_providers() -> Vec<Arc<dyn SearchProvider>> {
     selected
 }
 
-/// Map one finished RustyWeb session to Frame-owned data.
+/// Map one finished RustyWeb session to Platinum-owned data.
 fn map_session(session: &SearchSession, ask: bool, providers: Vec<String>) -> SerpResult {
     let receipt = &session.response.receipt;
     let hits = map_hits(&session.response.hits);
@@ -749,16 +749,16 @@ fn answer_note(codes: &[String]) -> String {
     let has = |code: &str| codes.iter().any(|c| c == code);
     if has("synthesis_model_unavailable") {
         return format!(
-            "Answers need a model. Set {SYNTHESIS_ENV_VAR} to a model config file, then restart Frame."
+            "Answers need a model. Set {SYNTHESIS_ENV_VAR} to a model config file, then restart Platinum."
         );
     }
     if has("synthesis_model_configuration_invalid") {
         return format!(
-            "The model config at {SYNTHESIS_ENV_VAR} could not be loaded. Check the path and the file, then restart Frame."
+            "The model config at {SYNTHESIS_ENV_VAR} could not be loaded. Check the path and the file, then restart Platinum."
         );
     }
     if has("synthesis_evidence_minimum_unmet") {
-        return "There is not enough captured page text to answer with citations yet. Open a few of these results so Frame can capture them, then ask again.".to_string();
+        return "There is not enough captured page text to answer with citations yet. Open a few of these results so Platinum can capture them, then ask again.".to_string();
     }
     if let Some(code) = codes.iter().find(|code| is_synthesis_code(code)) {
         return format!("The answer could not be generated ({}).", humanize(code));
@@ -870,7 +870,7 @@ fn weak_web_note(providers: &[String]) -> Option<String> {
         .iter()
         .any(|name| GENERAL_WEB_PROVIDERS.contains(&name.as_str()));
     (!general).then(|| {
-        "Only social and video sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Frame for general web results.".to_string()
+        "Only social and video sources are searched. Add a search API key (Brave, Exa, Mojeek, Firecrawl, SerpAPI or Perplexity) to .env and restart Platinum for general web results.".to_string()
     })
 }
 

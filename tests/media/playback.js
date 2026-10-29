@@ -1,4 +1,4 @@
-// Runs inside Frame's Servo instance. Fixtures come from Servo's existing WPT
+// Runs inside Platinum's Servo instance. Fixtures come from Servo's existing WPT
 // media directory; this probe does not replace the media-source WPT suite.
 (async () => {
     const types = [

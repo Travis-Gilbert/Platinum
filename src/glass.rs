@@ -11,9 +11,9 @@
 //! Clear glass needs dimming under text, so the glass leans to the theme's
 //! frame color, as its own tint rather than under a layer of paint that would
 //! flatten it, by as much as keeps Home's text readable over a white window
-//! behind Frame. No tint makes it light over a black one, so the light theme
+//! behind Platinum. No tint makes it light over a black one, so the light theme
 //! also lays a coat of the frame's color over it. It takes the chrome's
-//! appearance, not the system's: Frame in Light on a Dark system gets light
+//! appearance, not the system's: Platinum in Light on a Dark system gets light
 //! glass.
 //!
 //! Without the glass (before macOS 26, or with Reduce Transparency or

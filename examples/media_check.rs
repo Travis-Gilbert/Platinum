@@ -1,4 +1,4 @@
-//! Exercise Frame's actual Servo configuration and GPU context, without the
+//! Exercise Platinum's actual Servo configuration and GPU context, without the
 //! search service or the user's profile. See docs/plans/youtube.md.
 extern crate gpui_kit as gpui;
 
@@ -19,7 +19,7 @@ use servo::{
 };
 
 #[derive(Parser)]
-#[command(about = "Check Frame's native Servo media path using a temporary profile")]
+#[command(about = "Check Platinum's native Servo media path using a temporary profile")]
 struct Args {
     /// HTTP base URL of Servo's WPT media directory; omit for codec reporting.
     fixture_base: Option<url::Url>,
@@ -207,7 +207,7 @@ fn main() -> anyhow::Result<()> {
         })
         .detach();
     });
-    // This directory belongs only to this invocation, never Frame's profile.
+    // This directory belongs only to this invocation, never Platinum's profile.
     let _ = std::fs::remove_dir_all(profile);
     if *result.0.borrow() != Some(true) {
         anyhow::bail!("media acceptance failed");
