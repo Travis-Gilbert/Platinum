@@ -9,6 +9,33 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use url::Url;
 
+/// The app's name, which its folders take.
+pub const APP_NAME: &str = "Platinum";
+/// What the app and its folders were called before.
+const LEGACY_NAME: &str = "Frame";
+
+/// The app's folder under `base` (the data or cache directory): `Platinum`,
+/// taking over the `Frame` folder the app kept before it was renamed, so its
+/// profile, index and downloaded model carry over. A `Frame` link is left in
+/// its place, since builds of branches from before the rename still open it.
+/// The app and `profile-import` both find their folder here.
+pub fn app_dir(base: &Path) -> PathBuf {
+    let dir = base.join(APP_NAME);
+    let legacy = base.join(LEGACY_NAME);
+    if !dir.exists() && legacy.is_dir() {
+        let moved = std::fs::rename(&legacy, &dir)
+            .and_then(|()| std::os::unix::fs::symlink(APP_NAME, &legacy));
+        if let Err(error) = moved {
+            log::warn!(
+                "could not move {} to {}: {error}",
+                legacy.display(),
+                dir.display()
+            );
+        }
+    }
+    dir
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Profile {
     pub id: i64,
@@ -53,6 +80,7 @@ fn catalog(root: &Path) -> Result<Connection> {
           id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL DEFAULT '',
           source TEXT UNIQUE);
         CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value INTEGER NOT NULL);
+        CREATE TABLE IF NOT EXISTS vault (id INTEGER PRIMARY KEY CHECK (id = 1), namespace TEXT NOT NULL);
         INSERT OR IGNORE INTO profiles(id,name) VALUES(1,'Default');",
     )?;
     Ok(db)
@@ -136,12 +164,17 @@ impl ProfileStore {
     }
 
     pub fn directory(&self) -> PathBuf {
-        // Default keeps the existing Servo profile in place.
         if self.profile.id == 1 {
-            self.root.join("profile")
+            self.default_directory()
         } else {
             self.root.join("profiles").join(self.profile.id.to_string())
         }
+    }
+
+    /// The default profile's folder, which keeps the existing Servo profile
+    /// in place.
+    pub fn default_directory(&self) -> PathBuf {
+        self.root.join("profile")
     }
 
     pub fn search_directory(&self) -> PathBuf {

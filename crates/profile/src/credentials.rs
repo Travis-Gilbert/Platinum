@@ -3,7 +3,7 @@
 use super::{ProfileStore, web_url};
 use aes::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
 use anyhow::{Context, Result, ensure};
-use rusqlite::params;
+use rusqlite::{OptionalExtension as _, params};
 use sha2::{Digest, Sha256};
 use zeroize::Zeroizing;
 
@@ -25,12 +25,44 @@ pub struct Keychain {
 }
 impl Keychain {
     pub fn for_profile(store: &ProfileStore) -> Self {
-        // Include the installation root so test/development stores cannot collide.
-        let root = Sha256::digest(store.root.to_string_lossy().as_bytes());
+        // Name items by installation so test/development stores cannot collide.
+        let namespace = namespace(store).unwrap_or_else(|_| digest(&store.root));
         Self {
-            service: format!("Frame.credentials.{:x}.{}", root, store.profile.id),
+            service: format!("Frame.credentials.{namespace}.{}", store.profile.id),
         }
     }
+}
+
+/// What the installation at `store.root` names its Keychain items by. It is
+/// fixed in the catalog the first time it is asked for, so the folder can
+/// be moved or renamed after, and it opens the same through a link to it.
+/// The `Frame` folder became `Platinum` before this was kept; such a store
+/// goes on with the name its old path gave its items.
+fn namespace(store: &ProfileStore) -> Result<String> {
+    let db = super::catalog(&store.root)?;
+    let kept = || {
+        db.query_row("SELECT namespace FROM vault", [], |r| r.get(0))
+            .optional()
+    };
+    if let Some(namespace) = kept()? {
+        return Ok(namespace);
+    }
+    let legacy = store.root.with_file_name(super::LEGACY_NAME);
+    let same = matches!(
+        (legacy.canonicalize(), store.root.canonicalize()),
+        (Ok(a), Ok(b)) if a == b
+    );
+    let named_by = if same { &legacy } else { &store.root };
+    db.execute(
+        "INSERT OR IGNORE INTO vault(id,namespace) VALUES(1,?1)",
+        [digest(named_by)],
+    )?;
+    // Another process may have fixed it first.
+    kept()?.context("The Keychain namespace was not kept")
+}
+
+fn digest(path: &std::path::Path) -> String {
+    format!("{:x}", Sha256::digest(path.to_string_lossy().as_bytes()))
 }
 impl Vault for Keychain {
     fn put(&self, account: &str, secret: &[u8]) -> Result<()> {
@@ -243,6 +275,25 @@ mod tests {
         security_framework::passwords::delete_generic_password(&vault.service, &key)
             .expect("clean up synthetic Keychain item");
         assert!(result.is_ok_and(|value| value.as_slice() == b"synthetic-password"));
+    }
+
+    #[test]
+    fn keychain_names_outlast_the_folder_rename() {
+        let temp = tempfile::tempdir().unwrap();
+        let legacy = temp.path().join("Frame");
+        std::fs::create_dir(&legacy).unwrap();
+        // What builds from before the rename named the items by.
+        let before = format!("Frame.credentials.{}.1", digest(&legacy));
+        let root = crate::app_dir(temp.path());
+        assert!(root.ends_with(crate::APP_NAME));
+        let service = |root: &std::path::Path| {
+            Keychain::for_profile(&ProfileStore::open(root).unwrap()).service
+        };
+        assert_eq!(service(&root), before);
+        assert_eq!(service(&legacy), before, "through the link");
+        let moved = temp.path().join("Moved");
+        std::fs::rename(&root, &moved).unwrap();
+        assert_eq!(service(&moved), before, "after a move");
     }
 }
 

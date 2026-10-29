@@ -64,6 +64,7 @@ fn main() -> anyhow::Result<()> {
     let profile = frame_profile::ProfileStore::open(&data_dir)?;
     let profile_dir = profile.directory();
     let search_dir = profile.search_directory();
+    session::adopt(&data_dir, &profile.default_directory());
     // RustyWeb's provider keys: a checkout's `.env` while developing, then
     // the app's own. Neither overrides what the environment already sets.
     let _ = dotenvy::dotenv();
@@ -77,9 +78,10 @@ fn main() -> anyhow::Result<()> {
             brand::install();
             install_commands(cx);
             Engine::start(&profile_dir, cx);
-            cx.set_global(profile_ui::ActiveProfile(profile));
             search::init(&search_dir, cx);
             session::init(&profile_dir, cx);
+            session::open_imported_tabs(&profile, cx);
+            cx.set_global(profile_ui::ActiveProfile(profile));
             if let Err(error) = open_window(cx) {
                 log::error!("{error:#}");
                 cx.quit();

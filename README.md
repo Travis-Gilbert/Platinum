@@ -133,7 +133,8 @@ ready. **File > Profiles…** also creates and switches profiles.
   Firefox tab is imported. Source windows are
   combined into one window. Incomplete, encrypted, unknown or navigation-pruned
   session files are reported as unsupported. Existing imported tabs are not
-  added twice. Extension import inventories names and versions; it does not run
+  added twice. Imported tabs open the next time Platinum starts with that
+  profile. Extension import inventories names and versions; it does not run
   the extensions.
 
 For explicit local migration without opening the app, the profile crate also

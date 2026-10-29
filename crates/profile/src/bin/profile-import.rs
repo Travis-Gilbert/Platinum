@@ -31,11 +31,10 @@ fn main() -> Result<()> {
         Browser::Dia => "Dia",
         Browser::Firefox => "Firefox",
     };
-    let root = args.root.unwrap_or(
-        dirs::data_dir()
-            .context("No application data directory")?
-            .join("Frame"),
-    );
+    let root = match args.root {
+        Some(root) => root,
+        None => frame_profile::app_dir(&dirs::data_dir().context("No application data directory")?),
+    };
     let catalog = ProfileStore::open(&root)?;
     let sources: Vec<_> = migration::discover()
         .into_iter()

@@ -7,28 +7,9 @@
 //! `objc2-app-kit`, as `glass.rs` and `share.rs` reach AppKit.
 
 /// The app's name, for menus, titles and the folders it keeps its files in.
-pub const NAME: &str = "Platinum";
+pub const NAME: &str = frame_profile::APP_NAME;
 
-/// The app's folder under `base` (the data or cache directory): `Platinum`,
-/// taking over the `Frame` folder the app kept before it was renamed, so its
-/// profile, index and downloaded model carry over. A `Frame` link is left in
-/// its place, since builds of branches from before the rename still open it.
-pub fn app_dir(base: &std::path::Path) -> std::path::PathBuf {
-    let dir = base.join(NAME);
-    let legacy = base.join("Frame");
-    if !dir.exists() && legacy.is_dir() {
-        let moved = std::fs::rename(&legacy, &dir)
-            .and_then(|()| std::os::unix::fs::symlink(NAME, &legacy));
-        if let Err(error) = moved {
-            log::warn!(
-                "could not move {} to {}: {error}",
-                legacy.display(),
-                dir.display()
-            );
-        }
-    }
-    dir
-}
+pub use frame_profile::app_dir;
 
 /// Show the Platinum icon in the Dock and the app switcher.
 #[cfg(target_os = "macos")]

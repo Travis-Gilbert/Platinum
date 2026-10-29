@@ -69,6 +69,33 @@ pub struct Session {
     pub dock: Layout,
 }
 
+impl Session {
+    /// Add a tab for each of `contents` after the others, at the top of the
+    /// tree, leaving out what a tab shows already.
+    pub fn add_tabs(&mut self, contents: impl IntoIterator<Item = Content>) {
+        let mut id = self.tabs.iter().map(|tab| tab.id + 1).max().unwrap_or(0);
+        for content in contents {
+            let shown = self.tabs.iter().any(|tab| match content.url() {
+                Some(url) => tab.content.url() == Some(url),
+                None => tab.content == content,
+            });
+            if shown {
+                continue;
+            }
+            self.tabs.push(SavedTab {
+                id,
+                content,
+                pin: None,
+                parent: None,
+                opener: None,
+                collapsed: false,
+                name: None,
+            });
+            id += 1;
+        }
+    }
+}
+
 /// Tab groups, side by side or stacked, as the dock holds them.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Layout {
