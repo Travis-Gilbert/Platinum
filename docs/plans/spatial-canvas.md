@@ -1989,5 +1989,8 @@ and writes its results there.
     and `src/icons.rs`.
   - This plan, its briefs, its evidence and W0's spike code were in local
     checkouts only until the `docs/canvas-plan-handoff` branch.
-  - Done: P0, R1, W0, M1, the chrome kit and the site panel's data. Next on
-    the frontier: M2, then R2's Frame half with M3.
+  - Done: P0, R1, W0, the chrome kit and the site panel's data, and M1
+    apart from its by-hand checks in `tests/canvas/MANUAL.md`. Next on the
+    frontier: M2, then R2's Frame half with M3.
+  - Tracking issue: #12. The next session starts from
+    [briefs/handoff-2026-10-29-vault-canvas.md](briefs/handoff-2026-10-29-vault-canvas.md).

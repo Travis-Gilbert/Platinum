@@ -1299,7 +1299,9 @@ through #8 on 2026-10-29; its tip is the tag `archive/feat/notes-app`. Steps 4
 to 14 are not built, so the app has no notes window yet. The pins named below
 are the history: since #8 and #9, Servo is at `efdf7370` on the fork's `main`,
 which contains `feat/webgl2-cosmos` through `Travis-Gilbert/frame-converged`,
-and Theorem is at `8c5d22bd`, which contains `7eb1ba024`.
+and Theorem is at `8c5d22bd`, which contains `7eb1ba024`. Tracking issue: #13;
+the next session starts from
+[briefs/handoff-2026-10-29-vault-canvas.md](briefs/handoff-2026-10-29-vault-canvas.md).
 Step 1's atomic writes, FSEvents watching, three-way merge
 and note moves are on `claude/notes-foundations` in Theorem, which Frame pins.
 The moves commit `d7e322c3e` and its review fixes, `7eb1ba024`, are pushed, and
