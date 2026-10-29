@@ -119,11 +119,31 @@ pub fn run(output: PathBuf) -> anyhow::Result<()> {
                     browser.update(cx, |browser, cx| browser.back(window, cx));
                 }).unwrap();
                 assert!(browser.read_with(cx, |browser, _| browser.tabs[browser.active].showing == Showing::Serp), "Back restores native results");
+                handle.update(cx, |_, window, cx| {
+                    let field = browser.update(cx, |browser, cx| {
+                        browser.reset_underlay(window, cx);
+                        let serp = cx.new(|cx| Serp::loaded(fixture(false), window, cx));
+                        let events = cx.subscribe_in(&serp, window, Browser::serp_event);
+                        browser.underlay_go(underlay::Route::Results(serp, Rc::new(events)), window, cx);
+                        browser.underlay.field.clone()
+                    });
+                    field.update(cx, |field, cx| {
+                        field.set_value("data:text/html,<title>Shortcut</title><h1>Shortcut</h1>", window, cx);
+                        cx.emit(InputEvent::PressEnter { secondary: true, shift: false });
+                    });
+                }).unwrap();
+                cx.background_executor().timer(Duration::from_millis(150)).await;
+                assert!(browser.read_with(cx, |browser, _| {
+                    browser.tabs.len() == 2 && browser.active == 1
+                        && browser.tabs[0].showing == Showing::Serp
+                        && browser.tabs[1].showing == Showing::Page
+                }), "Command-Return address preserves results and opens a separate tab");
                 std::fs::write(
                     output.join("report.json"),
                     serde_json::to_vec_pretty(&serde_json::json!({
                         "fixture": true, "native_renderer": true, "captures": captures,
-                        "live_search": false, "servo_navigation": true, "back_to_native_results": true
+                        "live_search": false, "servo_navigation": true, "back_to_native_results": true,
+                        "command_return_address_preserves_results": true
                     }))
                     .unwrap(),
                 )

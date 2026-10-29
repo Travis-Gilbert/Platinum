@@ -292,7 +292,10 @@ impl Browser {
         let text = field.read(cx).value().to_string();
         match classify(&text) {
             None => {}
-            Some(Target::Go(url)) => self.underlay_open(url, window, cx),
+            Some(Target::Go(url)) => {
+                let origin = secondary.then_some(Origin::From(self.tabs[0].id));
+                self.go(url, origin, true, window, cx);
+            }
             Some(Target::Search(query)) => {
                 let mode = if self.ask {
                     SerpMode::Ask

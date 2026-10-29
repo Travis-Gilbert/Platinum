@@ -13,6 +13,7 @@ Scope follows step 1 of [the native workspace vision](../vision/native-workspace
   the user visited automatically fetched pages.
 - Preserve Command-click and Command-Return search destinations on workspace
   Home. Consume the backing tab when it is the new destination.
+- Command-Return on an address also preserves workspace results in their own tab.
 - Downloading a workspace result preserves its route and Back history.
 - Opening a new tab preserves existing workspace results in their own tab.
 
@@ -22,6 +23,11 @@ Scope follows step 1 of [the native workspace vision](../vision/native-workspace
   stacks; bound preview input to 64 KiB and favicon discovery to 512 KiB plus a
   five-second request/body deadline. Only HTTP(S) declared icon URLs are used.
   html5ever remains the HTML parser; no replacement parser was introduced.
+- Bound the separate favicon image response to 2 MiB and five seconds. Decode
+  only one raster frame, with strict 1024-pixel dimensions and an 8 MiB allocation
+  budget, then cache a 32-pixel thumbnail. SVGs render to 32 pixels with nested
+  image and local-file resolution disabled. This uses image and resvg already
+  present in the dependency graph; the generic GPUI loader has no such bounds.
 - `CON-004`, `DATA-002`: serialize recents writes and reject older snapshots,
   using the existing session store's generation/mutex pattern. Flush the latest
   snapshot on quit. The record contains at most eight pages and eight searches.
@@ -42,7 +48,7 @@ The commands below use the repository Rust 1.97.1 toolchain on macOS arm64.
 existing build cache, refreshes first-party source timestamps and invokes
 `script/media-env`. It was used for the Cargo commands.
 
-- `cargo test --locked --offline --bin frame`: 182 passed, 0 failed, 1 ignored.
+- `cargo test --locked --offline --bin frame`: 186 passed, 0 failed, 1 ignored.
   The ignored test is the existing explicit model-download/inference check.
 - `cargo build --locked --offline --features snapshot --bin frame --example serp_check`:
   built successfully. Existing dependency and unused-code warnings remain.
@@ -54,7 +60,8 @@ existing build cache, refreshes first-party source timestamps and invokes
   pre-existing formatting in untouched main files; those were not reformatted.
 - Native visual/navigation acceptance: passed (exit 0). Inspected workspace Home,
   tab Home, populated light/dark results, empty results with notices, and the Servo
-  destination. Back returned to the native results view. See the
+  destination. Back returned to the native results view. The native harness also
+  checks Command-Return on an address preserves results in a separate tab. See the
   [native report](evidence/native-home-pr4-2026-10-29/report.json) and adjacent PNGs.
 
 The native harness is `FRAME_WORKSPACE_CHECK=<output> script/media-env <frame>`

@@ -11,5 +11,6 @@
   ],
   "live_search": false,
   "servo_navigation": true,
-  "back_to_native_results": true
+  "back_to_native_results": true,
+  "command_return_address_preserves_results": true
 }

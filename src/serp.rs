@@ -24,8 +24,8 @@
 //! `DescriptionList`, `Alert`, `Empty`, `Skeleton` and `Button`; sites are
 //! named by Servo's public suffix list (`net_traits::pub_domains`), snippets
 //! are parsed by html5ever (`markup.rs`), dates are chrono's. A site's icon
-//! is found by `favicon.rs`, then loads and decodes through GPUI's image
-//! loader (`ImageAssetLoader`); both fetch over the HTTP client `main`
+//! is found and decoded within explicit limits by `favicon.rs`; both
+//! requests use the HTTP client `main`
 //! installs (`gpui-pre-reqwest-client`).
 
 use chrono::{DateTime, Local, NaiveDate};
@@ -52,14 +52,14 @@ use gpui_kit::component::{
 };
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClickEvent, Context, Entity, EventEmitter, FocusHandle,
-    Focusable, FontWeight, HighlightStyle, ImageAssetLoader, InteractiveElement, IntoElement,
-    ParentElement, Rems, Render, Resource, ScrollStrategy, SharedString, Styled, StyledText, Task,
-    WeakEntity, Window, div, img, prelude::FluentBuilder as _, px, relative, rems,
+    Focusable, FontWeight, HighlightStyle, InteractiveElement, IntoElement, ParentElement, Rems,
+    Render, ScrollStrategy, SharedString, Styled, StyledText, Task, WeakEntity, Window, div, img,
+    prelude::FluentBuilder as _, px, relative, rems,
 };
 use percent_encoding::percent_decode_str;
 use url::Url;
 
-use crate::favicon::SiteIcon;
+use crate::favicon::{IconImage, SiteIcon};
 use crate::icons;
 use crate::search::{self, SerpAnswer, SerpHit, SerpResult, SerpSource, sentence};
 
@@ -988,9 +988,9 @@ fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
     };
     let icon = window
         .use_asset::<SiteIcon>(&root, cx)
-        .and_then(|icon| window.use_asset::<ImageAssetLoader>(&Resource::Uri(icon), cx));
+        .and_then(|icon| window.use_asset::<IconImage>(&icon, cx));
     match icon {
-        Some(Err(_)) => initials(),
+        Some(None) => initials(),
         icon => h_flex()
             .size_6()
             .flex_shrink_0()
@@ -999,7 +999,7 @@ fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
             .border_1()
             .border_color(cx.theme().border)
             .bg(gpui_kit::white())
-            .when_some(icon.and_then(Result::ok), |circle, icon| {
+            .when_some(icon.flatten(), |circle, icon| {
                 circle.child(img(icon).size_4())
             })
             .into_any_element(),
