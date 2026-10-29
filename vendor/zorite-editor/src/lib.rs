@@ -30,6 +30,9 @@
 //! Usage: create an [`EditorState`] entity and render it; call [`bind_keys`]
 //! once at startup so the editing actions resolve while it's focused.
 
+#[cfg(test)]
+mod authority_tests;
+
 mod authority;
 pub use authority::{BufferEdit, EditOrigin, HistoryAction, RemoteEditError, TextEdit};
 

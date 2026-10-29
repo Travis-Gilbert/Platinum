@@ -18623,6 +18623,7 @@ dependencies = [
  "frame-notes",
  "gpui-bidi",
  "gpui-pre",
+ "tempfile",
  "unicode-segmentation",
  "zorite-markdown",
 ]

@@ -35,4 +35,6 @@ gpui-bidi = { path = "../gpui-bidi", version = "0.1" }
 
 # `#[gpui::test]` + headless windows, using Frame's existing test feature.
 [dev-dependencies]
+# Existing workspace dependency; real Vault consumer regression tests.
+tempfile = "3"
 gpui = { package = "gpui-pre", version = "=0.3.9", features = ["test-support"] }
