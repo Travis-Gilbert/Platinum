@@ -8,6 +8,10 @@ extern crate gpui_kit as gpui;
 #[allow(dead_code)]
 #[path = "../src/engine.rs"]
 mod engine;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
 #[allow(dead_code)]
 #[path = "../src/scene.rs"]
 mod scene;

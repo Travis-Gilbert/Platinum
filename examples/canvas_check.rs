@@ -1,6 +1,9 @@
 //! Native M1 probe using the production Page and SpatialCanvas, with an isolated profile.
 extern crate gpui_kit as gpui;
 #[allow(dead_code)]
+#[path = "../src/brand.rs"]
+mod brand;
+#[allow(dead_code)]
 #[path = "../src/canvas/mod.rs"]
 mod canvas;
 #[allow(dead_code)]
@@ -9,6 +12,9 @@ mod controls;
 #[allow(dead_code)]
 #[path = "../src/delegate.rs"]
 mod delegate;
+#[allow(dead_code)]
+#[path = "../src/embedder.rs"]
+mod embedder;
 #[allow(dead_code)]
 #[path = "../src/engine.rs"]
 mod engine;
@@ -21,6 +27,10 @@ mod keys;
 #[allow(dead_code)]
 #[path = "../src/page.rs"]
 mod page;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
 #[allow(dead_code)]
 #[path = "../src/scene.rs"]
 mod scene;

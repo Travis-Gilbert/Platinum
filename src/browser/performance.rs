@@ -44,7 +44,7 @@ pub fn run() -> anyhow::Result<()> {
                         let browser = cx.new(|cx| Browser::new(window, cx));
                         view = Some(browser.clone());
                         browser.update(cx, |browser, cx| {
-                            browser.go(url.clone(), false, false, window, cx)
+                            browser.go(url.clone(), None, false, window, cx)
                         });
                         window.activate_window();
                         cx.new(|cx| Root::new(browser, window, cx))

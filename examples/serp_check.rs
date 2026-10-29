@@ -23,6 +23,9 @@ extern crate gpui_kit as gpui;
 mod performance;
 
 
+#[allow(dead_code)]
+#[path = "../src/brand.rs"]
+mod brand;
 #[path = "../src/embedder.rs"]
 mod embedder;
 #[path = "../src/search.rs"]

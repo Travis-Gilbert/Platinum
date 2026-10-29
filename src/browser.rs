@@ -573,7 +573,7 @@ impl Browser {
                 cx.subscribe_in(&panel, window, |this, _, event, window, cx| {
                     let ProfileEvent::Open(url) = event;
                     window.close_sheet(cx);
-                    this.go(url.clone(), false, false, window, cx);
+                    this.go(url.clone(), None, false, window, cx);
                 }),
             );
         self.profile_panel = Some(panel.clone());
@@ -3094,7 +3094,7 @@ impl Render for Browser {
                                                 .and_then(|e| Url::parse(&e.url).ok())
                                             {
                                                 let _ = browser.update(cx, |this, cx| {
-                                                    this.go(url, false, false, window, cx)
+                                                    this.go(url, None, false, window, cx)
                                                 });
                                             }
                                         })

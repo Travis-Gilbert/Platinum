@@ -1280,37 +1280,12 @@ fn imported_history_appears_when_typing_in_address_bar_and_has_a_keyboard_path(
 }
 
 #[gpui_kit::test]
-fn history_command_opens_native_profile_library_and_session_restores_tab_selection(
-    cx: &mut TestAppContext,
-) {
+fn history_command_opens_native_profile_library(cx: &mut TestAppContext) {
     use gpui_kit::component::WindowExt as _;
     let temp = tempfile::tempdir().unwrap();
     let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
-    store
-        .save_session(&frame_profile::Session {
-            layout: None,
-            tabs: vec![
-                frame_profile::SessionTab {
-                    url: None,
-                    query: None
-                };
-                3
-            ],
-            active: 1,
-        })
-        .unwrap();
-    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store.clone())));
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
     let (browser, cx) = open(cx);
-    assert_eq!(tabs(&browser, cx), (3, 1));
-    keys(cx, "cmd-t");
-    // Disk writes are debounced; the tab UI still updates immediately.
-    assert_eq!(tabs(&browser, cx), (4, 3));
-    cx.executor()
-        .advance_clock(std::time::Duration::from_millis(250));
-    cx.run_until_parked();
-    let saved = store.session().unwrap();
-    assert_eq!(saved.tabs.len(), 4);
-    assert_eq!(saved.active, 3);
     keys(cx, "cmd-y");
     assert!(cx.update(|window, cx| window.has_active_sheet(cx)));
     assert!(cx.update(|_, cx| browser.read(cx).profile_panel.is_some()));
@@ -1368,34 +1343,39 @@ fn home_status_bar_pins_import_to_bottom_left_and_opens_importer(cx: &mut TestAp
 }
 
 #[gpui_kit::test]
-fn visual_chrome_updates_do_not_schedule_session_writes(cx: &mut TestAppContext) {
-    let temp = tempfile::tempdir().unwrap();
-    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
-    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+fn visual_chrome_updates_do_not_write_the_session(cx: &mut TestAppContext) {
+    let dir = data_dir("visual-chrome");
+    cx.update(|cx| session::init(&dir, cx));
     let (browser, cx) = open(cx);
-    cx.executor()
-        .advance_clock(std::time::Duration::from_millis(250));
-    cx.run_until_parked();
     cx.update(|window, cx| {
         browser.update(cx, |browser, cx| {
-            assert!(browser.pending_session.is_none());
+            // What is written now is what the next save compares with.
+            assert!(browser.snapshot(true, cx).is_some());
             for _ in 0..100 {
                 browser.sync_chrome(window, cx);
             }
-            assert!(browser.pending_session.is_none());
+            assert!(browser.snapshot(false, cx).is_none());
         })
     });
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[gpui_kit::test]
-fn closing_before_debounce_preserves_latest_tabs(cx: &mut TestAppContext) {
-    let temp = tempfile::tempdir().unwrap();
-    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
-    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store.clone())));
+fn closing_before_the_save_keeps_the_latest_tabs(cx: &mut TestAppContext) {
+    let dir = data_dir("close-before-save");
+    cx.update(|cx| session::init(&dir, cx));
     let (browser, cx) = open(cx);
     keys(cx, "cmd-t cmd-t");
-    cx.update(|_, cx| browser.update(cx, |browser, cx| browser.flush_session(cx)));
-    let saved = store.session().unwrap();
+    let active = cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.save(cx);
+            browser.tabs[browser.active].id
+        })
+    });
+    let saved = cx
+        .update(|_, cx| cx.global::<session::Store>().load_session())
+        .expect("written on close");
     assert_eq!(saved.tabs.len(), 3);
-    assert_eq!(saved.active, 2);
+    assert_eq!(saved.active, Some(active));
+    let _ = std::fs::remove_dir_all(&dir);
 }

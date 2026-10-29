@@ -1136,7 +1136,7 @@ impl Render for Page {
             .on_mouse_up_out(GpuiButton::Middle, cx.listener(Self::mouse_up))
             .on_mouse_move(cx.listener(Self::mouse_move))
             .on_mouse_exit(cx.listener(Self::mouse_exit))
-            .on_hover(cx.listener(|page, hovered, _, _| {
+            .on_hover(cx.listener(|page, hovered: &bool, _, _| {
                 if !hovered {
                     page.send(InputEvent::MouseLeftViewport(MouseLeftViewportEvent::default()));
                 }
