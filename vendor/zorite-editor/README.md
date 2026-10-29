@@ -9,12 +9,13 @@ notes.
 It is built directly on GPUI's text primitives: an `EntityInputHandler` for
 keyboard and IME input, `shape_line` for per-line shaping, and a custom
 `Element` that lays out and paints the lines, caret, and selection. It depends
-on `gpui`, `unicode-segmentation` and (in the Platinum fork) `frame-notes`
-for the shared offset boundary, plus one sibling crate,
+on `gpui`, `unicode-segmentation` and (in the Platinum fork) `str_indices`
+for UTF-8/UTF-16 indexing, plus one sibling crate,
 [`zorite-markdown`](../zorite-markdown/README.md) with default features off,
 for its dependency-free `syntax` module. That module decides what counts as a
 link, an alert, or a table style; sharing it keeps the editor and the reading
-view in agreement.
+view in agreement. `frame-notes` is a dev-dependency only, for host-offset
+fixtures and real Vault integration tests.
 
 The Platinum fork emits lossless byte edits and supports host-owned history and
 remote updates; see the authority seam in [API.md](API.md).

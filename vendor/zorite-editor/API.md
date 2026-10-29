@@ -49,9 +49,11 @@ current API accepts whole text plus revision/operation identity). For session
 operations that take scalar positions, use `frame_notes::Offsets` on
 the **pre-edit** text: `byte_range_to_scalar`; use an Offsets for the resulting
 text for the selection. Reverse session ranges with `scalar_range_to_byte`.
-Mac input uses the same module's `Offsets::utf16_to_byte_cached` and
-`byte_to_utf16_cached`, with the editor's generation-scoped cursor cache. Ranges convert with `byte_range_to_utf16`/
-`utf16_range_to_byte`. Combining characters and ZWJ components count as separate
+Mac input in the editor uses `str_indices::utf16::from_byte_idx` and
+`to_byte_idx` (0.4.4), the same indexing library used by the host's ropey-backed
+Offsets. The editor retains no conversion cache or application-core dependency.
+Host ranges convert with `byte_range_to_utf16`/`utf16_range_to_byte`.
+Combining characters and ZWJ components count as separate
 scalars, never as graphemes; graphemes remain the editor's cursor-step unit.
 
 Hosted keys and commands emit `HistoryRequested` instead of using snapshots.

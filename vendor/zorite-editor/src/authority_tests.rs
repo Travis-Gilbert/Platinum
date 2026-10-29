@@ -302,8 +302,11 @@ fn unicode_local_and_remote_edits_use_old_text_byte_ranges(cx: &mut TestAppConte
                     range: end..end + 1,
                 },
             ];
-            // Prime the UTF-16 cache before replacing its text.
-            e.offset_to_utf16(e.text().len());
+            // Check conversion on both sides of the remote update.
+            assert_eq!(
+                e.offset_to_utf16(e.text().len()),
+                e.text().encode_utf16().count()
+            );
             e.apply_remote(
                 e.generation(),
                 &[TextEdit {
@@ -478,38 +481,127 @@ fn hosted_load_is_byte_identical_and_history_requests_do_not_restore_snapshots(
     });
 }
 
-/// Measures the real input mutation path, excluding rendering, filesystem and session work.
+#[gpui::test]
+fn utf16_conversions_match_host_offsets_at_every_boundary(cx: &mut TestAppContext) {
+    let h = Harness::new(cx, true, "");
+    for fixture in ["abc"].into_iter().chain(UNICODE.iter().copied()) {
+        h.update(cx, |e, _, cx| {
+            e.set_text(fixture, cx);
+            let offsets = Offsets::new(fixture);
+            for byte in (0..fixture.len() + 3).chain([usize::MAX]) {
+                assert_eq!(
+                    e.offset_to_utf16(byte),
+                    offsets.byte_to_utf16(byte),
+                    "{fixture}: byte {byte}"
+                );
+            }
+            for unit in (0..fixture.encode_utf16().count() + 3)
+                .rev()
+                .chain([usize::MAX])
+            {
+                assert_eq!(
+                    e.offset_from_utf16(unit),
+                    offsets.utf16_to_byte(unit),
+                    "{fixture}: unit {unit}"
+                );
+                assert_eq!(utf16_to_byte(fixture, unit), offsets.utf16_to_byte(unit));
+            }
+        });
+    }
+}
+
+fn report_cost(label: &str, bytes: usize, samples: &mut [u128]) {
+    samples.sort_unstable();
+    let mean = samples.iter().sum::<u128>() as f64 / samples.len() as f64 / 1000.;
+    eprintln!(
+        "{label} sections=900 bytes={bytes} warmup=100 samples=1000 mean_us={mean:.2} p50_us={:.2} p95_us={:.2} max_us={:.2}",
+        samples[500] as f64 / 1000.,
+        samples[950] as f64 / 1000.,
+        samples[999] as f64 / 1000.
+    );
+}
+
+/// Real input mutation and uncached conversion paths, excluding rendering, files and sessions.
 #[gpui::test]
 fn typing_cost_on_900_sections(cx: &mut TestAppContext) {
+    use std::hint::black_box;
+
     let note: String = (0..900).map(|i| format!("## Section {i}\n\nA note about emoji 😀, combining e\u{301}, 中文 and שלום. {}\n\n- First item\n- Second item\n\n", "Body text for a large note. ".repeat(20))).collect();
     let bytes = note.len();
     let h = Harness::new(cx, true, "");
-    let mut samples = Vec::new();
+    let mut typing = Vec::new();
+    let mut to_units = Vec::new();
+    let mut to_bytes = Vec::new();
+    let mut ime_queries = Vec::new();
     h.update(cx, |e, w, cx| {
-        e.set_text(note, cx);
+        e.set_text(note.clone(), cx);
         e.selected_range = e.text().len()..e.text().len();
         for i in 0..1100 {
             let start = Instant::now();
             e.replace_text_in_range(None, "a", w, cx);
             let elapsed = start.elapsed();
             if i >= 100 {
-                samples.push(elapsed.as_nanos());
+                typing.push(elapsed.as_nanos());
             }
         }
         assert_eq!(e.text().len(), bytes + 1100);
-        // The headless App draws at update exit. Unload after timing so that
-        // the unbounded-height root does not render the entire 900-section note;
-        // this measures input mutation, not whole-document layout/paint.
+
+        // Restore the exact 600,190-byte fixture. End-of-document conversions
+        // scan the full String every time, with no anchor or retained index.
+        e.set_text(note, cx);
+        let units = e.text().encode_utf16().count();
+        for i in 0..1100 {
+            let start = Instant::now();
+            black_box(e.offset_to_utf16(black_box(bytes)));
+            let elapsed = start.elapsed();
+            if i >= 100 {
+                to_units.push(elapsed.as_nanos());
+            }
+        }
+        for i in 0..1100 {
+            let start = Instant::now();
+            black_box(e.offset_from_utf16(black_box(units)));
+            let elapsed = start.elapsed();
+            if i >= 100 {
+                to_bytes.push(elapsed.as_nanos());
+            }
+        }
+        assert_eq!(e.offset_to_utf16(bytes), units);
+        assert_eq!(e.offset_from_utf16(units), bytes);
+
+        // Native IME's selection, marked-range and text queries: eight
+        // conversions near the tail, plus returning the requested emoji text.
+        let start = e.text().rfind('😀').unwrap();
+        let marked = start..start + '😀'.len_utf8();
+        let marked_utf16 = e.range_to_utf16(&marked);
+        e.selected_range = marked.end..marked.end;
+        e.marked_range = Some(marked.clone());
+        for i in 0..1100 {
+            let started = Instant::now();
+            black_box(e.selected_text_range(false, w, cx));
+            black_box(e.marked_text_range(w, cx));
+            black_box(e.text_for_range(black_box(marked_utf16.clone()), &mut None, w, cx));
+            let elapsed = started.elapsed();
+            if i >= 100 {
+                ime_queries.push(elapsed.as_nanos());
+            }
+        }
+        assert_eq!(
+            e.selected_text_range(false, w, cx).unwrap().range,
+            marked_utf16.end..marked_utf16.end
+        );
+        assert_eq!(e.marked_text_range(w, cx), Some(marked_utf16.clone()));
+        assert_eq!(
+            e.text_for_range(marked_utf16, &mut None, w, cx).as_deref(),
+            Some("😀")
+        );
+        // Do not render the unbounded-height 900-section root at update exit.
         e.set_text("", cx);
     });
-    samples.sort_unstable();
-    let mean = samples.iter().sum::<u128>() as f64 / samples.len() as f64 / 1000.;
-    eprintln!(
-        "TYPING_COST sections=900 bytes={bytes} warmup=100 samples=1000 mean_us={mean:.2} p50_us={:.2} p95_us={:.2} max_us={:.2}",
-        samples[500] as f64 / 1000.,
-        samples[950] as f64 / 1000.,
-        samples[999] as f64 / 1000.
-    );
+    report_cost("TYPING_COST", bytes, &mut typing);
+    report_cost("BYTE_TO_UTF16_COST", bytes, &mut to_units);
+    report_cost("UTF16_TO_BYTE_COST", bytes, &mut to_bytes);
+    report_cost("IME_QUERY_BATCH_COST", bytes, &mut ime_queries);
 }
 
 #[gpui::test]

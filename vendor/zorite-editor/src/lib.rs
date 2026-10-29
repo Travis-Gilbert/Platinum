@@ -5,7 +5,7 @@
 //! nothing, so any markdown behavior added here must be checked there and
 //! vice versa. See AGENTS.md "The three views".)
 //!
-//! Host-agnostic — depends only on `gpui` (+ `unicode-segmentation`); no
+//! Host-agnostic — uses `gpui`, `unicode-segmentation` and `str_indices`; no
 //! `gpui-component`. Built directly on gpui's text primitives: an
 //! [`EntityInputHandler`] for keyboard + IME input, `shape_line` for per-line
 //! text shaping, and a custom [`Element`] that lays out + paints the lines,
@@ -1012,15 +1012,9 @@ pub struct EditorState {
     /// but different heights means an async (non-edit) height change, the
     /// scroll-anchoring trigger.
     last_paint_gen: u64,
-    /// Bumped on every content mutation — cheap staleness key for caches
-    /// (the UTF-16 conversion anchor below; a shape cache later).
+    /// Bumped on every content mutation — staleness key for scan/shape caches
+    /// and authority responses. UTF-16 conversions retain no state.
     content_gen: u64,
-    /// Resume point for UTF-8↔UTF-16 conversion: `(generation, utf8, utf16)`
-    /// of the last converted offset. IME composition fires conversions many
-    /// times per keystroke, clustered near the caret — resuming from the
-    /// anchor makes them O(distance) instead of O(document) (CJK latency
-    /// grew with note size; found auditing against Cditor's per-block IME).
-    utf16_anchor: std::cell::Cell<(u64, usize, usize)>,
     /// A `$$…$$` block being edited in-line: its byte range + the host-supplied view (the
     /// structural editor) painted in a reserved gap at the block's spot. `None` = none.
     editing_block: Option<EditingBlock>,
@@ -1172,7 +1166,6 @@ impl EditorState {
             table_thumb_drag: None,
             grip_inset: px(0.),
             content_gen: 0,
-            utf16_anchor: std::cell::Cell::new((0, 0, 0)),
             editing_block: None,
             inline_math_rects: Vec::new(),
             editing_inline: None,
@@ -5072,21 +5065,11 @@ impl EditorState {
     // --- UTF-16 + grapheme boundaries (IME / cursor movement) ----------------
 
     fn offset_from_utf16(&self, offset: usize) -> usize {
-        frame_notes::Offsets::utf16_to_byte_cached(
-            &self.content,
-            self.content_gen,
-            offset,
-            &self.utf16_anchor,
-        )
+        utf16_to_byte(&self.content, offset)
     }
 
     fn offset_to_utf16(&self, offset: usize) -> usize {
-        frame_notes::Offsets::byte_to_utf16_cached(
-            &self.content,
-            self.content_gen,
-            offset,
-            &self.utf16_anchor,
-        )
+        str_indices::utf16::from_byte_idx(&self.content, offset)
     }
 
     fn range_to_utf16(&self, range: &Range<usize>) -> Range<usize> {
@@ -7060,7 +7043,7 @@ struct ShapeMemo {
 /// `utf16` code units into `text`, as a byte offset — clamped to `text.len()`,
 /// and never inside a character.
 fn utf16_to_byte(text: &str, utf16: usize) -> usize {
-    frame_notes::Offsets::utf16_to_byte_cached(text, 0, utf16, &std::cell::Cell::new((0, 0, 0)))
+    str_indices::utf16::to_byte_idx(text, utf16)
 }
 
 /// Whether a just-typed input completes a word: a single boundary character

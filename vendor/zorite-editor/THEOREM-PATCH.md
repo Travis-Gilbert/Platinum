@@ -54,15 +54,20 @@ source changes; keep this file, API.md and the replay tests with the fork.
   delete table, duplicate row, marker rewrite, column rewrite) finish with
   the same emission. Column rewrite returns the edit to the caller so its
   final cell selection is reported. Table resize uses marker rewrite.
-- `crates/notes/src/offsets.rs`: range adapters reuse its Rope-based scalar
-  conversions; the editor's UTF-16 cursor cache moves here, preserving nearby
-  query scans, with clamping/round-down at partial scalars/surrogates.
-- `Cargo.toml`/root lock: add the existing `frame-notes` package dependency
-  rather than duplicating offset conversion in the editor, and existing
-  `tempfile` as a dev-dependency for a real Vault consumer test. No new package
-  or package version is introduced. This deliberately makes the carried fork
-  depend on Platinum's core; an upstream standalone extraction should give the
-  shared offsets their own small crate rather than copy them again.
+- `crates/notes/src/offsets.rs`: the four documented range adapters live in
+  its existing impl and reuse the host's Rope-based scalar/UTF-16 conversions.
+  No editor scanner or conversion cache lives in the notes core.
+- `src/lib.rs`: use `str_indices::utf16::from_byte_idx` / `to_byte_idx` for
+  all byte/UTF-16 conversion. Remove the former generation anchor and resume
+  scanner. Clamping and rounding down partial scalars/surrogates are supplied
+  by the library. Keep the buffer generation for authority and layout staleness.
+- `Cargo.toml`/root lock: pin normal dependency `str_indices = "=0.4.4"`,
+  already locked for ropey, MIT OR Apache-2.0, with no dependencies of its own.
+  `frame-notes` is a **dev-dependency only** for offset fixtures and real Vault
+  integration tests, alongside `tempfile`; the leaf UI crate has no normal
+  dependency on Platinum's notes core, RedCore, VFS or Loro. The lockfile adds
+  the editor's edge to the existing str_indices package; no new crate/version
+  enters the graph. Both editor and host use the library already used by ropey.
 - `src/authority_tests.rs`: replay actual mutation methods through GPUI event
   delivery; Unicode local/remote fixtures, atomic failure/history invariants,
   real Vault edit/undo/redo/save consumer, and large-note typing measurement.
@@ -81,7 +86,7 @@ whole-String rebuild per keystroke is deliberately unchanged.
 
 Verification and the measured typing cost are recorded below after execution.
 
-### Verification receipts
+### Initial seam verification receipts (before the layering revision)
 
 All commands ran from the dedicated `feat/notes-editor-seam` worktree on the
 base revision above plus this patch, Rust 1.97.1, macOS 27.0.1 (26A434), Apple
@@ -135,7 +140,7 @@ input loop and was stuck painting the full auto-height root. The measurement
 harness now unloads its text after timing and before GPUI's automatic draw. The
 passing results above are from a subsequent complete run, not that stopped run.
 
-### Typing cost (storage unchanged)
+### Initial typing cost (before the layering revision; storage unchanged)
 
 `authority_tests::typing_cost_on_900_sections`, in the final command above:
 900 generated sections, **600,190 UTF-8 bytes** initially. Each section contains
@@ -163,3 +168,93 @@ not accepted rendering/performance evidence. A mounted Platinum notes UI and
 interactive demo were not run; the consumer evidence here is headless GPUI plus
 the real filesystem-backed Vault. The separate notes UI lane must attach this
 seam to its production host subscription.
+
+## Layering revision after 297352a (2026-10-29)
+
+The initial seam made the vendored UI crate depend normally on the notes core
+just for the editor's former UTF-16 resume scanner. This revision removes that
+layering dependency and the scanner. `frame-notes` remains a **dev-dependency**
+for the real Vault consumer and host offset fixtures. Production conversions
+use exactly pinned `str_indices` 0.4.4's `utf16::from_byte_idx` / `to_byte_idx`,
+which ropey 1.6.1 already uses. The MIT OR Apache-2.0 crate has no dependencies
+of its own; its library already owns chunked UTF-8/UTF-16 indexing, partial
+character rounding and clamping. No new package/version enters Cargo.lock.
+
+`utf16_anchor` and all generation-based conversion caching are removed. The
+three scanner helpers are removed from `crates/notes/src/offsets.rs`; its four
+range helpers are documented in the existing `impl Offsets`. Generation still
+protects authority responses and editor layout caches. No persistent offset
+index, queue, alternate buffer or new scanner is introduced. Conversions now
+scan the queried String prefix without allocation; their cost is measured
+below. Cache-specific fixture tests were adapted to test the surviving Rope
+API's boundary rounding and independent documents; all other fixtures remain.
+An additional editor test compares the actual input conversions to host Offsets
+at every byte/unit, including partial scalars/surrogates and `usize::MAX`, for
+ASCII, emoji, ZWJ sequences, combining marks, CJK and right-to-left text.
+
+### Revision verification
+
+Worktree: `feat/notes-editor-seam` at `297352a` plus this revision. Environment
+reconfirmed: Rust 1.97.1, macOS 27.0.1 (26A434), Apple M1 Max, 32 GiB RAM.
+`df -h "/Volumes/SSD Samsung"` ran before both builds (17 and 16 GiB free).
+Both builds used the shared lock/media script and its selected target directory:
+
+```sh
+"/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" sh -c 'find vendor/zorite-editor -type f -exec touch {} + && cargo test --locked -p zorite-editor -- --nocapture'
+"/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" cargo test --locked -p frame-notes offsets
+```
+
+Offsets: **10 passed**, zero failed/ignored; 88 library tests and all integration
+targets were filtered out. Compile: 26.70s; offset tests: 0.00s.
+
+Editor: **76 passed**, zero failed/ignored, including all original seam and
+real-Vault tests plus the new conversion boundary test. Compile: 1m 07s;
+tests: 15.78s. Doc tests selected zero tests. Existing dependency dead-code
+warnings remain; the editor emitted no warnings.
+
+```sh
+cargo tree --locked -p zorite-editor --edges normal --depth 1
+cargo tree --locked -p zorite-editor --edges normal --prefix none
+rustfmt --edition 2024 --check vendor/zorite-editor/src/lib.rs vendor/zorite-editor/src/authority_tests.rs crates/notes/src/offsets.rs
+git diff --check
+```
+
+Both normal-dependency tree views confirm that frame-notes, Theorem, RedCore,
+VFS and Loro are absent. The direct dependencies are gpui-pre, gpui-bidi,
+zorite-markdown, unicode-segmentation and str_indices. The full tree was also
+checked programmatically for those excluded package prefixes. Touched-file
+formatting and diff checks passed. The initial workspace-wide formatting
+limitation above is unchanged; shared dependency sources were not edited.
+
+### Revised typing and IME conversion measurements
+
+`authority_tests::typing_cost_on_900_sections` retains the same **600,190-byte,
+900-section** multilingual fixture, 100 warm-up and 1,000 measured iterations
+per workload. Typing still appends `a` through the real input mutation method,
+with hosted history and queued GPUI edit delivery, then asserts text length.
+Conversions restore the original fixture before timing. Each direction measures
+one actual editor conversion at the document end, traversing the full prefix;
+`black_box` guards offsets and results. The IME workload queries the caret
+selection, marked range and requested text through `EntityInputHandler`, with
+the final section's emoji as the composition span: eight conversions per batch
+near the tail, plus returning the emoji String. Assertions check returned units,
+marked range and text. The text is unloaded after timing, before automatic
+root painting, exactly as in the corrected initial benchmark.
+
+| Workload | Mean (us) | Median (us) | p95 (us) | Maximum (us) |
+| --- | ---: | ---: | ---: | ---: |
+| Input mutation / keystroke | 27.56 | 27.12 | 54.08 | 176.50 |
+| Byte to UTF-16, full prefix | 1447.48 | 1425.46 | 1577.17 | 2775.71 |
+| UTF-16 to byte, full prefix | 1156.28 | 1127.83 | 1287.54 | 2843.79 |
+| IME query batch, eight conversions | 11589.62 | 10988.29 | 13915.83 | 116861.08 |
+
+These are warm in-process measurements in the same Cargo test profile:
+unoptimized editor with debuginfo, unchanged opt-level 2/debug 0 dependency
+overrides, on a shared machine. Timers exclude layout/paint, session persistence
+and filesystem work. The 11.59 ms mean / 13.92 ms p95 IME batch is a material
+measured cost, not evidence of native/release input latency. The maximum outlier
+is retained in the table. No conversion cache is retained and no speedup or
+latency acceptance is claimed; a native input budget and native/release profile
+would be needed to judge whether an IME-specific cache is warranted. The String
+storage and seam/history contracts are unchanged. Mounted UI/demo rendering
+remains unverified.
