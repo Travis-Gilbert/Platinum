@@ -13,6 +13,8 @@ keywords = ["gpui", "editor", "markdown", "wysiwyg", "text-editor"]
 categories = ["gui", "text-editors"]
 
 [dependencies]
+# THEOREM PATCH: one offset boundary for session scalars and macOS UTF-16.
+frame-notes = { path = "../../crates/notes" }
 # THEOREM PATCH: match Frame's patched GPUI snapshot.
 gpui = { package = "gpui-pre", version = "=0.3.9" }
 
