@@ -2,6 +2,12 @@
 //! SVGs are masks, so their lighter fill (`fill-opacity`) gives each one a
 //! duotone in the current theme.
 //!
+//! The Ask glyphs are Streamline's "design file AI". Home and the appearance
+//! glyphs are redrawn from the Streamline Ultimate Duotone set, as are the
+//! page, share and downloads glyphs (`sd-card-download` from its CC BY 4.0
+//! free subset). The places' glyphs are redrawn from Streamline Ultimate
+//! Light, on its 48-point grid; All apps is drawn to match them. See the
+//! README's credits.
 //! The Ask glyphs are Streamline's "design file AI"; pin, unpin and rename
 //! are Lucide's, given the same duotone; the rest are redrawn from the
 //! Streamline Ultimate Duotone set (`sd-card-download` from its CC BY 4.0
@@ -24,6 +30,13 @@ const DOWNLOADS: &[u8] = include_bytes!("../assets/icons/downloads.svg");
 const LIGHT: &[u8] = include_bytes!("../assets/icons/theme-light.svg");
 const DARK: &[u8] = include_bytes!("../assets/icons/theme-dark.svg");
 const SYSTEM: &[u8] = include_bytes!("../assets/icons/theme-system.svg");
+const HOME: &[u8] = include_bytes!("../assets/icons/home.svg");
+const MAIL: &[u8] = include_bytes!("../assets/icons/mail.svg");
+const MEDIA: &[u8] = include_bytes!("../assets/icons/media.svg");
+const NOTES: &[u8] = include_bytes!("../assets/icons/notes.svg");
+const TERMINAL: &[u8] = include_bytes!("../assets/icons/terminal.svg");
+const AGENT: &[u8] = include_bytes!("../assets/icons/agent.svg");
+const APPS: &[u8] = include_bytes!("../assets/icons/apps.svg");
 const PIN: &[u8] = include_bytes!("../assets/icons/pin.svg");
 const UNPIN: &[u8] = include_bytes!("../assets/icons/pin-off.svg");
 const RENAME: &[u8] = include_bytes!("../assets/icons/rename.svg");
@@ -83,6 +96,35 @@ pub fn dark() -> Icon {
 /// Light or dark, as the system is.
 pub fn system() -> Icon {
     Icon::default().data(SYSTEM)
+}
+
+pub fn home() -> Icon {
+    Icon::default().data(HOME)
+}
+
+pub fn mail() -> Icon {
+    Icon::default().data(MAIL)
+}
+
+/// The library: saved pages, media and files.
+pub fn media() -> Icon {
+    Icon::default().data(MEDIA)
+}
+
+pub fn notes() -> Icon {
+    Icon::default().data(NOTES)
+}
+
+pub fn terminal() -> Icon {
+    Icon::default().data(TERMINAL)
+}
+
+pub fn agent() -> Icon {
+    Icon::default().data(AGENT)
+}
+
+pub fn apps() -> Icon {
+    Icon::default().data(APPS)
 }
 
 pub fn pin() -> Icon {

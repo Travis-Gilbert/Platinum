@@ -1,0 +1,36 @@
+{
+  "deps": {
+    "checked": true,
+    "fork_toolchain": "1.97.1",
+    "gstreamer_patch_applied": true,
+    "heads": {
+      "gstreamer-mse": "1b2a95a1b72787cda146b46df9605b168e5b683b",
+      "servo-consolidated": "efdf7370da024f467f7526798fe5c6e50e784b52",
+      "theorem-search": "8c5d22bd6fea76dde197d0b9e73149d037d374d3"
+    },
+    "mse_runtime_present": true
+  },
+  "gstreamer": {
+    "patch": "gstreamer-mse.patch",
+    "rev": "1b2a95a1b72787cda146b46df9605b168e5b683b",
+    "url": "https://github.com/GStreamer/gstreamer.git"
+  },
+  "patches": {
+    "gstreamer-mse.patch": "403442383bc2cf247f399663832e771000323cfb6192eacaf925036ddb0c8d08",
+    "servo-mse.patch": "956ffff2313913a3ce18cc99e6b4840ee23aeb8a7bc7b3c86d81f76bb73cecb8"
+  },
+  "rust_toolchain": "1.97.1",
+  "schema": "frame-pins/1.0",
+  "servo": {
+    "archival_base": "ebc89e684b721f0a8e2407aad20b121a61187779",
+    "branch": "main",
+    "dir": "servo-consolidated",
+    "rev": "efdf7370da024f467f7526798fe5c6e50e784b52",
+    "url": "https://github.com/Travis-Gilbert/servo.git"
+  },
+  "theorem": {
+    "branch": "claude/browser-search-concurrency",
+    "rev": "8c5d22bd6fea76dde197d0b9e73149d037d374d3",
+    "url": "https://github.com/Travis-Gilbert/Theorem.git"
+  }
+}

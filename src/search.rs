@@ -42,6 +42,7 @@ use std::{
 };
 
 use anyhow::{Context as _, anyhow};
+use chrono::{DateTime, Local};
 use gpui_kit::{App, AppContext as _, Global, Task};
 use rustyred_web::{
     COHERE_RERANK_4_PRO, NEMOTRON_RERANK_VL, OpenRouterReranker, Reranker, SearchOpts,
@@ -55,6 +56,8 @@ use theorem_browser_substrate::{
     durable_browser_session, fetch_campaign_pages, memory_browser_session,
 };
 use url::Url;
+
+use crate::markup::{self, Marked};
 
 /// Identity of the local browser profile inside the RedCore store.
 const SESSION_ID: &str = "frame";
@@ -120,7 +123,9 @@ pub struct SerpHit {
     pub url: Url,
     /// Host without a leading `www.`.
     pub host: String,
-    pub snippet: String,
+    /// The provider's excerpt as text, with the words it emphasized (the
+    /// ones that matched). Markup never reaches the page.
+    pub snippet: Marked,
     pub providers: Vec<String>,
     /// `warm`, `fresh` or `federated`, as reported by RustyWeb.
     pub lane: String,
@@ -174,6 +179,8 @@ pub struct SerpResult {
     pub answer_note: Option<String>,
     /// Quiet context for the page footer, such as weak general web coverage.
     pub notes: Vec<String>,
+    /// When the search started: the retrieval time of every live result.
+    pub searched_at: DateTime<Local>,
     pub elapsed_ms: u64,
 }
 
@@ -305,7 +312,6 @@ fn frame_profile() -> RankProfile {
     profile.graph.allow_dense_seeds = true;
     profile
 }
-
 type Rerankers = Vec<Arc<dyn Reranker>>;
 
 /// OpenRouter rerankers: Voyage Rerank 3 Lite first and Cohere Rerank 4 Pro
@@ -481,7 +487,6 @@ fn run_campaign(
         .map_err(|error| anyhow!("{error}"))?;
     Ok(receipt.map_or(0, |receipt| receipt.page_count))
 }
-
 /// Run one search off the main thread.
 ///
 /// `ask` is the explicit AI path. A plain search never shows an answer.
@@ -544,6 +549,7 @@ impl SearchService {
 
     fn search(&self, query: &str, ask: bool) -> anyhow::Result<SerpResult> {
         let started = Instant::now();
+        let searched_at = Local::now();
         let used: Vec<String> = self
             .providers
             .iter()
@@ -601,7 +607,7 @@ impl SearchService {
             receipt.lane_candidate_counts,
         );
 
-        let mut result = map_session(&session, ask, used);
+        let mut result = map_session(&session, ask, used, searched_at);
         result
             .notes
             .extend(self.store_note.iter().map(|n| n.to_string()));
@@ -624,7 +630,6 @@ static SEARCH_RUNTIME: LazyLock<std::io::Result<tokio::runtime::Runtime>> = Lazy
         .enable_all()
         .build()
 });
-
 /// The providers every search queries.
 ///
 /// An explicit `RUSTYWEB_SEARCH_PROVIDERS` (or `RUSTY_RED_SEARCH_PROVIDERS`)
@@ -670,7 +675,12 @@ fn select_providers() -> Vec<Arc<dyn SearchProvider>> {
 }
 
 /// Map one finished RustyWeb session to Platinum-owned data.
-fn map_session(session: &SearchSession, ask: bool, providers: Vec<String>) -> SerpResult {
+fn map_session(
+    session: &SearchSession,
+    ask: bool,
+    providers: Vec<String>,
+    searched_at: DateTime<Local>,
+) -> SerpResult {
     let receipt = &session.response.receipt;
     let hits = map_hits(&session.response.hits);
 
@@ -716,6 +726,7 @@ fn map_session(session: &SearchSession, ask: bool, providers: Vec<String>) -> Se
         answer,
         answer_note,
         notes,
+        searched_at,
         elapsed_ms: 0,
     }
 }
@@ -740,12 +751,13 @@ fn map_answer(session: &SearchSession) -> (Option<SerpAnswer>, Option<String>) {
                 })
                 .filter_map(|source| {
                     let url = openable_url(&source.url)?;
+                    let title = markup::parse(&source.title).text;
                     Some(SerpSource {
                         host: display_host(&url),
-                        title: if source.title.trim().is_empty() {
+                        title: if title.is_empty() {
                             display_host(&url)
                         } else {
-                            source.title.trim().to_string()
+                            title
                         },
                         url,
                     })
@@ -811,16 +823,17 @@ fn map_hits(hits: &[EvidenceHit]) -> Vec<SerpHit> {
                 return None;
             }
             let host = display_host(&url);
-            let title = hit.title.trim();
+            // Providers mark titles up too, and some send the URL as the title.
+            let title = markup::parse(&hit.title).text;
             Some(SerpHit {
-                title: if title.is_empty() {
+                title: if title.is_empty() || title == url.as_str() {
                     host.clone()
                 } else {
-                    title.to_string()
+                    title
                 },
                 host,
                 url,
-                snippet: collapse_whitespace(&hit.snippet),
+                snippet: markup::parse(&hit.snippet),
                 providers: hit.providers.clone(),
                 lane: hit.lane.clone(),
                 published_at: hit
@@ -836,18 +849,31 @@ fn map_hits(hits: &[EvidenceHit]) -> Vec<SerpHit> {
 }
 
 /// `warm` (the local index) and `my_web` are local; everything else is fetched.
-fn is_local_lane(lane: &str) -> bool {
+pub fn is_local_lane(lane: &str) -> bool {
     lane.starts_with("warm") || lane == "my_web"
 }
 
-/// Short label for a lane tag.
+/// Short label for a lane: Local, Web, or what RustyWeb called it.
 pub fn lane_label(lane: &str) -> String {
     if is_local_lane(lane) {
         return "Local".to_string();
     }
     match lane {
-        "fresh" => "Fresh".to_string(),
+        // Fetched from the providers during this search.
+        "fresh" => "Web".to_string(),
         "federated" => "Federated".to_string(),
+        other => capitalize(&humanize(other)),
+    }
+}
+
+/// Where a lane's results come from, for a result's details.
+pub fn lane_origin(lane: &str) -> String {
+    if is_local_lane(lane) {
+        return "Frame's local index, from pages kept locally".to_string();
+    }
+    match lane {
+        "fresh" => "The web, through the search providers".to_string(),
+        "federated" => "An index RustyWeb searches with".to_string(),
         other => capitalize(&humanize(other)),
     }
 }
@@ -1021,8 +1047,24 @@ mod tests {
         let hit = &mapped[0];
         assert_eq!(hit.host, "example.com");
         assert_eq!(hit.title, "example.com");
-        assert_eq!(hit.snippet, "A snippet with gaps");
+        assert_eq!(hit.snippet.text, "A snippet with gaps");
         assert_eq!(hit.published_at.as_deref(), Some("2026-10-24"));
+    }
+
+    #[test]
+    fn markup_in_titles_and_snippets_becomes_text() {
+        let mapped = map_hits(&[hit(
+            "https://example.com/tides",
+            "fresh",
+            json!({
+                "title": "<b>Tides</b> &amp; the moon",
+                "snippet": "Why the <strong>moon</strong> pulls<script>x()</script>",
+            }),
+        )]);
+        let hit = &mapped[0];
+        assert_eq!(hit.title, "Tides & the moon");
+        assert_eq!(hit.snippet.text, "Why the moon pulls");
+        assert_eq!(&hit.snippet.text[hit.snippet.emphasis[0].clone()], "moon");
     }
 
     #[test]
@@ -1038,7 +1080,7 @@ mod tests {
     fn lane_labels() {
         assert_eq!(lane_label("warm"), "Local");
         assert_eq!(lane_label("warm_lexical"), "Local");
-        assert_eq!(lane_label("fresh"), "Fresh");
+        assert_eq!(lane_label("fresh"), "Web");
         assert_eq!(lane_label("federated"), "Federated");
         assert_eq!(lane_label("my_web"), "Local");
         assert_eq!(lane_label("something_new"), "Something new");
@@ -1194,7 +1236,10 @@ mod tests {
         first.join().unwrap().unwrap();
         second.join().unwrap().unwrap();
         capture.join().unwrap();
-        assert!(first_started && second_started, "provider waits must overlap");
+        assert!(
+            first_started && second_started,
+            "provider waits must overlap"
+        );
         assert!(
             capture_finished,
             "capture must finish before providers are released"

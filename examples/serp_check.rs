@@ -1,4 +1,5 @@
-//! Compile and live check for `src/search.rs` and `src/serp.rs`.
+//! Compile and live check for `src/search.rs` and `src/serp.rs` (with the
+//! `src/markup.rs`, `src/favicon.rs` and `src/icons.rs` it draws with).
 //!
 //! ```text
 //! cargo build --example serp_check
@@ -17,17 +18,21 @@
 //! the system temp directory so a check never touches real browsing data.
 
 extern crate gpui_kit as gpui;
-#[cfg(feature = "performance-check")]
-#[allow(dead_code)]
-#[path = "../src/performance.rs"]
-mod performance;
-
-
 #[allow(dead_code)]
 #[path = "../src/brand.rs"]
 mod brand;
 #[path = "../src/embedder.rs"]
 mod embedder;
+#[path = "../src/favicon.rs"]
+mod favicon;
+#[path = "../src/icons.rs"]
+mod icons;
+#[path = "../src/markup.rs"]
+mod markup;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
 #[path = "../src/search.rs"]
 mod search;
 #[path = "../src/serp.rs"]
@@ -145,8 +150,8 @@ fn print_result(result: &search::SerpResult) {
                 .map(|date| format!("  date: {date}"))
                 .unwrap_or_default()
         );
-        if !hit.snippet.is_empty() {
-            let snippet: String = hit.snippet.chars().take(140).collect();
+        if !hit.snippet.text.is_empty() {
+            let snippet: String = hit.snippet.text.chars().take(140).collect();
             println!("     {snippet}");
         }
     }

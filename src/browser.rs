@@ -8,7 +8,12 @@
 //!
 //! A tab holds at most one page and one results page. Results sit before the
 //! page's own history: Back from a page with nowhere to go shows the results
-//! again, and a result opens in a fresh page so that Back returns to them.
+//! again, and a result opens in a fresh page so that Back returns to them. A
+//! new tab shows Home, and Home's places open in the tab.
+//!
+//! With no tab open, the window shows the native workspace instead of the
+//! tabs (`browser/underlay.rs`): Home, results and the places, beneath the
+//! pages.
 //!
 //! The dock decides where tabs are and which one each group shows; the
 //! browser keeps `tabs` in the dock's order and decides which shown tab is
@@ -22,12 +27,16 @@
 //!
 //! SOURCING: GPUI Kit's base `DockArea` for the tab layout, drag and drop
 //! and splits; GPUI Kit's `TitleBar`, folder `TabBar`/`Tab`, `Toolbar`,
-//! `Button`, `Input`, `Kbd`, `Spinner`, `Popover` and `Progress`; the navigator is GPUI Kit's `Command` (`navigator.rs`).
+//! `Button`, `Input`, `Spinner`, `Popover` and `Progress`; the navigator is
+//! GPUI Kit's `Command` (`navigator.rs`); Home is `home.rs`.
 
 mod dock;
 #[cfg(feature = "performance-check")]
 pub mod performance;
 mod sidebar;
+mod underlay;
+#[cfg(feature = "snapshot")]
+pub mod workspace_check;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -39,7 +48,6 @@ use gpui_kit::base::dock::{DockArea, DockEvent, DragPanel, NodeId, PanelId, TabG
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
-use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::notification::Notification;
 use gpui_kit::component::popover::Popover;
 use gpui_kit::component::progress::{Progress, ProgressCircle};
@@ -49,8 +57,8 @@ use gpui_kit::component::tab::{Tab as TabItem, TabBar};
 use gpui_kit::component::toolbar::Toolbar;
 use gpui_kit::component::tree::TreeState;
 use gpui_kit::component::{
-    ActiveTheme as _, Disableable as _, Icon, IconName, Sizable as _, TitleBar, WindowExt as _,
-    h_flex, v_flex,
+    ActiveTheme as _, Disableable as _, Icon, IconName, Selectable as _, Sizable as _, TitleBar,
+    WindowExt as _, h_flex, v_flex,
 };
 use gpui_kit::{
     Anchor, AnyElement, App, AppContext as _, Bounds, ClickEvent, Context, Corners, Div, ElementId,
@@ -64,26 +72,31 @@ use url::Url;
 use self::dock::{DRAG_PREVIEW, FRAME, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
-    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit,
-    Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads,
-    ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
+    SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
+    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
 use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
 use crate::glass;
+use crate::home::{Home, HomeEvent};
 use crate::icons;
 use crate::inspector::Inspector;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
+use crate::places::{Place, PlaceView};
 use crate::profile_ui::{ActiveProfile, ProfileEvent, ProfilePanel, Section};
+use crate::recents::{self, Recents};
 use crate::serp::{Serp, SerpEvent, SerpMode};
 use crate::session::{Content, Layout, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
 use frame_profile::credentials::{self, Keychain};
+
+use self::underlay::Underlay;
 
 /// The height of a row of tabs, the same as the title bar's.
 const TAB_ROW: f32 = 36.;
@@ -115,18 +128,26 @@ struct Restored {
     sidebar_width: Option<f32>,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+/// What the address bar and Home's field say while they search, and while
+/// they ask.
+const SEARCH_PLACEHOLDER: &str = "Search or go somewhere";
+const ASK_PLACEHOLDER: &str = "Ask...";
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Showing {
+    /// Home.
     Start,
     Page,
     Serp,
+    /// One of the places beneath the pages, opened from Home.
+    Place(Place),
 }
 
 /// The page commands may use, or none when the tab is not showing a webpage.
 fn displayed_page_id(showing: Showing, page_id: Option<String>) -> Option<String> {
     match showing {
         Showing::Page => page_id,
-        Showing::Start | Showing::Serp => None,
+        Showing::Start | Showing::Serp | Showing::Place(_) => None,
     }
 }
 
@@ -150,7 +171,8 @@ struct Tab {
     /// nothing.
     asleep: Option<Content>,
     _page_events: Option<Subscription>,
-    _serp_events: Option<Subscription>,
+    /// Shared with the workspace's history while the results came from it.
+    _serp_events: Option<Rc<Subscription>>,
 }
 
 impl Tab {
@@ -189,6 +211,7 @@ impl Tab {
                 .serp
                 .as_ref()
                 .map_or("Search".into(), |serp| serp.read(cx).title()),
+            Showing::Place(place) => place.label().into(),
         }
     }
 
@@ -210,7 +233,7 @@ impl Tab {
             Some(Content::Start) | None => {}
         }
         match self.showing {
-            Showing::Start => SharedString::default(),
+            Showing::Start | Showing::Place(_) => SharedString::default(),
             Showing::Page => self
                 .url(cx)
                 .map_or(SharedString::default(), |url| url.to_string().into()),
@@ -258,7 +281,7 @@ impl Tab {
                 }
                 None => Content::Start,
             },
-            Showing::Start => Content::Start,
+            Showing::Start | Showing::Place(_) => Content::Start,
         }
     }
 
@@ -287,6 +310,11 @@ impl Tab {
         self.page.as_ref()?.read(cx).tint()
     }
 
+    /// Whether the tab shows one of Frame's own surfaces, Home or a place.
+    fn native(&self) -> bool {
+        matches!(self.showing, Showing::Start | Showing::Place(_))
+    }
+
     /// The site's icon, while the tab shows the site.
     fn favicon(&self, cx: &App) -> Option<Arc<RenderImage>> {
         if self.showing != Showing::Page {
@@ -305,6 +333,7 @@ impl Tab {
             Showing::Start => icons::page(),
             Showing::Page => Icon::new(IconName::Globe),
             Showing::Serp => Icon::new(IconName::Search),
+            Showing::Place(place) => place.icon(),
         }
     }
 }
@@ -357,6 +386,8 @@ pub struct Browser {
     /// Where each tab's Share button was last drawn, for the share sheet.
     share_anchors: Rc<RefCell<HashMap<u64, Bounds<Pixels>>>>,
     window_title: SharedString,
+    /// The workspace shown while no tab is open.
+    underlay: Underlay,
     /// The sidebar is open, with the tabs as a tree under the pinned sites;
     /// otherwise the tabs run in rows along the top of each group.
     sidebar: bool,
@@ -387,12 +418,13 @@ pub struct Browser {
     _dock_events: Subscription,
     _downloads_events: Subscription,
     _appearance_events: Subscription,
+    _recents_events: Subscription,
     _quit: Subscription,
 }
 
 impl Browser {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let omnibox = cx.new(|cx| InputState::new(window, cx).placeholder("Search..."));
+        let omnibox = cx.new(|cx| InputState::new(window, cx).placeholder(SEARCH_PLACEHOLDER));
         let omnibox_events = cx.subscribe_in(&omnibox, window, Self::omnibox_event);
         let this = cx.weak_entity();
         let dock = cx.new(|cx| {
@@ -402,6 +434,9 @@ impl Browser {
         let store = Store::global(cx);
         let pins = store.as_ref().map(Store::load_pins).unwrap_or_default();
         let session = store.as_ref().and_then(Store::load_session);
+        let workspace = session
+            .as_ref()
+            .is_none_or(|session| session.tabs.is_empty());
         let restored = Self::restore(session.unwrap_or_default(), &pins, &dock, window, cx);
         let dock_events = cx.subscribe_in(&dock, window, Self::dock_event);
         let downloads = cx.new(|_| Downloads::new(Downloads::default_folder()));
@@ -415,6 +450,10 @@ impl Browser {
             browser.save(cx);
             async {}
         });
+        // Home lists them.
+        let recents_events = cx.observe_global::<Recents>(|_, cx| cx.notify());
+        let mut underlay = Underlay::new(window, cx);
+        underlay.shown = workspace;
         cx.on_release(|browser, cx| browser.save(cx)).detach();
         let mut icons = HashMap::new();
         if let Some(store) = &store {
@@ -463,6 +502,7 @@ impl Browser {
             inspector,
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
+            underlay,
             sidebar: restored.sidebar,
             sidebar_width: sidebar::fit_width(restored.sidebar_width.unwrap_or(sidebar::WIDTH)),
             tree: restored.tree,
@@ -482,6 +522,7 @@ impl Browser {
             _dock_events: dock_events,
             _downloads_events: downloads_events,
             _appearance_events: appearance_events,
+            _recents_events: recents_events,
             _quit: quit,
         };
         browser.sync_from_dock(cx);
@@ -767,6 +808,13 @@ impl Browser {
         self.tabs.iter().position(|tab| tab.panel_id() == panel)
     }
 
+    /// Whether the tab with `panel` shows one of Frame's own surfaces, Home
+    /// or a place, rather than a page.
+    fn shows_native(&self, panel: PanelId) -> bool {
+        self.panel_index(panel)
+            .is_some_and(|index| self.tabs[index].native())
+    }
+
     /// The tab the pinned site `pin` owns, if it is open.
     fn pinned_tab(&self, pin: u64) -> Option<usize> {
         self.tabs.iter().position(|tab| tab.pin == Some(pin))
@@ -868,8 +916,13 @@ impl Browser {
         self.tab_index(id).unwrap_or(self.tabs.len() - 1)
     }
 
+    /// From the workspace, the tab behind it; else a new one.
     fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.new_tab_beside(self.active, window, cx);
+        if self.underlay.shown {
+            self.reveal_tab(window, cx);
+        } else {
+            self.new_tab_beside(self.active, window, cx);
+        }
     }
 
     /// A new tab at the end of the group of the tab at `anchor`, ready for an
@@ -960,6 +1013,9 @@ impl Browser {
     }
 
     fn close_tab(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            return;
+        }
         if self.remove_tab(index, window, cx) {
             self.after_closing(window, cx);
         }
@@ -997,9 +1053,11 @@ impl Browser {
         }
         self.tree.remove(closing);
         if self.tabs.len() == 1 {
+            // The last tab: the workspace shows, over a fresh tab.
             let id = self.new_id();
             let panel = self.tabs[0].panel.clone();
             self.tabs[0] = Tab::start(id, panel);
+            self.reset_underlay(window, cx);
             self.tree.add_root(id);
         } else {
             let active_id = self.tabs[self.active].id;
@@ -1074,6 +1132,10 @@ impl Browser {
     }
 
     fn focus_content(&self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.focus_underlay(window, cx);
+            return;
+        }
         let tab = &self.tabs[self.active];
         match tab.showing {
             Showing::Page if let Some(page) = &tab.page => {
@@ -1082,6 +1144,8 @@ impl Browser {
             Showing::Serp if let Some(serp) = &tab.serp => {
                 window.focus(&serp.focus_handle(cx), cx);
             }
+            // The window keeps focus, so that Back reaches the browser.
+            Showing::Place(_) => window.focus(&self.focus_handle, cx),
             // With the chrome hidden the address bar is not drawn; the window
             // keeps focus so that shortcuts still reach the browser.
             _ if self.compact && !self.revealed => window.focus(&self.focus_handle, cx),
@@ -1107,6 +1171,17 @@ impl Browser {
             self.download(url, None, window, cx);
             return;
         }
+        // Workspace has no open tab; its backing tab becomes the destination.
+        let new_tab = if self.underlay.shown {
+            if let underlay::Route::Results(serp, _) = self.underlay.route.clone() {
+                self.underlay_opened(&serp, &url, new_tab.is_some(), window, cx);
+                return;
+            }
+            self.hide_underlay(cx);
+            None
+        } else {
+            new_tab
+        };
         let index = match new_tab {
             Some(origin) => self.insert_tab_after_active(origin, window, cx),
             None => self.active,
@@ -1156,10 +1231,20 @@ impl Browser {
         &mut self,
         query: String,
         mode: SerpMode,
-        new_tab: bool,
+        mut new_tab: bool,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.underlay.shown {
+            if new_tab {
+                self.reveal_tab(window, cx);
+                new_tab = false;
+            } else {
+                self.underlay_search(query, mode, window, cx);
+                return;
+            }
+        }
+        recents::record_search(&query, mode == SerpMode::Ask, cx);
         let index = if new_tab {
             self.insert_tab_after_active(Origin::Root, window, cx)
         } else {
@@ -1179,26 +1264,123 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let serp = cx.new(|cx| Serp::new(query, mode, window, cx));
-        let id = self.tabs[index].id;
-        let events = cx.subscribe_in(
-            &serp,
-            window,
-            move |browser, _, event: &SerpEvent, window, cx| {
-                let SerpEvent::Open { url, new_tab } = event;
-                let Some(index) = browser.tab_index(id) else {
-                    return;
-                };
-                browser.active = index;
-                let origin = new_tab.then_some(Origin::From(id));
-                browser.go(url.clone(), origin, true, window, cx);
-            },
-        );
+        let (serp, events) = self.new_serp(query, mode, window, cx);
         let tab = &mut self.tabs[index];
         tab.asleep = None;
         tab.serp = Some(serp);
         tab._serp_events = Some(events);
         tab.showing = Showing::Serp;
+    }
+
+    /// A results page, searching, and the subscription to the results it
+    /// opens. The subscription moves with the page, from the workspace to a
+    /// tab.
+    fn new_serp(
+        &mut self,
+        query: String,
+        mode: SerpMode,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> (Entity<Serp>, Rc<Subscription>) {
+        let serp = cx.new(|cx| Serp::new(query, mode, window, cx));
+        let events = cx.subscribe_in(&serp, window, Self::serp_event);
+        (serp, Rc::new(events))
+    }
+
+    /// A result was opened: in the tab whose results they are, or one after
+    /// it.
+    fn serp_event(
+        &mut self,
+        serp: &Entity<Serp>,
+        event: &SerpEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let SerpEvent::Open { url, new_tab } = event;
+        if self.underlay.shown {
+            self.underlay_opened(serp, url, *new_tab, window, cx);
+            return;
+        }
+        let Some(index) = self
+            .tabs
+            .iter()
+            .position(|tab| tab.serp.as_ref() == Some(serp))
+        else {
+            return;
+        };
+        self.active = index;
+        self.go(
+            url.clone(),
+            new_tab.then_some(Origin::From(self.tabs[index].id)),
+            true,
+            window,
+            cx,
+        );
+    }
+
+    /// A place, in the workspace, in this tab if it shows Home or a place,
+    /// or else in a new one.
+    fn open_place(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_go(underlay::Route::Place(place), window, cx);
+            return;
+        }
+        let index = match self.tabs[self.active].showing {
+            Showing::Start | Showing::Place(_) => self.active,
+            Showing::Page | Showing::Serp => self.insert_tab_after_active(Origin::Root, window, cx),
+        };
+        self.tabs[index].showing = Showing::Place(place);
+        self.activate(index, window, cx);
+    }
+
+    /// Home: the workspace's, or this tab's if it shows a place, or a new
+    /// tab's.
+    fn open_home(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_go(underlay::Route::Home, window, cx);
+            return;
+        }
+        match self.tabs[self.active].showing {
+            Showing::Start => self.focus_content(window, cx),
+            Showing::Place(_) => {
+                self.tabs[self.active].showing = Showing::Start;
+                self.after_switch(window, cx);
+            }
+            Showing::Page | Showing::Serp => self.new_tab(window, cx),
+        }
+    }
+
+    /// Something picked on a tab's Home.
+    fn home_event(
+        &mut self,
+        id: u64,
+        event: &HomeEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.activate_id(id, window, cx);
+        match event {
+            HomeEvent::Place(place) => self.open_place(*place, window, cx),
+            HomeEvent::Page { url, new_tab } => self.go(
+                url.clone(),
+                new_tab.then_some(Origin::From(id)),
+                true,
+                window,
+                cx,
+            ),
+            HomeEvent::Search {
+                query,
+                ask,
+                new_tab,
+            } => {
+                let mode = if *ask {
+                    SerpMode::Ask
+                } else {
+                    SerpMode::Search
+                };
+                self.search(query.clone(), mode, *new_tab, window, cx);
+            }
+        }
     }
 
     fn set_page(
@@ -1304,6 +1486,10 @@ impl Browser {
                 window.push_notification(Notification::info("Enter a password in a visible login form, then choose Save or Update Password"),cx);
             }
             PageEvent::Visited => {
+                if let Some(url) = page.read(cx).url() {
+                    let title = page.read(cx).title();
+                    recents::record_page(&url, &title, cx);
+                }
                 if let Some(store) = cx.try_global::<ActiveProfile>() {
                     if let Some(url) = page.read(cx).url() {
                         let _ = store.0.visit(url.as_str(), &page.read(cx).title());
@@ -1318,8 +1504,16 @@ impl Browser {
                 cx.notify();
             }
             PageEvent::Changed => {
-                if !page.read(cx).is_loading() {
+                let (loading, url, title) = {
+                    let page = page.read(cx);
+                    (page.is_loading(), page.url(), page.title())
+                };
+                if !loading {
                     self.tabs[index].requested = None;
+                    // Home lists it among the recent pages.
+                    if let Some(url) = url {
+                        recents::update_title(&url, &title, cx);
+                    }
                 }
                 self.remember_icon(index, cx);
                 self.sync_chrome(window, cx);
@@ -1344,7 +1538,7 @@ impl Browser {
                     self.activate_id(id, window, cx);
                 }
             }
-            PageEvent::RevealCanvas => {},
+            PageEvent::RevealCanvas => {}
             PageEvent::ContextMenu(menu) => {
                 let tab = &self.tabs[index];
                 if tab.showing == Showing::Page && self.displayed.contains(&tab.panel_id()) {
@@ -1441,6 +1635,10 @@ impl Browser {
     }
 
     fn back(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_back(window, cx);
+            return;
+        }
         let tab = &mut self.tabs[self.active];
         match tab.showing {
             Showing::Page => {
@@ -1452,11 +1650,20 @@ impl Browser {
                     self.after_switch(window, cx);
                 }
             }
+            // A place opened from the tab's Home.
+            Showing::Place(_) => {
+                tab.showing = Showing::Start;
+                self.after_switch(window, cx);
+            }
             Showing::Serp | Showing::Start => {}
         }
     }
 
     fn forward(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_forward(window, cx);
+            return;
+        }
         let tab = &mut self.tabs[self.active];
         match tab.showing {
             Showing::Page => {
@@ -1468,15 +1675,19 @@ impl Browser {
                 tab.showing = Showing::Page;
                 self.after_switch(window, cx);
             }
-            Showing::Serp | Showing::Start => {}
+            Showing::Serp | Showing::Start | Showing::Place(_) => {}
         }
     }
 
-    fn reload(&mut self, cx: &mut Context<Self>) {
+    fn reload(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.underlay_reload(window, cx);
+            return;
+        }
         let tab = &self.tabs[self.active];
         match (tab.showing, &tab.page, &tab.serp) {
             (Showing::Page, Some(page), _) => page.update(cx, |page, _| page.reload()),
-            (Showing::Serp, _, Some(serp)) => serp.update(cx, |serp, cx| serp.reload(cx)),
+            (Showing::Serp, _, Some(serp)) => serp.update(cx, |serp, cx| serp.reload(window, cx)),
             _ => {}
         }
     }
@@ -1562,6 +1773,10 @@ impl Browser {
     }
 
     fn focus_address_bar(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            self.focus_underlay_field(window, cx);
+            return;
+        }
         if self.compact {
             self.revealed = true;
         }
@@ -1586,10 +1801,15 @@ impl Browser {
     /// searching, until it is turned off.
     fn toggle_ask(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.ask = !self.ask;
-        let placeholder = if self.ask { "Ask..." } else { "Search..." };
+        let placeholder = if self.ask {
+            ASK_PLACEHOLDER
+        } else {
+            SEARCH_PLACEHOLDER
+        };
         self.omnibox.update(cx, |input, cx| {
             input.set_placeholder(placeholder, window, cx)
         });
+        self.underlay.set_placeholder(self.ask, window, cx);
         if self.ask {
             self.focus_address_bar(window, cx);
         }
@@ -1609,7 +1829,11 @@ impl Browser {
                     .update(cx, |input, cx| input.set_value(summary, window, cx));
             }
         }
-        let title = tab.title(cx);
+        let title = if self.underlay.shown {
+            self.underlay.title(cx)
+        } else {
+            tab.title(cx)
+        };
         if title != self.window_title {
             window.set_window_title(&title);
             self.window_title = title;
@@ -1688,14 +1912,27 @@ impl Browser {
                 .filter(|tab| !self.tree.contains(tab.id))
                 .map(|tab| tab.id),
         );
+        let workspace_search = if self.underlay.shown {
+            match &self.underlay.route {
+                underlay::Route::Results(serp, _) => Some(Content::Search {
+                    query: serp.read(cx).query().to_string(),
+                    ask: serp.read(cx).mode() == SerpMode::Ask,
+                }),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let empty_workspace = self.underlay.shown && workspace_search.is_none();
         let tabs: Vec<SavedTab> = order
             .into_iter()
+            .filter(|_| !empty_workspace)
             .filter_map(|id| {
                 let tab = &self.tabs[self.tab_index(id)?];
                 let node = self.tree.node(id);
                 Some(SavedTab {
                     id,
-                    content: tab.content(cx),
+                    content: workspace_search.clone().unwrap_or_else(|| tab.content(cx)),
                     pin: tab.pin,
                     parent: node.and_then(|node| node.parent),
                     opener: node.and_then(|node| node.opener),
@@ -1718,9 +1955,13 @@ impl Browser {
         let session = Session {
             sidebar: self.sidebar,
             sidebar_width: Some(f32::from(self.sidebar_width)),
-            active: self.tabs.get(self.active).map(|tab| tab.id),
+            active: (!empty_workspace).then(|| self.tabs[self.active].id),
             tabs,
-            dock: self.layout(cx),
+            dock: if empty_workspace {
+                Layout::default()
+            } else {
+                self.layout(cx)
+            },
         };
         let pins = self.pins.clone();
         let unchanged = self
@@ -1858,6 +2099,9 @@ impl Browser {
 
     /// The open tabs, as the navigator lists them.
     fn navigator_tabs(&self, cx: &App) -> Vec<TabEntry> {
+        if self.underlay.shown {
+            return Vec::new();
+        }
         self.tabs
             .iter()
             .enumerate()
@@ -1896,10 +2140,13 @@ impl Browser {
                 }
             }
             Pick::Command => {}
+            Pick::Go(url) if self.underlay.shown => self.underlay_open(url, window, cx),
             Pick::Go(url) => {
                 let fresh = self.tabs[self.active].showing != Showing::Page;
                 self.go(url, None, fresh, window, cx);
             }
+            Pick::Home => self.open_home(window, cx),
+            Pick::Place(place) => self.open_place(place, window, cx),
             Pick::Search(query) => self.search(query, SerpMode::Search, false, window, cx),
             Pick::Ask(query) => self.search(query, SerpMode::Ask, false, window, cx),
             Pick::Download(url) => {
@@ -2017,6 +2264,9 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.underlay.shown {
+            return;
+        }
         let order = self.visible_order();
         // ⌘9 is always the last tab.
         let at = if action.index >= 8 {
@@ -2030,6 +2280,9 @@ impl Browser {
     }
 
     fn cycle(&mut self, step: isize, window: &mut Window, cx: &mut Context<Self>) {
+        if self.underlay.shown {
+            return;
+        }
         let order = self.visible_order();
         let count = order.len() as isize;
         // A tab inside a folded branch counts as just after the branch's row.
@@ -2101,8 +2354,13 @@ impl Browser {
     }
 
     /// The color of a tab's toolbar, and of the tab while it is selected: the
-    /// color along the top of its page, as Dia does; else the card's.
+    /// color along the top of its page, as Dia does, else the card's. It is
+    /// the page's own color, so the page runs on into its toolbar; the glass
+    /// stays in the frame around them.
     fn chrome_fill(tab: &Tab, cx: &App) -> Hsla {
+        if tab.native() {
+            return glass::pane(cx);
+        }
         tab.tint(cx).unwrap_or(cx.theme().background)
     }
 
@@ -2340,7 +2598,7 @@ impl Browser {
     fn render_card(
         &mut self,
         panel: PanelId,
-        window: &mut Window,
+        _: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let Some(index) = self.panel_index(panel) else {
@@ -2349,8 +2607,10 @@ impl Browser {
         let tab = &self.tabs[index];
         let home = tab.showing == Showing::Start;
         let id = tab.id;
-        // A page's color runs on into the toolbar; anything else keeps a rule.
-        let tinted = tab.tint(cx).is_some();
+        // A page's color runs on into the toolbar, and Home and the places
+        // are one pane with theirs, the card's own; a plain page keeps a rule.
+        let native = tab.native();
+        let ruled = !native && tab.tint(cx).is_none();
         let fill = Self::chrome_fill(tab, cx);
         let (border, radius) = (cx.theme().border, cx.theme().radius_lg);
         v_flex()
@@ -2359,8 +2619,8 @@ impl Browser {
                 card.child(
                     self.toolbar(index, cx)
                         .rounded_t(radius)
-                        .bg(fill)
-                        .when(!tinted, |toolbar| toolbar.border_b_1().border_color(border)),
+                        .when(!native, |toolbar| toolbar.bg(fill))
+                        .when(ruled, |toolbar| toolbar.border_b_1().border_color(border)),
                 )
             })
             .child(
@@ -2369,7 +2629,7 @@ impl Browser {
                     .flex_1()
                     .min_h_0()
                     .overflow_hidden()
-                    .child(self.content(index, window, cx))
+                    .child(self.content(index, cx))
                     .children(self.status_bubble(index, cx)),
             )
             .when(
@@ -2384,8 +2644,9 @@ impl Browser {
             .into_any_element()
     }
 
-    /// Back, Forward and Reload, the address bar and the Ask button. Each acts
-    /// on its own tab, which a click makes the active one.
+    /// Back, Forward and Reload, the address bar with Ask inside it, and the
+    /// page's own buttons. Each acts on its own tab, which a click makes the
+    /// active one.
     fn toolbar(&self, index: usize, cx: &mut Context<Self>) -> Div {
         let tab = &self.tabs[index];
         let id = tab.id;
@@ -2398,9 +2659,10 @@ impl Browser {
                 )
             }
             (Showing::Serp, page) => (false, page.is_some()),
+            (Showing::Place(_), _) => (true, false),
             _ => (false, false),
         };
-        let can_reload = tab.showing != Showing::Start;
+        let can_reload = matches!(tab.showing, Showing::Page | Showing::Serp);
         let ink = Self::chrome_ink(tab, cx);
         h_flex()
             .flex_shrink_0()
@@ -2438,33 +2700,39 @@ impl Browser {
                             .tooltip_with_action("Reload", &Reload, None)
                             .on_click(cx.listener(move |browser, _, window, cx| {
                                 browser.activate_id(id, window, cx);
-                                browser.reload(cx);
+                                browser.reload(window, cx);
                             })),
                     )
-                    .content(self.address(index, ink, cx)),
+                    .content(self.address(index, cx)),
             )
-            .child(self.ask_button(index, ink, cx))
             .child(self.share_button(index, ink, cx))
             .children(self.downloads_button(id, ink, cx))
             .child(self.appearance_button(id, ink, cx))
     }
 
     /// The active tab's address bar. Another tab's card shows its summary in
-    /// the same place; a click there moves the address bar to it.
-    fn address(&self, index: usize, ink: Option<Hsla>, cx: &mut Context<Self>) -> AnyElement {
+    /// the same place; a click there moves the address bar to it. Either is
+    /// on a surface of its own in the theme's colors, whatever color the
+    /// toolbar takes from the page, with Ask at its end.
+    fn address(&self, index: usize, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
-        let (text, muted) = ink.map_or((theme.foreground, theme.muted_foreground), |ink| {
-            (ink, ink.opacity(0.6))
-        });
+        let (text, muted, border, radius) = (
+            theme.foreground,
+            theme.muted_foreground,
+            theme.input,
+            theme.radius,
+        );
+        let surface = glass::field(cx);
+        let id = self.tabs[index].id;
+        let ask = self
+            .ask_toggle(("ask", id), format!("ask-{id}"))
+            .xsmall()
+            .on_click(cx.listener(move |browser, _, window, cx| {
+                browser.activate_id(id, window, cx);
+                browser.toggle_ask(window, cx);
+            }));
+        let search = Icon::new(IconName::Search).small().text_color(muted);
         if index == self.active {
-            let prefix = if self.ask {
-                icons::ask().small()
-            } else {
-                Icon::new(IconName::Search).small()
-            };
-            // On a page's color the field is drawn here, in that color's ink:
-            // the theme's own field would be a dark box on a light page.
-            let editing = self.editing;
             let anchor = self.address_anchor.clone();
             return div()
                 .on_children_prepainted(move |bounds, _, _| {
@@ -2474,34 +2742,24 @@ impl Browser {
                 .flex_1()
                 .min_w_0()
                 .on_action(cx.listener(Self::escape_address_bar))
-                .when_some(ink, |field, ink| {
-                    field
-                        .text_color(ink)
-                        .rounded(theme.radius)
-                        .border_1()
-                        .border_color(if editing {
-                            ink.opacity(0.3)
-                        } else {
-                            transparent_black()
-                        })
-                        .when(editing, |field| field.bg(ink.opacity(0.06)))
-                })
                 .child(
                     Input::new(&self.omnibox)
                         .id("omnibox")
-                        .prefix(prefix.when_some(ink, |icon, ink| icon.text_color(ink)))
+                        .prefix(search)
+                        .suffix(ask)
                         .small()
-                        .appearance(editing && ink.is_none())
-                        .when_some(ink, |input, ink| input.foreground(ink)),
+                        .bg(surface),
                 )
                 .into_any_element();
         }
-        let tab = &self.tabs[index];
-        let id = tab.id;
-        let summary = tab.summary(cx);
-        let (text, color) = if summary.is_empty() {
+        let summary = self.tabs[index].summary(cx);
+        let (summary, color) = if summary.is_empty() {
             (
-                SharedString::from(if self.ask { "Ask..." } else { "Search..." }),
+                SharedString::from(if self.ask {
+                    ASK_PLACEHOLDER
+                } else {
+                    SEARCH_PLACEHOLDER
+                }),
                 muted,
             )
         } else {
@@ -2511,14 +2769,20 @@ impl Browser {
             .id(("address", id))
             .flex_1()
             .min_w_0()
-            .h_7()
-            .px_2()
-            .gap_2()
+            .h_6()
+            .pl_2()
+            .pr_1()
+            .gap_1()
+            .rounded(radius)
+            .border_1()
+            .border_color(border)
+            .bg(surface)
             .cursor_text()
             .text_sm()
             .text_color(color)
-            .child(Icon::new(IconName::Search).small().text_color(muted))
-            .child(div().min_w_0().truncate().child(text))
+            .child(search)
+            .child(div().flex_1().min_w_0().truncate().child(summary))
+            .child(ask)
             .on_click(cx.listener(move |browser, _, window, cx| {
                 browser.activate_id(id, window, cx);
                 browser.focus_address_bar(window, cx);
@@ -2526,42 +2790,26 @@ impl Browser {
             .into_any_element()
     }
 
-    /// Filled while the address bar asks, outlined while it searches. An icon
-    /// alone, at the toolbar's 24 px row; Button draws it at three quarters of
-    /// that, larger than the 14 px of a small button's icon.
-    fn ask_button(&self, index: usize, ink: Option<Hsla>, cx: &mut Context<Self>) -> Button {
-        let id = self.tabs[index].id;
-        let button = Button::new(("ask", id))
-            .debug_selector(move || format!("ask-{id}"))
-            .with_size(px(24.))
-            .accessibility_label("Ask AI")
+    /// Ask, at the end of a search field: an icon alone, filled on a filled
+    /// chip while the field asks, outlined while it searches. The caller
+    /// says what a click does.
+    fn ask_toggle(&self, id: impl Into<ElementId>, selector: String) -> Button {
+        Button::new(id)
+            .debug_selector(move || selector.clone())
+            .ghost()
+            .icon(if self.ask {
+                icons::ask_on()
+            } else {
+                icons::ask()
+            })
+            .selected(self.ask)
             .toggled(self.ask)
+            .accessibility_label("Ask AI")
             .tooltip_with_action(
                 if self.ask { "Turn Off Ask" } else { "Ask AI" },
                 &ToggleAsk,
                 None,
             )
-            .on_click(cx.listener(move |browser, _, window, cx| {
-                browser.activate_id(id, window, cx);
-                browser.toggle_ask(window, cx);
-            }));
-        if self.ask {
-            let (on, text) = match ink {
-                Some(ink) => (ink, Self::chrome_fill(&self.tabs[index], cx)),
-                None => (cx.theme().foreground, cx.theme().background),
-            };
-            button.icon(icons::ask_on()).custom(
-                ButtonCustomVariant::new(cx)
-                    .color(on)
-                    .foreground(text)
-                    .hover(on.opacity(0.9))
-                    .active(on.opacity(0.8)),
-            )
-        } else if ink.is_some() {
-            Self::inked(button, ink, cx).icon(icons::ask())
-        } else {
-            button.icon(icons::ask()).outline()
-        }
     }
 
     /// The system's share sheet for the tab's page. AppKit asks for it on
@@ -2869,48 +3117,13 @@ impl Browser {
             )
     }
 
-    fn start_surface(&self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        let theme = cx.theme();
-        let hint = |keys: AnyElement, text: &'static str| {
-            h_flex()
-                .gap_3()
-                .child(h_flex().w(px(96.)).justify_end().child(keys))
-                .child(text)
-        };
-        let binding = |action: &dyn gpui_kit::Action| -> AnyElement {
-            match Kbd::binding_for_action(action, None, window) {
-                Some(kbd) => kbd.into_any_element(),
-                None => div().into_any_element(),
-            }
-        };
-        v_flex()
-            .size_full()
-            .items_center()
-            .justify_center()
-            .gap_6()
-            .text_color(theme.muted_foreground)
-            .child(icons::page().large().text_color(theme.muted_foreground))
-            .child(
-                v_flex()
-                    .gap_2()
-                    .text_sm()
-                    .child(hint(
-                        binding(&OpenPalette),
-                        "Search tabs, commands and the web",
-                    ))
-                    .child(hint(
-                        binding(&FocusAddressBar),
-                        "Type an address or a search",
-                    ))
-                    .child(hint(
-                        div().text_xs().child("Right-click").into_any_element(),
-                        "The same search, wherever the pointer is",
-                    ))
-                    .child(hint(
-                        div().text_xs().child("Drag a tab").into_any_element(),
-                        "Onto a page's edge to see two side by side",
-                    )),
-            )
+    /// A new tab's content: Home, under the tab's own address bar.
+    fn start_surface(&self, id: u64, cx: &mut Context<Self>) -> AnyElement {
+        let browser = cx.weak_entity();
+        Home::new(("home", id))
+            .on_event(move |event, window, cx| {
+                let _ = browser.update(cx, |browser, cx| browser.home_event(id, event, window, cx));
+            })
             .into_any_element()
     }
 
@@ -2948,7 +3161,7 @@ impl Browser {
     /// What a tab's card shows under its toolbar. The card paints the
     /// background, rounded, behind it; only a page's own picture has to be
     /// rounded to the card's corners, its top ones while there is no toolbar.
-    fn content(&self, index: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+    fn content(&self, index: usize, cx: &mut Context<Self>) -> AnyElement {
         let tab = &self.tabs[index];
         match tab.showing {
             Showing::Page if let Some(page) = &tab.page => {
@@ -2964,8 +3177,9 @@ impl Browser {
                 page.clone().into_any_element()
             }
             Showing::Serp if let Some(serp) = &tab.serp => serp.clone().into_any_element(),
+            Showing::Place(place) => PlaceView::new(place).into_any_element(),
             _ if tab.asleep.is_some() => self.asleep_surface(index, cx),
-            _ => self.start_surface(window, cx),
+            _ => self.start_surface(tab.id, cx),
         }
     }
 
@@ -3181,7 +3395,7 @@ impl Render for Browser {
                 cx.listener(|browser, _: &PreviousTab, window, cx| browser.cycle(-1, window, cx)),
             )
             .on_action(cx.listener(Self::activate_numbered))
-            .on_action(cx.listener(|browser, _: &Reload, _, cx| browser.reload(cx)))
+            .on_action(cx.listener(|browser, _: &Reload, window, cx| browser.reload(window, cx)))
             .on_action(cx.listener(|browser, _: &GoBack, window, cx| browser.back(window, cx)))
             .on_action(
                 cx.listener(|browser, _: &GoForward, window, cx| browser.forward(window, cx)),
@@ -3211,17 +3425,19 @@ impl Render for Browser {
             .on_action(cx.listener(|browser, _: &SharePage, window, cx| {
                 browser.share_tab(browser.tabs[browser.active].id, window, cx)
             }))
-            .on_action(cx.listener(|browser, _: &crate::actions::ShowCanvas, window, cx| {
-                if let Some(board) = browser.canvas.take() {
-                    board.update(cx, |board, cx| board.detach(cx));
-                    browser.focus_content(window, cx);
-                } else if let Some(page) = browser.tabs[browser.active].page.clone() {
-                    let board = cx.new(|cx| crate::canvas::SpatialCanvas::new(page, cx));
-                    window.focus(&board.focus_handle(cx), cx);
-                    browser.canvas = Some(board);
-                }
-                cx.notify();
-            }))
+            .on_action(
+                cx.listener(|browser, _: &crate::actions::ShowCanvas, window, cx| {
+                    if let Some(board) = browser.canvas.take() {
+                        board.update(cx, |board, cx| board.detach(cx));
+                        browser.focus_content(window, cx);
+                    } else if let Some(page) = browser.tabs[browser.active].page.clone() {
+                        let board = cx.new(|cx| crate::canvas::SpatialCanvas::new(page, cx));
+                        window.focus(&board.focus_handle(cx), cx);
+                        browser.canvas = Some(board);
+                    }
+                    cx.notify();
+                }),
+            )
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
             .capture_key_down(
                 cx.listener(|this, event: &gpui_kit::KeyDownEvent, window, cx| {
@@ -3240,15 +3456,17 @@ impl Render for Browser {
                 h_flex()
                     .flex_1()
                     .min_h_0()
-                    .when(self.sidebar && !self.compact, |row| {
-                        row.child(self.render_sidebar(window, cx))
-                    })
+                    .when(
+                        self.sidebar && !self.compact && !self.underlay.shown,
+                        |row| row.child(self.render_sidebar(window, cx)),
+                    )
                     .child(div().flex_1().min_w_0().h_full().child(match &self.canvas {
                         Some(board) => board.clone().into_any_element(),
+                        None if self.underlay.shown => self.render_underlay(window, cx),
                         None => self.dock.clone().into_any_element(),
                     })),
             )
-            .when(self.compact, |this| {
+            .when(self.compact && !self.underlay.shown, |this| {
                 this.child(
                     // Pointing at the top edge brings the chrome back over the page.
                     div()

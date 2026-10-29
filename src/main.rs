@@ -14,15 +14,20 @@ mod delegate;
 mod downloads;
 mod embedder;
 mod engine;
+mod favicon;
 mod glass;
+mod home;
 mod icons;
 mod inspector;
 mod keys;
+mod markup;
 mod navigator;
 mod page;
 #[cfg(feature = "performance-check")]
 mod performance;
+mod places;
 mod profile_ui;
+mod recents;
 mod scene;
 mod search;
 mod serp;
@@ -42,15 +47,19 @@ use gpui_kit::{
 
 use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
-    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit,
-    Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads,
-    ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
+    SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
+    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
 use crate::theme::Appearance;
 
 fn main() -> anyhow::Result<()> {
+    #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
+        return browser::workspace_check::run(output.into());
+    }
     #[cfg(feature = "performance-check")]
     if std::env::var_os("FRAME_PERF_ROOT").is_some() {
         return browser::performance::run();
@@ -78,6 +87,13 @@ fn main() -> anyhow::Result<()> {
             brand::install();
             install_commands(cx);
             Engine::start(&profile_dir, cx);
+            // GPUI's images load from a URL through this, a result's favicon
+            // among them: with Servo's user agent, and without cookies.
+            match reqwest_client::ReqwestClient::user_agent(&Engine::user_agent()) {
+                Ok(client) => cx.set_http_client(std::sync::Arc::new(client)),
+                Err(error) => log::error!("http client: {error:#}"),
+            }
+            recents::init(Some(profile_dir.join("recents.json")), cx);
             search::init(&search_dir, cx);
             session::init(&profile_dir, cx);
             session::open_imported_tabs(&profile, cx);

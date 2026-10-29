@@ -18,6 +18,7 @@ use url::Url;
 use super::{Browser, Showing};
 use crate::downloads::DownloadState;
 use crate::navigator::{Pick, Placement, TabAction};
+use crate::places::Place as NativePlace;
 use crate::session::{self, Content, Layout, Pin};
 use crate::tabtree::Place;
 use crate::theme::{self, Appearance};
@@ -44,6 +45,7 @@ fn open(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
         gpui_kit::init(cx);
         theme::init(cx);
         crate::install_commands(cx);
+        crate::recents::init(None, cx);
     });
     let mut browser = None;
     let window = cx.open_window(size(px(1000.), px(700.)), |window, cx| {
@@ -57,6 +59,40 @@ fn open(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
     cx.update(|window, _| window.activate_window());
     cx.run_until_parked();
     (browser.expect("browser view"), cx)
+}
+
+/// Frame with one tab open, from ⌘T on the workspace.
+fn open_with_tab(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    (browser, cx)
+}
+
+fn workspace(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> bool {
+    cx.update(|_, cx| browser.read(cx).underlay.shown)
+}
+
+/// The workspace's route, by its title.
+fn route(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> String {
+    cx.update(|_, cx| browser.read(cx).underlay.title(cx).to_string())
+}
+
+fn in_workspace_field(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> bool {
+    cx.update(|window, cx| {
+        browser
+            .read(cx)
+            .underlay
+            .field
+            .focus_handle(cx)
+            .is_focused(window)
+    })
+}
+
+fn showing(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> Showing {
+    cx.update(|_, cx| {
+        let browser = browser.read(cx);
+        browser.tabs[browser.active].showing
+    })
 }
 
 fn right_click(cx: &mut VisualTestContext, at: Point<Pixels>) {
@@ -184,10 +220,11 @@ fn click(cx: &mut VisualTestContext, at: Point<Pixels>) {
 
 #[gpui_kit::test]
 fn right_click_opens_search_at_the_pointer_ready_to_type(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     assert!(cx.debug_bounds("navigator").is_none());
 
-    let pointer = point(px(500.), px(300.));
+    // Beside Home's tiles: right-clicking a button focuses it.
+    let pointer = point(px(40.), px(300.));
     right_click(cx, pointer);
     let placed_at = cx.update(|_, cx| {
         browser
@@ -219,7 +256,7 @@ fn right_click_opens_search_at_the_pointer_ready_to_type(cx: &mut TestAppContext
 
 #[gpui_kit::test]
 fn the_right_click_menu_leads_with_tools_and_finds_tabs_once_typed(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     right_click(cx, point(px(500.), px(300.)));
     let untyped = offered(&browser, "", cx);
@@ -243,7 +280,7 @@ fn the_right_click_menu_leads_with_tools_and_finds_tabs_once_typed(cx: &mut Test
 
 #[gpui_kit::test]
 fn a_tabs_right_click_menu_pins_that_tab(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, b] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -298,7 +335,7 @@ fn a_tabs_right_click_menu_pins_that_tab(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn escape_closes_the_right_click_search(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     right_click(cx, point(px(400.), px(400.)));
     assert!(typing_in_navigator(&browser, cx));
     keys(cx, "escape");
@@ -309,7 +346,7 @@ fn escape_closes_the_right_click_search(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn palette_works_with_the_toolbar_hidden(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     assert!(cx.debug_bounds("address-bar").is_some());
 
     keys(cx, "ctrl-cmd-c");
@@ -336,7 +373,7 @@ fn palette_works_with_the_toolbar_hidden(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn palette_toggles_and_escape_closes_it(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-k");
     assert!(typing_in_navigator(&browser, cx));
     keys(cx, "cmd-k");
@@ -351,7 +388,7 @@ fn palette_toggles_and_escape_closes_it(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn tab_shortcuts(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t");
     assert_eq!(tabs(&browser, cx), (3, 2));
     assert!(in_address_bar(&browser, cx));
@@ -370,14 +407,17 @@ fn tab_shortcuts(cx: &mut TestAppContext) {
     assert_eq!(tabs(&browser, cx), (2, 0));
     assert_eq!(cx.update(|_, cx| browser.read(cx).tabs[1].id), last);
 
-    // Closing the last tab leaves a fresh one.
-    keys(cx, "cmd-w cmd-w");
+    // Closing the last tab leaves a fresh one, behind the workspace.
+    keys(cx, "cmd-w");
+    assert!(!workspace(&browser, cx));
+    keys(cx, "cmd-w");
     assert_eq!(tabs(&browser, cx), (1, 0));
+    assert!(workspace(&browser, cx));
 }
 
 #[gpui_kit::test]
 fn dragging_a_tab_onto_another_moves_it_there(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t");
     let [a, b, c] = ids(&browser, cx)[..] else {
         panic!("three tabs")
@@ -403,7 +443,7 @@ fn dragging_a_tab_onto_another_moves_it_there(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn dropping_a_tab_on_a_pages_edge_puts_the_two_side_by_side(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, b] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -436,8 +476,8 @@ fn dropping_a_tab_on_a_pages_edge_puts_the_two_side_by_side(cx: &mut TestAppCont
 }
 
 #[gpui_kit::test]
-fn ask_button_switches_the_address_bar_between_searching_and_asking(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+fn ask_in_the_address_bar_switches_it_between_searching_and_asking(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
     let id = ids(&browser, cx)[0];
     let state = |cx: &mut VisualTestContext| {
         cx.update(|_, cx| {
@@ -451,11 +491,20 @@ fn ask_button_switches_the_address_bar_between_searching_and_asking(cx: &mut Tes
             (browser.ask, placeholder)
         })
     };
-    assert_eq!(state(cx), (false, "Search...".to_owned()));
+    assert_eq!(state(cx), (false, "Search or go somewhere".to_owned()));
 
-    // An icon alone, square in the toolbar's row.
+    // An icon alone, square, inside the address bar at its end.
     let ask = bounds_of(cx, format!("ask-{id}"));
-    assert_eq!(ask.size, size(px(24.), px(24.)));
+    assert_eq!(ask.size.width, ask.size.height);
+    let bar = bounds_of(cx, "address-bar".to_owned());
+    assert!(
+        bar.contains(&ask.origin) && bar.contains(&ask.bottom_right()),
+        "{ask:?} in {bar:?}"
+    );
+    assert!(
+        ask.center().x > bar.center().x,
+        "at the end: {ask:?} in {bar:?}"
+    );
 
     let button = ask.center();
     click(cx, button);
@@ -463,12 +512,12 @@ fn ask_button_switches_the_address_bar_between_searching_and_asking(cx: &mut Tes
     assert!(in_address_bar(&browser, cx), "ready for the question");
 
     click(cx, button);
-    assert_eq!(state(cx), (false, "Search...".to_owned()));
+    assert_eq!(state(cx), (false, "Search or go somewhere".to_owned()));
 }
 
 #[gpui_kit::test]
 fn compact_chrome_comes_back_at_the_top_edge(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "ctrl-cmd-c");
     assert!(cx.debug_bounds("address-bar").is_none());
     let revealed = |cx: &mut VisualTestContext| cx.update(|_, cx| browser.read(cx).revealed);
@@ -491,7 +540,7 @@ fn compact_chrome_comes_back_at_the_top_edge(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn appearance_button_switches_and_the_palette_matches_the_system(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     let id = ids(&browser, cx)[0];
     let appearance = |cx: &mut VisualTestContext| cx.update(|_, cx| theme::appearance(cx));
     assert_eq!(appearance(cx), Appearance::Dark);
@@ -522,7 +571,7 @@ fn appearance_button_switches_and_the_palette_matches_the_system(cx: &mut TestAp
 
 #[gpui_kit::test]
 fn a_file_address_downloads_instead_of_opening(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     let id = ids(&browser, cx)[0];
     assert!(in_address_bar(&browser, cx));
     // Nothing listens on the discard port, so nothing reaches the disk.
@@ -557,7 +606,7 @@ fn a_file_address_downloads_instead_of_opening(cx: &mut TestAppContext) {
 /// Tabs grow to a width and stay side by side; New Tab is at the row's end.
 #[gpui_kit::test]
 fn tabs_sit_in_capsules_with_new_tab_after_them(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, b] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -605,7 +654,7 @@ fn tabs_sit_in_capsules_with_new_tab_after_them(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn the_sidebar_draws_the_tabs_as_a_tree(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t");
     let [a, b, c] = ids(&browser, cx)[..] else {
         panic!("three tabs")
@@ -671,7 +720,7 @@ fn the_sidebar_draws_the_tabs_as_a_tree(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn dragging_a_row_onto_another_nests_it(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t ctrl-cmd-s");
     let [a, b, c] = ids(&browser, cx)[..] else {
         panic!("three tabs")
@@ -708,7 +757,7 @@ fn dragging_a_row_onto_another_nests_it(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn closing_a_branch_closes_the_tabs_under_it(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t cmd-t");
     let [a, b, c, d] = ids(&browser, cx)[..] else {
         panic!("four tabs")
@@ -731,7 +780,7 @@ fn closing_a_branch_closes_the_tabs_under_it(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn closing_a_tab_moves_the_tabs_under_it_up(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t");
     let [a, b, c] = ids(&browser, cx)[..] else {
         panic!("three tabs")
@@ -761,7 +810,7 @@ fn closing_a_tab_moves_the_tabs_under_it_up(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn closing_a_branch_wakes_only_the_tab_left(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t cmd-t cmd-t");
     let [a, b, c, d, e] = ids(&browser, cx)[..] else {
         panic!("five tabs")
@@ -796,7 +845,7 @@ fn closing_a_branch_wakes_only_the_tab_left(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn renaming_a_tab_in_a_folded_branch_shows_its_row(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, b] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -823,7 +872,7 @@ fn renaming_a_tab_in_a_folded_branch_shows_its_row(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn kept_site_icons_show_for_pins_and_unloaded_tabs(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, _] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -863,7 +912,7 @@ fn kept_site_icons_show_for_pins_and_unloaded_tabs(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn a_sidebar_row_dropped_on_a_pages_edge_splits_it(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t ctrl-cmd-s");
     let [a, _] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -876,7 +925,7 @@ fn a_sidebar_row_dropped_on_a_pages_edge_splits_it(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn the_sidebars_edge_drags_its_width(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "ctrl-cmd-s");
     let sidebar = bounds_of(cx, "sidebar".into());
     assert_eq!(sidebar.size.width, px(240.));
@@ -905,7 +954,7 @@ fn the_sidebars_edge_drags_its_width(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn the_tray_pins_the_active_tab_and_tabs_dropped_on_it(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t");
     let [_, b, c] = ids(&browser, cx)[..] else {
         panic!("three tabs")
@@ -948,7 +997,7 @@ fn the_tray_pins_the_active_tab_and_tabs_dropped_on_it(cx: &mut TestAppContext) 
 
 #[gpui_kit::test]
 fn a_pinned_site_owns_a_tab_outside_the_tree(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, b] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -1150,7 +1199,7 @@ fn without_a_saved_active_tab_each_group_keeps_its_tab(cx: &mut TestAppContext) 
 
 #[gpui_kit::test]
 fn cycling_from_a_folded_branch_goes_on_from_its_row(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t cmd-t ctrl-cmd-s");
     let [_, b, c, d] = ids(&browser, cx)[..] else {
         panic!("four tabs")
@@ -1175,7 +1224,7 @@ fn cycling_from_a_folded_branch_goes_on_from_its_row(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn a_site_is_pinned_once(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t");
     let [a, b] = ids(&browser, cx)[..] else {
         panic!("two tabs")
@@ -1205,7 +1254,7 @@ fn a_site_is_pinned_once(cx: &mut TestAppContext) {
 fn a_stream_of_changes_cannot_put_the_save_off(cx: &mut TestAppContext) {
     let dir = data_dir("save-stream");
     cx.update(|cx| session::init(&dir, cx));
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     // A change every 0.4s, as a pointer over links makes them.
     for width in [200., 210., 220., 230., 240., 250.] {
         cx.update(|_, cx| {
@@ -1225,7 +1274,7 @@ fn a_stream_of_changes_cannot_put_the_save_off(cx: &mut TestAppContext) {
 
 #[gpui_kit::test]
 fn console_panel_opens_and_closes(cx: &mut TestAppContext) {
-    let (_browser, cx) = open(cx);
+    let (_browser, cx) = open_with_tab(cx);
     assert!(cx.debug_bounds("Console").is_none());
     keys(cx, "alt-cmd-j");
     assert!(cx.debug_bounds("Console").is_some());
@@ -1252,7 +1301,7 @@ fn imported_history_appears_when_typing_in_address_bar_and_has_a_keyboard_path(
         .bookmark("https://bookmarks.example.test/", "Familiar bookmark")
         .unwrap();
     cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-l");
     cx.simulate_input("Familiar");
     cx.run_until_parked();
@@ -1285,7 +1334,7 @@ fn history_command_opens_native_profile_library(cx: &mut TestAppContext) {
     let temp = tempfile::tempdir().unwrap();
     let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
     cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-y");
     assert!(cx.update(|window, cx| window.has_active_sheet(cx)));
     assert!(cx.update(|_, cx| browser.read(cx).profile_panel.is_some()));
@@ -1346,7 +1395,7 @@ fn home_status_bar_pins_import_to_bottom_left_and_opens_importer(cx: &mut TestAp
 fn visual_chrome_updates_do_not_write_the_session(cx: &mut TestAppContext) {
     let dir = data_dir("visual-chrome");
     cx.update(|cx| session::init(&dir, cx));
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     cx.update(|window, cx| {
         browser.update(cx, |browser, cx| {
             // What is written now is what the next save compares with.
@@ -1364,7 +1413,7 @@ fn visual_chrome_updates_do_not_write_the_session(cx: &mut TestAppContext) {
 fn closing_before_the_save_keeps_the_latest_tabs(cx: &mut TestAppContext) {
     let dir = data_dir("close-before-save");
     cx.update(|cx| session::init(&dir, cx));
-    let (browser, cx) = open(cx);
+    let (browser, cx) = open_with_tab(cx);
     keys(cx, "cmd-t cmd-t");
     let active = cx.update(|_, cx| {
         browser.update(cx, |browser, cx| {
@@ -1378,4 +1427,166 @@ fn closing_before_the_save_keeps_the_latest_tabs(cx: &mut TestAppContext) {
     assert_eq!(saved.tabs.len(), 3);
     assert_eq!(saved.active, Some(active));
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[gpui_kit::test]
+fn frame_opens_on_the_workspace_and_new_tab_leaves_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    assert!(workspace(&browser, cx));
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(cx.debug_bounds("underlay").is_some());
+    assert!(cx.debug_bounds("address-bar").is_none(), "no tab is open");
+    assert!(in_workspace_field(&browser, cx), "ready for a search");
+
+    // There is no tab to close or switch to.
+    keys(cx, "cmd-w ctrl-tab cmd-1");
+    assert!(workspace(&browser, cx));
+    assert_eq!(tabs(&browser, cx), (1, 0));
+
+    // ⌘T opens the tab behind it, ready for an address.
+    keys(cx, "cmd-t");
+    assert!(!workspace(&browser, cx));
+    assert_eq!(tabs(&browser, cx), (1, 0));
+    assert!(cx.debug_bounds("underlay").is_none());
+    assert!(in_address_bar(&browser, cx));
+}
+
+#[gpui_kit::test]
+fn closing_the_last_tab_returns_to_the_workspace_at_home(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-t");
+    assert_eq!(tabs(&browser, cx), (2, 1));
+    keys(cx, "cmd-w cmd-w");
+    assert!(workspace(&browser, cx));
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(in_workspace_field(&browser, cx));
+}
+
+#[gpui_kit::test]
+fn a_search_in_the_workspace_shows_results_with_their_own_history(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    cx.simulate_input("tides and the moon");
+    keys(cx, "enter");
+    assert!(workspace(&browser, cx), "results show in the workspace");
+    assert_eq!(route(&browser, cx), "tides and the moon");
+    let searches = cx.update(|_, cx| crate::recents::searches(cx).to_vec());
+    assert_eq!(searches[0].query, "tides and the moon", "Home lists it");
+
+    keys(cx, "cmd-[");
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(in_workspace_field(&browser, cx));
+    keys(cx, "cmd-]");
+    assert_eq!(route(&browser, cx), "tides and the moon");
+}
+
+#[gpui_kit::test]
+fn places_open_from_the_palette_and_back_returns(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-k");
+    cx.simulate_input("mail");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    assert_eq!(route(&browser, cx), "Mail");
+    keys(cx, "cmd-[");
+    assert_eq!(route(&browser, cx), "Home");
+
+    // In a tab, a place opens over the tab's Home, and Back returns to it.
+    keys(cx, "cmd-t");
+    keys(cx, "cmd-k");
+    cx.simulate_input("library");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    assert!(showing(&browser, cx) == Showing::Place(NativePlace::Library));
+    assert_eq!(tabs(&browser, cx), (1, 0), "in the same tab");
+    keys(cx, "cmd-[");
+    assert!(showing(&browser, cx) == Showing::Start);
+}
+
+#[gpui_kit::test]
+fn command_return_searches_in_a_tab_from_workspace(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    cx.simulate_input("tides and the moon");
+    keys(cx, "cmd-enter");
+    assert!(!workspace(&browser, cx));
+    assert_eq!(showing(&browser, cx), Showing::Serp);
+    assert_eq!(tabs(&browser, cx), (1, 0));
+}
+
+#[gpui_kit::test]
+fn command_click_recent_search_opens_a_results_tab(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    cx.update(|_, cx| crate::recents::record_search("tides", false, cx));
+    cx.run_until_parked();
+    let row = cx
+        .debug_bounds("recent-search:search:tides")
+        .expect("recent search")
+        .center();
+    cx.simulate_click(
+        row,
+        Modifiers {
+            platform: true,
+            ..Modifiers::none()
+        },
+    );
+    cx.run_until_parked();
+    assert!(!workspace(&browser, cx));
+    assert_eq!(showing(&browser, cx), Showing::Serp);
+}
+
+#[gpui_kit::test]
+fn downloading_a_workspace_result_preserves_its_history(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            let (serp, events) = browser.new_serp(
+                "downloads".into(),
+                crate::serp::SerpMode::Search,
+                window,
+                cx,
+            );
+            browser.underlay_go(
+                super::underlay::Route::Results(serp.clone(), events),
+                window,
+                cx,
+            );
+            let url = Url::parse("http://127.0.0.1:9/file.zip").unwrap();
+            assert!(browser.underlay_opened(&serp, &url, true, window, cx));
+        })
+    });
+    cx.run_until_parked();
+    assert!(workspace(&browser, cx));
+    assert_eq!(route(&browser, cx), "downloads");
+    keys(cx, "cmd-[");
+    assert_eq!(route(&browser, cx), "Home");
+}
+
+#[gpui_kit::test]
+fn workspace_backing_tab_is_not_saved_as_an_open_tab(cx: &mut TestAppContext) {
+    let dir = data_dir("workspace-empty");
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    cx.update(|_, cx| browser.update(cx, |browser, cx| browser.save(cx)));
+    let saved = cx.update(|_, cx| session::Store::global(cx).unwrap().load_session().unwrap());
+    assert!(saved.tabs.is_empty());
+    assert_eq!(saved.active, None);
+}
+
+#[gpui_kit::test]
+fn workspace_results_keep_the_query_in_the_saved_session(cx: &mut TestAppContext) {
+    let dir = data_dir("workspace-search");
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    cx.simulate_input("native search");
+    keys(cx, "enter");
+    cx.update(|_, cx| browser.update(cx, |browser, cx| browser.save(cx)));
+    let saved = cx.update(|_, cx| session::Store::global(cx).unwrap().load_session().unwrap());
+    assert_eq!(saved.tabs.len(), 1);
+    assert_eq!(
+        saved.tabs[0].content,
+        Content::Search {
+            query: "native search".into(),
+            ask: false
+        }
+    );
+    assert_eq!(saved.active, Some(saved.tabs[0].id));
 }

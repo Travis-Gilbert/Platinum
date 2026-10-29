@@ -65,7 +65,7 @@ pub fn init(data_dir: &Path, cx: &mut App) {
 /// profile had its own, into `into`, the default profile's folder. A file
 /// already in `into` is kept; the older one stays where it was.
 pub fn adopt(from: &Path, into: &Path) {
-    for name in [SESSION, PINS, FAVICONS] {
+    for name in [SESSION, PINS, FAVICONS, "recents.json"] {
         let (old, new) = (from.join(name), into.join(name));
         if !old.exists() || new.exists() {
             continue;
@@ -359,6 +359,7 @@ mod tests {
         fs::write(root.join(FAVICONS).join("example.org"), b"icon").unwrap();
         fs::write(root.join(SESSION), "old session").unwrap();
         fs::write(root.join(PINS), "old pins").unwrap();
+        fs::write(root.join("recents.json"), "old recents").unwrap();
         fs::create_dir_all(&profile).unwrap();
         fs::write(profile.join(PINS), "newer pins").unwrap();
         adopt(&root, &profile);
@@ -366,6 +367,11 @@ mod tests {
             fs::read_to_string(profile.join(SESSION)).unwrap(),
             "old session"
         );
+        assert_eq!(
+            fs::read_to_string(profile.join("recents.json")).unwrap(),
+            "old recents"
+        );
+        assert!(!root.join("recents.json").exists());
         assert!(profile.join(FAVICONS).join("example.org").exists());
         assert!(!root.join(SESSION).exists() && !root.join(FAVICONS).exists());
         assert_eq!(

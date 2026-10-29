@@ -4083,6 +4083,7 @@ name = "frame"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "content_disposition",
  "dirs 6.0.0",
@@ -4097,13 +4098,16 @@ dependencies = [
  "gpui-kit",
  "gpui-pre",
  "gpui-pre-macos",
+ "gpui-pre-reqwest-client",
  "gpui-whiteboard",
  "hf-hub",
+ "html5ever 0.27.0",
  "http",
  "humansize",
  "image",
  "kmeans_colors",
  "log",
+ "markup5ever_rcdom",
  "mime_guess",
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
@@ -4116,11 +4120,15 @@ dependencies = [
  "percent-encoding",
  "raw-window-handle",
  "reqwest 0.12.28",
+ "resvg 0.48.1",
+ "rust-embed",
  "rustls",
  "rustyred-web",
  "sanitize-filename",
+ "serde",
  "serde_json",
  "servo",
+ "servo-net-traits",
  "surfman",
  "tempfile",
  "theorem-browser-substrate",
@@ -5025,6 +5033,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui-pre-http-client-tls"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7616a90ec92c9832bbc80ddab34e10fdf8d23520d5cbb0b432b73e4e9f6c812"
+dependencies = [
+ "log",
+ "rustls",
+ "rustls-platform-verifier",
+ "webpki-roots 1.0.10",
+]
+
+[[package]]
 name = "gpui-pre-linux"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5194,6 +5214,24 @@ dependencies = [
  "wasm-streams",
  "web-sys",
  "windows-registry 0.4.0",
+]
+
+[[package]]
+name = "gpui-pre-reqwest-client"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92c2e70dc8550d60324b1eb3f3d08b4ccf20a8b577a9a42732dd3bafb2363bc0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "futures",
+ "gpui-pre-http-client",
+ "gpui-pre-http-client-tls",
+ "gpui-pre-reqwest",
+ "gpui-pre-util",
+ "log",
+ "regex",
+ "tokio",
 ]
 
 [[package]]
@@ -11575,7 +11613,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

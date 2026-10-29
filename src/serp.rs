@@ -1,34 +1,77 @@
-//! A natively rendered search results page.
+//! A natively rendered search results page, laid out the way people know
+//! from web search: the scopes, then each result as its site, where it
+//! leads, its title and its excerpt, with space between results rather than
+//! rules. Ask puts an answer drawn from the results above them. How many
+//! results came back and how long the search took is a quiet line after the
+//! last one.
 //!
-//! `Serp` runs one RustyWeb search when it is created and draws the outcome:
-//! a header, an optional answer (Ask mode only), the results, and quiet notes.
-//! It never navigates by itself. Activating a result emits [`SerpEvent::Open`]
-//! and the host decides which tab loads the page.
+//! Where a result came from (Frame's local index or the web, which
+//! providers, when it was published and when it was retrieved) is behind its
+//! ⋮ button, in About this result, with the ways to open it.
+//!
+//! The page works from the keyboard: Up and Down move through the results,
+//! Enter opens one, ⌘Enter opens it in a new tab. It never navigates by
+//! itself. Opening emits [`SerpEvent::Open`] and the host decides which tab
+//! loads the page.
+//!
+//! Nothing here rests on color alone: the selected row has a fill, the
+//! result under the pointer underlines its title, a site is marked by its
+//! favicon, or its initials where it has none, and a local result carries a
+//! drive icon and the word Local. A web result carries no word: the web is
+//! what a search finds unless it says otherwise.
+//!
+//! SOURCING: GPUI Kit's `List`, `TabBar`, `Popover`, `Avatar`,
+//! `DescriptionList`, `Alert`, `Empty`, `Skeleton` and `Button`; sites are
+//! named by Servo's public suffix list (`net_traits::pub_domains`), snippets
+//! are parsed by html5ever (`markup.rs`), dates are chrono's. A site's icon
+//! is found and decoded within explicit limits by `favicon.rs`; both
+//! requests use the HTTP client `main`
+//! installs (`gpui-pre-reqwest-client`).
 
+use chrono::{DateTime, Local, NaiveDate};
+use gpui_kit::assets::IconName as Lucide;
 use gpui_kit::base::Link;
 use gpui_kit::component::{
-    ActiveTheme as _, Icon, IconName, Sizable as _,
+    ActiveTheme as _, Icon, IconName, IndexPath, Sizable as _,
     alert::Alert,
-    button::Button,
+    avatar::Avatar,
+    button::{Button, ButtonVariants as _},
+    description_list::DescriptionList,
     empty::{
         Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyMediaVariant,
         EmptyTitle,
     },
     h_flex,
+    list::{List, ListDelegate, ListItem, ListState},
+    popover::{Popover, PopoverState},
     scroll::ScrollableElement as _,
     skeleton::Skeleton,
-    spinner::Spinner,
+    tab::{Tab, TabBar},
     tag::Tag,
     v_flex,
 };
 use gpui_kit::{
-    App, ClickEvent, Context, EventEmitter, FocusHandle, Focusable, FontWeight, InteractiveElement,
-    IntoElement, ParentElement, Render, SharedString, Styled, Task, Window, div,
-    prelude::FluentBuilder as _, rems,
+    AnyElement, App, AppContext as _, ClickEvent, Context, Entity, EventEmitter, FocusHandle,
+    Focusable, FontWeight, HighlightStyle, InteractiveElement, IntoElement, ParentElement, Rems,
+    Render, ScrollStrategy, SharedString, Styled, StyledText, Task, WeakEntity, Window, div, img,
+    prelude::FluentBuilder as _, px, relative, rems,
 };
+use percent_encoding::percent_decode_str;
 use url::Url;
 
+use crate::favicon::{IconImage, SiteIcon};
+use crate::icons;
 use crate::search::{self, SerpAnswer, SerpHit, SerpResult, SerpSource, sentence};
+
+/// Every row is this tall: the list measures one and lays out the rest.
+const ROW_HEIGHT: Rems = rems(8.75);
+
+/// The line after the last result.
+const FOOTER_HEIGHT: Rems = rems(3.5);
+
+/// The results' distance from the page's leading edge, as a share of its
+/// width: a wide page holds them in from the edge, a narrow one barely.
+const GUTTER: f32 = 0.05;
 
 /// How the page was asked for.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -53,6 +96,35 @@ enum State {
     Failed(SharedString),
 }
 
+/// Which results the list shows.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum Scope {
+    #[default]
+    All,
+    Local,
+    Web,
+}
+
+impl Scope {
+    const ALL: [Scope; 3] = [Scope::All, Scope::Local, Scope::Web];
+
+    fn label(self) -> &'static str {
+        match self {
+            Scope::All => "All",
+            Scope::Local => "Local",
+            Scope::Web => "Web",
+        }
+    }
+
+    fn includes(self, hit: &SerpHit) -> bool {
+        match self {
+            Scope::All => true,
+            Scope::Local => search::is_local_lane(&hit.lane),
+            Scope::Web => !search::is_local_lane(&hit.lane),
+        }
+    }
+}
+
 pub struct Serp {
     query: SharedString,
     mode: SerpMode,
@@ -60,7 +132,9 @@ pub struct Serp {
     /// Bumped on every search so a slow, superseded search cannot overwrite a
     /// newer one.
     revision: u64,
+    scope: Scope,
     focus: FocusHandle,
+    list: Entity<ListState<Results>>,
     /// Held so the search is cancelled if the page is closed first.
     _search: Task<()>,
 }
@@ -68,8 +142,13 @@ pub struct Serp {
 impl EventEmitter<SerpEvent> for Serp {}
 
 impl Focusable for Serp {
-    fn focus_handle(&self, _: &App) -> FocusHandle {
-        self.focus.clone()
+    /// The results once there are some, so the arrow keys work at once.
+    fn focus_handle(&self, cx: &App) -> FocusHandle {
+        if self.has_rows(cx) {
+            self.list.focus_handle(cx)
+        } else {
+            self.focus.clone()
+        }
     }
 }
 
@@ -78,20 +157,52 @@ impl Serp {
     pub fn new(
         query: impl Into<SharedString>,
         mode: SerpMode,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let query = query.into();
-        let revision = 1;
-        let search = Self::start(&query, mode, revision, cx);
+        let mut serp = Self::build(query.into(), mode, window, cx);
+        serp._search = Self::start(&serp.query, mode, serp.revision, window, cx);
+        serp
+    }
+
+    fn build(
+        query: SharedString,
+        mode: SerpMode,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let results = Results {
+            serp: cx.weak_entity(),
+            hits: Vec::new(),
+            selected: None,
+            searched_at: None,
+            summary: None,
+        };
+        let list = cx.new(|cx| ListState::new(results, window, cx));
         Self {
             query,
             mode,
             state: State::Loading,
-            revision,
+            revision: 1,
+            scope: Scope::All,
             focus: cx.focus_handle(),
-            _search: search,
+            list,
+            _search: Task::ready(()),
         }
+    }
+
+    /// A page showing `result`, with no search behind it.
+    #[cfg(any(test, feature = "snapshot"))]
+    pub fn loaded(result: SerpResult, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let mode = if result.ask {
+            SerpMode::Ask
+        } else {
+            SerpMode::Search
+        };
+        let mut serp = Self::build(result.query.clone().into(), mode, window, cx);
+        serp.state = State::Loaded(result);
+        serp.show_scope(window, cx);
+        serp
     }
 
     pub fn query(&self) -> &SharedString {
@@ -108,10 +219,11 @@ impl Serp {
     }
 
     /// Search again for the same query.
-    pub fn reload(&mut self, cx: &mut Context<Self>) {
+    pub fn reload(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.revision += 1;
         self.state = State::Loading;
-        self._search = Self::start(&self.query, self.mode, self.revision, cx);
+        self.show_scope(window, cx);
+        self._search = Self::start(&self.query, self.mode, self.revision, window, cx);
         cx.notify();
     }
 
@@ -119,13 +231,16 @@ impl Serp {
         query: &SharedString,
         mode: SerpMode,
         revision: u64,
+        window: &Window,
         cx: &mut Context<Self>,
     ) -> Task<()> {
         let search = search::run(query.to_string(), mode == SerpMode::Ask, cx);
-        cx.spawn(async move |this, cx| {
+        cx.spawn_in(window, async move |this, cx| {
             let outcome = search.await;
-            this.update(cx, |this, cx| this.finish(revision, outcome, cx))
-                .ok();
+            this.update_in(cx, |this, window, cx| {
+                this.finish(revision, outcome, window, cx)
+            })
+            .ok();
         })
     }
 
@@ -133,11 +248,13 @@ impl Serp {
         &mut self,
         revision: u64,
         outcome: anyhow::Result<SerpResult>,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         if revision != self.revision {
             return;
         }
+        let had_focus = self.focus.is_focused(window);
         self.state = match outcome {
             Ok(result) => State::Loaded(result),
             Err(error) => {
@@ -145,10 +262,60 @@ impl Serp {
                 State::Failed(format!("{error:#}").into())
             }
         };
+        self.scope = Scope::All;
+        self.show_scope(window, cx);
+        // The keyboard follows the page into its results.
+        if had_focus && self.has_rows(cx) {
+            self.list.update(cx, |list, cx| list.focus(window, cx));
+        }
         cx.notify();
     }
 
-    /// A title or source link. The page is opened by the host, never here.
+    fn has_rows(&self, cx: &App) -> bool {
+        !self.list.read(cx).delegate().hits.is_empty()
+    }
+
+    /// Fill the list with the results in the current scope, the first one
+    /// selected.
+    fn show_scope(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let (hits, searched_at, summary) = match &self.state {
+            State::Loaded(result) => (
+                result
+                    .hits
+                    .iter()
+                    .filter(|hit| self.scope.includes(hit))
+                    .cloned()
+                    .collect(),
+                Some(result.searched_at),
+                Some(summary(result).into()),
+            ),
+            _ => (Vec::new(), None, None),
+        };
+        let first = (!hits.is_empty()).then(|| IndexPath::new(0));
+        self.list.update(cx, |list, cx| {
+            let results = list.delegate_mut();
+            results.hits = hits;
+            results.searched_at = searched_at;
+            results.summary = summary;
+            list.set_selected_index(first, window, cx);
+            if let Some(first) = first {
+                list.scroll_to_item(first, ScrollStrategy::Top, window, cx);
+            }
+            cx.notify();
+        });
+    }
+
+    fn set_scope(&mut self, scope: Scope, window: &mut Window, cx: &mut Context<Self>) {
+        if self.scope == scope {
+            return;
+        }
+        self.scope = scope;
+        self.show_scope(window, cx);
+        self.list.update(cx, |list, cx| list.focus(window, cx));
+        cx.notify();
+    }
+
+    /// An answer's source link. The page is opened by the host, never here.
     fn web_link(&self, id: SharedString, url: &Url, cx: &Context<Self>) -> Link {
         let target = url.clone();
         Link::new(id)
@@ -169,58 +336,61 @@ impl Serp {
             })
     }
 
-    fn header(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let subline = match &self.state {
-            State::Loading => h_flex()
-                .gap_2()
-                .child(Spinner::new().small())
-                .child("Searching…")
-                .into_any_element(),
-            State::Loaded(result) => div().child(summary(result)).into_any_element(),
-            State::Failed(_) => div().into_any_element(),
+    /// All, Local and Web, there from the start so the page does not shift
+    /// when results arrive. A scope with nothing in it is disabled.
+    fn scope_bar(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
+        let hits = match &self.state {
+            State::Loaded(result) => result.hits.as_slice(),
+            _ => &[],
         };
-        v_flex()
-            .gap_1()
-            .child(
-                h_flex()
-                    .gap_2()
-                    .child(
-                        div()
-                            .min_w_0()
-                            .text_xl()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .child(self.query.clone()),
-                    )
-                    .when(self.mode == SerpMode::Ask, |this| {
-                        this.child(Tag::info().small().child("Ask"))
-                    }),
-            )
-            .child(
-                div()
-                    .text_sm()
-                    .text_color(cx.theme().muted_foreground)
-                    .child(subline),
-            )
+        let selected = Scope::ALL
+            .iter()
+            .position(|scope| *scope == self.scope)
+            .unwrap_or(0);
+        TabBar::new("serp-scope")
+            .underline()
+            .selected_index(selected)
+            .on_click(cx.listener(|this, ix: &usize, window, cx| {
+                this.set_scope(Scope::ALL[*ix], window, cx)
+            }))
+            .children(Scope::ALL.map(|scope| {
+                let empty = !hits.iter().any(|hit| scope.includes(hit));
+                Tab::new()
+                    .label(scope.label())
+                    .disabled(scope != Scope::All && empty)
+            }))
     }
 
-    fn loading(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    /// Placeholder rows in the results' own shape while the search runs.
+    fn loading(&self) -> impl IntoElement + use<> {
         let line = |width: f32, height: f32| Skeleton::new().w(rems(width)).h(rems(height));
         v_flex()
-            .gap_6()
-            .children((0..4).map(|_| {
-                v_flex()
-                    .gap_2()
-                    .child(line(10., 0.75))
-                    .child(line(26., 1.1))
-                    .child(line(40., 0.75))
-                    .child(line(32., 0.75))
+            .id("serp-loading")
+            .gap_8()
+            .pt_3()
+            .children((0..4).map(move |_| {
+                inset().child(
+                    v_flex()
+                        .gap_2()
+                        .child(
+                            h_flex()
+                                .gap_3()
+                                .child(Skeleton::new().size(px(24.)).rounded_full())
+                                .child(
+                                    v_flex().gap_1().child(line(8., 0.75)).child(line(14., 0.6)),
+                                ),
+                        )
+                        .child(line(24., 1.25))
+                        .child(line(40., 0.75))
+                        .child(line(32., 0.75)),
+                )
             }))
-            .text_color(cx.theme().muted_foreground)
     }
 
-    fn failed(&self, message: &SharedString, cx: &mut Context<Self>) -> impl IntoElement {
+    fn failed(&self, message: &SharedString, cx: &mut Context<Self>) -> impl IntoElement + use<> {
         v_flex()
             .gap_3()
+            .pt_3()
             .child(
                 Alert::error(
                     "serp-error",
@@ -237,12 +407,12 @@ impl Serp {
                         .label("Try again")
                         .icon(IconName::RotateCw)
                         .outline()
-                        .on_click(cx.listener(|this, _, _, cx| this.reload(cx))),
+                        .on_click(cx.listener(|this, _, window, cx| this.reload(window, cx))),
                 ),
             )
     }
 
-    fn empty(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn empty(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
         Empty::new()
             .header(
                 EmptyHeader::new()
@@ -262,12 +432,12 @@ impl Serp {
                         .label("Search again")
                         .icon(IconName::RotateCw)
                         .outline()
-                        .on_click(cx.listener(|this, _, _, cx| this.reload(cx))),
+                        .on_click(cx.listener(|this, _, window, cx| this.reload(window, cx))),
                 ),
             )
     }
 
-    fn answer(&self, result: &SerpResult, cx: &mut Context<Self>) -> impl IntoElement {
+    fn answer(&self, result: &SerpResult, cx: &mut Context<Self>) -> impl IntoElement + use<> {
         let sources = unique_sources(result.answer.as_ref());
         let body = match (&result.answer, &result.answer_note) {
             (Some(answer), _) => v_flex()
@@ -318,167 +488,467 @@ impl Serp {
             (None, None) => div().into_any_element(),
         };
 
-        v_flex()
+        // Held to a few lines' height, so the results still start on screen.
+        div()
+            .flex_shrink_0()
+            .max_h(rems(16.))
+            .overflow_y_scrollbar()
             .id("serp-answer")
-            .gap_3()
-            .p_4()
-            .rounded(cx.theme().radius_tokens().lg)
-            .border_1()
-            .border_color(cx.theme().border)
-            .bg(cx.theme().secondary)
             .child(
-                h_flex()
-                    .gap_2()
-                    .text_sm()
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .child(Icon::new(IconName::Bot).small())
-                    .child("Answer")
-                    .when_some(
-                        result.answer.as_ref().filter(|a| !a.model.is_empty()),
-                        |this, answer| {
-                            this.child(
-                                Tag::secondary()
-                                    .outline()
-                                    .small()
-                                    .child(answer.model.clone()),
-                            )
-                        },
-                    ),
+                v_flex()
+                    .gap_3()
+                    .p_4()
+                    .rounded(cx.theme().radius_tokens().lg)
+                    .bg(cx.theme().secondary)
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .text_sm()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .child(icons::ask().small())
+                            .child("Answer")
+                            .when_some(
+                                result.answer.as_ref().filter(|a| !a.model.is_empty()),
+                                |this, answer| {
+                                    this.child(
+                                        Tag::secondary()
+                                            .outline()
+                                            .small()
+                                            .child(answer.model.clone()),
+                                    )
+                                },
+                            ),
+                    )
+                    .child(body),
             )
-            .child(body)
     }
 
-    fn result_row(&self, hit: &SerpHit, cx: &mut Context<Self>) -> impl IntoElement {
-        let key = element_key(&hit.url);
-        let local = search::lane_label(&hit.lane) == "Local";
+    /// Search-wide coverage notices stay visible even when no hits return.
+    fn notices(&self, result: &SerpResult, cx: &App) -> impl IntoElement + use<> {
         v_flex()
-            .id(SharedString::from(format!("serp-result:{key}")))
             .gap_1()
-            .child(
-                div()
-                    .min_w_0()
-                    .truncate()
-                    .text_xs()
-                    .text_color(cx.theme().muted_foreground)
-                    .child(display_url(&hit.url)),
-            )
-            .child(
-                self.web_link(format!("serp-link:{key}").into(), &hit.url, cx)
-                    .accessibility_label(format!("{}, {}", hit.title, hit.host))
-                    .text_base()
-                    .font_weight(FontWeight::MEDIUM)
-                    .child(hit.title.clone()),
-            )
-            .when(!hit.snippet.is_empty(), |this| {
-                this.child(div().text_sm().line_clamp(3).child(hit.snippet.clone()))
-            })
-            .child(
-                h_flex()
-                    .flex_wrap()
-                    .gap_x_2()
-                    .gap_y_1()
-                    .child(if local {
-                        Tag::primary()
-                            .outline()
-                            .small()
-                            .child(search::lane_label(&hit.lane))
-                    } else {
-                        Tag::secondary()
-                            .outline()
-                            .small()
-                            .child(search::lane_label(&hit.lane))
-                    })
-                    .children(
-                        hit.providers
-                            .iter()
-                            .map(|provider| Tag::secondary().small().child(provider.clone())),
-                    )
-                    .when_some(hit.published_at.clone(), |this, date| {
-                        this.child(
-                            div()
-                                .text_xs()
-                                .text_color(cx.theme().muted_foreground)
-                                .child(date),
-                        )
+            .text_sm()
+            .text_color(cx.theme().muted_foreground)
+            .debug_selector(|| "search-notices".into())
+            .children(
+                result
+                    .notes
+                    .iter()
+                    .chain(result.degradations.iter().map(|item| &item.message))
+                    .map(|notice| {
+                        let selector = format!("search-notice:{notice}");
+                        div()
+                            .debug_selector(move || selector.clone())
+                            .child(notice.clone())
                     }),
             )
     }
 
-    fn notes(&self, result: &SerpResult, cx: &mut Context<Self>) -> Option<impl IntoElement> {
-        let lines: Vec<String> = result
-            .notes
-            .iter()
-            .cloned()
-            .chain(result.degradations.iter().map(|d| d.message.clone()))
-            .collect();
-        if lines.is_empty() {
-            return None;
-        }
-        Some(
-            v_flex()
-                .id("serp-notes")
-                .gap_1()
-                .pt_4()
-                .border_t_1()
-                .border_color(cx.theme().border)
-                .text_xs()
-                .text_color(cx.theme().muted_foreground)
-                .children(lines.into_iter().map(|line| {
-                    h_flex()
-                        .items_start()
-                        .gap_2()
-                        .child(Icon::new(IconName::Info).xsmall())
-                        .child(div().min_w_0().child(line))
-                })),
-        )
+    /// The answer, when asked for, then the results.
+    fn results(&self, result: &SerpResult, cx: &mut Context<Self>) -> AnyElement {
+        let ask = self.mode == SerpMode::Ask;
+        v_flex()
+            .flex_1()
+            .min_h_0()
+            .gap_4()
+            .child(self.notices(result, cx))
+            .when(ask, |this| this.child(self.answer(result, cx)))
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .child(List::new(&self.list).size_full()),
+            )
+            .into_any_element()
     }
 }
 
 impl Render for Serp {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let body = match &self.state {
-            State::Loading => self.loading(cx).into_any_element(),
+            State::Loading => self.loading().into_any_element(),
             State::Failed(message) => self.failed(message, cx).into_any_element(),
-            State::Loaded(result) => v_flex()
-                .gap_6()
-                .when(self.mode == SerpMode::Ask, |this| {
-                    this.child(self.answer(result, cx))
-                })
-                .child(if result.hits.is_empty() {
-                    self.empty(cx).into_any_element()
-                } else {
-                    let mut rows = Vec::with_capacity(result.hits.len());
-                    for hit in &result.hits {
-                        rows.push(self.result_row(hit, cx).into_any_element());
-                    }
-                    v_flex().gap_5().children(rows).into_any_element()
-                })
-                .children(self.notes(result, cx))
+            State::Loaded(result) if result.hits.is_empty() => v_flex()
+                .flex_1()
+                .min_h_0()
+                .overflow_y_scrollbar()
+                .id("serp-empty")
+                .child(
+                    v_flex()
+                        .gap_6()
+                        .pb_6()
+                        .when(self.mode == SerpMode::Ask, |this| {
+                            this.child(self.answer(result, cx))
+                        })
+                        .child(self.notices(result, cx))
+                        .child(self.empty(cx)),
+                )
                 .into_any_element(),
+            State::Loaded(result) => self.results(result, cx),
         };
 
-        div()
+        v_flex()
             .id("serp")
-            .size_full()
-            .text_color(cx.theme().foreground)
             .track_focus(&self.focus)
+            .size_full()
+            .px_6()
+            .pt_3()
+            .text_color(cx.theme().foreground)
             .child(
-                v_flex()
-                    .size_full()
-                    .overflow_y_scrollbar()
-                    .id("serp-scroll")
-                    .child(
-                        v_flex()
-                            .w_full()
-                            .max_w(rems(46.))
-                            .mx_auto()
-                            .px_6()
-                            .py_6()
-                            .gap_6()
-                            .child(self.header(cx))
-                            .child(body),
-                    ),
+                v_flex().size_full().pl(relative(GUTTER)).child(
+                    v_flex()
+                        .h_full()
+                        .w_full()
+                        .max_w(rems(46.))
+                        .gap_4()
+                        .child(self.scope_bar(cx))
+                        .child(body),
+                ),
             )
+    }
+}
+
+/// The rows the list shows: the loaded results in the current scope.
+struct Results {
+    serp: WeakEntity<Serp>,
+    hits: Vec<SerpHit>,
+    selected: Option<usize>,
+    /// When the shown search ran: the retrieval time of its live results.
+    searched_at: Option<DateTime<Local>>,
+    /// The line after the last result.
+    summary: Option<SharedString>,
+}
+
+impl ListDelegate for Results {
+    type Item = ListItem;
+
+    fn items_count(&self, _section: usize, _cx: &App) -> usize {
+        self.hits.len()
+    }
+
+    fn render_item(
+        &mut self,
+        ix: IndexPath,
+        window: &mut Window,
+        cx: &mut Context<ListState<Self>>,
+    ) -> Option<ListItem> {
+        let hit = self.hits.get(ix.row)?;
+        Some(result_row(
+            hit,
+            self.serp.clone(),
+            self.searched_at?,
+            window,
+            cx,
+        ))
+    }
+
+    fn render_section_footer(
+        &mut self,
+        _section: usize,
+        _window: &mut Window,
+        cx: &mut Context<ListState<Self>>,
+    ) -> Option<impl IntoElement> {
+        let summary = self.summary.clone()?;
+        Some(
+            inset()
+                .h(FOOTER_HEIGHT)
+                .items_center()
+                .text_xs()
+                .text_color(cx.theme().muted_foreground)
+                .child(summary),
+        )
+    }
+
+    fn set_selected_index(
+        &mut self,
+        ix: Option<IndexPath>,
+        _window: &mut Window,
+        cx: &mut Context<ListState<Self>>,
+    ) {
+        self.selected = ix.map(|ix| ix.row);
+        cx.notify();
+    }
+
+    fn confirm(
+        &mut self,
+        secondary: bool,
+        _window: &mut Window,
+        cx: &mut Context<ListState<Self>>,
+    ) {
+        let Some(hit) = self.selected.and_then(|row| self.hits.get(row)) else {
+            return;
+        };
+        let url = hit.url.clone();
+        self.serp
+            .update(cx, |_, cx| {
+                cx.emit(SerpEvent::Open {
+                    url,
+                    new_tab: secondary,
+                })
+            })
+            .ok();
+    }
+}
+
+/// A row's leading edge, so what is not a result (placeholders, the footer)
+/// lines up with the results, and they with the answer's text.
+fn inset() -> gpui_kit::Div {
+    div().flex().pl_4()
+}
+
+/// A result's row: its site, where it leads, its title and its excerpt.
+/// Clicking it opens the page; its ⋮ button only shows where it came from.
+fn result_row(
+    hit: &SerpHit,
+    serp: WeakEntity<Serp>,
+    searched_at: DateTime<Local>,
+    window: &mut Window,
+    cx: &mut App,
+) -> ListItem {
+    let local = search::is_local_lane(&hit.lane);
+    let mark = if local {
+        Avatar::new()
+            .small()
+            .placeholder(IconName::HardDrive)
+            .text_color(cx.theme().muted_foreground)
+            .into_any_element()
+    } else {
+        site_icon(&hit.url, window, cx)
+    };
+    let theme = cx.theme();
+    let muted = theme.muted_foreground;
+    let site = site(&hit.url);
+    let key = element_key(&hit.url);
+    let emphasis = HighlightStyle {
+        font_weight: Some(FontWeight::SEMIBOLD),
+        ..Default::default()
+    };
+    let snippet = StyledText::new(hit.snippet.text.clone()).with_highlights(
+        hit.snippet
+            .emphasis
+            .iter()
+            .map(|range| (range.clone(), emphasis)),
+    );
+    let about = {
+        let hit = hit.clone();
+        Popover::new("about")
+            .trigger(
+                Button::new("about-trigger")
+                    .ghost()
+                    .xsmall()
+                    .icon(Lucide::EllipsisVertical)
+                    .accessibility_label("About this result")
+                    .tooltip("About this result")
+                    // The popover opens on mouse-down, which an accessibility
+                    // press only becomes on a button that takes clicks.
+                    .on_click(|_, _, _| {}),
+            )
+            .content(move |_, _, cx| about(&hit, searched_at, &serp, cx))
+    };
+    ListItem::new(SharedString::from(format!("serp-result:{key}")))
+        .group("serp-result")
+        .cursor_pointer()
+        .h(ROW_HEIGHT)
+        .px_4()
+        .py_3()
+        .rounded(theme.radius_tokens().lg)
+        .accessibility_label(if local {
+            format!("{}, {site}, Local", hit.title)
+        } else {
+            format!("{}, {site}", hit.title)
+        })
+        .child(
+            v_flex()
+                .flex_1()
+                .min_w_0()
+                .child(
+                    h_flex()
+                        .min_w_0()
+                        .gap_3()
+                        .child(mark)
+                        .child(
+                            v_flex()
+                                .min_w_0()
+                                .child(
+                                    h_flex()
+                                        .min_w_0()
+                                        .gap_1p5()
+                                        .text_sm()
+                                        .line_height(rems(1.25))
+                                        .child(div().min_w_0().truncate().child(site))
+                                        .when(local, |this| {
+                                            this.child(
+                                                div()
+                                                    .flex_shrink_0()
+                                                    .text_color(muted)
+                                                    .child("· Local"),
+                                            )
+                                        }),
+                                )
+                                .child(
+                                    div()
+                                        .min_w_0()
+                                        .truncate()
+                                        .text_xs()
+                                        .line_height(rems(1.))
+                                        .text_color(muted)
+                                        .child(breadcrumb(&hit.url)),
+                                ),
+                        )
+                        .child(
+                            div()
+                                .flex_shrink_0()
+                                .debug_selector(move || format!("serp-about:{key}"))
+                                .child(about),
+                        ),
+                )
+                .child(
+                    // An id keeps the hover state that a group hover's text
+                    // style, the underline, is laid out from.
+                    div()
+                        .id("serp-title")
+                        .mt_2()
+                        .min_w_0()
+                        .truncate()
+                        .text_xl()
+                        .line_height(rems(1.75))
+                        .text_color(theme.link)
+                        .group_hover("serp-result", |style| style.underline())
+                        .child(hit.title.clone()),
+                )
+                .child(
+                    div()
+                        .mt_1()
+                        .h(rems(2.5))
+                        .text_sm()
+                        .line_height(rems(1.25))
+                        .line_clamp(2)
+                        .text_ellipsis()
+                        .child(snippet),
+                ),
+        )
+}
+
+/// About this result: where it came from, and the ways to open it.
+fn about(
+    hit: &SerpHit,
+    searched_at: DateTime<Local>,
+    serp: &WeakEntity<Serp>,
+    cx: &mut Context<PopoverState>,
+) -> impl IntoElement + use<> {
+    let popover = cx.entity();
+    let muted = cx.theme().muted_foreground;
+    let open = |new_tab: bool| {
+        let url = hit.url.clone();
+        let serp = serp.clone();
+        let popover = popover.clone();
+        move |_: &ClickEvent, window: &mut Window, cx: &mut App| {
+            popover.update(cx, |popover, cx| popover.dismiss(window, cx));
+            // The popover is drawn by the list's row, which has to redraw
+            // to close it.
+            window.refresh();
+            serp.update(cx, |_, cx| {
+                cx.emit(SerpEvent::Open {
+                    url: url.clone(),
+                    new_tab,
+                })
+            })
+            .ok();
+        }
+    };
+    v_flex()
+        .debug_selector(|| "serp-about".into())
+        .w(rems(22.))
+        .gap_3()
+        .child(
+            div()
+                .text_xs()
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(muted)
+                .child("About this result"),
+        )
+        .child(
+            v_flex()
+                .gap_1()
+                .child(
+                    div()
+                        .font_weight(FontWeight::MEDIUM)
+                        .line_clamp(2)
+                        .text_ellipsis()
+                        .child(hit.title.clone()),
+                )
+                .child(
+                    div()
+                        .text_xs()
+                        .text_color(muted)
+                        .overflow_hidden()
+                        .whitespace_nowrap()
+                        .text_ellipsis_middle()
+                        .child(hit.url.to_string()),
+                ),
+        )
+        .child(
+            DescriptionList::horizontal()
+                .columns(1)
+                .bordered(false)
+                .label_width(rems(5.5))
+                .small()
+                .item("Found in", search::lane_origin(&hit.lane), 1)
+                .item("Providers", providers(hit), 1)
+                .item("Published", published(hit), 1)
+                .item("Retrieved", retrieved(hit, searched_at), 1),
+        )
+        .child(
+            h_flex()
+                .flex_wrap()
+                .gap_2()
+                .child(
+                    Button::new("serp-open")
+                        .primary()
+                        .small()
+                        .label("Open")
+                        .on_click(open(false)),
+                )
+                .child(
+                    div().debug_selector(|| "serp-open-new-tab".into()).child(
+                        Button::new("serp-open-new-tab")
+                            .outline()
+                            .small()
+                            .label("Open in New Tab")
+                            .on_click(open(true)),
+                    ),
+                ),
+        )
+}
+
+fn providers(hit: &SerpHit) -> String {
+    match (hit.providers.is_empty(), search::is_local_lane(&hit.lane)) {
+        (false, _) => hit.providers.join(", "),
+        (true, true) => "None: Frame kept it".to_string(),
+        (true, false) => "Not reported".to_string(),
+    }
+}
+
+/// The page's own date, as words: `2026-10-24` is "24 Oct 2026".
+fn published(hit: &SerpHit) -> String {
+    match hit.published_at.as_deref() {
+        Some(date) => match NaiveDate::parse_from_str(date, "%Y-%m-%d") {
+            Ok(date) => date.format("%-d %b %Y").to_string(),
+            Err(_) => date.to_string(),
+        },
+        None => "Not given".to_string(),
+    }
+}
+
+/// When Frame or RustyWeb fetched the page, which is not when it was
+/// published: live results now, local ones when Frame kept a copy.
+fn retrieved(hit: &SerpHit, searched_at: DateTime<Local>) -> String {
+    if search::is_local_lane(&hit.lane) {
+        "Before this search, when Frame kept a copy".to_string()
+    } else if hit.lane == "fresh" {
+        format!("During this search, at {}", searched_at.format("%H:%M"))
+    } else {
+        "Not reported".to_string()
     }
 }
 
@@ -492,15 +962,84 @@ fn element_key(url: &Url) -> String {
     }
 }
 
-/// The URL line above a title: host and path without the scheme.
-fn display_url(url: &Url) -> String {
-    let host = url.host_str().unwrap_or_default();
-    let host = host.strip_prefix("www.").unwrap_or(host);
-    let path = url.path().trim_end_matches('/');
-    format!("{host}{path}")
+/// The site a result is on, by its registrable domain: `rust-lang.org` for
+/// `doc.rust-lang.org`. An address that is not a domain stays as it is.
+fn site(url: &Url) -> String {
+    match url.host() {
+        Some(url::Host::Domain(domain)) => net_traits::pub_domains::reg_suffix(domain).to_string(),
+        Some(host) => host.to_string(),
+        None => url.scheme().to_string(),
+    }
 }
 
-/// Count, lane mix, providers and time on one line.
+/// A web result's mark: its site's icon, on white, the ground favicons are
+/// drawn for, so a dark one still shows in the dark theme; the site's
+/// initials where it has none. The circle stays empty while the icon loads,
+/// so a row never turns from initials to an icon.
+fn site_icon(url: &Url, window: &mut Window, cx: &mut App) -> AnyElement {
+    let initials = || {
+        Avatar::new()
+            .small()
+            .name(site_mark(&site(url)))
+            .into_any_element()
+    };
+    let Some(root) = site_root(url) else {
+        return initials();
+    };
+    let icon = window
+        .use_asset::<SiteIcon>(&root, cx)
+        .and_then(|icon| window.use_asset::<IconImage>(&icon, cx));
+    match icon {
+        Some(None) => initials(),
+        icon => h_flex()
+            .size_6()
+            .flex_shrink_0()
+            .justify_center()
+            .rounded_full()
+            .border_1()
+            .border_color(cx.theme().border)
+            .bg(gpui_kit::white())
+            .when_some(icon.flatten(), |circle, icon| {
+                circle.child(img(icon).size_4())
+            })
+            .into_any_element(),
+    }
+}
+
+/// The root of the site a result is on, where its icon is named:
+/// `https://docs.rs/`. Only the web has one.
+fn site_root(url: &Url) -> Option<Url> {
+    matches!(url.scheme(), "http" | "https")
+        .then(|| url.join("/").ok())
+        .flatten()
+}
+
+/// What a site's mark is drawn from: its name without the public suffix,
+/// `rust-lang` for `rust-lang.org`.
+fn site_mark(site: &str) -> String {
+    let suffix = net_traits::pub_domains::pub_suffix(site);
+    site.strip_suffix(suffix)
+        .map(|name| name.trim_end_matches('.'))
+        .filter(|name| !name.is_empty())
+        .unwrap_or(site)
+        .to_string()
+}
+
+/// Where a result leads, the way web search writes it:
+/// `https://doc.rust-lang.org › book › ch01-00`.
+fn breadcrumb(url: &Url) -> String {
+    let mut crumbs = format!("{}://{}", url.scheme(), url.host_str().unwrap_or_default());
+    for segment in url.path_segments().into_iter().flatten() {
+        if segment.is_empty() {
+            continue;
+        }
+        crumbs.push_str(" › ");
+        crumbs.push_str(&percent_decode_str(segment).decode_utf8_lossy());
+    }
+    crumbs
+}
+
+/// Count, lane mix, search time and duration on one line.
 fn summary(result: &SerpResult) -> String {
     let count = result.hits.len();
     let mut parts = vec![format!(
@@ -525,9 +1064,10 @@ fn summary(result: &SerpResult) -> String {
                 .join(", "),
         );
     }
-    if !result.providers.is_empty() {
-        parts.push(result.providers.join(", "));
-    }
+    parts.push(format!(
+        "searched at {}",
+        result.searched_at.format("%H:%M")
+    ));
     parts.push(format!("{:.1} s", result.elapsed_ms as f64 / 1000.0));
     parts.join(" · ")
 }
@@ -548,24 +1088,30 @@ fn unique_sources(answer: Option<&SerpAnswer>) -> Vec<SerpSource> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
+    use crate::markup;
     use crate::search::SerpClaim;
+    use chrono::TimeZone as _;
+    use gpui_kit::component::Root;
+    use gpui_kit::{Modifiers, TestAppContext, VisualTestContext, size};
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
-    fn hit(url: &str, lane: &str) -> SerpHit {
+    pub(crate) fn hit(url: &str, lane: &str) -> SerpHit {
         let url = Url::parse(url).unwrap();
         SerpHit {
             title: "Title".into(),
             host: url.host_str().unwrap().into(),
             url,
-            snippet: String::new(),
+            snippet: markup::parse("An <b>excerpt</b>"),
             providers: vec![],
             lane: lane.into(),
             published_at: None,
         }
     }
 
-    fn result(hits: Vec<SerpHit>) -> SerpResult {
+    pub(crate) fn result(hits: Vec<SerpHit>) -> SerpResult {
         SerpResult {
             query: "q".into(),
             ask: false,
@@ -575,6 +1121,7 @@ mod tests {
             answer: None,
             answer_note: None,
             notes: vec![],
+            searched_at: Local.with_ymd_and_hms(2026, 10, 24, 17, 31, 0).unwrap(),
             elapsed_ms: 1840,
         }
     }
@@ -588,15 +1135,42 @@ mod tests {
     }
 
     #[test]
-    fn display_url_drops_scheme_www_and_trailing_slash() {
-        let url = Url::parse("https://www.example.com/docs/").unwrap();
-        assert_eq!(display_url(&url), "example.com/docs");
-        let root = Url::parse("https://example.com/").unwrap();
-        assert_eq!(display_url(&root), "example.com");
+    fn a_web_result_looks_for_its_sites_icon_at_the_root() {
+        let page = Url::parse("https://docs.rs/gpui-kit/latest/gpui_kit/?q=1").unwrap();
+        assert_eq!(
+            site_root(&page).map(String::from).as_deref(),
+            Some("https://docs.rs/")
+        );
+        let port = Url::parse("http://127.0.0.1:8080/a").unwrap();
+        assert_eq!(
+            site_root(&port).map(String::from).as_deref(),
+            Some("http://127.0.0.1:8080/")
+        );
+        let file = Url::parse("file:///Users/a/notes.md").unwrap();
+        assert_eq!(site_root(&file), None);
     }
 
     #[test]
-    fn summary_counts_lanes_in_order() {
+    fn a_result_is_named_by_its_site_and_led_to_by_a_breadcrumb() {
+        let url = Url::parse("https://doc.rust-lang.org/book/ch01%2000/").unwrap();
+        assert_eq!(site(&url), "rust-lang.org");
+        assert_eq!(site_mark(&site(&url)), "rust-lang");
+        assert_eq!(
+            breadcrumb(&url),
+            "https://doc.rust-lang.org › book › ch01 00"
+        );
+
+        let uk = Url::parse("https://www.bbc.co.uk/").unwrap();
+        assert_eq!(site(&uk), "bbc.co.uk");
+        assert_eq!(site_mark(&site(&uk)), "bbc");
+        assert_eq!(breadcrumb(&uk), "https://www.bbc.co.uk");
+
+        let ip = Url::parse("http://127.0.0.1:8080/a").unwrap();
+        assert_eq!(site(&ip), "127.0.0.1");
+    }
+
+    #[test]
+    fn summary_counts_lanes_and_says_when_it_searched() {
         let r = result(vec![
             hit("https://a.example/1", "warm"),
             hit("https://b.example/2", "fresh"),
@@ -604,10 +1178,25 @@ mod tests {
         ]);
         assert_eq!(
             summary(&r),
-            "3 results · 1 local, 2 fresh · gdelt, bluesky · 1.8 s"
+            "3 results · 1 local, 2 web · searched at 17:31 · 1.8 s"
         );
         let one = result(vec![hit("https://a.example/1", "fresh")]);
         assert!(summary(&one).starts_with("1 result · "));
+    }
+
+    #[test]
+    fn publication_and_retrieval_are_told_apart() {
+        let at = result(vec![]).searched_at;
+        let mut web = hit("https://a.example/1", "fresh");
+        web.published_at = Some("2024-10-24".into());
+        assert_eq!(published(&web), "24 Oct 2024");
+        assert_eq!(retrieved(&web, at), "During this search, at 17:31");
+
+        let mut local = hit("https://b.example/2", "warm");
+        local.published_at = Some("last spring".into());
+        assert_eq!(published(&local), "last spring");
+        assert!(retrieved(&local, at).starts_with("Before this search"));
+        assert_eq!(published(&hit("https://c.example/3", "fresh")), "Not given");
     }
 
     #[test]
@@ -645,5 +1234,176 @@ mod tests {
             ]
         );
         assert!(unique_sources(None).is_empty());
+    }
+
+    /// A results page in a headless window, and every `Open` it asks for.
+    fn open_page(
+        hits: Vec<SerpHit>,
+        cx: &mut TestAppContext,
+    ) -> (
+        Entity<Serp>,
+        Rc<RefCell<Vec<SerpEvent>>>,
+        &mut VisualTestContext,
+    ) {
+        cx.update(|cx| {
+            gpui_kit::init(cx);
+            crate::theme::init(cx);
+        });
+        let opened = Rc::new(RefCell::new(Vec::new()));
+        let mut page = None;
+        let mut subscription = None;
+        let window = cx.open_window(size(px(1200.), px(800.)), |window, cx| {
+            let serp = cx.new(|cx| Serp::loaded(result(hits), window, cx));
+            let seen = opened.clone();
+            subscription = Some(cx.subscribe(&serp, move |_, _, event: &SerpEvent, _| {
+                seen.borrow_mut().push(event.clone())
+            }));
+            page = Some(serp.clone());
+            Root::new(serp, window, cx)
+        });
+        std::mem::forget(subscription);
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        cx.update(|window, _| window.activate_window());
+        let serp = page.expect("results page");
+        cx.update(|window, cx| serp.focus_handle(cx).focus(window, cx));
+        cx.run_until_parked();
+        (serp, opened, cx)
+    }
+
+    fn selected_url(serp: &Entity<Serp>, cx: &mut VisualTestContext) -> Option<String> {
+        cx.update(|_, cx| {
+            let results = serp.read(cx).list.read(cx).delegate();
+            results
+                .selected
+                .and_then(|row| results.hits.get(row))
+                .map(|hit| hit.url.to_string())
+        })
+    }
+
+    #[gpui_kit::test]
+    fn search_notices_remain_visible_with_and_without_results(cx: &mut TestAppContext) {
+        let (serp, _, cx) = open_page(vec![], cx);
+        for hits in [vec![], vec![hit("https://a.example/", "warm")]] {
+            cx.update(|window, cx| {
+                serp.update(cx, |serp, cx| {
+                    let mut result = result(hits);
+                    result
+                        .notes
+                        .push("Only news and social sources were searched".into());
+                    result.degradations.push(search::Degradation {
+                        code: "failed".into(),
+                        message: "Provider unavailable".into(),
+                    });
+                    serp.state = State::Loaded(result);
+                    serp.show_scope(window, cx);
+                    cx.notify();
+                })
+            });
+            cx.run_until_parked();
+            assert!(
+                cx.debug_bounds("search-notice:Only news and social sources were searched")
+                    .is_some()
+            );
+            assert!(
+                cx.debug_bounds("search-notice:Provider unavailable")
+                    .is_some()
+            );
+        }
+    }
+
+    #[gpui_kit::test]
+    fn the_keyboard_moves_through_results_and_opens_one(cx: &mut TestAppContext) {
+        let (serp, opened, cx) = open_page(
+            vec![
+                hit("https://a.example/1", "warm"),
+                hit("https://b.example/2", "fresh"),
+                hit("https://c.example/3", "fresh"),
+            ],
+            cx,
+        );
+        assert_eq!(
+            selected_url(&serp, cx).as_deref(),
+            Some("https://a.example/1")
+        );
+
+        cx.simulate_keystrokes("down");
+        cx.run_until_parked();
+        assert_eq!(
+            selected_url(&serp, cx).as_deref(),
+            Some("https://b.example/2")
+        );
+
+        cx.simulate_keystrokes("enter");
+        cx.run_until_parked();
+        cx.simulate_keystrokes("down cmd-enter");
+        cx.run_until_parked();
+        assert_eq!(
+            *opened.borrow(),
+            [
+                SerpEvent::Open {
+                    url: Url::parse("https://b.example/2").unwrap(),
+                    new_tab: false,
+                },
+                SerpEvent::Open {
+                    url: Url::parse("https://c.example/3").unwrap(),
+                    new_tab: true,
+                },
+            ]
+        );
+    }
+
+    #[gpui_kit::test]
+    fn about_this_result_opens_from_its_button_without_opening_the_page(cx: &mut TestAppContext) {
+        let (_, opened, cx) = open_page(
+            vec![
+                hit("https://a.example/1", "fresh"),
+                hit("https://b.example/2", "fresh"),
+            ],
+            cx,
+        );
+        assert!(cx.debug_bounds("serp-about").is_none());
+
+        let button = cx
+            .debug_bounds("serp-about:b.example/2")
+            .expect("the second result's button")
+            .center();
+        cx.simulate_click(button, Modifiers::none());
+        cx.run_until_parked();
+        assert!(cx.debug_bounds("serp-about").is_some());
+        assert!(opened.borrow().is_empty());
+
+        let new_tab = cx
+            .debug_bounds("serp-open-new-tab")
+            .expect("Open in New Tab")
+            .center();
+        cx.simulate_click(new_tab, Modifiers::none());
+        cx.run_until_parked();
+        assert_eq!(
+            *opened.borrow(),
+            [SerpEvent::Open {
+                url: Url::parse("https://b.example/2").unwrap(),
+                new_tab: true,
+            }]
+        );
+        assert!(cx.debug_bounds("serp-about").is_none());
+    }
+
+    #[gpui_kit::test]
+    fn scopes_narrow_the_list_to_local_or_web(cx: &mut TestAppContext) {
+        let (serp, _, cx) = open_page(
+            vec![
+                hit("https://a.example/1", "warm"),
+                hit("https://b.example/2", "fresh"),
+            ],
+            cx,
+        );
+        cx.update(|window, cx| serp.update(cx, |serp, cx| serp.set_scope(Scope::Web, window, cx)));
+        cx.run_until_parked();
+        assert_eq!(
+            selected_url(&serp, cx).as_deref(),
+            Some("https://b.example/2")
+        );
+        let rows = cx.update(|_, cx| serp.read(cx).list.read(cx).delegate().hits.len());
+        assert_eq!(rows, 1);
     }
 }

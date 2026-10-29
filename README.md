@@ -9,6 +9,13 @@ default search engine, with its results page drawn natively.
 
 ## Using it
 
+With no tabs open, Home shows native places and recent pages and searches.
+Mail, Library, Notes, Terminal, Agent and Apps currently open clearly labeled
+placeholder views. Search results are native, with keyboard navigation, local/web
+filters, source details and visible notices when search coverage is incomplete.
+Continue is kept in each profile’s `recents.json`; Clear removes that list.
+
+
 - **Right-click** anywhere: a menu opens at the pointer with its search field
   first and already focused, over the page's own entries and Platinum's tools.
   Type to filter those and find your tabs and every command, or to open an
@@ -18,11 +25,11 @@ default search engine, with its results page drawn natively.
 - **⌘L** focuses the address bar. An address opens; anything else searches.
   A leading `?` always searches. ⌘Return opens in a new tab. Away from the
   field, the bar shows the page as "host / title".
-- **Ask**, the button at the end of the address bar, turns the AI on (filled)
-  and off (outlined). While it is on, the field reads "Ask..." and what you
-  type is answered rather than searched. The palette and View > Ask AI do the
-  same.
-- **Share**, after Ask, opens macOS's share sheet for the page: Mail,
+- **Ask**, the icon inside the address bar at its end, turns the AI on
+  (filled) and off (outlined). While it is on, the field reads "Ask..." and
+  what you type is answered rather than searched. Home's field has the same
+  icon. The palette and View > Ask AI do the same.
+- **Share**, beside the address bar, opens macOS's share sheet for the page: Mail,
   Messages, AirDrop, Notes and the rest. File > Share... and the palette do
   the same.
 - **Downloads**: a link to a file (a `.dmg`, `.zip`, `.pdf` and the like), a
@@ -86,9 +93,11 @@ next search on the topic finds them locally.
 The chrome uses the Asciinema theme in dark mode and GitHub Sharp in light,
 with the frame around each page drawn in the title-bar color (`#e1e4e8` in
 light). On macOS 26 and later that frame, the row of tabs included, is
-Liquid Glass: the title-bar color over the glass, at 55% in dark and 30% in
-light, so the desktop shows through it. The glass follows Platinum's appearance,
-not the system's. Pages, their toolbars and the selected tab stay opaque.
+Liquid Glass: clear glass tinted to the title-bar color, at 65% in dark and
+60% in light, so the desktop shows through it. The glass follows Platinum's
+appearance, not the system's. A page's toolbar and its selected tab take the
+page's color as a half-transparent wash over the glass; pages stay opaque,
+and the address field keeps a nearly opaque surface of the theme's own.
 With Reduce Transparency on, or on an older macOS, the frame is solid.
 As in Dia, the selected tab rises out of its page's toolbar, and both
 take the color along the top of the page, following it as the page changes;
@@ -270,3 +279,5 @@ editable master, compact and micro drawings). `src/brand.rs`
 sets the `.icns` as the Dock icon at launch, since Platinum runs as a bare
 binary; a bundle would name the same file in its `Info.plist`. The wordmark
 is DejaVu Sans Bold, outlined to paths (`assets/brand/DejaVu-font-notice.txt`).
+
+Home and the places’ icons (mail, media, notes, terminal, agent) are redrawn from Streamline Ultimate Light; All apps is drawn to match them.
