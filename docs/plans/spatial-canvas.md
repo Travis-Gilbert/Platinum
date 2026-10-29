@@ -1640,30 +1640,35 @@ otherwise.
 
 ## Reproducing the checks
 
-None of this runs yet: M1 builds `examples/canvas_check.rs`, the probe page
-`tests/canvas/zoom-probe.html` and the scripts under `tests/canvas/`, with the
-interface below. Build `canvas_check` and serve the probe:
+M1's checks run through `tests/canvas/run-checks.py`. It builds through
+`/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh`, which takes the shared
+target's lock and builds into `cargo-targets/frame-canvas`; serves
+`tests/canvas/` on `127.0.0.1` at a free port; and keeps the display awake
+while a case runs. The cases open real windows, so the Mac's display must be
+unlocked. A case never overwrites an earlier run of itself in the same
+`--evidence` directory, and the run stops at the first failure. Build
+`canvas_check`:
 
 ```bash
-CARGO_TARGET_DIR="/Volumes/SSD Samsung/cargo-targets/frame" script/media-env cargo build --locked --example canvas_check
+python3 tests/canvas/run-checks.py --only build --evidence docs/plans/evidence/spatial-canvas-<date>/
 ```
+
+Then run the zoom gate:
 
 ```bash
-python3 -I -m http.server 8766 --bind 127.0.0.1 --directory tests/canvas
+python3 tests/canvas/run-checks.py --only zoom --evidence docs/plans/evidence/spatial-canvas-<date>/
 ```
 
-In another terminal, run the zoom gate:
-
-```bash
-CARGO_TARGET_DIR="/Volumes/SSD Samsung/cargo-targets/frame" script/media-env cargo run --locked --example canvas_check -- 'http://127.0.0.1:8766/zoom-probe.html' --zoom 1,0.35,2,1
-```
-
-`canvas_check` prints one JSON line per camera step, with the probe's
-`resize` count, inner sizes and `devicePixelRatio`, and saves a screenshot per
-step in the system temporary directory. Until R1 lands, the lines show a
-`resize` at each settle; that is the record M1 keeps. Each script under
-`tests/canvas/` takes `--evidence docs/plans/evidence/spatial-canvas-<date>/`
-and writes its results there.
+The zoom case opens `zoom-probe.html` in a real window and steps the camera
+through 1, 0.35, 2 and 1. In `<evidence>/zoom/` it saves `step-N.png` for each
+step, `zoom.json` with the probe's `resize` count, inner sizes and
+`devicePixelRatio` at each step, and `result.json` with the verdict. Since R1
+the gate passes only with no `resize` and a constant viewport. The runner adds
+each command, its log and the binary's hash to `<evidence>/commands.json`.
+Without `--only` it runs Frame's tests, the build and every native case: the
+surface diagnosis, zoom, sign-in and the measurements. `--dry-run` records the
+plan without building or opening a window. The checks that need a person are
+in `tests/canvas/MANUAL.md`.
 
 ## Status
 
