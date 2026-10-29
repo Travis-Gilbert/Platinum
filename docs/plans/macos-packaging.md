@@ -33,8 +33,8 @@ ad-hoc signing must remain clearly identified as local validation.
 
 ## Validation
 
-Implemented the pipeline and workflow. An optimized arm64 build and full
-bundle acceptance are in progress. No Developer ID Application identity was
+Implemented the pipeline and workflow; optimized arm64 app and ZIP validation
+are recorded below. No Developer ID Application identity was
 available in the current keychain search list at the start of this task.
 
 - Eight packaging tests passed using real compiled Mach-O fixtures, including
@@ -60,6 +60,54 @@ available in the current keychain search list at the start of this task.
   confirmed with a failing file read. This is native codec/module acceptance,
   not in-browser playback. Results: [media](evidence/macos-packaging-2026-10-29/media.json),
   [GIO](evidence/macos-packaging-2026-10-29/gio.txt).
+
+## Delivered artifacts and application acceptance
+
+Application source: `1dfac1c8ba31b01ad22cb7fe2d0a3c7c4b84cb15`, with a clean
+working tree when both bundles were generated. Implementation is in
+`3f9aee9`; later commits record validation only. Built on arm64 macOS 27.0.1
+with Rust 1.97.1 and SDK 27.2. The bundled libraries require macOS 27.0.0.
+
+- Regular app: `/Volumes/SSD Samsung/Platinum-releases/1dfac1c/Platinum.app`.
+  The build command was `script/package-macos build --output ...`, which ran
+  `script/media-env cargo build --locked --release --bin frame` without test
+  features. It passed in 13m 29s with existing dependency/application warnings.
+- Acceptance app retained at
+  `/Volumes/SSD Samsung/Platinum-releases/acceptance-1dfac1c/Platinum.app`.
+  Built with `script/package-macos build --snapshot --output ...`. The first
+  optimized snapshot build passed in 29m 58s. A verification rerun with
+  `CARGO_NET_OFFLINE=true` failed because ort-sys disables linking its downloaded
+  runtime in that mode; the documented command without that override passed.
+- Both bundles passed closed dependency-graph and ad-hoc code/resource-signature
+  verification: 109 native code files, 39 pinned media plugins, internal
+  symlinks only. Every native library hash in the regular bundle matches the
+  tested acceptance bundle. [Release receipt](evidence/macos-packaging-2026-10-29/release-receipt.json).
+- The acceptance app was copied to a new directory and launched from `/` with
+  `FRAME_WORKSPACE_CHECK` and the development-path-denial sandbox. It exited 0,
+  rendered six native Home/results captures, completed real Servo navigation,
+  restored native results with Back, and preserved results with Command-Return.
+  [Report](evidence/macos-packaging-2026-10-29/native-relocated.json),
+  [Home](evidence/macos-packaging-2026-10-29/home-dark.png),
+  [Servo page](evidence/macos-packaging-2026-10-29/servo-page.png).
+- Launch Services also passed the same acceptance scenario using
+  `open -n -W --env FRAME_WORKSPACE_CHECK=/tmp/platinum-launch-services ...`.
+  [Report](evidence/macos-packaging-2026-10-29/launch-services.json). An earlier
+  attempt redirecting stdout/stderr to the external disk failed at launchd
+  with EPERM; the ordinary launch without those redirects succeeded.
+- Native UI acceptance used the snapshot-enabled build and synthetic search
+  fixtures. The regular build has been built and packaged; the user's normal
+  browsing profile was not opened or migrated for this check. Live search,
+  account sessions, model inference, and in-browser media were not retested.
+- The manual Actions workflow passed actionlint but was not executed on a
+  hosted runner. Temporary validation app copies were removed; acceptance
+  images, reports, and the reusable acceptance app were retained.
+- Created `Platinum-0.1.0-arm64-adhoc.zip` with the pipeline's `archive` command,
+  extracted it with `ditto -x -k` into a new directory, and reran `verify`.
+  The extracted app passed all linkage and signature checks. The ZIP is
+  117,585,392 bytes; its SHA-256 is
+  `591be71849ffafcd7f55ab5537875152b33773b01d387c2358beb42bb5376ca4`.
+  The ZIP, original receipt, and `SHA256SUMS` are beside the regular app.
+  [Round-trip verification](evidence/macos-packaging-2026-10-29/zip-roundtrip.json).
 
 Certificate-dependent gates remain: timestamped Developer ID signatures,
 hardened-runtime execution, Apple notarization/stapling, and downloaded-artifact

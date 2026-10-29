@@ -1,0 +1,14 @@
+{
+  "app": "Platinum.app (extracted from ZIP)",
+  "native_code_files": 109,
+  "architectures": [
+    16777228
+  ],
+  "minimum_macos": "27.0.0",
+  "portable_linkage": true,
+  "signatures_verified": true,
+  "developer_id_verified": false,
+  "archive": "Platinum-0.1.0-arm64-adhoc.zip",
+  "archive_sha256": "591be71849ffafcd7f55ab5537875152b33773b01d387c2358beb42bb5376ca4",
+  "archive_bytes": 117585392
+}
