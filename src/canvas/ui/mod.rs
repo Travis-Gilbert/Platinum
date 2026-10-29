@@ -4,7 +4,7 @@
 //!
 //! Every component is stateless. It takes plain values through builder
 //! methods and reports what the person did through handler closures, the way
-//! GPUI Kit's own components do. None reads a Frame action, a canvas entity or
+//! GPUI Kit's own components do. None reads a Platinum action, a canvas entity or
 //! a global, so the canvas backend decides what each handler means. The one
 //! retained piece is the omnibar's text, which GPUI Kit keeps in an
 //! `InputState` the owner holds (`Omnibar::input` makes it).
@@ -24,7 +24,7 @@
 //!
 //! SOURCING: GPUI Kit's `Button`, `TabBar`, `DropdownMenu`/`PopupMenu`,
 //! `Input`, `ListItem`, `Popover`, `Switch`, `Separator` and `Tooltip`, and
-//! its `popover_style` surface; each file names its own parts. Frame's icons
+//! its `popover_style` surface; each file names its own parts. Platinum's icons
 //! (`crate::icons`) draw every glyph GPUI Kit's default set lacks.
 
 mod caption;

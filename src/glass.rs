@@ -39,7 +39,7 @@ const LIGHT_TINT: f32 = 0.6;
 /// theme's text does not read; this much of the frame's own color makes it
 /// light over any desktop and still lets the glass's sheen through.
 const LIGHT_FRAME: f32 = 0.8;
-/// How much of the page's color lies over the frame on Frame's own surfaces
+/// How much of the page's color lies over the frame on Platinum's own surfaces
 /// in a tab's card.
 const PANE: f32 = 0.5;
 /// How much of the theme's own color the address field keeps over the glass:
@@ -80,7 +80,7 @@ pub fn frame(cx: &App) -> Hsla {
     }
 }
 
-/// The fill of Frame's own surfaces in a tab's card, Home and the places:
+/// The fill of Platinum's own surfaces in a tab's card, Home and the places:
 /// the page's color, half let through, over the frame. They read as part of
 /// the chrome, glass and all, not as a page, while the selected tab still
 /// rises out of a color of its own.

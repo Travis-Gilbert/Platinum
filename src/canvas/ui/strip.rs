@@ -5,7 +5,7 @@
 //!   Remove;
 //! - a selection: Open side by side, Arrange, Ask or Find related, Remove.
 //!
-//! SOURCING: GPUI Kit's ghost `Button` with `.tooltip`, as Frame's own toolbar
+//! SOURCING: GPUI Kit's ghost `Button` with `.tooltip`, as Platinum's own toolbar
 //! buttons are, and `Separator` before the one command that removes. A strip
 //! is a short fixed row of commands, not a menu, so `DropdownMenu` does not
 //! apply.

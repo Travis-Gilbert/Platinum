@@ -21,7 +21,7 @@ are in the evidence directory. Those captures do not include the macOS IME
 candidate window, system file/colour panels, the desktop, or physical gestures.
 
 For the following checks, serve `tests/canvas` on loopback, open its `signin/`
-fixture in a temporary Frame profile, and use Ctrl-Cmd-B to enter the board.
+fixture in a temporary Platinum profile, and use Ctrl-Cmd-B to enter the board.
 Do not use a real profile, sign into a real site, or change system settings.
 Use an already configured input source and existing accessibility permissions.
 Repeat at zoom 0.35, 1 and 2. Record the date, display, input source, outcome,

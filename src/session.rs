@@ -1,10 +1,10 @@
-//! What Frame keeps between launches, in its data directory: the pinned
+//! What Platinum keeps between launches, in its data directory: the pinned
 //! sites (`pins.json`), the tabs with their tree (`session.json`), and the
 //! icons of the sites those name (`favicons/`), so a pin or a restored tab
 //! shows its site's icon before its page has loaded.
 //!
 //! Each file is written whole, through a temporary file, a moment after a
-//! change, and read once at launch. A file Frame cannot make sense of is set
+//! change, and read once at launch. A file Platinum cannot make sense of is set
 //! aside rather than written over, and one it cannot read at all is left
 //! alone. Icons are kept only for the sites the pins and the session name,
 //! so the folder is not a record of browsing.
@@ -56,7 +56,7 @@ pub struct Snapshot {
     hosts: HashSet<String>,
 }
 
-/// Keep Frame's state under `data_dir`.
+/// Keep Platinum's state under `data_dir`.
 pub fn init(data_dir: &Path, cx: &mut App) {
     cx.set_global(Store::new(data_dir.to_owned()));
 }
@@ -85,7 +85,7 @@ impl Store {
     }
 
     /// The file `name` as `parse` reads it, or none. A file that is there
-    /// but is not one Frame can read, broken JSON included, is set aside
+    /// but is not one Platinum can read, broken JSON included, is set aside
     /// before the next save could write over it. One that cannot be read
     /// now, for want of permission say, is left alone and not written over.
     fn load<T>(&self, name: &'static str, parse: impl FnOnce(&Value) -> Option<T>) -> Option<T> {
@@ -108,7 +108,7 @@ impl Store {
         if parsed.is_none() {
             let aside = path.with_extension("json.unreadable");
             log::warn!(
-                "{} is not Frame's; moved to {}",
+                "{} is not Platinum's; moved to {}",
                 path.display(),
                 aside.display()
             );
@@ -208,7 +208,7 @@ impl Store {
     }
 }
 
-/// A session file's text, as Frame reads it at launch.
+/// A session file's text, as Platinum reads it at launch.
 #[cfg(test)]
 pub fn parse_session(text: &str) -> Option<Session> {
     format::session_from_json(&serde_json::from_str(text).ok()?)

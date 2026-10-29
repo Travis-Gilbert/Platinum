@@ -1,5 +1,5 @@
 //! Render the spatial canvas's chrome in every state, in a real window with
-//! Frame's glass under it, in the dark and the light theme.
+//! Platinum's glass under it, in the dark and the light theme.
 //!
 //! Usage: canvas_chrome_check <png base path> [--screen] [--backdrop]
 //!

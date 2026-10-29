@@ -161,7 +161,7 @@ pub fn pins_to_json(pins: &[Pin]) -> Value {
     json!({ "version": VERSION, "pins": pins })
 }
 
-/// None when the file is not one Frame wrote.
+/// None when the file is not one Platinum wrote.
 pub fn pins_from_json(value: &Value) -> Option<Vec<Pin>> {
     let pins = value.get("pins")?.as_array()?;
     pins.iter()
@@ -277,7 +277,7 @@ fn layout_from_json(value: &Value) -> Option<Layout> {
     Some(Layout::Split { vertical, children })
 }
 
-/// None when the file is not one Frame wrote. A tab whose address no longer
+/// None when the file is not one Platinum wrote. A tab whose address no longer
 /// parses comes back as a new tab, and one without an id is left out,
 /// rather than losing the rest.
 pub fn session_from_json(value: &Value) -> Option<Session> {

@@ -59,7 +59,7 @@ default search engine, with its results page drawn natively.
   Tab, the palette, Pin Tab in a tab's right-click menu, or dropping a tab
   on the tray or the sidebar's pins pins a site; right-click a pin to Unpin
   it.
-- Frame reopens the tabs it had, in their tree with their names and folds,
+- Platinum reopens the tabs it had, in their tree with their names and folds,
   side by side as they were, and the sidebar as it was, at its width. Each
   tab loads its page once it is the active tab, showing its site's icon kept
   from before.
@@ -69,8 +69,9 @@ default search engine, with its results page drawn natively.
 - Back from a page that has nowhere to go returns to the search results.
 
 The pins (`pins.json`), the tabs and their tree (`session.json`) and the
-icons of the sites those name (`favicons/`) are kept in
-`~/Library/Application Support/Frame`.
+icons of the sites those name (`favicons/`) are kept in the profile's folder
+in `~/Library/Application Support/Platinum`: `profile/` for the first profile,
+`profiles/<id>/` for the others.
 
 Search is local first. Every web page you open is kept in a local index in
 `~/Library/Application Support/Platinum`, and search looks there before the web;
@@ -221,7 +222,7 @@ directory on another disk; a Servo build needs about 25 GB. Use
 
 To see the window without a screenshot (which needs the Screen Recording
 permission), build with the development `snapshot` feature and name a file:
-Frame keeps a picture of its window there, redrawn every two seconds.
+Platinum keeps a picture of its window there, redrawn every two seconds.
 
 ```bash
 script/media-env cargo build --features snapshot
@@ -239,7 +240,7 @@ GPUI's scene. `vendor/` holds two small patches, each described in its
 The Ask icons (`assets/icons/ask.svg`, `ask-on.svg`) are Streamline's
 "design file AI", licensed CC BY 4.0. The pin, unpin and rename icons
 (`pin.svg`, `pin-off.svg`, `rename.svg`) are Lucide's, ISC licensed, given
-the same duotone as Frame's others. The page, share, downloads and
+the same duotone as Platinum's others. The page, share, downloads and
 appearance icons are redrawn from Streamline's Ultimate Duotone set as
 single-color masks, so their duotone takes the theme's text color; the
 downloads glyph is `sd-card-download`, from its CC BY 4.0 free subset.

@@ -225,7 +225,7 @@ fn the_right_click_menu_leads_with_tools_and_finds_tabs_once_typed(cx: &mut Test
     let untyped = offered(&browser, "", cx);
     assert!(
         untyped[0].iter().all(|pick| matches!(pick, Pick::Command)),
-        "Frame's tools come first"
+        "Platinum's tools come first"
     );
     assert!(!lists_tabs(&untyped), "no list of tabs until typing");
     assert!(lists_tabs(&offered(&browser, "example", cx)));
@@ -1033,7 +1033,7 @@ fn the_tree_and_the_sidebar_survive_a_restart(cx: &mut TestAppContext) {
     cx.executor().advance_clock(Duration::from_secs(2));
     cx.run_until_parked();
     let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
-    let saved = session::parse_session(&saved).expect("Frame's session");
+    let saved = session::parse_session(&saved).expect("Platinum's session");
     assert_eq!(saved.tabs.len(), 4);
     assert!(saved.sidebar);
     let _ = std::fs::remove_dir_all(&dir);
@@ -1108,7 +1108,7 @@ fn a_split_survives_a_restart(cx: &mut TestAppContext) {
     cx.executor().advance_clock(Duration::from_secs(2));
     cx.run_until_parked();
     let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
-    let saved = session::parse_session(&saved).expect("Frame's session");
+    let saved = session::parse_session(&saved).expect("Platinum's session");
     let (left, right, share) = halves(&saved.dock);
     assert_eq!(left, &group(&[1, 2], 1));
     let Layout::Group { tabs, shown: 1 } = right else {

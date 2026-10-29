@@ -1,4 +1,4 @@
-//! The headless core of Frame's notes app: parses notes, resolves links and decides what the index contains.
+//! The headless core of Platinum's notes app: parses notes, resolves links and decides what the index contains.
 mod authority;
 mod canvas;
 mod frontmatter;

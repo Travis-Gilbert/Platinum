@@ -5,7 +5,7 @@
 //! SOURCING: GPUI Kit's `Button` (ghost, a primary tint for the tool in hand) with
 //! `DropdownMenu` and `PopupMenu` for Insert, which keep the menu's keyboard
 //! and dismissal; `TabBar` (segmented) for the mode switch, which is a choice
-//! of view; `Separator` between the groups. Only the glyphs are Frame's.
+//! of view; `Separator` between the groups. Only the glyphs are Platinum's.
 
 use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::menu::{DropdownMenu as _, PopupMenu, PopupMenuItem};

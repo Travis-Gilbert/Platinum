@@ -84,7 +84,7 @@ impl Controls {
         self.popup.as_ref().is_some_and(|(menu, _, _)| menu.focus_handle(cx).is_focused(window))
     }
 
-    /// The color or file panel Frame opened takes the key window, as in
+    /// The color or file panel Platinum opened takes the key window, as in
     /// other browsers the page keeps focus meanwhile: Servo hides an
     /// input's controls on blur, which would close the panel at once.
     pub(crate) fn owns_native_panel(&self) -> bool {
@@ -674,8 +674,8 @@ mod color_panel {
 }
 
 /// AppKit gives the key window back when the person closes a system panel,
-/// but not when Frame orders it out, which leaves the page's window without
-/// the keyboard. Frame hands it back to the window that had it.
+/// but not when Platinum orders it out, which leaves the page's window without
+/// the keyboard. Platinum hands it back to the window that had it.
 #[cfg(target_os = "macos")]
 mod key_owner {
     use std::cell::RefCell;

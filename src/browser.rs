@@ -1633,7 +1633,7 @@ impl Browser {
         });
     }
 
-    /// Write the session now: Frame is quitting or the window is going.
+    /// Write the session now: Platinum is quitting or the window is going.
     fn save(&mut self, cx: &App) {
         if let Some((store, snapshot)) = self.snapshot(true, cx) {
             store.save(&snapshot);

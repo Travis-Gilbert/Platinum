@@ -207,7 +207,7 @@ impl FileIndex {
 
     /// Candidate destinations in Obsidian order: exact paths, then suffix matches under
     /// the source folder, then other suffix matches; each group sorts by path length.
-    /// Frame uses lexical order for equal-length ties that Obsidian leaves in load order.
+    /// Platinum uses lexical order for equal-length ties that Obsidian leaves in load order.
     pub fn resolution_candidates(&self, target: &str, from: &str, syntax: LinkSyntax) -> Vec<&str> {
         if syntax == LinkSyntax::Path {
             return self.exactly(target).into_iter().collect();
