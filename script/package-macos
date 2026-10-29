@@ -1,0 +1,407 @@
+#!/usr/bin/env python3
+"""Build, package, verify, sign and notarize Platinum for direct macOS distribution.
+
+Dependency relocation is delegated to dylibbundler; macholib independently
+checks the resulting graph. No source library is modified. See docs/macos-app.md.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import plistlib
+import shutil
+import shlex
+import subprocess
+import sys
+import tempfile
+import tomllib
+
+from macholib.MachO import MachO
+from macholib import mach_o
+
+ROOT = Path(__file__).resolve().parent.parent
+ENTITLEMENTS = ROOT / "packaging/macos/entitlements.plist"
+SYSTEM = ("/usr/lib/", "/System/Library/")
+MAGICS = {bytes.fromhex(value) for value in (
+    "feedface", "cefaedfe", "feedfacf", "cffaedfe", "cafebabe", "bebafeca",
+    "cafebabf", "bfbafeca",
+)}
+
+
+def run(*args, **kwargs):
+    return subprocess.check_output([str(arg) for arg in args], text=True,
+                                   stdin=subprocess.DEVNULL, **kwargs).strip()
+
+
+def digest(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def code_files(app):
+    for path in sorted(app.rglob("*")):
+        if path.is_file() and not path.is_symlink():
+            with path.open("rb") as stream:
+                if stream.read(4) in MAGICS:
+                    yield path
+
+
+def binary_info(path):
+    dependencies, rpaths, architectures, minima = set(), set(), set(), []
+    for header in MachO(str(path)).headers:
+        architectures.add(header.header.cputype)
+        dependencies.update(name for _, _, name in header.walkRelocatables())
+        for load, command, data in header.commands:
+            if load.cmd == mach_o.LC_RPATH:
+                rpaths.add(data.rstrip(b"\0").decode())
+            if load.cmd == mach_o.LC_BUILD_VERSION:
+                if command.platform != 1:
+                    raise ValueError(f"Non-macOS binary: {path}")
+                minima.append(command.minos)
+            elif load.cmd == mach_o.LC_VERSION_MIN_MACOSX:
+                minima.append(command.version)
+    return dependencies, rpaths, architectures, max(minima, default=0)
+
+
+def inside(path, root):
+    return path.resolve().is_relative_to(root.resolve())
+
+
+def expand(name, loader, executable):
+    for prefix, directory in (("@loader_path", loader.parent),
+                              ("@executable_path", executable.parent)):
+        if name.startswith(prefix + "/"):
+            return directory / name[len(prefix) + 1:]
+    return Path(name)
+
+
+def version(number):
+    return f"{number >> 16}.{(number >> 8) & 255}.{number & 255}"
+
+
+def verify(app, signatures=False, developer_id=False):
+    app = app.resolve()
+    info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
+    executable = app / "Contents/MacOS" / info["CFBundleExecutable"]
+    manifest_path = app / "Contents/Resources/platinum-bundle.json"
+    manifest = json.loads(manifest_path.read_text())
+    for path in app.rglob("*"):
+        if path.is_symlink() and (not path.exists() or not inside(path, app)):
+            raise ValueError(f"Broken or external symlink: {path}")
+    codes = list(code_files(app))
+    if executable not in codes:
+        raise ValueError("Bundle executable is missing or is not Mach-O")
+    required = binary_info(executable)[2]
+    main_rpaths = binary_info(executable)[1]
+    minimum = 0
+    for path in codes:
+        dependencies, rpaths, architectures, minos = binary_info(path)
+        minimum = max(minimum, minos)
+        if not required.issubset(architectures):
+            raise ValueError(f"Incompatible architecture: {path}")
+        for rpath in rpaths:
+            target = expand(rpath, path, executable)
+            if rpath.startswith("@rpath") or not target.is_absolute() or not inside(target, app):
+                raise ValueError(f"External/unsupported rpath in {path}: {rpath}")
+        for dependency in dependencies:
+            if dependency.startswith(SYSTEM):
+                continue
+            if dependency.startswith("@rpath/"):
+                candidates = [expand(r, path, executable) / dependency[7:]
+                              for r in rpaths | main_rpaths]
+            elif dependency.startswith(("@loader_path/", "@executable_path/")):
+                candidates = [expand(dependency, path, executable)]
+            else:
+                raise ValueError(f"External dependency in {path}: {dependency}")
+            if not any(p.is_file() and inside(p, app) for p in candidates):
+                raise ValueError(f"Unresolved dependency in {path}: {dependency}")
+        if signatures or developer_id:
+            run("codesign", "--verify", "--strict", path, stderr=subprocess.STDOUT)
+    if tuple(map(int, info["LSMinimumSystemVersion"].split("."))) < tuple(map(int, version(minimum).split("."))):
+        raise ValueError("Info.plist understates a bundled binary's macOS requirement")
+    for plugin in manifest["plugins"]:
+        if not (executable.parent / "lib" / plugin).is_file():
+            raise ValueError(f"Missing pinned plugin: {plugin}")
+    for module in manifest.get("gio_modules", []):
+        if not (app / "Contents/PlugIns" / module).is_file():
+            raise ValueError(f"Missing GIO module: {module}")
+    if signatures or developer_id:
+        run("codesign", "--verify", "--deep", "--strict", app, stderr=subprocess.STDOUT)
+    if developer_id:
+        signature = run("codesign", "-d", "--verbose=4", app, stderr=subprocess.STDOUT)
+        if "Authority=Developer ID Application:" not in signature or "runtime" not in signature or "Timestamp=" not in signature:
+            raise ValueError("A timestamped Developer ID Application signature with hardened runtime is required")
+        entitlements = plistlib.loads(subprocess.check_output(
+            ["codesign", "-d", "--entitlements", "-", str(app)], stderr=subprocess.DEVNULL))
+        if entitlements != plistlib.loads(ENTITLEMENTS.read_bytes()):
+            raise ValueError("Unexpected application entitlements")
+    return {"app": str(app), "native_code_files": len(codes),
+            "architectures": sorted(required), "minimum_macos": version(minimum),
+            "portable_linkage": True, "signatures_verified": signatures or developer_id,
+            "developer_id_verified": developer_id}
+
+
+def sign(app, identity):
+    verify(app)
+    trusted = identity != "-"
+    if trusted:
+        identities = run("security", "find-identity", "-v", "-p", "codesigning")
+        matches = [line for line in identities.splitlines()
+                   if identity in line and '"Developer ID Application:' in line]
+        if len(matches) != 1:
+            raise ValueError("Exactly one valid Developer ID Application identity must match; install its certificate and private key in Keychain")
+        # Resolve the verified identity to its fingerprint, not an ambiguous label.
+        identity = matches[0].split()[1]
+    flags = ["--force", "--sign", identity]
+    if trusted:
+        flags += ["--options", "runtime", "--timestamp"]
+    else:
+        flags += ["--timestamp=none"]
+    executable = app / "Contents/MacOS/frame"
+    for path in sorted(code_files(app), key=lambda p: len(p.parts), reverse=True):
+        if path != executable:
+            run("codesign", *flags, path, stderr=subprocess.STDOUT)
+    run("codesign", *flags, "--entitlements", ENTITLEMENTS, app, stderr=subprocess.STDOUT)
+    return verify(app, signatures=True, developer_id=trusted)
+
+
+def notices(resources, metadata, native_sources):
+    directory = resources / "Licenses"
+    directory.mkdir()
+    if (ROOT / "LICENSE").is_file():
+        shutil.copy2(ROOT / "LICENSE", directory / "Platinum-LICENSE")
+    shutil.copy2(ROOT / "README.md", directory / "Platinum-README.md")
+    for source in (ROOT / "assets/brand/DejaVu-font-notice.txt", ROOT / "assets/icons/LICENSE-lucide.txt"):
+        shutil.copy2(source, directory / source.name)
+    records = []
+    for package in metadata["packages"]:
+        record = {key: package.get(key) for key in ("name", "version", "license", "repository")}
+        source = Path(package["manifest_path"]).parent
+        files = {p for pattern in ("LICENSE*", "LICENCE*", "COPYING*", "NOTICE*")
+                 for p in source.glob(pattern) if p.is_file()}
+        if package.get("license_file"):
+            files.add(source / package["license_file"])
+        if files:
+            destination = directory / f'{package["name"]}-{package["version"]}'
+            destination.mkdir(exist_ok=True)
+            for file in files:
+                if file.is_file():
+                    shutil.copy2(file, destination / file.name)
+        records.append(record)
+    (directory / "Cargo-dependencies.json").write_text(json.dumps(records, indent=2) + "\n")
+    for name, source in (("Servo", ROOT / "deps/servo-consolidated"),
+                         ("GStreamer", ROOT / "deps/gstreamer-mse")):
+        destination = directory / name
+        destination.mkdir()
+        for pattern in ("LICENSE*", "COPYING*", "NOTICE*"):
+            for file in source.glob(pattern):
+                if file.is_file():
+                    shutil.copy2(file, destination / file.name)
+    native_records = []
+    seen = set()
+    for source in native_sources:
+        source = source.resolve(strict=True)
+        record = {"file": source.name, "input_sha256": digest(source)}
+        # Homebrew ships machine-readable package provenance and license texts.
+        keg = next((p for p in source.parents if p.parent.parent.name == "Cellar"), None)
+        origin = keg or source.parent
+        if keg:
+            record["package"] = keg.parent.name
+            record["version"] = keg.name
+        native_records.append(record)
+        if origin in seen:
+            continue
+        seen.add(origin)
+        label = f"native-{keg.parent.name}-{keg.name}" if keg else f"native-{source.name}"
+        target = directory / label
+        target.mkdir(exist_ok=True)
+        for pattern in ("LICENSE*", "LICENCE*", "COPYING*", "NOTICE*", "ThirdPartyNotices*", "sbom.spdx.json"):
+            for file in origin.glob(pattern):
+                if file.is_file():
+                    shutil.copy2(file, target / file.name)
+    (directory / "Native-dependencies.json").write_text(json.dumps(native_records, indent=2) + "\n")
+
+
+def write_receipt(app, result):
+    result["bundle"] = json.loads((app / "Contents/Resources/platinum-bundle.json").read_text())
+    result["sha256"] = {str(p.relative_to(app)): digest(p) for p in code_files(app)}
+    path = app.parent / (app.stem + "-receipt.json")
+    path.write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
+def package(binary, output, metadata, build=None):
+    binary, output = binary.resolve(strict=True), output.absolute()
+    input_hash = digest(binary)
+    if output.suffix != ".app" or output.exists():
+        raise ValueError("Output must be a new .app path; existing outputs are never replaced")
+    if not shutil.which("dylibbundler"):
+        raise ValueError("Install dylibbundler 1.0.5: brew install dylibbundler")
+    bundler_version = run("dylibbundler", "--help").splitlines()[0]
+    if bundler_version != "dylibbundler 1.0.5":
+        raise ValueError(f"Unvalidated dependency bundler: {bundler_version}")
+    plugins = [Path(p) for p in json.loads(run(ROOT / "script/media-env", ROOT / "script/setup-media", "--print-sources", cwd=ROOT))]
+    gio_module = Path(run("brew", "--prefix", "glib-networking")) / "lib/gio/modules/libgiognutls.so"
+    if not gio_module.is_file():
+        raise ValueError("Install glib-networking for the GIO TLS module")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".platinum-package-", dir=output.parent) as staging:
+        app = Path(staging) / output.name
+        contents = app / "Contents"
+        macos, frameworks, resources = (contents / name for name in ("MacOS", "Frameworks", "Resources"))
+        for directory in (macos, frameworks, contents / "PlugIns", resources):
+            directory.mkdir(parents=True)
+        executable = macos / "frame"
+        shutil.copy2(binary, executable)
+        if digest(executable) != input_hash:
+            raise ValueError("Input binary changed while being copied")
+        executable.chmod(0o755)
+        seeds = [executable]
+        for plugin in plugins:
+            destination = frameworks / plugin.name
+            shutil.copy2(plugin, destination)
+            seeds.append(destination)
+        (macos / "lib").symlink_to("../Frameworks")
+        gio_destination = contents / "PlugIns" / gio_module.name
+        shutil.copy2(gio_module, gio_destination)
+        seeds.append(gio_destination)
+        command = ["dylibbundler", "-b", "-ns", "-cd", "-d", str(frameworks),
+                   "-p", "@executable_path/../Frameworks/", "-s", str(binary.parent)]
+        for seed in seeds:
+            command += ["-x", str(seed)]
+        with (output.parent / (output.stem + "-relocation.log")).open("w") as log:
+            subprocess.run(command, check=True, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+        minimum = 0
+        for path in code_files(app):
+            _, rpaths, _, minos = binary_info(path)
+            minimum = max(minimum, minos)
+            for rpath in sorted(rpaths):
+                run("install_name_tool", "-delete_rpath", rpath, path, stderr=subprocess.STDOUT)
+        # The dynamic WebGPU provider also searches beside the executable.
+        dawn = frameworks / "libwebgpu_dawn.dylib"
+        if not dawn.is_file():
+            raise ValueError("WebGPU runtime was not bundled")
+        (macos / dawn.name).symlink_to("../Frameworks/" + dawn.name)
+        version_text = tomllib.loads((ROOT / "Cargo.toml").read_text())["package"]["version"]
+        info = {
+            "CFBundleExecutable": "frame", "CFBundleIdentifier": "dev.platinum.browser",
+            "CFBundleName": "Platinum", "CFBundleDisplayName": "Platinum",
+            "CFBundlePackageType": "APPL", "CFBundleIconFile": "Platinum.icns",
+            "CFBundleShortVersionString": version_text,
+            "CFBundleVersion": run("git", "rev-list", "--count", "HEAD", cwd=ROOT),
+            "LSMinimumSystemVersion": version(minimum), "NSHighResolutionCapable": True,
+            "NSPrincipalClass": "NSApplication",
+            "NSCameraUsageDescription": "Allow a website you approve to use your camera.",
+            "NSMicrophoneUsageDescription": "Allow a website you approve to use your microphone.",
+        }
+        (contents / "Info.plist").write_bytes(plistlib.dumps(info))
+        shutil.copy2(ROOT / "assets/brand/icons/Platinum.icns", resources / "Platinum.icns")
+        native_sources = [*plugins, gio_module]
+        # Parse the pinned tool's displayed copy commands with Python's shell
+        # lexer, never execute the log. This captures provenance, not graph logic.
+        destinations = {}
+        for line in (output.parent / (output.stem + "-relocation.log")).read_text().splitlines():
+            if line.lstrip().startswith("cp -n "):
+                _, _, source, destination = shlex.split(line)
+                source = Path(source)
+                checksum = digest(source)
+                prior = destinations.setdefault(destination, checksum)
+                if prior != checksum:
+                    raise ValueError(f"Conflicting bundled library: {Path(destination).name}")
+                native_sources.append(source)
+        notices(resources, metadata, native_sources)
+        manifest = {"schema": 1, "revision": run("git", "rev-parse", "HEAD", cwd=ROOT),
+                    "source_dirty": bool(run("git", "status", "--porcelain", cwd=ROOT)),
+                    "input_sha256": input_hash, "build": build,
+                    "dependency_bundler": bundler_version,
+                    "plugins": [p.name for p in plugins],
+                    "gio_modules": [gio_module.name],
+                    "native_code": [str(p.relative_to(app)) for p in code_files(app)]}
+        (resources / "platinum-bundle.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        verify(app)
+        sign(app, "-")
+        app.rename(output)
+    receipt = verify(output, signatures=True)
+    receipt["signing"] = "ad-hoc; not notarized"
+    return write_receipt(output, receipt)
+
+
+def archive(app, destination):
+    verify(app, signatures=True)
+    if destination.exists():
+        raise ValueError("Archive already exists")
+    run("ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app, destination)
+    return {"archive": str(destination), "sha256": digest(destination)}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    build = commands.add_parser("build", help="Build release and package, with ad-hoc signing")
+    build.add_argument("--output", type=Path, required=True)
+    build.add_argument("--snapshot", action="store_true", help="Include the native acceptance harness")
+    pack = commands.add_parser("package", help="Package an explicit existing binary; does not claim build provenance")
+    pack.add_argument("--binary", type=Path, required=True)
+    pack.add_argument("--output", type=Path, required=True)
+    check = commands.add_parser("verify")
+    check.add_argument("app", type=Path)
+    check.add_argument("--developer-id", action="store_true")
+    signing = commands.add_parser("sign")
+    signing.add_argument("app", type=Path)
+    signing.add_argument("--identity", required=True, help="Developer ID identity, or - for ad-hoc")
+    zip_cmd = commands.add_parser("archive")
+    zip_cmd.add_argument("app", type=Path)
+    zip_cmd.add_argument("--output", type=Path, required=True)
+    notary = commands.add_parser("notarize")
+    notary.add_argument("app", type=Path)
+    notary.add_argument("--keychain-profile", required=True)
+    args = parser.parse_args()
+    if sys.platform != "darwin":
+        parser.error("Packaging requires macOS and Xcode command line tools")
+    if args.command in ("build", "package"):
+        metadata = json.loads(run("cargo", "metadata", "--locked", "--format-version", "1", cwd=ROOT))
+        build_record = None
+        if args.command == "build":
+            cargo = ["cargo", "build", "--locked", "--release", "--bin", "frame"]
+            if args.snapshot:
+                cargo += ["--features", "snapshot"]
+            subprocess.run([str(ROOT / "script/media-env"), *cargo], cwd=ROOT, check=True)
+            args.binary = Path(metadata["target_directory"]) / "release/frame"
+            build_record = {"command": cargo, "rustc": run("rustc", "--version", cwd=ROOT)}
+        result = package(args.binary, args.output, metadata, build_record)
+    elif args.command == "verify":
+        result = verify(args.app, signatures=True, developer_id=args.developer_id)
+    elif args.command == "sign":
+        result = sign(args.app.resolve(), args.identity)
+        result["signing"] = "ad-hoc" if args.identity == "-" else "Developer ID"
+        write_receipt(args.app.resolve(), result)
+    elif args.command == "archive":
+        result = archive(args.app.resolve(), args.output.absolute())
+    else:
+        app = args.app.resolve()
+        verify(app, developer_id=True)
+        with tempfile.TemporaryDirectory(prefix="platinum-notary-", dir=app.parent) as temp:
+            upload = Path(temp) / "Platinum.zip"
+            archive(app, upload)
+            response = json.loads(run("xcrun", "notarytool", "submit", upload,
+                                      "--keychain-profile", args.keychain_profile, "--wait", "--output-format", "json"))
+            (app.parent / "Platinum-notarization.json").write_text(json.dumps(response, indent=2) + "\n")
+            if response.get("status") != "Accepted":
+                raise ValueError(f"Notarization was not accepted: {response.get('id')}; inspect its notarytool log")
+        run("xcrun", "stapler", "staple", app)
+        run("xcrun", "stapler", "validate", app)
+        run("spctl", "--assess", "--type", "execute", "--verbose=2", app, stderr=subprocess.STDOUT)
+        result = verify(app, developer_id=True)
+        result["notarized"] = True
+        write_receipt(app, result)
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+        if isinstance(error, subprocess.CalledProcessError) and error.output:
+            print(error.output, file=sys.stderr)
+        sys.exit(f"Packaging failed: {error}")

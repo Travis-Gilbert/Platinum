@@ -218,6 +218,10 @@ beside the development executable and examples. Run it again after changing
 the Cargo target directory; use `--release` for a release build. These links
 depend on the local GStreamer installation and are not a portable app bundle.
 
+For a self-contained `.app`, release signing, and notarization, follow
+[the macOS packaging guide](docs/macos-app.md). `script/package-macos` bundles
+the native libraries instead of shipping development symlinks.
+
 YouTube compatibility is tracked in [the media plan](docs/plans/youtube.md).
 `script/bootstrap-media` checks out the pinned Servo commit with the media
 and rendering fixes, then applies `patches/gstreamer-mse.patch` to pinned

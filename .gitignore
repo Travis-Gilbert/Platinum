@@ -4,3 +4,8 @@
 # Provider keys for RustyWeb.
 .env
 /.graph-indexer
+
+# Local macOS packaging environment and artifacts.
+/.packaging-venv
+/dist
+__pycache__/
