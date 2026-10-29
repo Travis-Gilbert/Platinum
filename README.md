@@ -25,8 +25,8 @@ Continue is kept in each profile’s `recents.json`; Clear removes that list.
 - **⌘L** focuses the address bar. An address opens; anything else searches.
   A leading `?` always searches. ⌘Return opens in a new tab. Away from the
   field, the bar shows the page as "host / title".
-- **Ask**, the icon inside the address bar at its end, turns the AI on
-  (filled) and off (outlined). While it is on, the field reads "Ask..." and
+- **Ask**, the agent icon inside the address bar at its end, turns the AI
+  on (selected) and off. While it is on, the field reads "Ask..." and
   what you type is answered rather than searched. Home's field has the same
   icon. The palette and View > Ask AI do the same.
 - **Share**, beside the address bar, opens macOS's share sheet for the page: Mail,
@@ -247,13 +247,12 @@ FRAME_SNAPSHOT=/tmp/frame.png script/media-env target/debug/frame
 GPUI's scene. `vendor/` holds two small patches, each described in its
 `THEOREM-PATCH.md`.
 
-The Ask icons (`assets/icons/ask.svg`, `ask-on.svg`) are Streamline's
-"design file AI", licensed CC BY 4.0. The pin, unpin and rename icons
-(`pin.svg`, `pin-off.svg`, `rename.svg`) are Lucide's, ISC licensed, given
-the same duotone as Platinum's others. The page, share, downloads and
-appearance icons are redrawn from Streamline's Ultimate Duotone set as
-single-color masks, so their duotone takes the theme's text color; the
-downloads glyph is `sd-card-download`, from its CC BY 4.0 free subset.
+The pin, unpin and rename icons (`pin.svg`, `pin-off.svg`, `rename.svg`)
+are Lucide's, ISC licensed, given the same duotone as Platinum's others.
+The page, share, downloads and appearance icons are redrawn from
+Streamline's Ultimate Duotone set as single-color masks, so their duotone
+takes the theme's text color; the downloads glyph is `sd-card-download`,
+from its CC BY 4.0 free subset.
 
 The spatial canvas's glyphs (`assets/icons/canvas-*.svg`) are shapes from
 [Lucide](https://lucide.dev), licensed ISC, with Feather's MIT licence for the
@@ -280,4 +279,4 @@ sets the `.icns` as the Dock icon at launch, since Platinum runs as a bare
 binary; a bundle would name the same file in its `Info.plist`. The wordmark
 is DejaVu Sans Bold, outlined to paths (`assets/brand/DejaVu-font-notice.txt`).
 
-Home and the places’ icons (mail, media, notes, terminal, agent) are redrawn from Streamline Ultimate Light; All apps is drawn to match them.
+Home and the places’ icons (mail, media, notes, terminal, agent) are redrawn from Streamline Ultimate Light; All apps is drawn to match them. Ask uses the agent’s icon.

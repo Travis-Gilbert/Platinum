@@ -40,7 +40,7 @@ use gpui_kit::{
 };
 
 use super::dock::{self, DRAG_PREVIEW, FRAME, TabPreview};
-use super::{Browser, Origin, TAB_ROW};
+use super::{Browser, CHROME_BUTTON, Origin, TAB_ROW};
 use crate::actions::{CloseTab, PinTab, ToggleSidebar};
 use crate::icons;
 use crate::navigator::{Placement, TabAction, TabMenu};
@@ -98,7 +98,7 @@ impl Browser {
                     .debug_selector(|| "hide-sidebar".into())
                     .icon(IconName::PanelLeftClose)
                     .ghost()
-                    .small()
+                    .with_size(px(CHROME_BUTTON))
                     .tooltip_with_action("Hide Sidebar", &ToggleSidebar, None)
                     .on_click(
                         cx.listener(|browser, _, window, cx| browser.toggle_sidebar(window, cx)),
@@ -215,6 +215,7 @@ impl Browser {
         let pin_active = Button::new("pin-tab")
             .debug_selector(|| "pin-tab".into())
             .icon(icons::pin())
+            .with_size(px(CHROME_BUTTON))
             .custom(
                 ButtonCustomVariant::new(cx)
                     .color(transparent_black())

@@ -2,16 +2,12 @@
 //! SVGs are masks, so their lighter fill (`fill-opacity`) gives each one a
 //! duotone in the current theme.
 //!
-//! The Ask glyphs are Streamline's "design file AI". Home and the appearance
-//! glyphs are redrawn from the Streamline Ultimate Duotone set, as are the
-//! page, share and downloads glyphs (`sd-card-download` from its CC BY 4.0
-//! free subset). The places' glyphs are redrawn from Streamline Ultimate
-//! Light, on its 48-point grid; All apps is drawn to match them. See the
-//! README's credits.
-//! The Ask glyphs are Streamline's "design file AI"; pin, unpin and rename
-//! are Lucide's, given the same duotone; the rest are redrawn from the
-//! Streamline Ultimate Duotone set (`sd-card-download` from its CC BY 4.0
-//! free subset). See the README's credits.
+//! Home and the appearance glyphs are redrawn from the Streamline Ultimate
+//! Duotone set, as are the page, share and downloads glyphs
+//! (`sd-card-download` from its CC BY 4.0 free subset). The places' glyphs
+//! are redrawn from Streamline Ultimate Light, on its 48-point grid; All apps
+//! is drawn to match them. Pin, unpin and rename are Lucide's, given the same
+//! duotone. See the README's credits.
 //!
 //! The canvas glyphs (`assets/icons/canvas-*.svg`) are Lucide shapes (ISC
 //! licence, Copyright (c) Lucide Icons and Contributors, with Feather's MIT
@@ -20,8 +16,6 @@
 
 use gpui_kit::component::Icon;
 
-const ASK: &[u8] = include_bytes!("../assets/icons/ask.svg");
-const ASK_ON: &[u8] = include_bytes!("../assets/icons/ask-on.svg");
 const PAGE: &[u8] = include_bytes!("../assets/icons/page.svg");
 const SHARE: &[u8] = include_bytes!("../assets/icons/share.svg");
 // The supplied PNG is embedded unchanged; GPUI tints its alpha mask.
@@ -57,16 +51,6 @@ const CANVAS_REMOVE: &[u8] = include_bytes!("../assets/icons/canvas-remove.svg")
 const CANVAS_LAYERS: &[u8] = include_bytes!("../assets/icons/canvas-layers.svg");
 const CANVAS_APP: &[u8] = include_bytes!("../assets/icons/canvas-app.svg");
 const CANVAS_FILE_IMAGE: &[u8] = include_bytes!("../assets/icons/canvas-file-image.svg");
-
-/// Ask, outlined: the address bar searches.
-pub fn ask() -> Icon {
-    Icon::default().data(ASK)
-}
-
-/// Ask, filled: the address bar asks.
-pub fn ask_on() -> Icon {
-    Icon::default().data(ASK_ON)
-}
 
 /// A blank page: new tabs, before they go anywhere.
 pub fn page() -> Icon {
@@ -119,6 +103,7 @@ pub fn terminal() -> Icon {
     Icon::default().data(TERMINAL)
 }
 
+/// The agent, and Ask, which puts a search to it.
 pub fn agent() -> Icon {
     Icon::default().data(AGENT)
 }

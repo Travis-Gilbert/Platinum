@@ -30,7 +30,7 @@ use gpui_kit::{
 use url::Url;
 
 use super::dock::FRAME;
-use super::{ASK_PLACEHOLDER, Browser, Origin, SEARCH_PLACEHOLDER, TAB_ROW};
+use super::{ASK_PLACEHOLDER, Browser, CHROME_BUTTON, Origin, SEARCH_PLACEHOLDER, TAB_ROW};
 use crate::actions::{GoBack, GoForward, NewTab};
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
@@ -408,7 +408,7 @@ impl Browser {
             .child(
                 Button::new("underlay-back")
                     .ghost()
-                    .small()
+                    .with_size(px(CHROME_BUTTON))
                     .icon(IconName::ArrowLeft)
                     .disabled(!can_back)
                     .tooltip_with_action("Back", &GoBack, None)
@@ -419,7 +419,7 @@ impl Browser {
             .child(
                 Button::new("underlay-forward")
                     .ghost()
-                    .small()
+                    .with_size(px(CHROME_BUTTON))
                     .icon(IconName::ArrowRight)
                     .disabled(!can_forward)
                     .tooltip_with_action("Forward", &GoForward, None)
@@ -430,7 +430,7 @@ impl Browser {
             .child(
                 Button::new("underlay-home")
                     .ghost()
-                    .small()
+                    .with_size(px(CHROME_BUTTON))
                     .icon(icons::home())
                     .tooltip("Home")
                     .accessibility_label("Home")
@@ -445,7 +445,7 @@ impl Browser {
             .child(
                 Button::new("underlay-new-tab")
                     .ghost()
-                    .small()
+                    .with_size(px(CHROME_BUTTON))
                     .icon(IconName::Plus)
                     .tooltip_with_action("New Tab", &NewTab, None)
                     .on_click(cx.listener(|browser, _, window, cx| browser.reveal_tab(window, cx))),

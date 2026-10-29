@@ -168,7 +168,7 @@ impl Omnibar {
         self
     }
 
-    /// Filled while the field asks, outlined while it searches, as the
+    /// The agent icon on a selected chip while the field asks, as the
     /// address bar's Ask button is.
     fn ask_button(&self, cx: &App) -> Button {
         let asking = self.asking;
@@ -183,9 +183,9 @@ impl Omnibar {
                 }
             });
         if asking {
-            chosen(button.icon(icons::ask_on()), true, cx)
+            chosen(button.icon(icons::agent()), true, cx)
         } else {
-            button.icon(icons::ask()).ghost()
+            button.icon(icons::agent()).ghost()
         }
     }
 
@@ -268,7 +268,7 @@ impl RenderOnce for Omnibar {
                 }
             });
         let prefix = if self.asking {
-            icons::ask().small()
+            icons::agent().small()
         } else {
             icons::canvas_find().small()
         };

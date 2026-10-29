@@ -505,7 +505,7 @@ impl Serp {
                             .gap_2()
                             .text_sm()
                             .font_weight(FontWeight::SEMIBOLD)
-                            .child(icons::ask().small())
+                            .child(icons::agent().small())
                             .child("Answer")
                             .when_some(
                                 result.answer.as_ref().filter(|a| !a.model.is_empty()),

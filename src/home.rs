@@ -6,14 +6,13 @@
 //!
 //! It is part of the chrome, not a page: it has no surface of its own and
 //! sits on the window's frame, or on a tab's pane of it, never on a page's
-//! card. Its places are a launcher's shelf, a little above the middle, with
-//! the keys to know along the foot.
+//! card. Its places are a launcher's shelf, in the middle.
 //!
 //! Its parts differ by shape, weight and words, never by color alone: places
 //! are icons on neutral tiles with their names, the things to continue are
 //! rows with a title and one line under it.
 //!
-//! SOURCING: GPUI Kit's `Button`, `Icon` and `Kbd`; the record is
+//! SOURCING: GPUI Kit's `Button` and `Icon`; the record is
 //! `recents.rs`.
 
 use std::rc::Rc;
@@ -22,18 +21,15 @@ use gpui_kit::component::{
     ActiveTheme as _, Icon, IconName, Sizable as _,
     button::{Button, ButtonVariants as _},
     h_flex,
-    kbd::Kbd,
     scroll::ScrollableElement as _,
     v_flex,
 };
 use gpui_kit::{
-    Action, AnyElement, App, ElementId, FontWeight, InteractiveElement as _, IntoElement,
-    ParentElement, RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder as _,
-    rems,
+    AnyElement, App, ElementId, FontWeight, InteractiveElement as _, IntoElement, ParentElement,
+    RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder as _, rems,
 };
 use url::Url;
 
-use crate::actions::{FocusAddressBar, NewTab, OpenPalette};
 use crate::icons;
 use crate::places::Place;
 use crate::recents::{self, Recent, RecentSearch};
@@ -122,7 +118,6 @@ impl Home {
                     .w(rems(5.5))
                     .h(rems(5.75))
                     .accessibility_label(format!("{}, not built yet", place.label()))
-                    .tooltip(place.summary())
                     .child(
                         v_flex()
                             .items_center()
@@ -176,7 +171,7 @@ impl Home {
                     if *ask { "ask" } else { "search" }
                 ),
                 if *ask {
-                    icons::ask_on()
+                    icons::agent()
                 } else {
                     Icon::new(IconName::Search)
                 },
@@ -284,54 +279,12 @@ impl Home {
                 this.child(div().grid().grid_cols(2).gap_x_4().gap_y_1().children(rows))
             })
     }
-
-    /// The keys to know, in one line along the foot.
-    fn shortcuts(&self, window: &mut Window, cx: &App) -> impl IntoElement {
-        let muted = cx.theme().muted_foreground;
-        let binding = |action: &dyn Action, window: &mut Window| -> AnyElement {
-            match Kbd::binding_for_action(action, None, window) {
-                Some(kbd) => kbd.into_any_element(),
-                None => div().into_any_element(),
-            }
-        };
-        let hint = |keys: AnyElement, text: &'static str| h_flex().gap_2().child(keys).child(text);
-        let word = |text: &'static str| {
-            div()
-                .font_weight(FontWeight::MEDIUM)
-                .child(text)
-                .into_any_element()
-        };
-        h_flex()
-            .flex_shrink_0()
-            .flex_wrap()
-            .justify_center()
-            .gap_x_6()
-            .gap_y_2()
-            .py_4()
-            .text_xs()
-            .text_color(muted)
-            .child(hint(binding(&NewTab, window), "New tab"))
-            .child(hint(
-                binding(&OpenPalette, window),
-                "Search tabs, commands and the web",
-            ))
-            .child(hint(
-                binding(&FocusAddressBar, window),
-                "Type an address or a search",
-            ))
-            .child(hint(word("Right-click"), "The same search, anywhere"))
-            .child(hint(
-                word("Drag a tab"),
-                "To a page's edge, for two side by side",
-            ))
-    }
 }
 
 impl RenderOnce for Home {
-    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+    fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         let shelf = self.shelf(cx).into_any_element();
         let continue_list = self.continue_list(cx).into_any_element();
-        let shortcuts = self.shortcuts(window, cx).into_any_element();
         v_flex()
             .size_full()
             .items_center()
@@ -351,6 +304,5 @@ impl RenderOnce for Home {
                     .child(continue_list),
             )
             .child(div().flex_1().min_h(rems(2.)))
-            .child(shortcuts)
     }
 }

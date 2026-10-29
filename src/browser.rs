@@ -128,6 +128,10 @@ struct Restored {
     sidebar_width: Option<f32>,
 }
 
+/// The chrome's icon buttons, for 28px glyphs: twice GPUI Kit's small ones.
+/// A button sized in pixels draws its icon at three quarters of its size.
+const CHROME_BUTTON: f32 = 28. / 0.75;
+
 /// What the address bar and Home's field say while they search, and while
 /// they ask.
 const SEARCH_PLACEHOLDER: &str = "Search or go somewhere";
@@ -2526,7 +2530,7 @@ impl Browser {
             .debug_selector(move || format!("new-tab-{}", node.as_u64()))
             .icon(IconName::Plus)
             .ghost()
-            .small()
+            .with_size(px(CHROME_BUTTON))
             .tooltip_with_action("New Tab", &NewTab, None)
             .on_click(cx.listener(move |browser, _, window, cx| {
                 let anchor = shown.and_then(|panel| browser.panel_index(panel));
@@ -2571,7 +2575,7 @@ impl Browser {
                         .debug_selector(|| "show-sidebar".into())
                         .icon(IconName::PanelLeftOpen)
                         .ghost()
-                        .small()
+                        .with_size(px(CHROME_BUTTON))
                         .mr_1()
                         .tooltip_with_action("Show Sidebar", &ToggleSidebar, None)
                         .on_click(
@@ -2671,6 +2675,7 @@ impl Browser {
             .py_1()
             .child(
                 Toolbar::new(("navigation", id))
+                    .with_size(px(CHROME_BUTTON))
                     .flex_1()
                     .min_w_0()
                     .child(
@@ -2790,18 +2795,13 @@ impl Browser {
             .into_any_element()
     }
 
-    /// Ask, at the end of a search field: an icon alone, filled on a filled
-    /// chip while the field asks, outlined while it searches. The caller
-    /// says what a click does.
+    /// Ask, at the end of a search field: the agent icon on a selected chip
+    /// while the field asks. The caller says what a click does.
     fn ask_toggle(&self, id: impl Into<ElementId>, selector: String) -> Button {
         Button::new(id)
             .debug_selector(move || selector.clone())
             .ghost()
-            .icon(if self.ask {
-                icons::ask_on()
-            } else {
-                icons::ask()
-            })
+            .icon(icons::agent())
             .selected(self.ask)
             .toggled(self.ask)
             .accessibility_label("Ask AI")
@@ -2832,7 +2832,7 @@ impl Browser {
             .child(
                 Self::inked(Button::new(("share", id)), ink, cx)
                     .icon(icons::share())
-                    .small()
+                    .with_size(px(CHROME_BUTTON))
                     .disabled(self.share_url(index, cx).is_none())
                     .tooltip_with_action("Share", &SharePage, None)
                     .on_mouse_down(
@@ -2863,7 +2863,7 @@ impl Browser {
             return None;
         }
         let button = Self::inked(Button::new(("downloads", id)), ink, cx)
-            .small()
+            .with_size(px(CHROME_BUTTON))
             .tooltip_with_action("Downloads", &ShowDownloads, None);
         let button = match list.running() {
             Some(percent) => button.icon(
@@ -3039,7 +3039,7 @@ impl Browser {
         Self::inked(Button::new(("appearance", id)), ink, cx)
             .debug_selector(move || format!("appearance-{id}"))
             .icon(theme::appearance(cx).icon())
-            .small()
+            .with_size(px(CHROME_BUTTON))
             .tooltip(next.command())
             .on_click(move |_, window, cx| {
                 window.dispatch_action(Box::new(SetAppearance { appearance: next }), cx)
@@ -3100,7 +3100,7 @@ impl Browser {
                         Button::new("compact-new-tab")
                             .icon(IconName::Plus)
                             .ghost()
-                            .small()
+                            .with_size(px(CHROME_BUTTON))
                             .tooltip_with_action("New Tab", &NewTab, None)
                             .on_click(
                                 cx.listener(|browser, _, window, cx| browser.new_tab(window, cx)),
@@ -3144,7 +3144,7 @@ impl Browser {
                             cx,
                         )
                         .debug_selector(move || format!("import-browser-data-{id}"))
-                        .xsmall()
+                        .with_size(px(CHROME_BUTTON))
                         .icon(icons::import_browser_data())
                         .accessibility_label("Import browser data")
                         .tooltip("Import browser data…")
