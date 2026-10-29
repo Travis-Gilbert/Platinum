@@ -85,7 +85,7 @@ const TAB_ROW: f32 = 36.;
 const TAB_WIDTH: f32 = 160.;
 const TAB_MIN: f32 = 96.;
 
-/// How long the session waits for changes to settle before it is written.
+/// How long after a change the session is written.
 const SAVE_AFTER: Duration = Duration::from_secs(1);
 
 /// Where a new tab goes in the sidebar's tree.
@@ -352,7 +352,12 @@ pub struct Browser {
     icons: HashMap<String, Arc<RenderImage>>,
     /// Where pins and the session are kept; none in the UI tests.
     store: Option<Store>,
-    /// The session's next write, once changes settle.
+    /// A write is on its way, a moment after the first change since the last.
+    save_pending: bool,
+    /// What was last given the store to write, and whether a site's icon
+    /// changed since: a snapshot with nothing new is not written.
+    written: Option<(Session, Vec<Pin>)>,
+    icons_changed: bool,
     _save: Task<()>,
     _omnibox_events: Subscription,
     _dock_events: Subscription,
@@ -380,7 +385,7 @@ impl Browser {
         // Match System follows the system as it changes.
         let appearance_events =
             cx.observe_window_appearance(window, |_, window, cx| theme::system_changed(window, cx));
-        // Changes settle into the file a second later; quitting writes at once.
+        // Changes reach the file a second later; quitting writes at once.
         let quit = cx.on_app_quit(|browser, cx| {
             browser.save(cx);
             async {}
@@ -436,6 +441,9 @@ impl Browser {
             renaming: None,
             icons,
             store,
+            save_pending: false,
+            written: None,
+            icons_changed: false,
             _save: Task::ready(()),
             _omnibox_events: omnibox_events,
             _dock_events: dock_events,
@@ -446,9 +454,11 @@ impl Browser {
         browser.sync_from_dock(cx);
         browser.sync_tree(cx);
         browser.focus_content(window, cx);
-        // The tab that was active loads its page once the window is up.
+        // The tab that was active loads its page once the window is up; with
+        // none saved, the one its group shows.
+        let shown = browser.active;
         let active = restored.active.and_then(|id| browser.tab_index(id));
-        if let Some(index) = active.or(browser.tabs[0].asleep.is_some().then_some(0)) {
+        if let Some(index) = active.or(browser.tabs[shown].asleep.is_some().then_some(shown)) {
             cx.defer_in(window, move |browser, window, cx| {
                 browser.activate(index, window, cx)
             });
@@ -526,6 +536,17 @@ impl Browser {
 
     fn panel_index(&self, panel: PanelId) -> Option<usize> {
         self.tabs.iter().position(|tab| tab.panel_id() == panel)
+    }
+
+    /// The tab the pinned site `pin` owns, if it is open.
+    fn pinned_tab(&self, pin: u64) -> Option<usize> {
+        self.tabs.iter().position(|tab| tab.pin == Some(pin))
+    }
+
+    /// The site the tab at `index` would pin: none when it is pinned already.
+    fn pinnable_url(&self, index: usize, cx: &App) -> Option<Url> {
+        let url = self.tabs[index].pinnable_url(cx)?;
+        (!self.pins.iter().any(|pin| pin.url == url)).then_some(url)
     }
 
     // Tabs.
@@ -743,7 +764,7 @@ impl Browser {
         {
             self.renaming = None;
         }
-        self.tree.close(closing);
+        self.tree.remove(closing);
         if self.tabs.len() == 1 {
             let id = self.new_id();
             let panel = self.tabs[0].panel.clone();
@@ -1257,40 +1278,42 @@ impl Browser {
 
     // Keeping the session.
 
-    /// Write the session once changes have settled for a moment.
+    /// Write the session a moment after it changes. The changes after the
+    /// first ride along with it, so a stream of them, a pointer moving over
+    /// links say, cannot put the write off.
     fn schedule_save(&mut self, cx: &mut Context<Self>) {
-        if self.store.is_none() {
+        if self.store.is_none() || self.save_pending {
             return;
         }
+        self.save_pending = true;
         self._save = cx.spawn(async move |browser, cx| {
             cx.background_executor().timer(SAVE_AFTER).await;
-            // Gathered here, written off the window's thread, which a slow
-            // disk would otherwise stall.
-            let Ok(Some((store, snapshot))) =
-                browser.update(cx, |browser, cx| browser.snapshot(cx))
-            else {
+            let Ok(Some((store, snapshot))) = browser.update(cx, |browser, cx| {
+                browser.save_pending = false;
+                browser.snapshot(false, cx)
+            }) else {
                 return;
             };
+            // Gathered here, written off the window's thread, which a slow
+            // disk would otherwise stall; the store keeps the writes in order.
             cx.background_executor()
                 .spawn(async move { store.save(&snapshot) })
-                .await;
+                .detach();
         });
     }
 
     /// Write the session now: Frame is quitting or the window is going.
     fn save(&mut self, cx: &App) {
-        if let Some((store, snapshot)) = self.snapshot(cx) {
+        if let Some((store, snapshot)) = self.snapshot(true, cx) {
             store.save(&snapshot);
         }
     }
 
-    /// The tabs, their tree and the icons of the sites they and the pins
-    /// name, as the store keeps them.
-    fn snapshot(&mut self, cx: &App) -> Option<(Store, Snapshot)> {
+    /// The tabs, their tree, the pins and the icons of the sites those name,
+    /// as the store keeps them. None when nothing changed since the last
+    /// snapshot, unless `always`.
+    fn snapshot(&mut self, always: bool, cx: &App) -> Option<(Store, Snapshot)> {
         let store = self.store.clone()?;
-        for index in 0..self.tabs.len() {
-            self.remember_icon(index, cx);
-        }
         // Parents before children, then the pinned tabs.
         let mut order = self.tree.order();
         order.extend(
@@ -1333,7 +1356,17 @@ impl Browser {
             tabs,
             dock: self.layout(cx),
         };
-        let snapshot = store.snapshot(session, icons, hosts);
+        let pins = self.pins.clone();
+        let unchanged = self
+            .written
+            .as_ref()
+            .is_some_and(|written| written.0 == session && written.1 == pins);
+        if unchanged && !self.icons_changed && !always {
+            return None;
+        }
+        self.icons_changed = false;
+        self.written = Some((session.clone(), pins.clone()));
+        let snapshot = store.snapshot(session, pins, icons, hosts);
         Some((store, snapshot))
     }
 
@@ -1368,9 +1401,11 @@ impl Browser {
                 .is_none_or(|kept| !Arc::ptr_eq(kept, &icon))
         {
             self.icons.insert(host.to_owned(), icon.clone());
+            self.icons_changed = true;
         }
         if let Some(host) = pinned {
             self.icons.insert(host, icon);
+            self.icons_changed = true;
         }
     }
 
@@ -1478,7 +1513,7 @@ impl Browser {
             ask: self.ask,
             shareable: self.share_url(self.active, cx).is_some(),
             sidebar: self.sidebar,
-            pinnable: self.tabs[self.active].pinnable_url(cx).is_some(),
+            pinnable: self.pinnable_url(self.active, cx).is_some(),
         }
     }
 
@@ -1609,10 +1644,19 @@ impl Browser {
     fn cycle(&mut self, step: isize, window: &mut Window, cx: &mut Context<Self>) {
         let order = self.visible_order();
         let count = order.len() as isize;
-        let at = order
-            .iter()
-            .position(|index| *index == self.active)
-            .unwrap_or(0) as isize;
+        // A tab inside a folded branch counts as just after the branch's row.
+        let mut id = self.tabs[self.active].id;
+        let at = loop {
+            if let Some(at) = order.iter().position(|index| self.tabs[*index].id == id) {
+                break at as isize;
+            }
+            match self.tree.node(id).and_then(|node| node.parent) {
+                Some(parent) => id = parent,
+                None => break 0,
+            }
+        };
+        let folded = id != self.tabs[self.active].id;
+        let at = if folded && step < 0 { at + 1 } else { at };
         let index = order[(at + step).rem_euclid(count) as usize];
         self.activate(index, window, cx);
     }
@@ -1621,10 +1665,7 @@ impl Browser {
     /// the pinned sites' open tabs, then the tree's rows in the sidebar or
     /// the rows of tabs without it.
     fn visible_order(&self) -> Vec<usize> {
-        let pinned = self
-            .pins
-            .iter()
-            .filter_map(|pin| self.tabs.iter().position(|tab| tab.pin == Some(pin.id)));
+        let pinned = self.pins.iter().filter_map(|pin| self.pinned_tab(pin.id));
         let rest: Vec<usize> = if self.sidebar {
             self.tree
                 .rows()

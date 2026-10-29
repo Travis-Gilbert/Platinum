@@ -3,10 +3,11 @@
 //! icons of the sites those name (`favicons/`), so a pin or a restored tab
 //! shows its site's icon before its page has loaded.
 //!
-//! Each file is written whole, through a temporary file, once changes
-//! settle, and read once at launch. A pins file Frame cannot read is set
-//! aside rather than written over. Icons are kept only for the sites the
-//! pins and the session name, so the folder is not a record of browsing.
+//! Each file is written whole, through a temporary file, a moment after a
+//! change, and read once at launch. A file Frame cannot make sense of is set
+//! aside rather than written over, and one it cannot read at all is left
+//! alone. Icons are kept only for the sites the pins and the session name,
+//! so the folder is not a record of browsing.
 //!
 //! Without the `Store` global (the UI tests) nothing is read or written.
 
@@ -36,16 +37,20 @@ pub struct Store {
     /// The newest snapshot written, by when it was gathered; writes take
     /// turns holding it.
     written: Arc<Mutex<u64>>,
+    /// Files there at launch that could not be read then, left as they are
+    /// rather than written over.
+    unread: Arc<Mutex<HashSet<&'static str>>>,
 }
 
 impl Global for Store {}
 
-/// What one save writes: the session, and the icons of the sites it and the
-/// pins name, gathered on the UI thread.
+/// What one save writes: the session, the pins, and the icons of the sites
+/// those name, gathered on the UI thread.
 pub struct Snapshot {
     /// Its place among the snapshots gathered, from 1.
     order: u64,
     session: Session,
+    pins: Vec<Pin>,
     icons: Vec<(String, Arc<RenderImage>)>,
     /// Every site whose icon is kept; the others' are forgotten.
     hosts: HashSet<String>,
@@ -62,6 +67,7 @@ impl Store {
             dir,
             gathered: Arc::default(),
             written: Arc::default(),
+            unread: Arc::default(),
         }
     }
 
@@ -69,23 +75,37 @@ impl Store {
         cx.try_global::<Self>().cloned()
     }
 
-    /// The pins kept, or none. A file that is there but is not pins Frame
-    /// can read, broken JSON included, is set aside before the next save
-    /// could write over it.
+    /// The pins kept, or none.
     pub fn load_pins(&self) -> Vec<Pin> {
-        let path = self.dir.join(PINS);
+        self.load(PINS, format::pins_from_json).unwrap_or_default()
+    }
+
+    pub fn load_session(&self) -> Option<Session> {
+        self.load(SESSION, format::session_from_json)
+    }
+
+    /// The file `name` as `parse` reads it, or none. A file that is there
+    /// but is not one Frame can read, broken JSON included, is set aside
+    /// before the next save could write over it. One that cannot be read
+    /// now, for want of permission say, is left alone and not written over.
+    fn load<T>(&self, name: &'static str, parse: impl FnOnce(&Value) -> Option<T>) -> Option<T> {
+        let path = self.dir.join(name);
         let text = match fs::read_to_string(&path) {
             Ok(text) => text,
-            Err(error) if error.kind() == ErrorKind::NotFound => return Vec::new(),
+            Err(error) if error.kind() == ErrorKind::NotFound => return None,
             Err(error) => {
-                log::warn!("reading {}: {error}", path.display());
-                String::new()
+                log::warn!("reading {}: {error}; leaving it as it is", path.display());
+                self.unread
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+                    .insert(name);
+                return None;
             }
         };
-        let pins = serde_json::from_str(&text)
+        let parsed = serde_json::from_str(&text)
             .ok()
-            .and_then(|value| format::pins_from_json(&value));
-        pins.unwrap_or_else(|| {
+            .and_then(|value| parse(&value));
+        if parsed.is_none() {
             let aside = path.with_extension("json.unreadable");
             log::warn!(
                 "{} is not Frame's; moved to {}",
@@ -93,16 +113,16 @@ impl Store {
                 aside.display()
             );
             let _ = fs::rename(&path, aside);
-            Vec::new()
-        })
+        }
+        parsed
     }
 
-    pub fn save_pins(&self, pins: &[Pin]) {
-        write_json(&self.dir.join(PINS), &format::pins_to_json(pins));
-    }
-
-    pub fn load_session(&self) -> Option<Session> {
-        format::session_from_json(&read_json(&self.dir.join(SESSION))?)
+    /// Write `value` as the file `name`, unless it could not be read.
+    fn write(&self, name: &'static str, value: &Value) {
+        let unread = self.unread.lock().unwrap_or_else(PoisonError::into_inner);
+        if !unread.contains(name) {
+            write_json(&self.dir.join(name), value);
+        }
     }
 
     /// What one save writes, in its place among the others. Gather on the
@@ -110,12 +130,14 @@ impl Store {
     pub fn snapshot(
         &self,
         session: Session,
+        pins: Vec<Pin>,
         icons: Vec<(String, Arc<RenderImage>)>,
         hosts: HashSet<String>,
     ) -> Snapshot {
         Snapshot {
             order: self.gathered.fetch_add(1, Ordering::Relaxed) + 1,
             session,
+            pins,
             icons,
             hosts,
         }
@@ -130,10 +152,8 @@ impl Store {
         if snapshot.order <= *written {
             return;
         }
-        write_json(
-            &self.dir.join(SESSION),
-            &format::session_to_json(&snapshot.session),
-        );
+        self.write(SESSION, &format::session_to_json(&snapshot.session));
+        self.write(PINS, &format::pins_to_json(&snapshot.pins));
         for (host, icon) in &snapshot.icons {
             self.save_favicon(host, icon);
         }
@@ -148,19 +168,19 @@ impl Store {
         Some(crate::page::icon_image(frame))
     }
 
-    /// Keep `icon` for `host`, unless one is kept already.
-    pub fn save_favicon(&self, host: &str, icon: &RenderImage) {
-        let path = self.icon_path(host);
-        if path.exists() {
-            return;
-        }
+    /// Keep `icon` for `host`, in place of any other kept before.
+    fn save_favicon(&self, host: &str, icon: &RenderImage) {
         let Some(pixels) = icon.as_bytes(0) else {
             return;
         };
         let size = icon.size(0);
         let bytes = format::encode_icon(size.width.0 as u32, size.height.0 as u32, pixels);
+        let path = self.icon_path(host);
+        if fs::read(&path).is_ok_and(|kept| kept == bytes) {
+            return;
+        }
         if let Err(error) =
-            fs::create_dir_all(self.dir.join(FAVICONS)).and_then(|()| fs::write(&path, bytes))
+            fs::create_dir_all(self.dir.join(FAVICONS)).and_then(|()| write_whole(&path, &bytes))
         {
             log::warn!("keeping the icon for {host}: {error}");
         }
@@ -194,17 +214,6 @@ pub fn parse_session(text: &str) -> Option<Session> {
     format::session_from_json(&serde_json::from_str(text).ok()?)
 }
 
-fn read_json(path: &Path) -> Option<Value> {
-    let text = fs::read_to_string(path).ok()?;
-    match serde_json::from_str(&text) {
-        Ok(value) => Some(value),
-        Err(error) => {
-            log::warn!("reading {}: {error}", path.display());
-            None
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -229,14 +238,72 @@ mod tests {
     #[test]
     fn a_save_older_than_the_one_written_is_dropped() {
         let (store, dir) = store("save-order");
-        let older = store.snapshot(session(200.), Vec::new(), HashSet::new());
-        let newer = store.snapshot(session(300.), Vec::new(), HashSet::new());
+        let older = store.snapshot(session(200.), Vec::new(), Vec::new(), HashSet::new());
+        let newer = store.snapshot(session(300.), Vec::new(), Vec::new(), HashSet::new());
         // The save at quit finishes first; the one from before reaches its
         // turn after.
         store.save(&newer);
         store.save(&older);
-        let written = read_json(&dir.join(SESSION)).unwrap();
+        let written = fs::read_to_string(dir.join(SESSION)).unwrap();
+        let written: Value = serde_json::from_str(&written).unwrap();
         assert_eq!(written["sidebar_width"], 300.);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_kept_icon_follows_the_site_and_a_broken_one_is_rewritten() {
+        let (store, dir) = store("icons");
+        let icon = |side| crate::page::icon_image(image::RgbaImage::new(side, side));
+        let size = |store: &Store| store.load_favicon("example.org").map(|icon| icon.size(0));
+        store.save_favicon("example.org", &icon(16));
+        store.save_favicon("example.org", &icon(32));
+        assert_eq!(size(&store).map(|size| size.width.0), Some(32), "the newer");
+
+        let path = store.icon_path("example.org");
+        fs::write(&path, b"FRI1 cut short").unwrap();
+        assert_eq!(size(&store), None);
+        store.save_favicon("example.org", &icon(32));
+        assert_eq!(
+            size(&store).map(|size| size.width.0),
+            Some(32),
+            "whole again"
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_file_that_cannot_be_read_is_left_alone() {
+        use std::os::unix::fs::PermissionsExt as _;
+        let (store, dir) = store("unread");
+        let pins = r#"{"version": 1, "pins": []}"#;
+        fs::write(dir.join(PINS), pins).unwrap();
+        let locked = |mode| fs::set_permissions(dir.join(PINS), fs::Permissions::from_mode(mode));
+        locked(0o000).unwrap();
+        assert!(store.load_pins().is_empty());
+        let pin = Pin {
+            id: 1,
+            url: url::Url::parse("https://example.org/").unwrap(),
+            title: "Example".into(),
+        };
+        store.save(&store.snapshot(session(240.), vec![pin], Vec::new(), HashSet::new()));
+        locked(0o644).unwrap();
+        assert_eq!(
+            fs::read_to_string(dir.join(PINS)).unwrap(),
+            pins,
+            "not written over"
+        );
+        assert!(!dir.join("pins.json.unreadable").exists(), "nor set aside");
+        assert!(dir.join(SESSION).exists(), "the session is still kept");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_broken_session_is_set_aside() {
+        let (store, dir) = store("session-aside");
+        fs::write(dir.join(SESSION), "{ not json").unwrap();
+        assert!(store.load_session().is_none());
+        assert!(!dir.join(SESSION).exists());
+        assert!(dir.join("session.json.unreadable").exists());
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -256,14 +323,19 @@ mod tests {
     }
 }
 
-/// Write through a temporary file, so a crash mid-write leaves the old file.
 fn write_json(path: &Path, value: &Value) {
-    let temporary = path.with_extension("json.tmp");
     let result = serde_json::to_vec_pretty(value)
         .map_err(std::io::Error::other)
-        .and_then(|bytes| fs::write(&temporary, bytes))
-        .and_then(|()| fs::rename(&temporary, path));
+        .and_then(|bytes| write_whole(path, &bytes));
     if let Err(error) = result {
         log::warn!("writing {}: {error}", path.display());
     }
+}
+
+/// Write through a temporary file, so a crash mid-write leaves the old file.
+fn write_whole(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let mut temporary = path.as_os_str().to_owned();
+    temporary.push(".tmp");
+    fs::write(&temporary, bytes)?;
+    fs::rename(&temporary, path)
 }

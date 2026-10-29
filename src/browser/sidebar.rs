@@ -19,8 +19,11 @@
 //! its row; here a click activates the tab, so the rows stop the click and
 //! the browser's `TabTree` holds the folds.
 
+use std::collections::HashMap;
+use std::rc::Rc;
+
 use gpui_kit::base::InteractiveElementExt as _;
-use gpui_kit::base::dock::DragPanel;
+use gpui_kit::base::dock::{DragPanel, NodeId, PanelId};
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
 use gpui_kit::component::list::ListItem;
@@ -101,8 +104,24 @@ impl Browser {
                         cx.listener(|browser, _, window, cx| browser.toggle_sidebar(window, cx)),
                     ),
             );
+        // Each tab's group, read once for every row's drag.
+        let groups: Rc<HashMap<PanelId, NodeId>> = Rc::new(
+            dock::groups(self.dock.read(cx))
+                .into_iter()
+                .flat_map(|group| {
+                    let node = group.node;
+                    group.panels.into_iter().map(move |panel| (panel, node))
+                })
+                .collect(),
+        );
         let rows = tree(&self.tree_view, move |_, entry, _, _, cx| {
-            Self::render_row(&browser, entry.item().id.clone(), entry.depth(), cx)
+            Self::render_row(
+                &browser,
+                &groups,
+                entry.item().id.clone(),
+                entry.depth(),
+                cx,
+            )
         });
         // Past the traffic lights, unless full screen hides them.
         let clear = if window.is_fullscreen() { FRAME } else { 76. };
@@ -151,13 +170,11 @@ impl Browser {
     }
 
     /// What dragging a tab carries: the dock's own `DragPanel`, as a tab in
-    /// the rows carries, so the dock takes a row dropped on a page.
-    fn drag_tab(&self, index: usize, cx: &App) -> Option<DragPanel> {
+    /// the rows carries, so the dock takes a row dropped on a page. `groups`
+    /// holds each tab's group, by its panel.
+    fn drag_tab(&self, index: usize, groups: &HashMap<PanelId, NodeId>) -> Option<DragPanel> {
         let panel = self.tabs.get(index)?.panel_id();
-        let group = dock::groups(self.dock.read(cx))
-            .into_iter()
-            .find(|group| group.panels.contains(&panel))?;
-        Some(DragPanel::new(panel, group.node))
+        Some(DragPanel::new(panel, *groups.get(&panel)?))
     }
 
     /// The tab a dragged `DragPanel` is.
@@ -192,7 +209,7 @@ impl Browser {
     /// as Dia draws them, ending in a button that pins the active tab. A tab
     /// dragged onto the tray is pinned.
     pub(super) fn pin_tray(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let pinnable = self.tabs[self.active].pinnable_url(cx).is_some();
+        let pinnable = self.pinnable_url(self.active, cx).is_some();
         let theme = cx.theme();
         let (radius, fg, muted) = (theme.radius_lg, theme.foreground, theme.muted_foreground);
         let pin_active = Button::new("pin-tab")
@@ -271,7 +288,7 @@ impl Browser {
     pub(super) fn pin_button(&self, pin: &Pin, tile: bool, cx: &mut Context<Self>) -> Button {
         let theme = cx.theme();
         let pin_id = pin.id;
-        let tab = self.tabs.iter().position(|tab| tab.pin == Some(pin_id));
+        let tab = self.pinned_tab(pin_id);
         let active = tab == Some(self.active);
         let fg = theme.foreground;
         let (color, hover) = match tab {
@@ -335,6 +352,7 @@ impl Browser {
     /// Close, shown on the active row and under the pointer.
     fn render_row(
         browser: &WeakEntity<Self>,
+        groups: &HashMap<PanelId, NodeId>,
         item: SharedString,
         depth: usize,
         cx: &mut App,
@@ -365,7 +383,7 @@ impl Browser {
             .filter(|(renamed, ..)| *renamed == id)
             .map(|(_, input, _)| input.clone());
         let group = SharedString::from(format!("tree-row-{id}"));
-        let drag = this.drag_tab(index, cx);
+        let drag = this.drag_tab(index, groups);
 
         let fold = if this.tree.has_children(id) {
             let browser = browser.clone();
@@ -682,7 +700,7 @@ impl Browser {
             });
         }
         actions.push(TabAction::Rename(id));
-        if self.tabs[index].pinnable_url(cx).is_some() {
+        if self.pinnable_url(index, cx).is_some() {
             actions.push(TabAction::Pin(id));
         }
         actions.push(TabAction::Close(id));
@@ -700,8 +718,8 @@ impl Browser {
         cx: &mut Context<Self>,
     ) {
         let mut actions = Vec::new();
-        if let Some(tab) = self.tabs.iter().find(|tab| tab.pin == Some(pin)) {
-            actions.push(TabAction::Close(tab.id));
+        if let Some(index) = self.pinned_tab(pin) {
+            actions.push(TabAction::Close(self.tabs[index].id));
         }
         actions.push(TabAction::Unpin(pin));
         self.open_menu("Pinned Site", actions, position, window, cx);
@@ -785,7 +803,7 @@ impl Browser {
     // Pins.
 
     fn open_pin(&mut self, pin: u64, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(index) = self.tabs.iter().position(|tab| tab.pin == Some(pin)) {
+        if let Some(index) = self.pinned_tab(pin) {
             self.activate(index, window, cx);
             return;
         }
@@ -806,12 +824,13 @@ impl Browser {
     }
 
     /// Pin the site the tab `id` shows. The tab becomes the pin's and leaves
-    /// the tree; its children move up into its place.
+    /// the tree; its children move up into its place. The pins and the
+    /// site's icon are written with the session, off the window's thread.
     pub(super) fn pin_tab(&mut self, id: u64, cx: &mut Context<Self>) {
         let Some(index) = self.tab_index(id) else {
             return;
         };
-        let Some(url) = self.tabs[index].pinnable_url(cx) else {
+        let Some(url) = self.pinnable_url(index, cx) else {
             return;
         };
         if self
@@ -833,15 +852,9 @@ impl Browser {
             title,
         };
         self.next_pin += 1;
-        if let (Some(store), Some(host)) = (&self.store, pin.url.host_str())
-            && let Some(icon) = self.icons.get(host)
-        {
-            store.save_favicon(host, icon);
-        }
         self.tabs[index].pin = Some(pin.id);
         self.tree.remove(id);
         self.pins.push(pin);
-        self.save_pins();
         self.sync_tree(cx);
         self.schedule_save(cx);
         cx.notify();
@@ -850,19 +863,12 @@ impl Browser {
     /// Forget the pin. Its tab, if open, joins the tree at the top level.
     fn unpin(&mut self, pin: u64, cx: &mut Context<Self>) {
         self.pins.retain(|kept| kept.id != pin);
-        if let Some(tab) = self.tabs.iter_mut().find(|tab| tab.pin == Some(pin)) {
-            tab.pin = None;
-            self.tree.add_root(tab.id);
+        if let Some(index) = self.pinned_tab(pin) {
+            self.tabs[index].pin = None;
+            self.tree.add_root(self.tabs[index].id);
         }
-        self.save_pins();
         self.sync_tree(cx);
         self.schedule_save(cx);
         cx.notify();
-    }
-
-    fn save_pins(&self) {
-        if let Some(store) = &self.store {
-            store.save_pins(&self.pins);
-        }
     }
 }

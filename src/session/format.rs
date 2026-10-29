@@ -278,13 +278,14 @@ fn layout_from_json(value: &Value) -> Option<Layout> {
 }
 
 /// None when the file is not one Frame wrote. A tab whose address no longer
-/// parses comes back as a new tab rather than losing the rest.
+/// parses comes back as a new tab, and one without an id is left out,
+/// rather than losing the rest.
 pub fn session_from_json(value: &Value) -> Option<Session> {
     let tabs = value
         .get("tabs")?
         .as_array()?
         .iter()
-        .map(|tab| {
+        .filter_map(|tab| {
             let content = if let Some(query) = string(tab, "search") {
                 Content::Search {
                     query,
@@ -311,7 +312,7 @@ pub fn session_from_json(value: &Value) -> Option<Session> {
                 name: string(tab, "name"),
             })
         })
-        .collect::<Option<Vec<_>>>()?;
+        .collect();
     let dock = value
         .get("dock")
         .and_then(layout_from_json)
@@ -545,6 +546,15 @@ mod tests {
             session.sidebar_width, None,
             "an older file keeps the default"
         );
+    }
+
+    #[test]
+    fn a_tab_without_an_id_is_left_out_and_the_rest_kept() {
+        let value =
+            json!({ "tabs": [{ "id": 1 }, { "url": "https://example.org/" }, { "id": 3 }] });
+        let session = session_from_json(&value).unwrap();
+        let ids: Vec<u64> = session.tabs.iter().map(|tab| tab.id).collect();
+        assert_eq!(ids, [1, 3]);
     }
 
     #[test]

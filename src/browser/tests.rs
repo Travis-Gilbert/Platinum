@@ -1101,3 +1101,107 @@ fn a_split_survives_a_restart(cx: &mut TestAppContext) {
     assert!((share - 0.6).abs() < 0.02, "saved at its share: {share}");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[gpui_kit::test]
+fn without_a_saved_active_tab_each_group_keeps_its_tab(cx: &mut TestAppContext) {
+    let dir = data_dir("no-active");
+    std::fs::write(
+        dir.join("session.json"),
+        r#"{
+            "version": 1,
+            "tabs": [{ "id": 1, "search": "one" }, { "id": 2, "search": "two" }],
+            "dock": { "tabs": [1, 2], "shown": 1 }
+        }"#,
+    )
+    .unwrap();
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    cx.run_until_parked();
+
+    assert_eq!(active_id(&browser, cx), 2, "the tab its group showed");
+    let asleep: Vec<bool> = cx.update(|_, cx| {
+        let browser = browser.read(cx);
+        browser
+            .tabs
+            .iter()
+            .map(|tab| tab.asleep.is_some())
+            .collect()
+    });
+    assert_eq!(asleep, [true, false], "only that one woke");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[gpui_kit::test]
+fn cycling_from_a_folded_branch_goes_on_from_its_row(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t cmd-t cmd-t ctrl-cmd-s");
+    let [_, b, c, d] = ids(&browser, cx)[..] else {
+        panic!("four tabs")
+    };
+    // c hangs under b; b is folded while c is the active tab.
+    let fold_over_c = |cx: &mut VisualTestContext| {
+        cx.update(|window, cx| {
+            browser.update(cx, |browser, cx| {
+                browser.tree.move_to(c, Place::Into(b));
+                browser.activate_id(c, window, cx);
+                browser.tab_action(TabAction::Fold(b), window, cx);
+            })
+        })
+    };
+    fold_over_c(cx);
+    keys(cx, "ctrl-tab");
+    assert_eq!(active_id(&browser, cx), d, "the row after the branch");
+    fold_over_c(cx);
+    keys(cx, "ctrl-shift-tab");
+    assert_eq!(active_id(&browser, cx), b, "the branch's own row");
+}
+
+#[gpui_kit::test]
+fn a_site_is_pinned_once(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-t");
+    let [a, b] = ids(&browser, cx)[..] else {
+        panic!("two tabs")
+    };
+    let (offered, pins) = cx.update(|_, cx| {
+        browser.update(cx, |browser, cx| {
+            let site = Content::Page {
+                url: Url::parse("https://example.org/").unwrap(),
+                title: "Example".into(),
+            };
+            for id in [a, b] {
+                let index = browser.tab_index(id).unwrap();
+                browser.tabs[index].asleep = Some(site.clone());
+            }
+            browser.pin_tab(a, cx);
+            let other = browser.tab_index(b).unwrap();
+            let offered = browser.pinnable_url(other, cx).is_some();
+            browser.pin_tab(b, cx);
+            (offered, browser.pins.len())
+        })
+    });
+    assert!(!offered, "Pin Tab is not offered for a site pinned already");
+    assert_eq!(pins, 1);
+}
+
+#[gpui_kit::test]
+fn a_stream_of_changes_cannot_put_the_save_off(cx: &mut TestAppContext) {
+    let dir = data_dir("save-stream");
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    // A change every 0.4s, as a pointer over links makes them.
+    for width in [200., 210., 220., 230., 240., 250.] {
+        cx.update(|_, cx| {
+            browser.update(cx, |browser, cx| {
+                browser.sidebar_width = px(width);
+                browser.schedule_save(cx);
+            })
+        });
+        cx.executor().advance_clock(Duration::from_millis(400));
+        cx.run_until_parked();
+    }
+    let saved = std::fs::read_to_string(dir.join("session.json"))
+        .expect("written while the changes kept coming");
+    assert!(session::parse_session(&saved).is_some());
+    let _ = std::fs::remove_dir_all(&dir);
+}

@@ -133,13 +133,6 @@ impl TabTree {
         branch
     }
 
-    /// The person closed `id`. All its children move up a level into its
-    /// place, in order, keeping their own branches; a closed tab never stays
-    /// behind to hold its branch.
-    pub fn close(&mut self, id: u64) {
-        self.remove(id);
-    }
-
     /// `id` and everything under it, depth first.
     pub fn branch(&self, id: u64) -> Vec<u64> {
         let mut out = Vec::new();
@@ -418,10 +411,10 @@ mod tests {
     #[test]
     fn closing_a_tab_without_children_removes_it() {
         let mut tree = sample();
-        tree.close(4);
+        tree.remove(4);
         assert!(!tree.contains(4));
         assert_eq!(tree.children(2), [] as [u64; 0]);
-        tree.close(4);
+        tree.remove(4);
         assert_eq!(
             tree.order(),
             [1, 2, 3, 5],
@@ -433,7 +426,7 @@ mod tests {
     fn closing_a_tab_moves_all_its_children_up() {
         let mut tree = sample();
         tree.toggle(2);
-        tree.close(1);
+        tree.remove(1);
         assert_eq!(tree.roots(), [2, 3, 5]);
         assert_eq!(tree.children(2), [4], "a child keeps its own branch");
         assert!(tree.node(2).unwrap().collapsed, "and its fold");
