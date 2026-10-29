@@ -19,7 +19,7 @@ recorded in [youtube.md](youtube.md).
 
 | Row | Check |
 |---|---|
-| P1 | Pin unity: bootstrap scripts, `patches/README.md`, the workflow, the spec, `Cargo.toml` and the `deps/` checkouts name one Theorem (`7eb1ba02…`), one Servo (`efdf7370…`) and one GStreamer (`1b2a95a1…`) |
+| P1 | Pin unity: bootstrap scripts, `patches/README.md`, the workflow, the spec, `Cargo.toml` and the `deps/` checkouts name one Theorem (`8c5d22bd…`), one Servo (`efdf7370…`) and one GStreamer (`1b2a95a1…`) |
 | P2 | The archival `patches/servo-mse.patch` covers exactly the fork's `ebc89e68..efdf7370` diff and reproduces the pinned tree byte-for-byte |
 | B1 | The patched GStreamer MSE runtime loads: `gst-inspect-1.0 mse` sees `msesrc` through `script/media-env` |
 | B2 | `cargo build --locked` of `frame` and every example against the pinned engine, substrate and runtime |
