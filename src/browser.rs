@@ -1600,6 +1600,7 @@ impl Browser {
     fn sync_chrome(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         #[cfg(feature = "performance-check")]
         let _measure = crate::performance::Span::new("chrome_sync");
+        self.close_stale_canvas(cx);
         let tab = &self.tabs[self.active];
         if !self.editing {
             let summary = tab.summary(cx);
@@ -1616,6 +1617,29 @@ impl Browser {
         self.select_row(cx);
         self.schedule_save(cx);
         cx.notify();
+    }
+
+    /// Close the canvas once the active tab no longer shows its page: another
+    /// tab became the active one, or its own closed or let the page go.
+    fn close_stale_canvas(&mut self, cx: &mut Context<Self>) {
+        let active = self.tabs[self.active].page.as_ref().map(Entity::entity_id);
+        let Some(board) = self
+            .canvas
+            .take_if(|board| Some(board.read(cx).page().entity_id()) != active)
+        else {
+            return;
+        };
+        let page = board.read(cx).page().entity_id();
+        board.update(cx, |board, cx| board.detach(cx));
+        // Detaching shows the page; it stays shown only where its tab is.
+        if let Some(tab) = self
+            .tabs
+            .iter_mut()
+            .find(|tab| tab.page.as_ref().map(Entity::entity_id) == Some(page))
+        {
+            tab.page_shown = true;
+        }
+        self.apply_visibility(cx);
     }
 
     // Keeping the session.

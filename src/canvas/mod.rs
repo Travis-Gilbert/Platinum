@@ -164,6 +164,11 @@ impl SpatialCanvas {
         });
     }
 
+    /// The page the canvas lays out.
+    pub fn page(&self) -> &Entity<Page> {
+        &self.page
+    }
+
     fn frame(&self) -> Frame<'_> {
         Frame {
             selection: &self.selection,
