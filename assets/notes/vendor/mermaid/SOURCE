@@ -1,0 +1,9 @@
+mermaid 11.13.0 (MIT)
+The release Obsidian 1.13.4 ships (obsidian.md changelog: "Upgraded Mermaid to 11.13.0"),
+published 2026-03-09, so the diagrams match the reference.
+Tarball:   https://registry.npmjs.org/mermaid/-/mermaid-11.13.0.tgz
+Integrity: sha512-fEnci+Immw6lKMFI8sqzjlATTyjLkRa6axrEgLV2yHTfv8r+h1wjFbV6xeRtd4rUV1cS4EpR9rwp3Rci7TRWDw==
+Copied unmodified from the tarball:
+  package/dist/mermaid.min.js -> mermaid.min.js (the self-contained browser build)
+  package/LICENSE             -> LICENSE
+Off until the person allows Mermaid diagrams for the vault (reading.js, src/notes/trust.rs).
