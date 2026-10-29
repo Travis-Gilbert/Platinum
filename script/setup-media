@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--release", action="store_true")
     args = parser.parse_args()
     if sys.platform != "darwin":
-        parser.error("Frame currently supports macOS only")
+        parser.error("Platinum currently supports macOS only")
     root = Path(__file__).resolve().parent.parent
     metadata = json.loads(output(
         "cargo", "metadata", "--locked", "--format-version", "1",
@@ -59,16 +59,21 @@ def main():
         raise RuntimeError("Missing GStreamer plugins:\n" + "\n".join(missing))
     target = Path(metadata["target_directory"]) / ("release" if args.release else "debug")
     destinations = (target / "lib", target / "examples" / "lib")
-    # Validate everything before creating links; never replace an existing file.
+    # Validate everything first. Refresh links from known plugin sources when a
+    # patched native plugin supersedes a system plugin; preserve arbitrary links/files.
     for directory in destinations:
         for path in files:
             link = directory / path.name
             if (link.exists() or link.is_symlink()) and link.resolve() != path.resolve():
-                raise RuntimeError(f"Refusing to replace existing plugin: {link}")
+                known_sources = {(source / path.name).resolve() for source in sources}
+                if not link.is_symlink() or link.resolve() not in known_sources:
+                    raise RuntimeError(f"Refusing to replace existing plugin: {link}")
     for directory in destinations:
         directory.mkdir(parents=True, exist_ok=True)
         for path in files:
             link = directory / path.name
+            if link.is_symlink() and link.resolve() != path.resolve():
+                link.unlink()
             if not link.is_symlink() and not link.exists():
                 link.symlink_to(path)
         print(f"Ready: {len(files)} development plugins in {directory}")

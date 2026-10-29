@@ -127,7 +127,8 @@ impl RenderOnce for PlaceView {
                                     .child(place.icon()),
                             )
                             .title(
-                                EmptyTitle::new().child(format!("{} is not built yet", place.label())),
+                                EmptyTitle::new()
+                                    .child(format!("{} is not built yet", place.label())),
                             )
                             .description(EmptyDescription::new().child(place.summary())),
                     )

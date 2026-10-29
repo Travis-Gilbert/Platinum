@@ -30,7 +30,7 @@ use gpui_kit::{
 use url::Url;
 
 use super::dock::FRAME;
-use super::{ASK_PLACEHOLDER, Browser, SEARCH_PLACEHOLDER, TAB_ROW};
+use super::{ASK_PLACEHOLDER, Browser, Origin, SEARCH_PLACEHOLDER, TAB_ROW};
 use crate::actions::{GoBack, GoForward, NewTab};
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
@@ -93,9 +93,14 @@ impl Underlay {
     }
 
     pub(super) fn set_placeholder(&self, ask: bool, window: &mut Window, cx: &mut gpui_kit::App) {
-        let placeholder = if ask { ASK_PLACEHOLDER } else { SEARCH_PLACEHOLDER };
-        self.field
-            .update(cx, |field, cx| field.set_placeholder(placeholder, window, cx));
+        let placeholder = if ask {
+            ASK_PLACEHOLDER
+        } else {
+            SEARCH_PLACEHOLDER
+        };
+        self.field.update(cx, |field, cx| {
+            field.set_placeholder(placeholder, window, cx)
+        });
     }
 }
 
@@ -125,14 +130,32 @@ impl Browser {
         cx.notify();
     }
 
-    /// ⌘T: the tab behind the workspace, ready for an address.
+    /// Open a tab from the workspace, preserving an existing result or place.
     pub(super) fn reveal_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let route = self.underlay.route.clone();
         self.hide_underlay(cx);
-        self.activate(0, window, cx);
-        self.focus_address_bar(window, cx);
+        match route {
+            Route::Home => {
+                self.activate(0, window, cx);
+                self.focus_address_bar(window, cx);
+                return;
+            }
+            Route::Results(serp, events) => {
+                self.tabs[0].serp = Some(serp);
+                self.tabs[0]._serp_events = Some(events);
+                self.tabs[0].showing = super::Showing::Serp;
+            }
+            Route::Place(place) => self.tabs[0].showing = super::Showing::Place(place),
+        }
+        self.new_tab_beside(0, window, cx);
     }
 
-    pub(super) fn underlay_go(&mut self, route: Route, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn underlay_go(
+        &mut self,
+        route: Route,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if self.underlay.route.same(&route) {
             self.focus_content(window, cx);
             return;
@@ -221,8 +244,7 @@ impl Browser {
             self.download(url, None, window, cx);
             return;
         }
-        self.hide_underlay(cx);
-        self.go(url, false, true, window, cx);
+        self.go(url, None, true, window, cx);
     }
 
     /// A result was opened from the workspace's results. They become the
@@ -242,13 +264,18 @@ impl Browser {
         if shown != serp {
             return false;
         }
+        if delegate::verdict(url) == Verdict::Download {
+            self.download(url.clone(), None, window, cx);
+            return true;
+        }
         let (serp, events) = (shown.clone(), events.clone());
         self.hide_underlay(cx);
         let tab = &mut self.tabs[0];
         tab.serp = Some(serp);
         tab._serp_events = Some(events);
         tab.showing = super::Showing::Serp;
-        self.go(url.clone(), new_tab, true, window, cx);
+        let origin = new_tab.then_some(Origin::From(self.tabs[0].id));
+        self.go(url.clone(), origin, true, window, cx);
         true
     }
 
@@ -259,7 +286,7 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let InputEvent::PressEnter { .. } = event else {
+        let InputEvent::PressEnter { secondary, .. } = event else {
             return;
         };
         let text = field.read(cx).value().to_string();
@@ -272,7 +299,7 @@ impl Browser {
                 } else {
                     SerpMode::Search
                 };
-                self.underlay_search(query, mode, window, cx);
+                self.search(query, mode, *secondary, window, cx);
             }
         }
     }
@@ -284,17 +311,26 @@ impl Browser {
         }
     }
 
-    fn underlay_home_event(&mut self, event: &HomeEvent, window: &mut Window, cx: &mut Context<Self>) {
+    fn underlay_home_event(
+        &mut self,
+        event: &HomeEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         match event {
             HomeEvent::Place(place) => self.underlay_go(Route::Place(*place), window, cx),
             HomeEvent::Page { url, .. } => self.underlay_open(url.clone(), window, cx),
-            HomeEvent::Search { query, ask, .. } => {
+            HomeEvent::Search {
+                query,
+                ask,
+                new_tab,
+            } => {
                 let mode = if *ask {
                     SerpMode::Ask
                 } else {
                     SerpMode::Search
                 };
-                self.underlay_search(query.clone(), mode, window, cx);
+                self.search(query.clone(), mode, *new_tab, window, cx);
             }
         }
     }
@@ -342,7 +378,11 @@ impl Browser {
             )
     }
 
-    pub(super) fn render_underlay(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+    pub(super) fn render_underlay(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let theme = cx.theme().clone();
         let id = self.tabs[0].id;
         let route = self.underlay.route.clone();
@@ -369,7 +409,9 @@ impl Browser {
                     .icon(IconName::ArrowLeft)
                     .disabled(!can_back)
                     .tooltip_with_action("Back", &GoBack, None)
-                    .on_click(cx.listener(|browser, _, window, cx| browser.underlay_back(window, cx))),
+                    .on_click(
+                        cx.listener(|browser, _, window, cx| browser.underlay_back(window, cx)),
+                    ),
             )
             .child(
                 Button::new("underlay-forward")
@@ -441,6 +483,7 @@ impl Browser {
                     .overflow_hidden()
                     .child(body),
             )
+            .when(home, |view| view.child(self.home_status_bar(id, cx)))
             .into_any_element()
     }
 }

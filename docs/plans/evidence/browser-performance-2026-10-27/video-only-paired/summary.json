@@ -1,0 +1,153 @@
+[
+  {
+    "mode": "video-only-hd",
+    "baseline": {
+      "surface_interval_p95_ms": {
+        "median": 23.137749999999997,
+        "runs": [
+          30.400582999999997,
+          23.137749999999997,
+          23.134584
+        ]
+      },
+      "surface_presents": {
+        "median": 564,
+        "runs": [
+          561,
+          567,
+          564
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 25.378791,
+        "runs": [
+          33.292207999999995,
+          25.378791,
+          25.261291
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 23.131334,
+        "runs": [
+          30.664666999999998,
+          23.106917000000003,
+          23.131334
+        ]
+      },
+      "tint_reads": {
+        "median": 82,
+        "runs": [
+          83,
+          82,
+          82
+        ]
+      },
+      "tint_total_ms": {
+        "median": 22.077042,
+        "runs": [
+          24.892452999999996,
+          22.077042,
+          17.081041
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 8.939468000000005,
+        "runs": [
+          11.525035,
+          8.56617,
+          8.939468000000005
+        ]
+      }
+    },
+    "candidate": {
+      "surface_interval_p95_ms": {
+        "median": 25.391083,
+        "runs": [
+          33.103291999999996,
+          25.390125,
+          25.391083
+        ]
+      },
+      "surface_presents": {
+        "median": 564,
+        "runs": [
+          560,
+          564,
+          566
+        ]
+      },
+      "page_render_interval_p95_ms": {
+        "median": 25.337917,
+        "runs": [
+          32.988833,
+          25.337917,
+          25.313333
+        ]
+      },
+      "inactive_page_renders": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "servo_interval_p95_ms": {
+        "median": 23.345125000000003,
+        "runs": [
+          27.858291,
+          23.345125000000003,
+          22.976291
+        ]
+      },
+      "tint_reads": {
+        "median": 84,
+        "runs": [
+          84,
+          84,
+          84
+        ]
+      },
+      "tint_total_ms": {
+        "median": 11.426159,
+        "runs": [
+          13.777080000000002,
+          8.144792,
+          11.426159
+        ]
+      },
+      "session_snapshots": {
+        "median": 0,
+        "runs": [
+          0,
+          0,
+          0
+        ]
+      },
+      "process_cpu_s": {
+        "median": 9.766901999999998,
+        "runs": [
+          11.377935999999996,
+          9.766901999999998,
+          8.754862000000003
+        ]
+      }
+    }
+  }
+]

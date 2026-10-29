@@ -1,4 +1,4 @@
-//! Frame's commands. The window binds their shortcuts (`main.rs`); the
+//! Platinum's commands. The window binds their shortcuts (`main.rs`); the
 //! browser view handles them, from a shortcut, the menu bar, the toolbar or
 //! the navigator.
 
@@ -9,6 +9,14 @@ use crate::theme::Appearance;
 actions!(
     frame,
     [
+        ImportBrowserData,
+        ShowProfiles,
+        ShowBookmarks,
+        ShowHistory,
+        BookmarkPage,
+        FillPassword,
+        FillForm,
+        SavePassword,
         NewTab,
         CloseTab,
         NextTab,
@@ -19,8 +27,12 @@ actions!(
         FocusAddressBar,
         OpenPalette,
         ToggleCompact,
+        ToggleSidebar,
+        PinTab,
+        ShowCanvas,
         ToggleAsk,
         ShowDownloads,
+        ShowConsole,
         SharePage,
         Quit,
     ]

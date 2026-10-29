@@ -1,0 +1,19 @@
+# script/media-env gst-inspect-1.0 mse
+# started 2026-10-25T23:24:38+00:00
+Plugin Details:
+  Name                     mse
+  Description              W3C Media Source Extensions Support
+  Filename                 /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/gstreamer-1.0/libgstmse.dylib
+  Version                  1.28.8
+  License                  LGPL
+  Source module            gst-plugins-bad
+  Documentation            https://gstreamer.freedesktop.org/documentation/mse/
+  Source release date      2026-10-08
+  Binary package           GStreamer Bad Plug-ins source release
+  Origin URL               Unknown package origin
+
+  msesrc: MseSrc
+
+  1 features:
+  +-- 1 elements
+

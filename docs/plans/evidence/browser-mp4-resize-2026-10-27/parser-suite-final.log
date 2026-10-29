@@ -1,0 +1,20 @@
+Running suite(s): h264parse_to_bs_nal
+100%: Checks: 7, Failures: 0, Errors: 0
+Check suite h264parse_to_bs_nal ran in 0.076s (tests failed: 0)
+Running suite(s): h264parse_to_bs_au
+100%: Checks: 8, Failures: 0, Errors: 0
+Check suite h264parse_to_bs_au ran in 0.093s (tests failed: 0)
+Running suite(s): h264parse_to_avc_au
+100%: Checks: 7, Failures: 0, Errors: 0
+Running suite(s): h264parse_to_avc3_au
+100%: Checks: 7, Failures: 0, Errors: 0
+Check suite h264parse_to_avc3_au ran in 0.142s (tests failed: 0)
+Running suite(s): h264parse_packetized
+100%: Checks: 1, Failures: 0, Errors: 0
+Check suite h264parse_packetized ran in 0.034s (tests failed: 0)
+Running suite(s): h264parse_sliced
+100%: Checks: 4, Failures: 0, Errors: 0
+Check suite h264parse_sliced ran in 0.055s (tests failed: 0)
+Running suite(s): h264parse
+100%: Checks: 8, Failures: 0, Errors: 0
+Check suite h264parse ran in 0.125s (tests failed: 0)

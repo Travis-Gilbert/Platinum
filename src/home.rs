@@ -27,8 +27,9 @@ use gpui_kit::component::{
     v_flex,
 };
 use gpui_kit::{
-    Action, AnyElement, App, ElementId, FontWeight, IntoElement, ParentElement, RenderOnce,
-    SharedString, Styled, Window, div, prelude::FluentBuilder as _, rems,
+    Action, AnyElement, App, ElementId, FontWeight, InteractiveElement as _, IntoElement,
+    ParentElement, RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder as _,
+    rems,
 };
 use url::Url;
 
@@ -42,7 +43,10 @@ use crate::recents::{self, Recent, RecentSearch};
 pub enum HomeEvent {
     Place(Place),
     /// A recent page; in a new tab when `new_tab` (⌘-click).
-    Page { url: Url, new_tab: bool },
+    Page {
+        url: Url,
+        new_tab: bool,
+    },
     /// A recent search, run again.
     Search {
         query: String,
@@ -191,7 +195,9 @@ impl Home {
             ),
         };
         let handler = self.on_event.clone();
+        let selector = id.clone();
         Button::new(SharedString::from(id))
+            .debug_selector(move || selector.clone())
             .ghost()
             .w_full()
             .h(rems(3.25))
@@ -269,10 +275,9 @@ impl Home {
             )
             .when(empty, |this| {
                 this.child(
-                    div()
-                        .text_sm()
-                        .text_color(muted)
-                        .child("Pages you open and searches you run appear here, to pick up again."),
+                    div().text_sm().text_color(muted).child(
+                        "Pages you open and searches you run appear here, to pick up again.",
+                    ),
                 )
             })
             .when(!empty, |this| {
@@ -290,7 +295,12 @@ impl Home {
             }
         };
         let hint = |keys: AnyElement, text: &'static str| h_flex().gap_2().child(keys).child(text);
-        let word = |text: &'static str| div().font_weight(FontWeight::MEDIUM).child(text).into_any_element();
+        let word = |text: &'static str| {
+            div()
+                .font_weight(FontWeight::MEDIUM)
+                .child(text)
+                .into_any_element()
+        };
         h_flex()
             .flex_shrink_0()
             .flex_wrap()
@@ -310,7 +320,10 @@ impl Home {
                 "Type an address or a search",
             ))
             .child(hint(word("Right-click"), "The same search, anywhere"))
-            .child(hint(word("Drag a tab"), "To a page's edge, for two side by side"))
+            .child(hint(
+                word("Drag a tab"),
+                "To a page's edge, for two side by side",
+            ))
     }
 }
 

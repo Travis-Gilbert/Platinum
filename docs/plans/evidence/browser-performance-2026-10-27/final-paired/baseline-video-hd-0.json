@@ -1,0 +1,96 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1241,
+      "total_ms": 8.329831999999982,
+      "p50_ms": 0.006542,
+      "p95_ms": 0.009042000000000001,
+      "max_ms": 0.029082999999999998
+    },
+    "page_render_interval": {
+      "count": 1240,
+      "total_ms": 12058.133374999994,
+      "p50_ms": 8.369665999999999,
+      "p95_ms": 16.678124999999998,
+      "max_ms": 18.283
+    },
+    "servo_frame": {
+      "count": 1233,
+      "total_ms": 1204.4594359999996,
+      "p50_ms": 1.172125,
+      "p95_ms": 1.4140419999999998,
+      "max_ms": 2.1480829999999997
+    },
+    "servo_frame_interval": {
+      "count": 1232,
+      "total_ms": 12067.781499999985,
+      "p50_ms": 10.054,
+      "p95_ms": 10.0935,
+      "max_ms": 11.257
+    },
+    "servo_spin": {
+      "count": 4378,
+      "total_ms": 1253.5399689999988,
+      "p50_ms": 0.018208,
+      "p95_ms": 1.326166,
+      "max_ms": 2.1579580000000003
+    },
+    "surface_present": {
+      "count": 1233,
+      "total_ms": 383.63239700000054,
+      "p50_ms": 0.34237500000000004,
+      "p95_ms": 0.49195900000000004,
+      "max_ms": 1.274334
+    },
+    "surface_present_interval": {
+      "count": 1232,
+      "total_ms": 12067.520041999998,
+      "p50_ms": 9.808542,
+      "p95_ms": 10.727584,
+      "max_ms": 11.136750000000001
+    },
+    "tint_sample": {
+      "count": 89,
+      "total_ms": 35.452504999999995,
+      "p50_ms": 0.01175,
+      "p95_ms": 2.202708,
+      "max_ms": 4.807583
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 1236,
+    "interval_count": 1236,
+    "p50_ms": 10.040000000000873,
+    "p95_ms": 10.110000000000582,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 1920,
+      "height": 1080,
+      "current": 14.114748375,
+      "ready": 4,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.8705881834030151,
+    0.427450954914093,
+    0.4901960790157318
+  ],
+  "window_active": true,
+  "mode": "video-hd",
+  "variant": "baseline",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.60598625000057,
+  "cpu_s": 11.980862000000002,
+  "host_load": [
+    7.46875,
+    16.4296875,
+    19.4140625
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

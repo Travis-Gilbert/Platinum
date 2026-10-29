@@ -1,0 +1,15 @@
+{
+  "fixture": true,
+  "native_renderer": true,
+  "captures": [
+    "home-dark",
+    "home-light",
+    "tab-home-light",
+    "results-light",
+    "results-dark",
+    "empty-dark"
+  ],
+  "live_search": false,
+  "servo_navigation": true,
+  "back_to_native_results": true
+}

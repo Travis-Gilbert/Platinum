@@ -1,0 +1,57 @@
+{
+  "frame_base": "2e135c046d2feba70b57980c8d70e5bb7667822d",
+  "theorem_base": "6e57dbb39124f472d8619fb20a9984e89eb225e8",
+  "servo": "5c8325a389555f3b1adc476106d8529791afe13e",
+  "hardware": "Apple M1 Max, 10 logical CPUs, 32 GiB RAM",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434\n",
+  "rust": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "profile": "dev, application and dependencies opt-level=2, debug=0",
+  "source_sha256": {
+    "Cargo.toml": "8fb3cc8dc060cf546454a72578f2630419eeb2d14891745b956845ab08c9684e",
+    "Cargo.lock": "b6bc837b6c6f2255d6a3cfda0bd36ddcdf05082b1481b5072cf175d2e2be7035",
+    "src/browser.rs": "5867096da2298ccca18898e680cc422e7d51bcb4bed70944e30887d564118865",
+    "src/browser/tests.rs": "38f21b86cf2231b96955a5eeb9525193168a0facf1b46a2ba89132c154961ddb",
+    "src/page.rs": "9274c32d174c10a31c3f6eedec2f80ea8eca1ce28de2321b2f95fbb7d872f0ba",
+    "src/session.rs": "25e49f450f82ad76d9ce8d6573efa8d58027bbd5bffa67e254dc4129485310bf",
+    "src/search.rs": "723b7a7c907dfeda8b1a20c5ad0ff6f1a0f334968ec5e08bcf9b8ed181e2dbe2",
+    "src/search/performance.rs": "5570f90530ce4fd025bff8c1158681132203c9b697acc279866cd6869b92f590",
+    "src/browser/performance.rs": "d2cb520e889fc70c3ac5503f082f26a9997e77b1f730c1c53f3f999d9289c94f",
+    "src/performance.rs": "685927272fa179dd33dc76787d7d372a73308efe000cb5daa2f7f5ab8ebb74b6",
+    "src/delegate.rs": "f988b7027aea2020257f469e2a6f87bc373aaf57767378201880c20fe98421ef",
+    "src/scene.rs": "3fc4ddf954098041824ff42c243692cb141b68a4b5b0a6d78efdef821d85c4e4",
+    "src/main.rs": "6ba002d485267767e16f08c2529388e6be3aa0ca15a9eb76a4b1b648e872f3c4",
+    "patches/browser-search-concurrency.patch": "c520f417d8e1c7bb9b768bc4c803d1113b1917a41571ce7c1856dbeea7acb56b",
+    "script/bootstrap": "2a14fed12d0e1993eb454fa12990484259f75ce52a0db4a225bc442653ffd7f1",
+    "tests/performance/compare.py": "ea2234a8ce22ecbd391d4f528e3eded2cdfc202771f8a044c03a06d4cd7f29e6",
+    "tests/performance/page.html": "e35daac047eb988b3114ffc6b8993b2b9ffa3841af3f6fcd1587cc2a6b7a2228"
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-baseline",
+      "sha256": "f021c63499e9daa99b400cb498196088c0dcf3326be37928c52c40a698f67429"
+    },
+    "candidate": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/frame-candidate",
+      "sha256": "5e3da5c11c9c7da5eab4594ea2793412c8cd1c5523117e9e3432577b1fb3b563"
+    }
+  },
+  "final_source_sha256": {
+    "Cargo.toml": "8fb3cc8dc060cf546454a72578f2630419eeb2d14891745b956845ab08c9684e",
+    "Cargo.lock": "b6bc837b6c6f2255d6a3cfda0bd36ddcdf05082b1481b5072cf175d2e2be7035",
+    "src/browser.rs": "5867096da2298ccca18898e680cc422e7d51bcb4bed70944e30887d564118865",
+    "src/browser/tests.rs": "38f21b86cf2231b96955a5eeb9525193168a0facf1b46a2ba89132c154961ddb",
+    "src/page.rs": "9274c32d174c10a31c3f6eedec2f80ea8eca1ce28de2321b2f95fbb7d872f0ba",
+    "src/session.rs": "25e49f450f82ad76d9ce8d6573efa8d58027bbd5bffa67e254dc4129485310bf",
+    "src/search.rs": "1dae7ca17498c1617380473cd4f7e454e8e82033e3f6a9222a9de23c38632b9a",
+    "src/search/performance.rs": "37a978ab713a4fbcafab4aa020f2e810f3d54a0522b081757f89db744e4b6f31",
+    "src/browser/performance.rs": "7004804313a643037f87537d7c11fc18b4e92aec2ce981f870132ec5fbdba165",
+    "src/performance.rs": "685927272fa179dd33dc76787d7d372a73308efe000cb5daa2f7f5ab8ebb74b6",
+    "src/delegate.rs": "f988b7027aea2020257f469e2a6f87bc373aaf57767378201880c20fe98421ef",
+    "src/scene.rs": "3fc4ddf954098041824ff42c243692cb141b68a4b5b0a6d78efdef821d85c4e4",
+    "src/main.rs": "6ba002d485267767e16f08c2529388e6be3aa0ca15a9eb76a4b1b648e872f3c4",
+    "patches/browser-search-concurrency.patch": "c520f417d8e1c7bb9b768bc4c803d1113b1917a41571ce7c1856dbeea7acb56b",
+    "script/bootstrap": "2a14fed12d0e1993eb454fa12990484259f75ce52a0db4a225bc442653ffd7f1",
+    "tests/performance/compare.py": "ea2234a8ce22ecbd391d4f528e3eded2cdfc202771f8a044c03a06d4cd7f29e6",
+    "tests/performance/page.html": "e35daac047eb988b3114ffc6b8993b2b9ffa3841af3f6fcd1587cc2a6b7a2228"
+  }
+}

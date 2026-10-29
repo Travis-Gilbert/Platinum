@@ -1,0 +1,88 @@
+[
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.004639832997781923,
+    "output": "disk-1793120634006341000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 275.20232399999804,
+    "output": "canvas-build-1793120634011376000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.005303417001414346,
+    "output": "disk-1793120919051531000.log",
+    "timed_out": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "diagnose",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:60497/signin/",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/a2-repair/diagnose",
+      "--diagnose"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp/frame-canvas-check-ns75omva",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 14.964777708999463,
+    "output": "diagnose-1793120919062547000.log",
+    "timed_out": false,
+    "binary_sha256": "303662d12c51e6e2bf0195e5d2a6703e6ff3c195f27f64c3bf002e55f94d97e0",
+    "accepted": true,
+    "probe_result": {
+      "pid": 63222,
+      "passed": true,
+      "error": null
+    }
+  }
+]

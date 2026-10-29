@@ -5,9 +5,10 @@
 //! and has no recency listing to read back.
 
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
-use gpui_kit::{App, AppContext as _, Global, Task};
+use gpui_kit::{App, AppContext as _, Global, Subscription, Task};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -66,6 +67,9 @@ pub struct Recents {
     /// Where the record is saved; `None` keeps it in memory, as tests do.
     path: Option<PathBuf>,
     _save: Task<()>,
+    generation: u64,
+    written: Arc<Mutex<u64>>,
+    _quit: Subscription,
 }
 
 impl Global for Recents {}
@@ -73,10 +77,25 @@ impl Global for Recents {}
 /// Load the record at `path`, if there is one, and install it.
 pub fn init(path: Option<PathBuf>, cx: &mut App) {
     let record = path.as_deref().map(load).unwrap_or_default();
+    let quit = cx.on_app_quit(|cx| {
+        let recents = cx.global::<Recents>();
+        let path = recents.path.clone();
+        let record = recents.record.clone();
+        let generation = recents.generation;
+        let written = recents.written.clone();
+        cx.background_spawn(async move {
+            if let Some(path) = path {
+                persist(&path, &record, generation, &written);
+            }
+        })
+    });
     cx.set_global(Recents {
         record,
         path,
         _save: Task::ready(()),
+        generation: 0,
+        written: Arc::default(),
+        _quit: quit,
     });
 }
 
@@ -96,7 +115,11 @@ pub fn latest(count: usize, cx: &App) -> Vec<Recent<'_>> {
     merge(pages(cx), searches(cx), count)
 }
 
-fn merge<'a>(pages: &'a [RecentPage], searches: &'a [RecentSearch], count: usize) -> Vec<Recent<'a>> {
+fn merge<'a>(
+    pages: &'a [RecentPage],
+    searches: &'a [RecentSearch],
+    count: usize,
+) -> Vec<Recent<'a>> {
     let mut all: Vec<Recent> = pages
         .iter()
         .map(Recent::Page)
@@ -126,6 +149,21 @@ pub fn record_page(url: &Url, title: &str, cx: &mut App) {
     };
     update(cx, |record| {
         remember(&mut record.pages, page, |a, b| a.url == b.url)
+    });
+}
+
+/// A title change is not a visit and cannot restore a cleared entry.
+pub fn update_title(url: &Url, title: &str, cx: &mut App) {
+    update(cx, |record| {
+        let Some(page) = record.pages.iter_mut().find(|page| page.url == *url) else {
+            return false;
+        };
+        let title = title.trim();
+        if page.title == title {
+            return false;
+        }
+        page.title = title.to_owned();
+        true
     });
 }
 
@@ -171,24 +209,39 @@ fn update(cx: &mut App, change: impl FnOnce(&mut Record) -> bool) {
         return;
     }
     let path = recents.path.clone();
+    let generation = recents.generation + 1;
+    let written = recents.written.clone();
     let save = match path {
         Some(path) => {
             let saved = record.clone();
             let timer = cx.background_executor().timer(SAVE_AFTER);
             cx.background_spawn(async move {
                 timer.await;
-                if let Err(error) = save(&path, &saved) {
-                    log::warn!("recents: could not save {}: {error:#}", path.display());
-                }
+                persist(&path, &saved, generation, &written);
             })
         }
         None => Task::ready(()),
     };
-    // Replacing the pending save cancels it: only the newest record is
-    // written. Observers (Home) redraw from here.
+    // Cancel the debounce; any write already running is serialized by
+    // persist, following session::Store’s ordered snapshot protocol.
     let recents = cx.global_mut::<Recents>();
     recents.record = record;
+    recents.generation = generation;
     recents._save = save;
+}
+
+/// Serialize writes and reject a delayed snapshot older than the file.
+fn persist(path: &Path, record: &Record, generation: u64, written: &Mutex<u64>) {
+    let mut written = written
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if generation <= *written {
+        return;
+    }
+    match save(path, record) {
+        Ok(()) => *written = generation,
+        Err(error) => log::warn!("recents: could not save {}: {error:#}", path.display()),
+    }
 }
 
 fn load(path: &Path) -> Record {
@@ -201,7 +254,10 @@ fn load(path: &Path) -> Record {
         }
     };
     serde_json::from_slice(&bytes).unwrap_or_else(|error| {
-        log::warn!("recents: {} is not readable, starting over: {error}", path.display());
+        log::warn!(
+            "recents: {} is not readable, starting over: {error}",
+            path.display()
+        );
         Record::default()
     })
 }
@@ -218,6 +274,44 @@ fn save(path: &Path, record: &Record) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[gpui_kit::test]
+    fn title_changes_preserve_recency_and_do_not_restore_cleared_pages(
+        cx: &mut gpui_kit::TestAppContext,
+    ) {
+        cx.update(|cx| {
+            init(None, cx);
+            let url = Url::parse("https://example.com/").unwrap();
+            record_page(&url, "Before", cx);
+            cx.global_mut::<Recents>().record.pages[0].at = 1;
+            record_search("newer search", false, cx);
+            update_title(&url, "After", cx);
+            assert_eq!(pages(cx)[0].at, 1);
+            assert_eq!(pages(cx)[0].title, "After");
+            assert!(matches!(latest(2, cx)[0], Recent::Search(_)));
+            clear(cx);
+            update_title(&url, "Late title", cx);
+            assert!(pages(cx).is_empty());
+        });
+    }
+
+    #[test]
+    fn a_delayed_snapshot_cannot_overwrite_a_newer_clear() {
+        let folder = tempfile::tempdir().unwrap();
+        let path = folder.path().join("recents.json");
+        let written = Mutex::new(0);
+        let old = Record {
+            searches: vec![RecentSearch {
+                query: "old".into(),
+                ask: false,
+                at: 1,
+            }],
+            ..Record::default()
+        };
+        persist(&path, &Record::default(), 2, &written);
+        persist(&path, &old, 1, &written);
+        assert_eq!(load(&path), Record::default());
+    }
 
     #[test]
     fn remembering_moves_a_repeat_to_the_front() {

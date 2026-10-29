@@ -1,0 +1,17 @@
+[
+  {
+    "check": "unit-tests",
+    "exit_code": 0,
+    "elapsed_s": 33.07953212499706
+  },
+  {
+    "check": "all-targets",
+    "exit_code": 0,
+    "elapsed_s": 37.77445904100023
+  },
+  {
+    "check": "production-build",
+    "exit_code": 0,
+    "elapsed_s": 39.73523395800294
+  }
+]

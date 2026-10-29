@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Prepares a Frame checkout to build.
+# Prepares a Platinum checkout to build.
 #
-# Frame's RustyWeb crates are path dependencies under deps/, a read-only
-# checkout of Theorem at a pinned commit of claude/rustyweb-full-frame, which
-# builds on claude/rustyweb-synthesis-on-request and
-# codex/rustyweb-programmable-web-2.
+# Platinum's RustyWeb and notes crates are path dependencies under deps/, a
+# read-only checkout of Theorem at a pinned commit of
+# claude/browser-search-concurrency. That branch adds detached browser searches
+# to claude/notes-foundations, which builds on
+# claude/rustyweb-synthesis-on-request and codex/rustyweb-programmable-web-2.
 # deps/ and the Cargo target directory can live on another disk: a Servo build
 # needs about 25 GB.
 #
@@ -14,12 +15,12 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="6e57dbb39124f472d8619fb20a9984e89eb225e8"
-theorem_branch="claude/rustyweb-full-frame"
+theorem_rev="8c5d22bd6fea76dde197d0b9e73149d037d374d3"
+theorem_branch="claude/browser-search-concurrency"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"
-checkout="$deps_dir/theorem-rustyweb-pw2"
+checkout="$deps_dir/theorem-search"
 mkdir -p "$deps_dir"
 if [[ "$deps_dir" != "$root/deps" ]]; then
   if [[ -e "$root/deps" && ! -L "$root/deps" ]]; then
@@ -41,7 +42,7 @@ if [[ ! -d "$checkout" ]]; then
 fi
 actual="$(git -C "$checkout" rev-parse HEAD)"
 if [[ "$actual" != "$theorem_rev" ]]; then
-  echo "deps/theorem-rustyweb-pw2 is at $actual, Frame pins $theorem_rev" >&2
+  echo "deps/theorem-search is at $actual, Platinum pins $theorem_rev" >&2
   exit 1
 fi
 

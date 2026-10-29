@@ -1,0 +1,22 @@
+[
+  {
+    "check": "selected-tests",
+    "exit_code": 0,
+    "elapsed_s": 61.26240245900044
+  },
+  {
+    "check": "selected-check",
+    "exit_code": 0,
+    "elapsed_s": 10.362492749998637
+  },
+  {
+    "check": "selected-clippy",
+    "exit_code": 101,
+    "elapsed_s": 6.723577125001611
+  },
+  {
+    "check": "selected-build",
+    "exit_code": 0,
+    "elapsed_s": 57.08389333300147
+  }
+]

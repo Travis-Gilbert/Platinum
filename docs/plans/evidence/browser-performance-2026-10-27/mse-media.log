@@ -1,0 +1,6 @@
+{"mode":"mse","steps":["sourceopen",{"type":"video/webm; codecs=\"vp8\"","bytes":39228,"buffered":[0,2.000333333]},{"type":"audio/webm; codecs=\"vorbis\"","bytes":10735,"buffered":[0,2.036666666]},{"playing":0.505677292,"width":320,"height":240},{"repeatedPlay":1.01075075},{"seekAndResume":1.250045352}],"passed":true}
+
+media check: document 0 HeadParsed
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+media check: document 0 Complete
+frame screenshot: /var/folders/5f/gw6fzw9n1z15vht733bcn7jr0000gn/T/frame-media-mse.png

@@ -1,0 +1,6 @@
+# script/media-env python3 tests/media/check_native.py
+# started 2026-10-25T23:24:50+00:00
+video/webm; codecs="vp8": before=1 after=0 remove_returned=1 passed=1
+video/webm; codecs="vp8": refill=1
+audio/webm; codecs="vorbis": before=1 after=0 remove_returned=1 passed=1
+audio/webm; codecs="vorbis": refill=1

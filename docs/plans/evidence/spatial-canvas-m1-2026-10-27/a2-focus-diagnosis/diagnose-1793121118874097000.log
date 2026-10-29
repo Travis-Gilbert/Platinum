@@ -1,0 +1,29 @@
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+DIAG 1793121123607 click #choice Point { x: 450px, y: 324.86667px }
+CONTROL 1793121123613 Page focus -> Servo true
+CONTROL 1793121123648 show SelectElement
+CONTROL 1793121123648 popup mounted
+CONTROL 1793121123662 Page blur -> Servo false
+DIAG 1793121123763 #choice {"popup":true,"color":false,"file":false}
+CONTROL 1793121123763 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(0) }; popup=true color=false
+CONTROL 1793121123763 popup dismissed
+DIAG 1793121124019 #choice {"popup":false,"color":false,"file":false}
+DIAG 1793121124544 #choice {"popup":false,"color":false,"file":false}
+DIAG 1793121125290 click #color Point { x: 450px, y: 324.93332px }
+CONTROL 1793121125291 show InputMethod
+CONTROL 1793121125315 show ColorPicker
+CONTROL 1793121125315 color open begin
+CONTROL 1793121125321 color open returned visible=true
+DIAG 1793121125342 #color {"popup":false,"color":true,"file":false}
+DIAG 1793121125553 #color {"popup":false,"color":true,"file":false}
+DIAG 1793121126078 #color {"popup":false,"color":true,"file":false}
+CONTROL 1793121126152 camera dismiss controls
+DIAG 1793121126810 click #file Point { x: 450.18332px, y: 324.86667px }
+CONTROL 1793121126849 show FilePicker
+CONTROL 1793121126849 file open begin
+CONTROL 1793121126849 file open returned
+CONTROL 1793121126849 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(1) }; popup=false color=false
+DIAG 1793121127726 #file {"popup":false,"color":false,"file":true}
+DIAG 1793121127936 #file {"popup":false,"color":false,"file":true}
+DIAG 1793121128461 #file {"popup":false,"color":false,"file":true}
+CONTROL 1793121128547 camera dismiss controls

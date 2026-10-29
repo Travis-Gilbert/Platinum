@@ -1,0 +1,54 @@
+{
+  "native": {
+    "page_render": {
+      "count": 23,
+      "total_ms": 0.254333,
+      "p50_ms": 0.008957999999999999,
+      "p95_ms": 0.017042,
+      "max_ms": 0.017499999999999998
+    },
+    "page_render_interval": {
+      "count": 22,
+      "total_ms": 11528.065667,
+      "p50_ms": 525.2489999999999,
+      "p95_ms": 531.2200839999999,
+      "max_ms": 533.3279170000001
+    },
+    "servo_spin": {
+      "count": 1,
+      "total_ms": 0.070208,
+      "p50_ms": 0.070208,
+      "p95_ms": 0.070208,
+      "max_ms": 0.070208
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 0,
+      "height": 0,
+      "current": 0,
+      "duration": null,
+      "ended": false,
+      "sources": [],
+      "dimensions": [],
+      "ready": 0,
+      "advancing": false,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.3607843518257141,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": []
+}

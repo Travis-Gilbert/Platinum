@@ -1,0 +1,51 @@
+[
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.004465917001652997,
+    "output": "disk-1793130385620793000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "measure",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:57622/benchmark.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-measure-2026-10-27/measure",
+      "--measure"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp/frame-canvas-check-md9oziam",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 14.950084291995154,
+    "output": "measure-1793130385674710000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": "ebf0cc1ff947328e60115b985c28cef3ae2096319ed967894a4b38f63f1a2c0a",
+    "accepted": false,
+    "probe_result": {
+      "pid": 96464,
+      "passed": false,
+      "error": "needs the foreground: window inactive, hidden or occluded; run stopped without retry"
+    }
+  }
+]

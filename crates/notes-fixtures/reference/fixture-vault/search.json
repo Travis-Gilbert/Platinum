@@ -1,0 +1,3170 @@
+{
+  "search query=\"\"an exact phrase\"\" format=json": {
+    "command": "search",
+    "args": [
+      "query=\"an exact phrase\"",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=\"\"an exact phrase\"\" total": {
+    "command": "search",
+    "args": [
+      "query=\"an exact phrase\"",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"(apple OR banana) -fox\" format=json": {
+    "command": "search",
+    "args": [
+      "query=(apple OR banana) -fox",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Case Sensitivity.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Case Sensitivity.md"
+    ]
+  },
+  "search query=\"(apple OR banana) -fox\" total": {
+    "command": "search",
+    "args": [
+      "query=(apple OR banana) -fox",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"-path:attachments Note\" format=json": {
+    "command": "search",
+    "args": [
+      "query=-path:attachments Note",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"Dead End.md\",\n  \"Home.md\",\n  \"Orphan.md\",\n  \"Unicode é 日本.md\",\n  \"a/Links From A.md\",\n  \"a/Note.md\",\n  \"b/Links From B.md\",\n  \"b/Note.md\",\n  \"callouts/All Callouts.md\",\n  \"callouts/Callout Titles and Folding.md\",\n  \"callouts/Custom Callout.md\",\n  \"callouts/Nested Callouts.md\",\n  \"daily/2026-10-23.md\",\n  \"daily/2026-10-24.md\",\n  \"daily/2026-10-25.md\",\n  \"embeds/Embed Canvas and Base.md\",\n  \"embeds/Embed Media.md\",\n  \"embeds/Embed Notes.md\",\n  \"embeds/Embed Query.md\",\n  \"inbox/Inbox.md\",\n  \"links/Aliases.md\",\n  \"links/Link Forms.md\",\n  \"links/Markdown Links.md\",\n  \"links/Mentions.md\",\n  \"links/Unresolved Links.md\",\n  \"properties/Aliases and Cssclasses.md\",\n  \"properties/All Property Types.md\",\n  \"properties/Broken Frontmatter.md\",\n  \"properties/Link Properties.md\",\n  \"review/Missing Note Creation.md\",\n  \"search/Search Corpus.md\",\n  \"syntax/Byte Order Mark.md\",\n  \"syntax/Code Blocks.md\",\n  \"syntax/Footnotes.md\",\n  \"syntax/Line Endings.md\",\n  \"syntax/Mermaid.md\",\n  \"tagging/Tags.md\",\n  \"templates/Meeting.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "Dead End.md",
+      "Home.md",
+      "Orphan.md",
+      "Unicode é 日本.md",
+      "a/Links From A.md",
+      "a/Note.md",
+      "b/Links From B.md",
+      "b/Note.md",
+      "callouts/All Callouts.md",
+      "callouts/Callout Titles and Folding.md",
+      "callouts/Custom Callout.md",
+      "callouts/Nested Callouts.md",
+      "daily/2026-10-23.md",
+      "daily/2026-10-24.md",
+      "daily/2026-10-25.md",
+      "embeds/Embed Canvas and Base.md",
+      "embeds/Embed Media.md",
+      "embeds/Embed Notes.md",
+      "embeds/Embed Query.md",
+      "inbox/Inbox.md",
+      "links/Aliases.md",
+      "links/Link Forms.md",
+      "links/Markdown Links.md",
+      "links/Mentions.md",
+      "links/Unresolved Links.md",
+      "properties/Aliases and Cssclasses.md",
+      "properties/All Property Types.md",
+      "properties/Broken Frontmatter.md",
+      "properties/Link Properties.md",
+      "review/Missing Note Creation.md",
+      "search/Search Corpus.md",
+      "syntax/Byte Order Mark.md",
+      "syntax/Code Blocks.md",
+      "syntax/Footnotes.md",
+      "syntax/Line Endings.md",
+      "syntax/Mermaid.md",
+      "tagging/Tags.md",
+      "templates/Meeting.md"
+    ]
+  },
+  "search query=\"-path:attachments Note\" total": {
+    "command": "search",
+    "args": [
+      "query=-path:attachments Note",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "38\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"apple -banana\" format=json": {
+    "command": "search",
+    "args": [
+      "query=apple -banana",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Case Sensitivity.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Case Sensitivity.md"
+    ]
+  },
+  "search query=\"apple -banana\" total": {
+    "command": "search",
+    "args": [
+      "query=apple -banana",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"apple OR banana\" format=json": {
+    "command": "search",
+    "args": [
+      "query=apple OR banana",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Case Sensitivity.md\",\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Case Sensitivity.md",
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=\"apple OR banana\" total": {
+    "command": "search",
+    "args": [
+      "query=apple OR banana",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"apple banana\" format=json": {
+    "command": "search",
+    "args": [
+      "query=apple banana",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=\"apple banana\" total": {
+    "command": "search",
+    "args": [
+      "query=apple banana",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"block:(apple banana)\" format=json": {
+    "command": "search",
+    "args": [
+      "query=block:(apple banana)",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=\"block:(apple banana)\" total": {
+    "command": "search",
+    "args": [
+      "query=block:(apple banana)",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"file:\"Link Forms\"\" format=json": {
+    "command": "search",
+    "args": [
+      "query=file:\"Link Forms\"",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"links/Link Forms.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "links/Link Forms.md"
+    ]
+  },
+  "search query=\"file:\"Link Forms\"\" total": {
+    "command": "search",
+    "args": [
+      "query=file:\"Link Forms\"",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"line:(apple banana)\" format=json": {
+    "command": "search",
+    "args": [
+      "query=line:(apple banana)",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=\"line:(apple banana)\" total": {
+    "command": "search",
+    "args": [
+      "query=line:(apple banana)",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"path:a OR path:b\" format=json": {
+    "command": "search",
+    "args": [
+      "query=path:a OR path:b",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"Dead End.md\",\n  \"Orphan.md\",\n  \"a/Links From A.md\",\n  \"a/Note.md\",\n  \"b/Links From B.md\",\n  \"b/Note.md\",\n  \"callouts/All Callouts.md\",\n  \"callouts/Callout Titles and Folding.md\",\n  \"callouts/Custom Callout.md\",\n  \"callouts/Nested Callouts.md\",\n  \"daily/2026-10-23.md\",\n  \"daily/2026-10-24.md\",\n  \"daily/2026-10-25.md\",\n  \"dataview/Dataview Fields.md\",\n  \"embeds/Embed Canvas and Base.md\",\n  \"embeds/Embed Images.md\",\n  \"embeds/Embed Media.md\",\n  \"embeds/Embed Notes.md\",\n  \"embeds/Embed Query.md\",\n  \"embeds/Loop A.md\",\n  \"embeds/Loop B.md\",\n  \"inbox/Inbox.md\",\n  \"links/Aliases.md\",\n  \"links/Blocks Target.md\",\n  \"links/Headings Target.md\",\n  \"links/Markdown Links.md\",\n  \"projects/Project Alpha.md\",\n  \"projects/Project Beta.md\",\n  \"projects/Project Delta.md\",\n  \"projects/Project Gamma.md\",\n  \"properties/Aliases and Cssclasses.md\",\n  \"properties/All Property Types.md\",\n  \"properties/Broken Frontmatter.md\",\n  \"properties/Empty Frontmatter.md\",\n  \"properties/Frontmatter Only.md\",\n  \"properties/Type Mismatch.md\",\n  \"review/Heading With Hash.md\",\n  \"review/Missing Note Creation.md\",\n  \"search/Case Sensitivity.md\",\n  \"search/Search Corpus.md\",\n  \"syntax/Bidirectional Text.md\",\n  \"syntax/Byte Order Mark.md\",\n  \"syntax/Code Blocks.md\",\n  \"syntax/Comments and Highlights.md\",\n  \"syntax/Folding and Lists.md\",\n  \"syntax/Footnotes.md\",\n  \"syntax/Inline Formatting.md\",\n  \"syntax/Line Endings.md\",\n  \"syntax/Math.md\",\n  \"syntax/Mermaid.md\",\n  \"syntax/Raw HTML.md\",\n  \"syntax/Tables.md\",\n  \"tagging/Frontmatter Tags.md\",\n  \"tagging/Tags As Text.md\",\n  \"tagging/Tags.md\",\n  \"tagging/Unicode Tags.md\",\n  \"tasks/Task Statuses.md\",\n  \"templates/Daily.md\",\n  \"templates/Meeting.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "Dead End.md",
+      "Orphan.md",
+      "a/Links From A.md",
+      "a/Note.md",
+      "b/Links From B.md",
+      "b/Note.md",
+      "callouts/All Callouts.md",
+      "callouts/Callout Titles and Folding.md",
+      "callouts/Custom Callout.md",
+      "callouts/Nested Callouts.md",
+      "daily/2026-10-23.md",
+      "daily/2026-10-24.md",
+      "daily/2026-10-25.md",
+      "dataview/Dataview Fields.md",
+      "embeds/Embed Canvas and Base.md",
+      "embeds/Embed Images.md",
+      "embeds/Embed Media.md",
+      "embeds/Embed Notes.md",
+      "embeds/Embed Query.md",
+      "embeds/Loop A.md",
+      "embeds/Loop B.md",
+      "inbox/Inbox.md",
+      "links/Aliases.md",
+      "links/Blocks Target.md",
+      "links/Headings Target.md",
+      "links/Markdown Links.md",
+      "projects/Project Alpha.md",
+      "projects/Project Beta.md",
+      "projects/Project Delta.md",
+      "projects/Project Gamma.md",
+      "properties/Aliases and Cssclasses.md",
+      "properties/All Property Types.md",
+      "properties/Broken Frontmatter.md",
+      "properties/Empty Frontmatter.md",
+      "properties/Frontmatter Only.md",
+      "properties/Type Mismatch.md",
+      "review/Heading With Hash.md",
+      "review/Missing Note Creation.md",
+      "search/Case Sensitivity.md",
+      "search/Search Corpus.md",
+      "syntax/Bidirectional Text.md",
+      "syntax/Byte Order Mark.md",
+      "syntax/Code Blocks.md",
+      "syntax/Comments and Highlights.md",
+      "syntax/Folding and Lists.md",
+      "syntax/Footnotes.md",
+      "syntax/Inline Formatting.md",
+      "syntax/Line Endings.md",
+      "syntax/Math.md",
+      "syntax/Mermaid.md",
+      "syntax/Raw HTML.md",
+      "syntax/Tables.md",
+      "tagging/Frontmatter Tags.md",
+      "tagging/Tags As Text.md",
+      "tagging/Tags.md",
+      "tagging/Unicode Tags.md",
+      "tasks/Task Statuses.md",
+      "templates/Daily.md",
+      "templates/Meeting.md"
+    ]
+  },
+  "search query=\"path:a OR path:b\" total": {
+    "command": "search",
+    "args": [
+      "query=path:a OR path:b",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "59\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=\"section:(apple banana)\" format=json": {
+    "command": "search",
+    "args": [
+      "query=section:(apple banana)",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=\"section:(apple banana)\" total": {
+    "command": "search",
+    "args": [
+      "query=section:(apple banana)",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=/ID-\\d+/ format=json": {
+    "command": "search",
+    "args": [
+      "query=/ID-\\d+/",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=/ID-\\d+/ total": {
+    "command": "search",
+    "args": [
+      "query=/ID-\\d+/",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=/id-\\d+/ format=json": {
+    "command": "search",
+    "args": [
+      "query=/id-\\d+/",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=/id-\\d+/ total": {
+    "command": "search",
+    "args": [
+      "query=/id-\\d+/",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=Apple case total": {
+    "command": "search",
+    "args": [
+      "query=Apple",
+      "case",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=Apple format=json case": {
+    "command": "search",
+    "args": [
+      "query=Apple",
+      "format=json",
+      "case"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Case Sensitivity.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Case Sensitivity.md"
+    ]
+  },
+  "search query=C# format=json": {
+    "command": "search",
+    "args": [
+      "query=C#",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"review/Heading With Hash.md\",\n  \"tagging/Tags.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "review/Heading With Hash.md",
+      "tagging/Tags.md"
+    ]
+  },
+  "search query=C# total": {
+    "command": "search",
+    "args": [
+      "query=C#",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=Note path=a format=json": {
+    "command": "search",
+    "args": [
+      "query=Note",
+      "path=a",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"a/Links From A.md\",\n  \"a/Note.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "a/Links From A.md",
+      "a/Note.md"
+    ]
+  },
+  "search query=Note path=a total": {
+    "command": "search",
+    "args": [
+      "query=Note",
+      "path=a",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=[aliases] format=json": {
+    "command": "search",
+    "args": [
+      "query=[aliases]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"Home.md\",\n  \"Unicode é 日本.md\",\n  \"a/Note.md\",\n  \"b/Note.md\",\n  \"links/Aliases.md\",\n  \"properties/Aliases and Cssclasses.md\",\n  \"properties/All Property Types.md\",\n  \"properties/Frontmatter Only.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "Home.md",
+      "Unicode é 日本.md",
+      "a/Note.md",
+      "b/Note.md",
+      "links/Aliases.md",
+      "properties/Aliases and Cssclasses.md",
+      "properties/All Property Types.md",
+      "properties/Frontmatter Only.md"
+    ]
+  },
+  "search query=[aliases] total": {
+    "command": "search",
+    "args": [
+      "query=[aliases]",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "8\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=[rating:4] format=json": {
+    "command": "search",
+    "args": [
+      "query=[rating:4]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"projects/Project Gamma.md\",\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "projects/Project Gamma.md",
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=[rating:4] total": {
+    "command": "search",
+    "args": [
+      "query=[rating:4]",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=[status:draft] format=json": {
+    "command": "search",
+    "args": [
+      "query=[status:draft]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=[status:draft] total": {
+    "command": "search",
+    "args": [
+      "query=[status:draft]",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=[tags:project] format=json": {
+    "command": "search",
+    "args": [
+      "query=[tags:project]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"a/Note.md\",\n  \"b/Note.md\",\n  \"projects/Project Alpha.md\",\n  \"projects/Project Beta.md\",\n  \"projects/Project Delta.md\",\n  \"projects/Project Gamma.md\",\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "a/Note.md",
+      "b/Note.md",
+      "projects/Project Alpha.md",
+      "projects/Project Beta.md",
+      "projects/Project Delta.md",
+      "projects/Project Gamma.md",
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=[tags:project] total": {
+    "command": "search",
+    "args": [
+      "query=[tags:project]",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "7\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=café format=json": {
+    "command": "search",
+    "args": [
+      "query=café",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"Unicode é 日本.md\",\n  \"search/Case Sensitivity.md\",\n  \"tagging/Unicode Tags.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "Unicode é 日本.md",
+      "search/Case Sensitivity.md",
+      "tagging/Unicode Tags.md"
+    ]
+  },
+  "search query=café total": {
+    "command": "search",
+    "args": [
+      "query=café",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "3\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=content:plumber format=json": {
+    "command": "search",
+    "args": [
+      "query=content:plumber",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\",\n  \"tasks/Task Statuses.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md",
+      "tasks/Task Statuses.md"
+    ]
+  },
+  "search query=content:plumber total": {
+    "command": "search",
+    "args": [
+      "query=content:plumber",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=excluded-marker-xyzzy format=json": {
+    "command": "search",
+    "args": [
+      "query=excluded-marker-xyzzy",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No matches found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=excluded-marker-xyzzy total": {
+    "command": "search",
+    "args": [
+      "query=excluded-marker-xyzzy",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "0\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=file:Link format=json": {
+    "command": "search",
+    "args": [
+      "query=file:Link",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"a/Links From A.md\",\n  \"b/Links From B.md\",\n  \"links/Link Forms.md\",\n  \"links/Markdown Links.md\",\n  \"links/Unresolved Links.md\",\n  \"properties/Link Properties.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "a/Links From A.md",
+      "b/Links From B.md",
+      "links/Link Forms.md",
+      "links/Markdown Links.md",
+      "links/Unresolved Links.md",
+      "properties/Link Properties.md"
+    ]
+  },
+  "search query=file:Link total": {
+    "command": "search",
+    "args": [
+      "query=file:Link",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "6\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=fox format=json": {
+    "command": "search",
+    "args": [
+      "query=fox",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=fox total": {
+    "command": "search",
+    "args": [
+      "query=fox",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=heading limit=3 format=json": {
+    "command": "search",
+    "args": [
+      "query=heading",
+      "limit=3",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"__limited_result__\",\n  \"__limited_result__\",\n  \"__limited_result__\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "__limited_result__",
+      "__limited_result__",
+      "__limited_result__"
+    ]
+  },
+  "search query=heading limit=3 total": {
+    "command": "search",
+    "args": [
+      "query=heading",
+      "limit=3",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "20\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=ignore-case:APPLE format=json": {
+    "command": "search",
+    "args": [
+      "query=ignore-case:APPLE",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Case Sensitivity.md\",\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Case Sensitivity.md",
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=ignore-case:APPLE total": {
+    "command": "search",
+    "args": [
+      "query=ignore-case:APPLE",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=match-case:Apple format=json": {
+    "command": "search",
+    "args": [
+      "query=match-case:Apple",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Case Sensitivity.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Case Sensitivity.md"
+    ]
+  },
+  "search query=match-case:Apple total": {
+    "command": "search",
+    "args": [
+      "query=match-case:Apple",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=path:callouts format=json": {
+    "command": "search",
+    "args": [
+      "query=path:callouts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"callouts/All Callouts.md\",\n  \"callouts/Callout Titles and Folding.md\",\n  \"callouts/Custom Callout.md\",\n  \"callouts/Nested Callouts.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "callouts/All Callouts.md",
+      "callouts/Callout Titles and Folding.md",
+      "callouts/Custom Callout.md",
+      "callouts/Nested Callouts.md"
+    ]
+  },
+  "search query=path:callouts total": {
+    "command": "search",
+    "args": [
+      "query=path:callouts",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "4\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=tag:#project format=json": {
+    "command": "search",
+    "args": [
+      "query=tag:#project",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"a/Note.md\",\n  \"b/Note.md\",\n  \"projects/Project Alpha.md\",\n  \"projects/Project Beta.md\",\n  \"projects/Project Delta.md\",\n  \"projects/Project Gamma.md\",\n  \"search/Search Corpus.md\",\n  \"tagging/Tags.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "a/Note.md",
+      "b/Note.md",
+      "projects/Project Alpha.md",
+      "projects/Project Beta.md",
+      "projects/Project Delta.md",
+      "projects/Project Gamma.md",
+      "search/Search Corpus.md",
+      "tagging/Tags.md"
+    ]
+  },
+  "search query=tag:#project total": {
+    "command": "search",
+    "args": [
+      "query=tag:#project",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "8\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=tag:#project/alpha format=json": {
+    "command": "search",
+    "args": [
+      "query=tag:#project/alpha",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"a/Note.md\",\n  \"search/Search Corpus.md\",\n  \"tagging/Tags.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "a/Note.md",
+      "search/Search Corpus.md",
+      "tagging/Tags.md"
+    ]
+  },
+  "search query=tag:#project/alpha total": {
+    "command": "search",
+    "args": [
+      "query=tag:#project/alpha",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "3\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=task-done:call format=json": {
+    "command": "search",
+    "args": [
+      "query=task-done:call",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=task-done:call total": {
+    "command": "search",
+    "args": [
+      "query=task-done:call",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=task-todo:call format=json": {
+    "command": "search",
+    "args": [
+      "query=task-todo:call",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\",\n  \"tasks/Task Statuses.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md",
+      "tasks/Task Statuses.md"
+    ]
+  },
+  "search query=task-todo:call total": {
+    "command": "search",
+    "args": [
+      "query=task-todo:call",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=task:call format=json": {
+    "command": "search",
+    "args": [
+      "query=task:call",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\",\n  \"tasks/Task Statuses.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md",
+      "tasks/Task Statuses.md"
+    ]
+  },
+  "search query=task:call total": {
+    "command": "search",
+    "args": [
+      "query=task:call",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "2\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=xyzzy-unique-token format=json": {
+    "command": "search",
+    "args": [
+      "query=xyzzy-unique-token",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"search/Search Corpus.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "search/Search Corpus.md"
+    ]
+  },
+  "search query=xyzzy-unique-token total": {
+    "command": "search",
+    "args": [
+      "query=xyzzy-unique-token",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search query=שלום format=json": {
+    "command": "search",
+    "args": [
+      "query=שלום",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"syntax/Bidirectional Text.md\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "syntax/Bidirectional Text.md"
+    ]
+  },
+  "search query=שלום total": {
+    "command": "search",
+    "args": [
+      "query=שלום",
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "error": null
+  },
+  "search:context query=\"\"an exact phrase\"\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=\"an exact phrase\"",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 25,\n        \"text\": \"A line with \\\"an exact phrase\\\" in it.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 25,
+            "text": "A line with \"an exact phrase\" in it."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"(apple OR banana) -fox\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=(apple OR banana) -fox",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"-path:attachments Note\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=-path:attachments Note",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"Dead End.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Notes link here, but nothing leaves this note. It is a dead end that is not an orphan.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Notes link here, but nothing leaves this note. It is a dead end that is not an orphan.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"Home.md\",\n    \"matches\": [\n      {\n        \"line\": 13,\n        \"text\": \"The vault's startup note (\\\"Default file to open\\\"). Every hub below is linked from here, so the\"\n      },\n      {\n        \"line\": 14,\n        \"text\": \"only notes without an incoming link are the ones `COVERAGE.md` names.\"\n      },\n      {\n        \"line\": 19,\n        \"text\": \"- The same name in two folders: [[a/Note]], [[b/Note]], [[Links From A]], [[Links From B]]\"\n      },\n      {\n        \"line\": 19,\n        \"text\": \"- The same name in two folders: [[a/Note]], [[b/Note]], [[Links From A]], [[Links From B]]\"\n      },\n      {\n        \"line\": 20,\n        \"text\": \"- Embeds: [[Embed Notes]], [[Embed Images]], [[Embed Media]], [[Embed Canvas and Base]], [[Embed Query]]\"\n      },\n      {\n        \"line\": 25,\n        \"text\": \"- Syntax: [[Footnotes]], [[Comments and Highlights]], [[Math]], [[Mermaid]], [[Code Blocks]], [[Tables]], [[Raw HTML]], [[Inline Formatting]], [[Folding and Lists]], [[Bidirectional Text]], [[Line Endings]], [[Byte Order Mark]]\"\n      },\n      {\n        \"line\": 26,\n        \"text\": \"- Review cases: [[Heading With Hash]], [[Missing Note Creation]]\"\n      },\n      {\n        \"line\": 31,\n        \"text\": \"- Bases: [[Notes.base]], [[Projects.base]], [[Tasks.base]]\"\n      },\n      {\n        \"line\": 33,\n        \"text\": \"- A note nothing leads out of: [[Dead End]]\"\n      },\n      {\n        \"line\": 34,\n        \"text\": \"- Excluded from search and the graph by `userIgnoreFilters`: [[Hidden Note]]\"\n      },\n      {\n        \"line\": 40,\n        \"text\": \"![[Notes.base#All notes]]\"\n      },\n      {\n        \"line\": 40,\n        \"text\": \"![[Notes.base#All notes]]\"\n      },\n      {\n        \"line\": 50,\n        \"text\": \"name: Task notes\"\n      }\n    ]\n  },\n  {\n    \"file\": \"Orphan.md\",\n    \"matches\": [\n      {\n        \"line\": 1,\n        \"text\": \"No note links here, and this note links to nothing. It is an orphan in every sense: it has no\"\n      },\n      {\n        \"line\": 1,\n        \"text\": \"No note links here, and this note links to nothing. It is an orphan in every sense: it has no\"\n      }\n    ]\n  },\n  {\n    \"file\": \"Unicode é 日本.md\",\n    \"matches\": [\n      {\n        \"line\": 2,\n        \"text\": \"aliases: [Ünïcode Note, 日本のノート]\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"A note whose file name has accents and CJK characters: café, naïve, Ελληνικά, 日本語のテキスト,\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"[[Ünïcode Note]].\"\n      }\n    ]\n  },\n  {\n    \"file\": \"a/Links From A.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- Explicit: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- Explicit: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- A heading of the same-folder note: [[Note#Shared heading]]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- A heading of the same-folder note: [[Note#Shared heading]]\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"- Relative to this folder: [[./Note]] and [[../b/Note]]\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"- Relative to this folder: [[./Note]] and [[../b/Note]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": [\n      {\n        \"line\": 3,\n        \"text\": \"aliases: [Note A]\"\n      },\n      {\n        \"line\": 5,\n        \"text\": \"# Note\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"This is `a/Note`. Its twin lives at [[b/Note]].\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"This is `a/Note`. Its twin lives at [[b/Note]].\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]].\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]].\"\n      },\n      {\n        \"line\": 13,\n        \"text\": \"A block in `a/Note`. ^a-block\"\n      }\n    ]\n  },\n  {\n    \"file\": \"b/Links From B.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- Explicit: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- Explicit: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- A block of the same-folder note: [[Note#^b-block]]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- A block of the same-folder note: [[Note#^b-block]]\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"- Relative to this folder: [[./Note]] and [[../a/Note]]\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"- Relative to this folder: [[./Note]] and [[../a/Note]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"b/Note.md\",\n    \"matches\": [\n      {\n        \"line\": 3,\n        \"text\": \"aliases: [Note B]\"\n      },\n      {\n        \"line\": 5,\n        \"text\": \"# Note\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"This is `b/Note`. Its twin lives at [[a/Note]].\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"This is `b/Note`. Its twin lives at [[a/Note]].\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"Text under the shared heading in `b/Note`. A link to this heading: [[b/Note#Shared heading]].\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"Text under the shared heading in `b/Note`. A link to this heading: [[b/Note#Shared heading]].\"\n      },\n      {\n        \"line\": 13,\n        \"text\": \"A block in `b/Note`. ^b-block\"\n      }\n    ]\n  },\n  {\n    \"file\": \"callouts/All Callouts.md\",\n    \"matches\": [\n      {\n        \"line\": 8,\n        \"text\": \"> [!note]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"> A note.\"\n      },\n      {\n        \"line\": 93,\n        \"text\": \"> [!NOTE]\"\n      },\n      {\n        \"line\": 100,\n        \"text\": \"> An unknown type renders as a note.\"\n      },\n      {\n        \"line\": 105,\n        \"text\": \"> [! note]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"callouts/Callout Titles and Folding.md\",\n    \"matches\": [\n      {\n        \"line\": 18,\n        \"text\": \"> [!note]-\"\n      },\n      {\n        \"line\": 37,\n        \"text\": \"> [!note] Title only\"\n      }\n    ]\n  },\n  {\n    \"file\": \"callouts/Custom Callout.md\",\n    \"matches\": [\n      {\n        \"line\": 10,\n        \"text\": \"> Renders as a note.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"callouts/Nested Callouts.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"> [!note] A callout around a plain quote\"\n      }\n    ]\n  },\n  {\n    \"file\": \"daily/2026-10-23.md\",\n    \"matches\": [\n      {\n        \"line\": 12,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"matches\": [\n      {\n        \"line\": 12,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 20,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 24,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 28,\n        \"text\": \"- [x] Write the fixture notes\"\n      }\n    ]\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"matches\": [\n      {\n        \"line\": 12,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 20,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 24,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 28,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 32,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 36,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      },\n      {\n        \"line\": 40,\n        \"text\": \"The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"embeds/Embed Canvas and Base.md\",\n    \"matches\": [\n      {\n        \"line\": 12,\n        \"text\": \"![[Notes.base]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"embeds/Embed Media.md\",\n    \"matches\": [\n      {\n        \"line\": 40,\n        \"text\": \"One file in `attachments/` is referenced by no note. It stands for an attachment that is left behind\"\n      },\n      {\n        \"line\": 41,\n        \"text\": \"when its note is deleted.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"embeds/Embed Notes.md\",\n    \"matches\": [\n      {\n        \"line\": 4,\n        \"text\": \"# Embed Notes\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"A whole note:\"\n      },\n      {\n        \"line\": 30,\n        \"text\": \"The twin notes:\"\n      },\n      {\n        \"line\": 32,\n        \"text\": \"![[a/Note]]\"\n      },\n      {\n        \"line\": 34,\n        \"text\": \"![[b/Note#Shared heading]]\"\n      },\n      {\n        \"line\": 36,\n        \"text\": \"A note embedded with a size, which notes ignore: ![[Dead End|300]]\"\n      },\n      {\n        \"line\": 36,\n        \"text\": \"A note embedded with a size, which notes ignore: ![[Dead End|300]]\"\n      },\n      {\n        \"line\": 38,\n        \"text\": \"A note that does not exist: ![[Missing Embed Target]]\"\n      },\n      {\n        \"line\": 40,\n        \"text\": \"Two notes that embed each other: ![[Loop A]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"embeds/Embed Query.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Search results embedded in a note.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"inbox/Inbox.md\",\n    \"matches\": [\n      {\n        \"line\": 3,\n        \"text\": \"New notes land in this folder (the \\\"new note location\\\" setting).\"\n      },\n      {\n        \"line\": 3,\n        \"text\": \"New notes land in this folder (the \\\"new note location\\\" setting).\"\n      }\n    ]\n  },\n  {\n    \"file\": \"links/Aliases.md\",\n    \"matches\": [\n      {\n        \"line\": 10,\n        \"text\": \"This note is also known as Alias One. It links to itself by a piped alias: [[Aliases|piped alias]].\"\n      }\n    ]\n  },\n  {\n    \"file\": \"links/Link Forms.md\",\n    \"matches\": [\n      {\n        \"line\": 13,\n        \"text\": \"- Heading in this note: [[#Wikilinks]]\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"- Block in this note: [[#^own-block]]\"\n      },\n      {\n        \"line\": 21,\n        \"text\": \"- Same name in two folders, ambiguous from here: [[Note]]\"\n      },\n      {\n        \"line\": 22,\n        \"text\": \"- Told apart by folder: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 22,\n        \"text\": \"- Told apart by folder: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 23,\n        \"text\": \"- Headings of the twins: [[a/Note#Shared heading]] and [[b/Note#Shared heading]]\"\n      },\n      {\n        \"line\": 23,\n        \"text\": \"- Headings of the twins: [[a/Note#Shared heading]] and [[b/Note#Shared heading]]\"\n      },\n      {\n        \"line\": 29,\n        \"text\": \"- A base: [[Notes.base]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"links/Markdown Links.md\",\n    \"matches\": [\n      {\n        \"line\": 12,\n        \"text\": \"- Another folder: [a/Note](../a/Note.md)\"\n      },\n      {\n        \"line\": 12,\n        \"text\": \"- Another folder: [a/Note](../a/Note.md)\"\n      }\n    ]\n  },\n  {\n    \"file\": \"links/Mentions.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Plain-text mentions of other notes are the backlinks pane's unlinked mentions.\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- The note Aliases is named here without a link.\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- Alias One is a frontmatter alias of that note.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"links/Unresolved Links.md\",\n    \"matches\": [\n      {\n        \"line\": 8,\n        \"text\": \"- No such note: [[Missing]]\"\n      },\n      {\n        \"line\": 14,\n        \"text\": \"- A note that exists, a heading that does not: [[Headings Target#No such heading]]\"\n      },\n      {\n        \"line\": 15,\n        \"text\": \"- A note that exists, a block that does not: [[Blocks Target#^no-such-block]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"properties/Aliases and Cssclasses.md\",\n    \"matches\": [\n      {\n        \"line\": 3,\n        \"text\": \"- Alias Note\"\n      },\n      {\n        \"line\": 12,\n        \"text\": \"The classes above are added to this note's view; the second one has no CSS behind it.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"properties/All Property Types.md\",\n    \"matches\": [\n      {\n        \"line\": 25,\n        \"text\": \"- \\\"[[a/Note]]\\\"\"\n      },\n      {\n        \"line\": 46,\n        \"text\": \"name and not to the note.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"properties/Broken Frontmatter.md\",\n    \"matches\": [\n      {\n        \"line\": 8,\n        \"text\": \"The YAML above does not parse. Obsidian shows it as invalid properties and the note still opens.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"properties/Link Properties.md\",\n    \"matches\": [\n      {\n        \"line\": 5,\n        \"text\": \"- \\\"[[a/Note|Note A]]\\\"\"\n      },\n      {\n        \"line\": 5,\n        \"text\": \"- \\\"[[a/Note|Note A]]\\\"\"\n      }\n    ]\n  },\n  {\n    \"file\": \"review/Missing Note Creation.md\",\n    \"matches\": [\n      {\n        \"line\": 4,\n        \"text\": \"# Missing Note Creation\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Following an unresolved link creates the note, and its name must not gain a second extension.\"\n      },\n      {\n        \"line\": 12,\n        \"text\": \"- The twins stay two graph nodes: [[a/Note]] and [[b/Note]].\"\n      },\n      {\n        \"line\": 12,\n        \"text\": \"- The twins stay two graph nodes: [[a/Note]] and [[b/Note]].\"\n      }\n    ]\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 31,\n        \"text\": \"An excluded note is still a valid link target: [[Hidden Note]]. Its marker word never appears\"\n      },\n      {\n        \"line\": 31,\n        \"text\": \"An excluded note is still a valid link target: [[Hidden Note]]. Its marker word never appears\"\n      }\n    ]\n  },\n  {\n    \"file\": \"syntax/Byte Order Mark.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"This note starts with a UTF-8 byte order mark. A link to [[Dead End]].\"\n      }\n    ]\n  },\n  {\n    \"file\": \"syntax/Code Blocks.md\",\n    \"matches\": [\n      {\n        \"line\": 23,\n        \"text\": \"type Note = { path: string; links: string[] };\"\n      },\n      {\n        \"line\": 46,\n        \"text\": \"<div class=\\\"note\\\"><span>text</span></div>\"\n      },\n      {\n        \"line\": 50,\n        \"text\": \"SELECT path FROM notes WHERE tag = 'project' ORDER BY path;\"\n      }\n    ]\n  },\n  {\n    \"file\": \"syntax/Footnotes.md\",\n    \"matches\": [\n      {\n        \"line\": 2,\n        \"text\": \"tags: [syntax, footnotes]\"\n      },\n      {\n        \"line\": 4,\n        \"text\": \"# Footnotes\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"A reference footnote.[^1] A named one.[^named] The first one again.[^1]\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"An inline footnote.^[This text is written in place.] And a second one^[With **bold** and a [[Dead End]] link.].\"\n      },\n      {\n        \"line\": 12,\n        \"text\": \"[^1]: The first footnote, used twice.\"\n      },\n      {\n        \"line\": 13,\n        \"text\": \"[^named]: A named footnote.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"This note uses CRLF line endings.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"syntax/Mermaid.md\",\n    \"matches\": [\n      {\n        \"line\": 8,\n        \"text\": \"A[Note] --> B{Link resolves?}\"\n      },\n      {\n        \"line\": 18,\n        \"text\": \"V-->>U: note opens\"\n      },\n      {\n        \"line\": 23,\n        \"text\": \"class Note {\"\n      },\n      {\n        \"line\": 27,\n        \"text\": \"Note <|-- Canvas\"\n      }\n    ]\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"matches\": [\n      {\n        \"line\": 24,\n        \"text\": \"> [!note] A callout #callout-tag\"\n      }\n    ]\n  },\n  {\n    \"file\": \"templates/Meeting.md\",\n    \"matches\": [\n      {\n        \"line\": 8,\n        \"text\": \"## Notes\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "Dead End.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Notes link here, but nothing leaves this note. It is a dead end that is not an orphan."
+          },
+          {
+            "line": 6,
+            "text": "Notes link here, but nothing leaves this note. It is a dead end that is not an orphan."
+          }
+        ]
+      },
+      {
+        "file": "Home.md",
+        "matches": [
+          {
+            "line": 13,
+            "text": "The vault's startup note (\"Default file to open\"). Every hub below is linked from here, so the"
+          },
+          {
+            "line": 14,
+            "text": "only notes without an incoming link are the ones `COVERAGE.md` names."
+          },
+          {
+            "line": 19,
+            "text": "- The same name in two folders: [[a/Note]], [[b/Note]], [[Links From A]], [[Links From B]]"
+          },
+          {
+            "line": 19,
+            "text": "- The same name in two folders: [[a/Note]], [[b/Note]], [[Links From A]], [[Links From B]]"
+          },
+          {
+            "line": 20,
+            "text": "- Embeds: [[Embed Notes]], [[Embed Images]], [[Embed Media]], [[Embed Canvas and Base]], [[Embed Query]]"
+          },
+          {
+            "line": 25,
+            "text": "- Syntax: [[Footnotes]], [[Comments and Highlights]], [[Math]], [[Mermaid]], [[Code Blocks]], [[Tables]], [[Raw HTML]], [[Inline Formatting]], [[Folding and Lists]], [[Bidirectional Text]], [[Line Endings]], [[Byte Order Mark]]"
+          },
+          {
+            "line": 26,
+            "text": "- Review cases: [[Heading With Hash]], [[Missing Note Creation]]"
+          },
+          {
+            "line": 31,
+            "text": "- Bases: [[Notes.base]], [[Projects.base]], [[Tasks.base]]"
+          },
+          {
+            "line": 33,
+            "text": "- A note nothing leads out of: [[Dead End]]"
+          },
+          {
+            "line": 34,
+            "text": "- Excluded from search and the graph by `userIgnoreFilters`: [[Hidden Note]]"
+          },
+          {
+            "line": 40,
+            "text": "![[Notes.base#All notes]]"
+          },
+          {
+            "line": 40,
+            "text": "![[Notes.base#All notes]]"
+          },
+          {
+            "line": 50,
+            "text": "name: Task notes"
+          }
+        ]
+      },
+      {
+        "file": "Orphan.md",
+        "matches": [
+          {
+            "line": 1,
+            "text": "No note links here, and this note links to nothing. It is an orphan in every sense: it has no"
+          },
+          {
+            "line": 1,
+            "text": "No note links here, and this note links to nothing. It is an orphan in every sense: it has no"
+          }
+        ]
+      },
+      {
+        "file": "Unicode é 日本.md",
+        "matches": [
+          {
+            "line": 2,
+            "text": "aliases: [Ünïcode Note, 日本のノート]"
+          },
+          {
+            "line": 7,
+            "text": "A note whose file name has accents and CJK characters: café, naïve, Ελληνικά, 日本語のテキスト,"
+          },
+          {
+            "line": 11,
+            "text": "[[Ünïcode Note]]."
+          }
+        ]
+      },
+      {
+        "file": "a/Links From A.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 8,
+            "text": "- Explicit: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 8,
+            "text": "- Explicit: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 9,
+            "text": "- A heading of the same-folder note: [[Note#Shared heading]]"
+          },
+          {
+            "line": 9,
+            "text": "- A heading of the same-folder note: [[Note#Shared heading]]"
+          },
+          {
+            "line": 10,
+            "text": "- Relative to this folder: [[./Note]] and [[../b/Note]]"
+          },
+          {
+            "line": 10,
+            "text": "- Relative to this folder: [[./Note]] and [[../b/Note]]"
+          }
+        ]
+      },
+      {
+        "file": "a/Note.md",
+        "matches": [
+          {
+            "line": 3,
+            "text": "aliases: [Note A]"
+          },
+          {
+            "line": 5,
+            "text": "# Note"
+          },
+          {
+            "line": 7,
+            "text": "This is `a/Note`. Its twin lives at [[b/Note]]."
+          },
+          {
+            "line": 7,
+            "text": "This is `a/Note`. Its twin lives at [[b/Note]]."
+          },
+          {
+            "line": 11,
+            "text": "Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]]."
+          },
+          {
+            "line": 11,
+            "text": "Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]]."
+          },
+          {
+            "line": 13,
+            "text": "A block in `a/Note`. ^a-block"
+          }
+        ]
+      },
+      {
+        "file": "b/Links From B.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 8,
+            "text": "- Explicit: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 8,
+            "text": "- Explicit: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 9,
+            "text": "- A block of the same-folder note: [[Note#^b-block]]"
+          },
+          {
+            "line": 9,
+            "text": "- A block of the same-folder note: [[Note#^b-block]]"
+          },
+          {
+            "line": 10,
+            "text": "- Relative to this folder: [[./Note]] and [[../a/Note]]"
+          },
+          {
+            "line": 10,
+            "text": "- Relative to this folder: [[./Note]] and [[../a/Note]]"
+          }
+        ]
+      },
+      {
+        "file": "b/Note.md",
+        "matches": [
+          {
+            "line": 3,
+            "text": "aliases: [Note B]"
+          },
+          {
+            "line": 5,
+            "text": "# Note"
+          },
+          {
+            "line": 7,
+            "text": "This is `b/Note`. Its twin lives at [[a/Note]]."
+          },
+          {
+            "line": 7,
+            "text": "This is `b/Note`. Its twin lives at [[a/Note]]."
+          },
+          {
+            "line": 11,
+            "text": "Text under the shared heading in `b/Note`. A link to this heading: [[b/Note#Shared heading]]."
+          },
+          {
+            "line": 11,
+            "text": "Text under the shared heading in `b/Note`. A link to this heading: [[b/Note#Shared heading]]."
+          },
+          {
+            "line": 13,
+            "text": "A block in `b/Note`. ^b-block"
+          }
+        ]
+      },
+      {
+        "file": "callouts/All Callouts.md",
+        "matches": [
+          {
+            "line": 8,
+            "text": "> [!note]"
+          },
+          {
+            "line": 9,
+            "text": "> A note."
+          },
+          {
+            "line": 93,
+            "text": "> [!NOTE]"
+          },
+          {
+            "line": 100,
+            "text": "> An unknown type renders as a note."
+          },
+          {
+            "line": 105,
+            "text": "> [! note]"
+          }
+        ]
+      },
+      {
+        "file": "callouts/Callout Titles and Folding.md",
+        "matches": [
+          {
+            "line": 18,
+            "text": "> [!note]-"
+          },
+          {
+            "line": 37,
+            "text": "> [!note] Title only"
+          }
+        ]
+      },
+      {
+        "file": "callouts/Custom Callout.md",
+        "matches": [
+          {
+            "line": 10,
+            "text": "> Renders as a note."
+          }
+        ]
+      },
+      {
+        "file": "callouts/Nested Callouts.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "> [!note] A callout around a plain quote"
+          }
+        ]
+      },
+      {
+        "file": "daily/2026-10-23.md",
+        "matches": [
+          {
+            "line": 12,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          }
+        ]
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "matches": [
+          {
+            "line": 12,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 16,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 20,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 24,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 28,
+            "text": "- [x] Write the fixture notes"
+          }
+        ]
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "matches": [
+          {
+            "line": 12,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 16,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 20,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 24,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 28,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 32,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 36,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          },
+          {
+            "line": 40,
+            "text": "The vault was quiet, so most of the day went to reading and tidying. This paragraph is filler of a known length: the calendar draws one dot for every two hundred and fifty words, and the word count of each daily note has to land on a chosen side of that boundary. Nothing here links anywhere or carries a tag, so only the length and the tasks matter."
+          }
+        ]
+      },
+      {
+        "file": "embeds/Embed Canvas and Base.md",
+        "matches": [
+          {
+            "line": 12,
+            "text": "![[Notes.base]]"
+          }
+        ]
+      },
+      {
+        "file": "embeds/Embed Media.md",
+        "matches": [
+          {
+            "line": 40,
+            "text": "One file in `attachments/` is referenced by no note. It stands for an attachment that is left behind"
+          },
+          {
+            "line": 41,
+            "text": "when its note is deleted."
+          }
+        ]
+      },
+      {
+        "file": "embeds/Embed Notes.md",
+        "matches": [
+          {
+            "line": 4,
+            "text": "# Embed Notes"
+          },
+          {
+            "line": 6,
+            "text": "A whole note:"
+          },
+          {
+            "line": 30,
+            "text": "The twin notes:"
+          },
+          {
+            "line": 32,
+            "text": "![[a/Note]]"
+          },
+          {
+            "line": 34,
+            "text": "![[b/Note#Shared heading]]"
+          },
+          {
+            "line": 36,
+            "text": "A note embedded with a size, which notes ignore: ![[Dead End|300]]"
+          },
+          {
+            "line": 36,
+            "text": "A note embedded with a size, which notes ignore: ![[Dead End|300]]"
+          },
+          {
+            "line": 38,
+            "text": "A note that does not exist: ![[Missing Embed Target]]"
+          },
+          {
+            "line": 40,
+            "text": "Two notes that embed each other: ![[Loop A]]"
+          }
+        ]
+      },
+      {
+        "file": "embeds/Embed Query.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Search results embedded in a note."
+          }
+        ]
+      },
+      {
+        "file": "inbox/Inbox.md",
+        "matches": [
+          {
+            "line": 3,
+            "text": "New notes land in this folder (the \"new note location\" setting)."
+          },
+          {
+            "line": 3,
+            "text": "New notes land in this folder (the \"new note location\" setting)."
+          }
+        ]
+      },
+      {
+        "file": "links/Aliases.md",
+        "matches": [
+          {
+            "line": 10,
+            "text": "This note is also known as Alias One. It links to itself by a piped alias: [[Aliases|piped alias]]."
+          }
+        ]
+      },
+      {
+        "file": "links/Link Forms.md",
+        "matches": [
+          {
+            "line": 13,
+            "text": "- Heading in this note: [[#Wikilinks]]"
+          },
+          {
+            "line": 16,
+            "text": "- Block in this note: [[#^own-block]]"
+          },
+          {
+            "line": 21,
+            "text": "- Same name in two folders, ambiguous from here: [[Note]]"
+          },
+          {
+            "line": 22,
+            "text": "- Told apart by folder: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 22,
+            "text": "- Told apart by folder: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 23,
+            "text": "- Headings of the twins: [[a/Note#Shared heading]] and [[b/Note#Shared heading]]"
+          },
+          {
+            "line": 23,
+            "text": "- Headings of the twins: [[a/Note#Shared heading]] and [[b/Note#Shared heading]]"
+          },
+          {
+            "line": 29,
+            "text": "- A base: [[Notes.base]]"
+          }
+        ]
+      },
+      {
+        "file": "links/Markdown Links.md",
+        "matches": [
+          {
+            "line": 12,
+            "text": "- Another folder: [a/Note](../a/Note.md)"
+          },
+          {
+            "line": 12,
+            "text": "- Another folder: [a/Note](../a/Note.md)"
+          }
+        ]
+      },
+      {
+        "file": "links/Mentions.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Plain-text mentions of other notes are the backlinks pane's unlinked mentions."
+          },
+          {
+            "line": 8,
+            "text": "- The note Aliases is named here without a link."
+          },
+          {
+            "line": 9,
+            "text": "- Alias One is a frontmatter alias of that note."
+          }
+        ]
+      },
+      {
+        "file": "links/Unresolved Links.md",
+        "matches": [
+          {
+            "line": 8,
+            "text": "- No such note: [[Missing]]"
+          },
+          {
+            "line": 14,
+            "text": "- A note that exists, a heading that does not: [[Headings Target#No such heading]]"
+          },
+          {
+            "line": 15,
+            "text": "- A note that exists, a block that does not: [[Blocks Target#^no-such-block]]"
+          }
+        ]
+      },
+      {
+        "file": "properties/Aliases and Cssclasses.md",
+        "matches": [
+          {
+            "line": 3,
+            "text": "- Alias Note"
+          },
+          {
+            "line": 12,
+            "text": "The classes above are added to this note's view; the second one has no CSS behind it."
+          }
+        ]
+      },
+      {
+        "file": "properties/All Property Types.md",
+        "matches": [
+          {
+            "line": 25,
+            "text": "- \"[[a/Note]]\""
+          },
+          {
+            "line": 46,
+            "text": "name and not to the note."
+          }
+        ]
+      },
+      {
+        "file": "properties/Broken Frontmatter.md",
+        "matches": [
+          {
+            "line": 8,
+            "text": "The YAML above does not parse. Obsidian shows it as invalid properties and the note still opens."
+          }
+        ]
+      },
+      {
+        "file": "properties/Link Properties.md",
+        "matches": [
+          {
+            "line": 5,
+            "text": "- \"[[a/Note|Note A]]\""
+          },
+          {
+            "line": 5,
+            "text": "- \"[[a/Note|Note A]]\""
+          }
+        ]
+      },
+      {
+        "file": "review/Missing Note Creation.md",
+        "matches": [
+          {
+            "line": 4,
+            "text": "# Missing Note Creation"
+          },
+          {
+            "line": 6,
+            "text": "Following an unresolved link creates the note, and its name must not gain a second extension."
+          },
+          {
+            "line": 12,
+            "text": "- The twins stay two graph nodes: [[a/Note]] and [[b/Note]]."
+          },
+          {
+            "line": 12,
+            "text": "- The twins stay two graph nodes: [[a/Note]] and [[b/Note]]."
+          }
+        ]
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 31,
+            "text": "An excluded note is still a valid link target: [[Hidden Note]]. Its marker word never appears"
+          },
+          {
+            "line": 31,
+            "text": "An excluded note is still a valid link target: [[Hidden Note]]. Its marker word never appears"
+          }
+        ]
+      },
+      {
+        "file": "syntax/Byte Order Mark.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "This note starts with a UTF-8 byte order mark. A link to [[Dead End]]."
+          }
+        ]
+      },
+      {
+        "file": "syntax/Code Blocks.md",
+        "matches": [
+          {
+            "line": 23,
+            "text": "type Note = { path: string; links: string[] };"
+          },
+          {
+            "line": 46,
+            "text": "<div class=\"note\"><span>text</span></div>"
+          },
+          {
+            "line": 50,
+            "text": "SELECT path FROM notes WHERE tag = 'project' ORDER BY path;"
+          }
+        ]
+      },
+      {
+        "file": "syntax/Footnotes.md",
+        "matches": [
+          {
+            "line": 2,
+            "text": "tags: [syntax, footnotes]"
+          },
+          {
+            "line": 4,
+            "text": "# Footnotes"
+          },
+          {
+            "line": 6,
+            "text": "A reference footnote.[^1] A named one.[^named] The first one again.[^1]"
+          },
+          {
+            "line": 8,
+            "text": "An inline footnote.^[This text is written in place.] And a second one^[With **bold** and a [[Dead End]] link.]."
+          },
+          {
+            "line": 12,
+            "text": "[^1]: The first footnote, used twice."
+          },
+          {
+            "line": 13,
+            "text": "[^named]: A named footnote."
+          }
+        ]
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "This note uses CRLF line endings."
+          }
+        ]
+      },
+      {
+        "file": "syntax/Mermaid.md",
+        "matches": [
+          {
+            "line": 8,
+            "text": "A[Note] --> B{Link resolves?}"
+          },
+          {
+            "line": 18,
+            "text": "V-->>U: note opens"
+          },
+          {
+            "line": 23,
+            "text": "class Note {"
+          },
+          {
+            "line": 27,
+            "text": "Note <|-- Canvas"
+          }
+        ]
+      },
+      {
+        "file": "tagging/Tags.md",
+        "matches": [
+          {
+            "line": 24,
+            "text": "> [!note] A callout #callout-tag"
+          }
+        ]
+      },
+      {
+        "file": "templates/Meeting.md",
+        "matches": [
+          {
+            "line": 8,
+            "text": "## Notes"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"apple -banana\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=apple -banana",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"apple OR banana\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=apple OR banana",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"A line with apple only.\"\n      },\n      {\n        \"line\": 17,\n        \"text\": \"A line with banana only.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          }
+        ]
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 16,
+            "text": "A line with apple only."
+          },
+          {
+            "line": 17,
+            "text": "A line with banana only."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"apple banana\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=apple banana",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"A line with apple only.\"\n      },\n      {\n        \"line\": 17,\n        \"text\": \"A line with banana only.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 16,
+            "text": "A line with apple only."
+          },
+          {
+            "line": 17,
+            "text": "A line with banana only."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"block:(apple banana)\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=block:(apple banana)",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"A line with apple only.\"\n      },\n      {\n        \"line\": 17,\n        \"text\": \"A line with banana only.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 16,
+            "text": "A line with apple only."
+          },
+          {
+            "line": 17,
+            "text": "A line with banana only."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"file:\"Link Forms\"\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=file:\"Link Forms\"",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"links/Link Forms.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "links/Link Forms.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=\"line:(apple banana)\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=line:(apple banana)",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=\"path:a OR path:b\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=path:a OR path:b",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"Dead End.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"Orphan.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"a/Links From A.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"b/Links From B.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"b/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/All Callouts.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/Callout Titles and Folding.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/Custom Callout.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/Nested Callouts.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"daily/2026-10-23.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"dataview/Dataview Fields.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Embed Canvas and Base.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Embed Images.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Embed Media.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Embed Notes.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Embed Query.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Loop A.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"embeds/Loop B.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"inbox/Inbox.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Aliases.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Blocks Target.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Headings Target.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Markdown Links.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Beta.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Delta.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Aliases and Cssclasses.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/All Property Types.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Broken Frontmatter.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Empty Frontmatter.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Frontmatter Only.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Type Mismatch.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"review/Heading With Hash.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"review/Missing Note Creation.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Byte Order Mark.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Code Blocks.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Comments and Highlights.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Folding and Lists.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Footnotes.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Inline Formatting.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Math.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Mermaid.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Raw HTML.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"syntax/Tables.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tagging/Frontmatter Tags.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tagging/Tags As Text.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tagging/Unicode Tags.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"templates/Daily.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"templates/Meeting.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "Dead End.md",
+        "matches": []
+      },
+      {
+        "file": "Orphan.md",
+        "matches": []
+      },
+      {
+        "file": "a/Links From A.md",
+        "matches": []
+      },
+      {
+        "file": "a/Note.md",
+        "matches": []
+      },
+      {
+        "file": "b/Links From B.md",
+        "matches": []
+      },
+      {
+        "file": "b/Note.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/All Callouts.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/Callout Titles and Folding.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/Custom Callout.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/Nested Callouts.md",
+        "matches": []
+      },
+      {
+        "file": "daily/2026-10-23.md",
+        "matches": []
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "matches": []
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "matches": []
+      },
+      {
+        "file": "dataview/Dataview Fields.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Embed Canvas and Base.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Embed Images.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Embed Media.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Embed Notes.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Embed Query.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Loop A.md",
+        "matches": []
+      },
+      {
+        "file": "embeds/Loop B.md",
+        "matches": []
+      },
+      {
+        "file": "inbox/Inbox.md",
+        "matches": []
+      },
+      {
+        "file": "links/Aliases.md",
+        "matches": []
+      },
+      {
+        "file": "links/Blocks Target.md",
+        "matches": []
+      },
+      {
+        "file": "links/Headings Target.md",
+        "matches": []
+      },
+      {
+        "file": "links/Markdown Links.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Beta.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Delta.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Gamma.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Aliases and Cssclasses.md",
+        "matches": []
+      },
+      {
+        "file": "properties/All Property Types.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Broken Frontmatter.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Empty Frontmatter.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Frontmatter Only.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Type Mismatch.md",
+        "matches": []
+      },
+      {
+        "file": "review/Heading With Hash.md",
+        "matches": []
+      },
+      {
+        "file": "review/Missing Note Creation.md",
+        "matches": []
+      },
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": []
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Byte Order Mark.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Code Blocks.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Comments and Highlights.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Folding and Lists.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Footnotes.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Inline Formatting.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Math.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Mermaid.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Raw HTML.md",
+        "matches": []
+      },
+      {
+        "file": "syntax/Tables.md",
+        "matches": []
+      },
+      {
+        "file": "tagging/Frontmatter Tags.md",
+        "matches": []
+      },
+      {
+        "file": "tagging/Tags As Text.md",
+        "matches": []
+      },
+      {
+        "file": "tagging/Tags.md",
+        "matches": []
+      },
+      {
+        "file": "tagging/Unicode Tags.md",
+        "matches": []
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "matches": []
+      },
+      {
+        "file": "templates/Daily.md",
+        "matches": []
+      },
+      {
+        "file": "templates/Meeting.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=\"section:(apple banana)\" format=json": {
+    "command": "search:context",
+    "args": [
+      "query=section:(apple banana)",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"A line with apple only.\"\n      },\n      {\n        \"line\": 17,\n        \"text\": \"A line with banana only.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 16,
+            "text": "A line with apple only."
+          },
+          {
+            "line": 17,
+            "text": "A line with banana only."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=/ID-\\d+/ format=json": {
+    "command": "search:context",
+    "args": [
+      "query=/ID-\\d+/",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 26,\n        \"text\": \"Identifiers for regular expressions: id-1234, id-5678 and ID-9999.\"\n      },\n      {\n        \"line\": 26,\n        \"text\": \"Identifiers for regular expressions: id-1234, id-5678 and ID-9999.\"\n      },\n      {\n        \"line\": 26,\n        \"text\": \"Identifiers for regular expressions: id-1234, id-5678 and ID-9999.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 26,
+            "text": "Identifiers for regular expressions: id-1234, id-5678 and ID-9999."
+          },
+          {
+            "line": 26,
+            "text": "Identifiers for regular expressions: id-1234, id-5678 and ID-9999."
+          },
+          {
+            "line": 26,
+            "text": "Identifiers for regular expressions: id-1234, id-5678 and ID-9999."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=/id-\\d+/ format=json": {
+    "command": "search:context",
+    "args": [
+      "query=/id-\\d+/",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 26,\n        \"text\": \"Identifiers for regular expressions: id-1234, id-5678 and ID-9999.\"\n      },\n      {\n        \"line\": 26,\n        \"text\": \"Identifiers for regular expressions: id-1234, id-5678 and ID-9999.\"\n      },\n      {\n        \"line\": 26,\n        \"text\": \"Identifiers for regular expressions: id-1234, id-5678 and ID-9999.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 26,
+            "text": "Identifiers for regular expressions: id-1234, id-5678 and ID-9999."
+          },
+          {
+            "line": 26,
+            "text": "Identifiers for regular expressions: id-1234, id-5678 and ID-9999."
+          },
+          {
+            "line": 26,
+            "text": "Identifiers for regular expressions: id-1234, id-5678 and ID-9999."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=Apple format=json case": {
+    "command": "search:context",
+    "args": [
+      "query=Apple",
+      "format=json",
+      "case"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=C# format=json": {
+    "command": "search:context",
+    "args": [
+      "query=C#",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"review/Heading With Hash.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"## C# basics\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"## F# and C# together\"\n      },\n      {\n        \"line\": 22,\n        \"text\": \"- As typed: [[Heading With Hash#C# basics]]\"\n      },\n      {\n        \"line\": 24,\n        \"text\": \"- As a Markdown link: [C# basics](Heading%20With%20Hash.md#C%23%20basics)\"\n      }\n    ]\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"matches\": [\n      {\n        \"line\": 32,\n        \"text\": \"- C# and F# are languages\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "review/Heading With Hash.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "## C# basics"
+          },
+          {
+            "line": 10,
+            "text": "## F# and C# together"
+          },
+          {
+            "line": 22,
+            "text": "- As typed: [[Heading With Hash#C# basics]]"
+          },
+          {
+            "line": 24,
+            "text": "- As a Markdown link: [C# basics](Heading%20With%20Hash.md#C%23%20basics)"
+          }
+        ]
+      },
+      {
+        "file": "tagging/Tags.md",
+        "matches": [
+          {
+            "line": 32,
+            "text": "- C# and F# are languages"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=Note path=a format=json": {
+    "command": "search:context",
+    "args": [
+      "query=Note",
+      "path=a",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"a/Links From A.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"`[[Note]]` here should prefer the note in the same folder: [[Note]].\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- Explicit: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"- Explicit: [[a/Note]] and [[b/Note]]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- A heading of the same-folder note: [[Note#Shared heading]]\"\n      },\n      {\n        \"line\": 9,\n        \"text\": \"- A heading of the same-folder note: [[Note#Shared heading]]\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"- Relative to this folder: [[./Note]] and [[../b/Note]]\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"- Relative to this folder: [[./Note]] and [[../b/Note]]\"\n      }\n    ]\n  },\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": [\n      {\n        \"line\": 3,\n        \"text\": \"aliases: [Note A]\"\n      },\n      {\n        \"line\": 5,\n        \"text\": \"# Note\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"This is `a/Note`. Its twin lives at [[b/Note]].\"\n      },\n      {\n        \"line\": 7,\n        \"text\": \"This is `a/Note`. Its twin lives at [[b/Note]].\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]].\"\n      },\n      {\n        \"line\": 11,\n        \"text\": \"Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]].\"\n      },\n      {\n        \"line\": 13,\n        \"text\": \"A block in `a/Note`. ^a-block\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "a/Links From A.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 6,
+            "text": "`[[Note]]` here should prefer the note in the same folder: [[Note]]."
+          },
+          {
+            "line": 8,
+            "text": "- Explicit: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 8,
+            "text": "- Explicit: [[a/Note]] and [[b/Note]]"
+          },
+          {
+            "line": 9,
+            "text": "- A heading of the same-folder note: [[Note#Shared heading]]"
+          },
+          {
+            "line": 9,
+            "text": "- A heading of the same-folder note: [[Note#Shared heading]]"
+          },
+          {
+            "line": 10,
+            "text": "- Relative to this folder: [[./Note]] and [[../b/Note]]"
+          },
+          {
+            "line": 10,
+            "text": "- Relative to this folder: [[./Note]] and [[../b/Note]]"
+          }
+        ]
+      },
+      {
+        "file": "a/Note.md",
+        "matches": [
+          {
+            "line": 3,
+            "text": "aliases: [Note A]"
+          },
+          {
+            "line": 5,
+            "text": "# Note"
+          },
+          {
+            "line": 7,
+            "text": "This is `a/Note`. Its twin lives at [[b/Note]]."
+          },
+          {
+            "line": 7,
+            "text": "This is `a/Note`. Its twin lives at [[b/Note]]."
+          },
+          {
+            "line": 11,
+            "text": "Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]]."
+          },
+          {
+            "line": 11,
+            "text": "Text under the shared heading in `a/Note`. A link to this heading: [[a/Note#Shared heading]]."
+          },
+          {
+            "line": 13,
+            "text": "A block in `a/Note`. ^a-block"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=[aliases] format=json": {
+    "command": "search:context",
+    "args": [
+      "query=[aliases]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"Home.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"Unicode é 日本.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"b/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Aliases.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Aliases and Cssclasses.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/All Property Types.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Frontmatter Only.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "Home.md",
+        "matches": []
+      },
+      {
+        "file": "Unicode é 日本.md",
+        "matches": []
+      },
+      {
+        "file": "a/Note.md",
+        "matches": []
+      },
+      {
+        "file": "b/Note.md",
+        "matches": []
+      },
+      {
+        "file": "links/Aliases.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Aliases and Cssclasses.md",
+        "matches": []
+      },
+      {
+        "file": "properties/All Property Types.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Frontmatter Only.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=[rating:4] format=json": {
+    "command": "search:context",
+    "args": [
+      "query=[rating:4]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "projects/Project Gamma.md",
+        "matches": []
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=[status:draft] format=json": {
+    "command": "search:context",
+    "args": [
+      "query=[status:draft]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=[tags:project] format=json": {
+    "command": "search:context",
+    "args": [
+      "query=[tags:project]",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"b/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Beta.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Delta.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "a/Note.md",
+        "matches": []
+      },
+      {
+        "file": "b/Note.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Beta.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Delta.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Gamma.md",
+        "matches": []
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=café format=json": {
+    "command": "search:context",
+    "args": [
+      "query=café",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"Unicode é 日本.md\",\n    \"matches\": [\n      {\n        \"line\": 7,\n        \"text\": \"A note whose file name has accents and CJK characters: café, naïve, Ελληνικά, 日本語のテキスト,\"\n      }\n    ]\n  },\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 8,\n        \"text\": \"Straße and strasse. İstanbul and istanbul. CAFÉ and café.\"\n      },\n      {\n        \"line\": 8,\n        \"text\": \"Straße and strasse. İstanbul and istanbul. CAFÉ and café.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"tagging/Unicode Tags.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Accents: #café #naïve/ünï\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "Unicode é 日本.md",
+        "matches": [
+          {
+            "line": 7,
+            "text": "A note whose file name has accents and CJK characters: café, naïve, Ελληνικά, 日本語のテキスト,"
+          }
+        ]
+      },
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 8,
+            "text": "Straße and strasse. İstanbul and istanbul. CAFÉ and café."
+          },
+          {
+            "line": 8,
+            "text": "Straße and strasse. İstanbul and istanbul. CAFÉ and café."
+          }
+        ]
+      },
+      {
+        "file": "tagging/Unicode Tags.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Accents: #café #naïve/ünï"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=content:plumber format=json": {
+    "command": "search:context",
+    "args": [
+      "query=content:plumber",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 21,\n        \"text\": \"- [ ] call the plumber tomorrow\"\n      }\n    ]\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"matches\": [\n      {\n        \"line\": 51,\n        \"text\": \"- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 21,
+            "text": "- [ ] call the plumber tomorrow"
+          }
+        ]
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "matches": [
+          {
+            "line": 51,
+            "text": "- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=excluded-marker-xyzzy format=json": {
+    "command": "search:context",
+    "args": [
+      "query=excluded-marker-xyzzy",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No matches found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "search:context query=file:Link format=json": {
+    "command": "search:context",
+    "args": [
+      "query=file:Link",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"a/Links From A.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"b/Links From B.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Link Forms.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Markdown Links.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"links/Unresolved Links.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"properties/Link Properties.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "a/Links From A.md",
+        "matches": []
+      },
+      {
+        "file": "b/Links From B.md",
+        "matches": []
+      },
+      {
+        "file": "links/Link Forms.md",
+        "matches": []
+      },
+      {
+        "file": "links/Markdown Links.md",
+        "matches": []
+      },
+      {
+        "file": "links/Unresolved Links.md",
+        "matches": []
+      },
+      {
+        "file": "properties/Link Properties.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=fox format=json": {
+    "command": "search:context",
+    "args": [
+      "query=fox",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 14,\n        \"text\": \"The quick brown fox jumps over the lazy dog.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 14,
+            "text": "The quick brown fox jumps over the lazy dog."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=heading limit=3 format=json": {
+    "command": "search:context",
+    "args": [
+      "query=heading",
+      "limit=3",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  \"__limited_result__\",\n  \"__limited_result__\",\n  \"__limited_result__\"\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      "__limited_result__",
+      "__limited_result__",
+      "__limited_result__"
+    ]
+  },
+  "search:context query=ignore-case:APPLE format=json": {
+    "command": "search:context",
+    "args": [
+      "query=ignore-case:APPLE",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      }\n    ]\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 15,\n        \"text\": \"A line with both apple and banana.\"\n      },\n      {\n        \"line\": 16,\n        \"text\": \"A line with apple only.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          },
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          }
+        ]
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 15,
+            "text": "A line with both apple and banana."
+          },
+          {
+            "line": 16,
+            "text": "A line with apple only."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=match-case:Apple format=json": {
+    "command": "search:context",
+    "args": [
+      "query=match-case:Apple",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Case Sensitivity.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Apple apple APPLE aPpLe.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Case Sensitivity.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Apple apple APPLE aPpLe."
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=path:callouts format=json": {
+    "command": "search:context",
+    "args": [
+      "query=path:callouts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"callouts/All Callouts.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/Callout Titles and Folding.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/Custom Callout.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"callouts/Nested Callouts.md\",\n    \"matches\": []\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "callouts/All Callouts.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/Callout Titles and Folding.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/Custom Callout.md",
+        "matches": []
+      },
+      {
+        "file": "callouts/Nested Callouts.md",
+        "matches": []
+      }
+    ]
+  },
+  "search:context query=tag:#project format=json": {
+    "command": "search:context",
+    "args": [
+      "query=tag:#project",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"b/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Beta.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Delta.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Nested: #project #project/alpha #project/alpha/beta #project/gamma\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Nested: #project #project/alpha #project/alpha/beta #project/gamma\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Nested: #project #project/alpha #project/alpha/beta #project/gamma\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Nested: #project #project/alpha #project/alpha/beta #project/gamma\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "a/Note.md",
+        "matches": []
+      },
+      {
+        "file": "b/Note.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Beta.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Delta.md",
+        "matches": []
+      },
+      {
+        "file": "projects/Project Gamma.md",
+        "matches": []
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": []
+      },
+      {
+        "file": "tagging/Tags.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Nested: #project #project/alpha #project/alpha/beta #project/gamma"
+          },
+          {
+            "line": 6,
+            "text": "Nested: #project #project/alpha #project/alpha/beta #project/gamma"
+          },
+          {
+            "line": 6,
+            "text": "Nested: #project #project/alpha #project/alpha/beta #project/gamma"
+          },
+          {
+            "line": 6,
+            "text": "Nested: #project #project/alpha #project/alpha/beta #project/gamma"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=tag:#project/alpha format=json": {
+    "command": "search:context",
+    "args": [
+      "query=tag:#project/alpha",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"a/Note.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": []\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Nested: #project #project/alpha #project/alpha/beta #project/gamma\"\n      },\n      {\n        \"line\": 6,\n        \"text\": \"Nested: #project #project/alpha #project/alpha/beta #project/gamma\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "a/Note.md",
+        "matches": []
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "matches": []
+      },
+      {
+        "file": "tagging/Tags.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Nested: #project #project/alpha #project/alpha/beta #project/gamma"
+          },
+          {
+            "line": 6,
+            "text": "Nested: #project #project/alpha #project/alpha/beta #project/gamma"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=task-done:call format=json": {
+    "command": "search:context",
+    "args": [
+      "query=task-done:call",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 22,\n        \"text\": \"- [x] call the bank\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 22,
+            "text": "- [x] call the bank"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=task-todo:call format=json": {
+    "command": "search:context",
+    "args": [
+      "query=task-todo:call",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 21,\n        \"text\": \"- [ ] call the plumber tomorrow\"\n      }\n    ]\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"matches\": [\n      {\n        \"line\": 47,\n        \"text\": \"> - [ ] Task in a callout\"\n      },\n      {\n        \"line\": 51,\n        \"text\": \"- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 21,
+            "text": "- [ ] call the plumber tomorrow"
+          }
+        ]
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "matches": [
+          {
+            "line": 47,
+            "text": "> - [ ] Task in a callout"
+          },
+          {
+            "line": 51,
+            "text": "- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=task:call format=json": {
+    "command": "search:context",
+    "args": [
+      "query=task:call",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 21,\n        \"text\": \"- [ ] call the plumber tomorrow\"\n      },\n      {\n        \"line\": 22,\n        \"text\": \"- [x] call the bank\"\n      }\n    ]\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"matches\": [\n      {\n        \"line\": 47,\n        \"text\": \"> - [ ] Task in a callout\"\n      },\n      {\n        \"line\": 51,\n        \"text\": \"- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 21,
+            "text": "- [ ] call the plumber tomorrow"
+          },
+          {
+            "line": 22,
+            "text": "- [x] call the bank"
+          }
+        ]
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "matches": [
+          {
+            "line": 47,
+            "text": "> - [ ] Task in a callout"
+          },
+          {
+            "line": 51,
+            "text": "- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=xyzzy-unique-token format=json": {
+    "command": "search:context",
+    "args": [
+      "query=xyzzy-unique-token",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"matches\": [\n      {\n        \"line\": 27,\n        \"text\": \"A unique word, xyzzy-unique-token, on a block of its own. ^search-block\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "matches": [
+          {
+            "line": 27,
+            "text": "A unique word, xyzzy-unique-token, on a block of its own. ^search-block"
+          }
+        ]
+      }
+    ]
+  },
+  "search:context query=שלום format=json": {
+    "command": "search:context",
+    "args": [
+      "query=שלום",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"matches\": [\n      {\n        \"line\": 6,\n        \"text\": \"Hebrew: שלום עולם, a [[Dead End]] link in the middle, and English again.\"\n      },\n      {\n        \"line\": 10,\n        \"text\": \"Mixed in one sentence: the word שלום means peace, and مرحبا means hello.\"\n      }\n    ]\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "matches": [
+          {
+            "line": 6,
+            "text": "Hebrew: שלום עולם, a [[Dead End]] link in the middle, and English again."
+          },
+          {
+            "line": 10,
+            "text": "Mixed in one sentence: the word שלום means peace, and مرحبا means hello."
+          }
+        ]
+      }
+    ]
+  }
+}

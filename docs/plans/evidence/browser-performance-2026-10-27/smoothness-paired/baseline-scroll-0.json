@@ -1,0 +1,76 @@
+{
+  "native": {
+    "servo_frame": {
+      "count": 560,
+      "total_ms": 1382.5155260000004,
+      "p50_ms": 1.6783329999999999,
+      "p95_ms": 6.203708,
+      "max_ms": 8.567875
+    },
+    "servo_frame_interval": {
+      "count": 559,
+      "total_ms": 11987.185083000002,
+      "p50_ms": 12.057292,
+      "p95_ms": 54.886375,
+      "max_ms": 69.79804200000001
+    },
+    "servo_spin": {
+      "count": 2346,
+      "total_ms": 1781.8696110000003,
+      "p50_ms": 0.017082999999999997,
+      "p95_ms": 4.507291,
+      "max_ms": 18.768416
+    },
+    "surface_present": {
+      "count": 560,
+      "total_ms": 358.1743419999995,
+      "p50_ms": 0.6300840000000001,
+      "p95_ms": 1.499291,
+      "max_ms": 2.900583
+    },
+    "surface_present_interval": {
+      "count": 559,
+      "total_ms": 11983.838042000003,
+      "p50_ms": 12.029791,
+      "p95_ms": 59.003541999999996,
+      "max_ms": 74.657917
+    },
+    "tint_sample": {
+      "count": 79,
+      "total_ms": 16.100250000000003,
+      "p50_ms": 0.081833,
+      "p95_ms": 1.095708,
+      "max_ms": 1.234416
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 767,
+    "interval_count": 767,
+    "p50_ms": 12.05999999999949,
+    "p95_ms": 29.790000000000873,
+    "over_33_ms": 4,
+    "scroll_y": 7519,
+    "video": null
+  },
+  "tint_rgb": [
+    0.7764706611633301,
+    0.4392157196998596,
+    0.4549019932746887
+  ],
+  "window_active": false,
+  "mode": "scroll",
+  "variant": "baseline",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.389373041998624,
+  "cpu_s": 5.585317,
+  "host_load": [
+    28.44091796875,
+    23.392578125,
+    28.10693359375
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": false,
+  "excluded_reason": "Window was inactive/occluded; validation strengthened before continuing."
+}

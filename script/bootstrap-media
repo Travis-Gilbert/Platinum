@@ -36,8 +36,8 @@ def checkout(name, url, revision, patch=None, sparse=False):
 
 def main():
     (ROOT / "deps").mkdir(exist_ok=True)
-    checkout("servo-mse", "https://github.com/Travis-Gilbert/servo.git",
-             "81d8e2999569a8a496142651a1d129aed22fda77")
+    checkout("servo-consolidated", "https://github.com/Travis-Gilbert/servo.git",
+             "efdf7370da024f467f7526798fe5c6e50e784b52")
     source = checkout("gstreamer-mse", "https://github.com/GStreamer/gstreamer.git",
                       "1b2a95a1b72787cda146b46df9605b168e5b683b", "gstreamer-mse.patch", sparse=True)
     build = ROOT / "deps/gstreamer-mse-build"
@@ -46,7 +46,7 @@ def main():
     if (build / "meson-private/coredata.dat").exists():
         args.append("--reconfigure")
     run(*args, str(build), str(source / "subprojects/gst-plugins-bad"),
-        f"--prefix={prefix}", "-Dauto_features=disabled", "-Dmse=enabled",
+        f"--prefix={prefix}", "-Dauto_features=disabled", "-Dmse=enabled", "-Dvideoparsers=enabled",
         "-Dtests=disabled", "-Dexamples=disabled", "-Dintrospection=disabled")
     run("ninja", "-C", str(build))
     run("meson", "install", "-C", str(build))

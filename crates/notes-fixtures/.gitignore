@@ -1,0 +1,9 @@
+# Obsidian rewrites these every time it opens the vault.
+vault/.obsidian/workspace.json
+vault/.obsidian/workspace-mobile.json
+vault/.obsidian/cache
+
+# Reference runs against an unlicensed vault (the help vault) must never be committed. Only the
+# fixture vault's run, made from a copy named `fixture-vault`, is kept.
+/reference/*
+!/reference/fixture-vault/

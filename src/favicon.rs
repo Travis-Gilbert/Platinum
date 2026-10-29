@@ -12,11 +12,12 @@
 //! no touch-icon rel. `webicon` (MIT) was last released in 2017, on reqwest
 //! 0.4. `site_icons` and `favicon-picker` are GPL-3.0, and Frame is MIT.
 
-use futures::AsyncReadExt as _;
+use futures::{AsyncReadExt as _, FutureExt as _};
 use gpui_kit::{App, Asset, SharedUri};
 use html5ever::tendril::TendrilSink as _;
 use html5ever::{ParseOpts, local_name, parse_document};
 use markup5ever_rcdom::{Handle, NodeData, RcDom};
+use std::time::Duration;
 use url::Url;
 
 /// A site's icon address, from the root of the site (`https://lib.rs/`).
@@ -26,8 +27,9 @@ impl Asset for SiteIcon {
     type Source = Url;
     type Output = SharedUri;
 
-    fn load(root: Url, cx: &mut App) -> impl Future<Output = SharedUri> + Send + 'static {
+    fn load(root: Url, cx: &mut App) -> impl Future<Output = SharedUri> + Send + 'static + use<> {
         let client = cx.http_client();
+        let deadline = cx.background_executor().timer(Duration::from_secs(5));
         async move {
             let declared = async {
                 let mut response = client.get(root.as_str(), ().into(), true).await.ok()?;
@@ -40,7 +42,11 @@ impl Asset for SiteIcon {
                 body.read_to_end(&mut page).await.ok()?;
                 declared_icon(&String::from_utf8_lossy(&page), &root)
             };
-            let icon = match declared.await {
+            let declared = match futures::future::select(declared.boxed(), deadline.boxed()).await {
+                futures::future::Either::Left((icon, _)) => icon,
+                futures::future::Either::Right(_) => None,
+            };
+            let icon = match declared {
                 Some(icon) => icon,
                 None => root.join("/favicon.ico").unwrap_or(root),
             };
@@ -71,7 +77,14 @@ fn declared_icon(page: &str, base: &Url) -> Option<Url> {
                 return None;
             };
             let href = base.join(link.get("href")?).ok()?;
-            let rank = (touch, link.get("media").is_some(), size_cost(link.get("sizes")));
+            if !matches!(href.scheme(), "http" | "https") {
+                return None;
+            }
+            let rank = (
+                touch,
+                link.get("media").is_some(),
+                size_cost(link.get("sizes")),
+            );
             Some((rank, href))
         })
         .min_by_key(|(rank, _)| *rank)
@@ -94,19 +107,20 @@ fn size_cost(sizes: Option<&str>) -> u32 {
 
 /// Every `<link>` in the document, as its attributes.
 fn collect_links(node: &Handle, links: &mut Vec<Attributes>) {
-    if let NodeData::Element { name, attrs, .. } = &node.data
-        && name.local == local_name!("link")
-    {
-        let attrs = attrs.borrow();
-        links.push(Attributes(
-            attrs
-                .iter()
-                .map(|attr| (attr.name.local.to_string(), attr.value.to_string()))
-                .collect(),
-        ));
-    }
-    for child in node.children.borrow().iter() {
-        collect_links(child, links);
+    let mut pending = vec![node.clone()];
+    while let Some(node) = pending.pop() {
+        if let NodeData::Element { name, attrs, .. } = &node.data
+            && name.local == local_name!("link")
+        {
+            let attrs = attrs.borrow();
+            links.push(Attributes(
+                attrs
+                    .iter()
+                    .map(|attr| (attr.name.local.to_string(), attr.value.to_string()))
+                    .collect(),
+            ));
+        }
+        pending.extend(node.children.borrow().iter().rev().cloned());
     }
 }
 
@@ -114,16 +128,46 @@ struct Attributes(Vec<(String, String)>);
 
 impl Attributes {
     fn get(&self, name: &str) -> Option<&str> {
-        self.0.iter().find(|(key, _)| key == name).map(|(_, value)| value.as_str())
+        self.0
+            .iter()
+            .find(|(key, _)| key == name)
+            .map(|(_, value)| value.as_str())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gpui_kit::AppContext as _;
 
     fn icon(page: &str) -> Option<String> {
         declared_icon(page, &Url::parse("https://lib.rs/").unwrap()).map(String::from)
+    }
+
+    #[gpui_kit::test]
+    async fn a_stalled_server_falls_back_after_the_deadline(cx: &mut gpui_kit::TestAppContext) {
+        let future = cx.update(|cx| {
+            cx.set_http_client(gpui_kit::http_client::FakeHttpClient::create(|_| async {
+                futures::future::pending().await
+            }));
+            SiteIcon::load(Url::parse("https://example.test/").unwrap(), cx)
+        });
+        let task = cx.background_spawn(future);
+        cx.run_until_parked();
+        cx.executor().advance_clock(Duration::from_secs(6));
+        cx.run_until_parked();
+        assert_eq!(task.await.as_ref(), "https://example.test/favicon.ico");
+    }
+
+    #[test]
+    fn deeply_nested_links_do_not_recurse_and_local_files_are_rejected() {
+        let html = format!(
+            "{}<link rel=icon href=/safe.svg>{}",
+            "<div>".repeat(10000),
+            "</div>".repeat(10000)
+        );
+        assert_eq!(icon(&html).as_deref(), Some("https://lib.rs/safe.svg"));
+        assert_eq!(icon("<link rel=icon href=file:///private/icon.png>"), None);
     }
 
     #[test]

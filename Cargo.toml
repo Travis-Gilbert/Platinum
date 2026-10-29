@@ -9,24 +9,35 @@ publish = false
 # Its own workspace: libservo is in this graph. `deps/` holds checkouts that
 # are path dependencies, not members.
 [workspace]
+members = [
+    "crates/profile",
+    "crates/notes",
+    "crates/notes-fixtures",
+    "vendor/zorite-editor",
+    "vendor/zorite-markdown",
+    "vendor/gpui-bidi",
+    "vendor/gpui-whiteboard",
+]
 exclude = ["deps"]
 
 [dependencies]
 gpui-kit = "=0.8.0"
+# Only for the `snapshot` feature: GPUI's window-to-image rendering.
+gpui-pre = { version = "=0.3.9", optional = true }
+gpui-whiteboard = { path = "vendor/gpui-whiteboard" }
 # Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
-servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
-# The site a search result is on, by its registrable domain: Servo's own
-# copy of the public suffix list, from the same checkout.
-net_traits = { package = "servo-net-traits", path = "deps/servo-mse/components/shared/net" }
+servo = { path = "deps/servo-consolidated/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
+# Use the same public suffix list as Servo.
+net_traits = { package = "servo-net-traits", path = "deps/servo-consolidated/components/shared/net" }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
-theorem-browser-substrate = { path = "deps/theorem-rustyweb-pw2/apps/browser-substrate" }
+theorem-browser-substrate = { path = "deps/theorem-search/apps/browser-substrate" }
 # The search sessions' query and provider types, from the same branch.
-rustyred-web = { path = "deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-web" }
+rustyred-web = { path = "deps/theorem-search/rustyredcore_THG/crates/rustyred-web" }
 # reqwest-based search providers need a Tokio runtime; `search.rs` keeps one
-# for every search, off GPUI's executor.
-tokio = { version = "1", features = ["rt", "rt-multi-thread", "time", "net"] }
+# for every search, off GPUI's executor, and a semaphore bounds how many run.
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "time", "net", "sync"] }
 # EmbeddingGemma 2 runs in-process: ONNX Runtime does the inference (on the
 # GPU through WebGPU, whose Dawn library `build.rs` lets the binary find), the
 # model's own tokenizer.json feeds it, and hf-hub fetches a pinned revision.
@@ -71,9 +82,29 @@ sanitize-filename = "0.6"
 # Home's recent pages and searches, kept as JSON in the app's data folder.
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+zeroize = "1"
+frame-profile = { path = "crates/profile" }
 url = { version = "2", features = ["serde"] }
+kmeans_colors = { version = "0.7.1", default-features = false, features = ["palette_color"] }
+palette = { version = "0.7", default-features = false, features = ["std"] }
+
+[features]
+# Opt-in native performance harness; absent from ordinary builds.
+performance-check = []
+# Development only: with `FRAME_SNAPSHOT=<file.png>` in the environment, the
+# window is kept as a picture in that file, redrawn every two seconds, to see
+# the chrome where taking a screenshot needs a permission the session lacks.
+snapshot = [
+    "dep:gpui-pre",
+    "gpui-pre/test-support",
+    "dep:gpui-pre-macos",
+    "gpui-pre-macos/test-support",
+]
 
 [dev-dependencies]
+tempfile = "3"
+# The graph probe's `frame-notes:` file handler sets a Content-Type header.
+http = "1"
 # Native media acceptance examples use the same CLI parser already in Servo.
 clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).
@@ -84,7 +115,13 @@ gpui-pre = { version = "=0.3.9", features = ["test-support"] }
 # Shows the search workers' logs in `examples/serp_check.rs`.
 env_logger = "0.11"
 
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+# Opt into the native backend's existing render-to-image test support.
+gpui-pre-macos = { version = "=0.3.9", features = ["test-support"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
+# Only for the `snapshot` feature: the Mac window's side of rendering to an image.
+gpui-pre-macos = { version = "=0.3.9", optional = true }
 objc2 = "0.6"
 # AppKit's shared color panel for `<input type=color>`; GPUI Kit already
 # builds this crate with its default features.

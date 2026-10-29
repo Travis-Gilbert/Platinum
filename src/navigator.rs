@@ -1,4 +1,4 @@
-//! Frame's navigator: one searchable list shown two ways. Right-click puts it
+//! Platinum's navigator: one searchable list shown two ways. Right-click puts it
 //! at the pointer as a menu whose first row is the search field, already
 //! focused, so the person can just start typing; ⌘K shows the same list as a
 //! command palette at the top of the window, whether or not the address bar
@@ -27,8 +27,9 @@ use servo::ContextMenuAction;
 use url::Url;
 
 use crate::actions::{
-    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, Quit, Reload, SetAppearance, SharePage,
-    ShowDownloads, ToggleAsk, ToggleCompact,
+    BookmarkPage, CloseTab, FillPassword, FocusAddressBar, GoBack, GoForward, ImportBrowserData,
+    NewTab, PinTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks,
+    ShowConsole, ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -50,7 +51,7 @@ pub enum Placement {
 pub enum Pick {
     Page(ContextMenuAction),
     SwitchTab(u64),
-    /// A Frame command; its action already ran.
+    /// A Platinum command; its action already ran.
     Command,
     Go(Url),
     Search(String),
@@ -59,8 +60,53 @@ pub enum Pick {
     Download(Url),
     Home,
     Place(Place),
+    Tab(TabAction),
 }
 
+/// Actions on a tab or pinned site, keyed by stable identity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TabAction {
+    Close(u64),
+    /// The tab and every tab under it in the sidebar.
+    CloseBranch(u64),
+    Fold(u64),
+    Unfold(u64),
+    Rename(u64),
+    Pin(u64),
+    Unpin(u64),
+}
+
+impl TabAction {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Close(_) => "Close Tab",
+            Self::CloseBranch(_) => "Close Branch",
+            Self::Fold(_) => "Collapse Branch",
+            Self::Unfold(_) => "Expand Branch",
+            Self::Rename(_) => "Rename...",
+            Self::Pin(_) => "Pin Tab",
+            Self::Unpin(_) => "Unpin Site",
+        }
+    }
+
+    fn icon(self) -> Icon {
+        match self {
+            Self::Close(_) | Self::CloseBranch(_) => Icon::new(IconName::Close),
+            Self::Fold(_) => Icon::new(IconName::ChevronRight),
+            Self::Unfold(_) => Icon::new(IconName::ChevronDown),
+            Self::Rename(_) => icons::rename(),
+            Self::Pin(_) => icons::pin(),
+            Self::Unpin(_) => icons::unpin(),
+        }
+    }
+}
+
+/// The entries for the tab or pinned site under the pointer.
+pub struct TabMenu {
+    /// "Tab" or "Pinned Site".
+    pub label: SharedString,
+    pub actions: Vec<TabAction>,
+}
 /// One open tab, as the navigator lists it.
 pub struct TabEntry {
     pub id: u64,
@@ -79,6 +125,9 @@ pub struct BrowserState<'a> {
     pub ask: bool,
     /// The active tab shows a web page that can be shared.
     pub shareable: bool,
+    pub sidebar: bool,
+    /// The active tab shows a site that can be pinned.
+    pub pinnable: bool,
 }
 
 pub struct Navigator {
@@ -87,6 +136,8 @@ pub struct Navigator {
     /// The page whose context menu this is, with its entries; the page holds
     /// the responder until the navigator answers it.
     pub page: Option<(Entity<Page>, PageMenu)>,
+    /// The tab or pinned site whose context menu this is.
+    pub tab: Option<TabMenu>,
     /// Where focus goes back to when the navigator closes.
     pub restore_focus: Option<FocusHandle>,
 }
@@ -130,9 +181,20 @@ impl Navigator {
             groups.push(group);
             picks.push(group_picks);
         }
+        if let Some(menu) = &self.tab {
+            let mut group = CommandGroup::new().label(menu.label.clone());
+            for action in &menu.actions {
+                group = group.item(CommandItem::new().label(action.label()).icon(action.icon()));
+            }
+            groups.push(group);
+            picks.push(menu.actions.iter().copied().map(Pick::Tab).collect());
+        }
 
+        let pointer = matches!(self.placement, Placement::Pointer(_));
+        // The right-click menu leads with what can be done: its tabs show only
+        // once the person types. The palette keeps them, as a switcher.
         let mut tabs = None;
-        if !browser.tabs.is_empty() {
+        if !browser.tabs.is_empty() && (typing || !pointer) {
             let mut group = CommandGroup::new().label("Tabs");
             let mut group_picks = Vec::new();
             for tab in browser.tabs {
@@ -148,18 +210,23 @@ impl Navigator {
             tabs = Some((group, group_picks));
         }
         // Filtering keeps the groups' order and Enter takes the first match.
-        // Untyped, the tabs come first as a switcher; typed, a query that
-        // names a command means the command ("new tab" over a start tab
+        // Untyped, the palette's tabs come first as a switcher; typed, a query
+        // that names a command means the command ("new tab" over a start tab
         // titled "New Tab"), and one that only matches tabs still finds them.
         if !typing && let Some((group, group_picks)) = tabs.take() {
             groups.push(group);
             picks.push(group_picks);
         }
 
-        let pointer = matches!(self.placement, Placement::Pointer(_));
         // (label, icon, action, shown untyped in the right-click menu, checked)
         let mut commands: Vec<(SharedString, Icon, Box<dyn Action>, bool, bool)> = vec![
-            ("New Tab".into(), icons::page(), Box::new(NewTab), true, false),
+            (
+                "New Tab".into(),
+                icons::page(),
+                Box::new(NewTab),
+                true,
+                false,
+            ),
             (
                 if browser.compact {
                     "Show Toolbar"
@@ -176,7 +243,29 @@ impl Navigator {
                 true,
                 false,
             ),
+            (
+                if browser.sidebar {
+                    "Hide Sidebar"
+                } else {
+                    "Show Sidebar"
+                }
+                .into(),
+                Icon::new(IconName::PanelLeft),
+                Box::new(ToggleSidebar),
+                true,
+                false,
+            ),
         ];
+        // A tab's own menu pins that tab, which may not be the active one.
+        if browser.pinnable && self.tab.is_none() {
+            commands.push((
+                "Pin Tab".into(),
+                icons::pin(),
+                Box::new(PinTab),
+                !pointer,
+                false,
+            ));
+        }
         if browser.shareable {
             commands.push((
                 "Share Page".into(),
@@ -193,6 +282,33 @@ impl Navigator {
             !pointer,
             false,
         ));
+        commands.push((
+            "Console".into(),
+            icons::page(),
+            Box::new(ShowConsole),
+            !pointer,
+            false,
+        ));
+        for (label, action) in [
+            (
+                "Import browser data…",
+                Box::new(ImportBrowserData) as Box<dyn Action>,
+            ),
+            ("Profiles…", Box::new(ShowProfiles)),
+            ("History…", Box::new(ShowHistory)),
+            ("Bookmarks…", Box::new(ShowBookmarks)),
+            ("Bookmark this page", Box::new(BookmarkPage)),
+            ("Fill saved password…", Box::new(FillPassword)),
+            ("Save or update password…", Box::new(SavePassword)),
+        ] {
+            commands.push((
+                label.into(),
+                Icon::new(IconName::Globe),
+                action,
+                !pointer,
+                false,
+            ));
+        }
         for appearance in Appearance::ALL {
             commands.push((
                 appearance.command(),
@@ -251,7 +367,7 @@ impl Navigator {
                 false,
             ),
             (
-                "Quit Frame".into(),
+                format!("Quit {}", crate::brand::NAME).into(),
                 Icon::new(IconName::WindowClose),
                 Box::new(Quit),
                 !pointer,
@@ -261,7 +377,7 @@ impl Navigator {
         // The right-click menu stays short until the person types; then every
         // command is reachable.
         commands.retain(|(_, _, _, shown, _)| *shown || typing);
-        let mut group = CommandGroup::new().label("Frame");
+        let mut group = CommandGroup::new().label(crate::brand::NAME);
         let mut group_picks = Vec::new();
         for (label, icon, action, _, checked) in commands {
             group = group.item(
@@ -404,7 +520,7 @@ impl Navigator {
     }
 }
 
-/// Frame fetches downloads itself, over the network.
+/// Platinum fetches downloads itself, over the network.
 fn downloadable(url: &Url) -> bool {
     matches!(url.scheme(), "http" | "https")
 }

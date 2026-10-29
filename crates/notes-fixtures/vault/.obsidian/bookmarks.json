@@ -1,0 +1,18 @@
+{
+  "items": [
+    { "type": "file", "ctime": 1792000000000, "path": "Home.md", "title": "Start here" },
+    { "type": "file", "ctime": 1792000000001, "path": "links/Headings Target.md", "subpath": "#First heading#Nested heading" },
+    { "type": "file", "ctime": 1792000000002, "path": "links/Blocks Target.md", "subpath": "#^quote-block" },
+    { "type": "search", "ctime": 1792000000003, "query": "tag:#project" },
+    { "type": "folder", "ctime": 1792000000004, "path": "callouts" },
+    {
+      "type": "group",
+      "ctime": 1792000000005,
+      "title": "Boards",
+      "items": [
+        { "type": "file", "ctime": 1792000000006, "path": "canvases/Board.canvas" },
+        { "type": "file", "ctime": 1792000000007, "path": "bases/Notes.base" }
+      ]
+    }
+  ]
+}

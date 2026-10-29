@@ -1,0 +1,52 @@
+{
+  "captured_unix": 1793118028.773761,
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "cargo_lock_sha256": "b6c48f9192a6c8456485df06890ba2b8e22f888fa5f2f2504819ec389248466c",
+  "commands": [
+    {
+      "name": "servo-commit",
+      "command": [
+        "git",
+        "-C",
+        "deps/servo-mse",
+        "rev-parse",
+        "HEAD"
+      ],
+      "elapsed_seconds": 0.010504958001547493,
+      "exit_code": 0,
+      "output": "2b522612c4db75a7f3214a0f17ef8abe5a8c47a1"
+    },
+    {
+      "name": "frame-commit",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "elapsed_seconds": 0.007903792000433896,
+      "exit_code": 0,
+      "output": "b4695cfb0d076c6ef042cb0fdfa14162dd71486f"
+    },
+    {
+      "name": "hardware",
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.model",
+        "hw.memsize"
+      ],
+      "elapsed_seconds": 0.004918124999676365,
+      "exit_code": 0,
+      "output": "MacBookPro18,4\n34359738368"
+    },
+    {
+      "name": "os",
+      "command": [
+        "sw_vers"
+      ],
+      "elapsed_seconds": 0.010564915999566438,
+      "exit_code": 0,
+      "output": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434"
+    }
+  ]
+}

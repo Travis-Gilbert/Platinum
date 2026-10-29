@@ -1,0 +1,149 @@
+[
+  {
+    "selector": "#choice",
+    "delay_ms": 50,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    }
+  },
+  {
+    "selector": "#choice",
+    "delay_ms": 200,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    }
+  },
+  {
+    "selector": "#choice",
+    "delay_ms": 500,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    }
+  },
+  {
+    "selector": "#color",
+    "delay_ms": 50,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    }
+  },
+  {
+    "selector": "#color",
+    "delay_ms": 200,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    }
+  },
+  {
+    "selector": "#color",
+    "delay_ms": 500,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": false
+    }
+  },
+  {
+    "selector": "#file",
+    "delay_ms": 50,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": true
+    }
+  },
+  {
+    "selector": "#file",
+    "delay_ms": 200,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": true
+    }
+  },
+  {
+    "selector": "#file",
+    "delay_ms": 500,
+    "state": {
+      "popup": false,
+      "color": false,
+      "file": true
+    }
+  },
+  {
+    "zoom": 0.35,
+    "old_hover_before": {
+      "count": 0,
+      "hover": false
+    },
+    "old_hover_after": {
+      "count": 1,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 0.35,
+    "explicit_exit": {
+      "count": 1,
+      "hover": true
+    },
+    "reentered": {
+      "count": 1,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 1.0,
+    "old_hover_before": {
+      "count": 1,
+      "hover": true
+    },
+    "old_hover_after": {
+      "count": 1,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 1.0,
+    "explicit_exit": {
+      "count": 1,
+      "hover": true
+    },
+    "reentered": {
+      "count": 1,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 2.0,
+    "old_hover_before": {
+      "count": 1,
+      "hover": true
+    },
+    "old_hover_after": {
+      "count": 1,
+      "hover": true
+    }
+  },
+  {
+    "zoom": 2.0,
+    "explicit_exit": {
+      "count": 1,
+      "hover": true
+    },
+    "reentered": {
+      "count": 1,
+      "hover": true
+    }
+  }
+]

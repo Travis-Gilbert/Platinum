@@ -1,0 +1,3568 @@
+{
+  "date": "2026-10-26",
+  "frameBase": "e8a21b13001e07f9b61e0be6827d1a83929bcb9a",
+  "frameBranch": "feat/notes-webgl2",
+  "servoBase": "81d8e2999569a8a496142651a1d129aed22fda77",
+  "servoBranch": "feat/webgl2-cosmos",
+  "servoHead": "20c844a2f9482ea9dfb1df58701a2801f29a92f2",
+  "buildCommand": "script/media-env cargo build --locked --example graph_probe",
+  "binaryNote": "graph_probe.baseline ... graph_probe.item8b are copies of target/debug/examples/graph_probe taken after each build; graph_probe.final is build 13 (Servo at servoHead). Builds 0 to 7c enable WebGL2 for every origin (the example sets dom_webgl2_enabled after Engine::start, the recipe of the first run) and load the pages from http://127.0.0.1:8765; item8, item8b and final take --notes-root and load frame-notes://probe/... with WebGL2 on for the frame-notes scheme only. control-* runs are earlier binaries run again at the load of the final runs.",
+  "sha256": {
+    "graph_probe.baseline": "dce99fee218ca2a4f5a5d92c1e929236e976f1a360a0992d3f0eda35f58263fd",
+    "graph_probe.item1": "7927a0fb1aa785519dab1b26e56bd4f36e8d655f36b1daa9f70d9d2052f1cb33",
+    "graph_probe.item2": "19ce52fb877b86b9b97f2b67ef5b08108dc2c5419c27496f81e3760ff2680627",
+    "graph_probe.item3": "d07eea76f5f65cc7d733eb1c96425c6bd265b5b02caea61d8e4a6fc644b3cd0b",
+    "graph_probe.item4": "47b167a95087e9d326e63dbe43e7d7671eab22c7165bafe666698dbe4b95beaa",
+    "graph_probe.item5": "1669e292296998a295361c4bfc6744ad13b81a7cad22cbb4072a3e15e06eefd4",
+    "graph_probe.item5b": "6fbe3c85cd27211e57af85af156a6559f36761bdbe973380feb49b0fb45e6379",
+    "graph_probe.item6": "39cb6878eccbf1e8b34621696a846ac28343d552b55b79528e12d8222d2679d5",
+    "graph_probe.item7a": "7d0f2cc703fbf019318fbaaf5efcf0dc5f0dfb1b77ea3a43d8853c2834e7cd40",
+    "graph_probe.item7b": "72c80ffed982e3e07996bcda05b29c6e70886840973d0e5c8a7c7602588c8763",
+    "graph_probe.item7c": "d556f77d926c21ae2b9bc3c3a7ca14aba7acff3a4e58d099e0308c6d5c3ded0a",
+    "graph_probe.item8": "9071b872261b1f13dcdc9d895b6658d9befc37a9556de03dc35836a0da65fbe4",
+    "graph_probe.item8b": "cec35a8e31db1779997e9ed5a39b648f01f33f7715307820d7c7692b661a3cea",
+    "graph_probe.final": "a8737712e9000b4bd0a7489bcb0b241e9690ae064d595620b1d9cd0966a09ade",
+    "servoshell.base": "198f03bfe63f86c6b2a37d5a5c7da3296277e77a39e988ec9513dc1768f5c4b7",
+    "servoshell.mine": "175683ed17d0ea54abedf51615c04698564c002ec6e8e7615c42a1b75e0895f9",
+    "servoshell.mine2": "cc59e674088a1a56cb9887adc62a5c4e6ea3b4794c8a70257e03ab14dcf5dd7d",
+    "graph-probe.html": "72ab92faf775f4f99eccd69523c137906aa526ceaa088f4de93bb9bac9df19aa",
+    "graph-probe-noop.js": "f15158db19b1cb4fe708f7f1a86701546c8e7a65b5681b0eb61c44dc09141482",
+    "graph-probe-canvas.html": "bc7ff8b3b5fc7e47d24b293ab9824db5d71a6584c79f90e9e1e03fdd072952e9",
+    "read-pixels-matrix.html": "e159d10d0f6e8bbc4de66a59787b22f1e83e1ba1abb2f2e3c1f4995f1bca837e",
+    "program-lifecycle.html": "245989c9f04c9e0c9fa57e46eded7dcea88fbb256793ae3bc2487ca0d9e79a3b",
+    "shader-nan.html": "adec6931c2fe81aadc9cf1025795827fabd3e0284b1a9fb996f52fa70b49d6f3",
+    "unpack-params.html": "5fd7c69249575d6130da53d312aae12a7994fd0475235c6ecce56f93d77a576f",
+    "tex-storage.html": "3f8c2f7d7d21fbc31cd32414e27bfd3d6169a1782d52cb0168f6928ac51e423a",
+    "scheme-gate.html": "1b0b2c230c9962dfb4b42cfedb3d44ff0da55c5e6e001a9d11c776876326f0ca",
+    "dbg-tex3d.html": "1e46177c47f7a0b8534fa4747bcc3c10311ab4617a323b3258bf34b65b51e543",
+    "dbg-readpixels-int.html": "81f5e32be5608440b5c01d6e9c51e02357de9617b6c0fe963d9fcec2c336eb37"
+  },
+  "libraries": {
+    "v3": "@cosmos.gl/graph 3.5.1 with @luma.gl/core, engine, webgl and shadertools 9.3.6 (WebGL2), loaded from esm.sh"
+  },
+  "graphSize": {
+    "points": 5000,
+    "links": 10000
+  },
+  "items": [
+    {
+      "item": 1,
+      "what": "WebGL2 extensions the native GL supports",
+      "servo": [
+        "5ebb8868af87d0641e95c7ff6725890ff3fc88b8"
+      ],
+      "result": "getSupportedExtensions() lists 6 extensions instead of none"
+    },
+    {
+      "item": 2,
+      "what": "texSubImage3D and copyTexSubImage3D",
+      "servo": [
+        "9410629576c488eb6940940244d33fa5873f4958"
+      ],
+      "result": "luma.gl's copyTexSubImage3D call no longer throws"
+    },
+    {
+      "item": 3,
+      "what": "point size range",
+      "servo": [
+        "b792c4ea90ef6a5ac958e18df5115382d93441f5"
+      ],
+      "result": "[0, 0] became [1, 64]; core profiles have POINT_SIZE_RANGE, not ALIASED_POINT_SIZE_RANGE"
+    },
+    {
+      "item": 4,
+      "what": "drawBuffers and readBuffer on the default framebuffer",
+      "servo": [
+        "9c01a24ec26e4a7ddc7d52d7e83304acd270cc7e"
+      ],
+      "result": "DrawBuffers GL errors went from 468 in item3-v3 to 0 in item4-v3"
+    },
+    {
+      "item": 5,
+      "what": "float and integer readPixels",
+      "servo": [
+        "c48525e9cd81579288ea108a3b7e8980c0e5af30",
+        "9f9f2a18502006870402f1203b89303fe32ea291"
+      ],
+      "result": "RGBA32F, RGBA32I, RGBA32UI and the other pairs of ES 3.0 4.3.2 read back; texImage2D keeps the sized internal format that the read-back type depends on"
+    },
+    {
+      "item": 6,
+      "what": "DetachShader warnings",
+      "servo": [
+        "f3a7289e6ded3c7c8fc484f2015ebe2cbd7c662e"
+      ],
+      "result": "12 failed DetachShader calls in the delete/replace cycle of program-lifecycle.html went to 0 (item6-lifecycle-before and item6-lifecycle-after)"
+    },
+    {
+      "item": 7,
+      "what": "why nodes were not drawn",
+      "servo": [
+        "bf40d13614127f77eaf1f139709dc16f05f2db51",
+        "8d875a6788acfc8f6d9c996b189ec63965986b22",
+        "7129a8223d17185444105f0b03eaf1c6b0af2992",
+        "bbc0d872e6266560635fb3b84ff67ea43ce9a429"
+      ],
+      "result": "four separate causes: texStorage2D rejected non power of two sizes so the position and force textures were never allocated; uniform block names kept ANGLE's _u prefix so luma.gl dropped every draw call; texSubImage2D refused RG, RED and *_INTEGER formats; and Apple GL's fast math folded isnan() so every point kept its NaN size and color"
+    },
+    {
+      "item": 8,
+      "what": "WebGL2 for frame-notes: pages only",
+      "servo": [
+        "dfd3feaa94a31c2be62a07dddf33536a8ce6cb2d"
+      ],
+      "frame": "src/engine.rs sets dom_webgl2_enabled_schemes to frame-notes and registers the scheme handler passed to Engine::start_with_protocols",
+      "result": "scheme-gate: WebGL2 context and all six WebGL2 interfaces on frame-notes:, none on http:"
+    },
+    {
+      "item": "after 8",
+      "what": "framebufferTextureLayer and the WebGL2 unpack parameters, found by running the conformance suite",
+      "servo": [
+        "e7a1abbbdeb6aec651bcfe179761dcddffb4d202",
+        "b6fa7f69fb0fe43750c45950d539f91fe1b1d6ca"
+      ],
+      "result": "3D texture readback correct; UNPACK_ROW_LENGTH, UNPACK_IMAGE_HEIGHT and the skip parameters honored (unpack-params.html)"
+    },
+    {
+      "item": "after 8",
+      "what": "regressions the conformance suite found in the commits above",
+      "servo": [
+        "5b2c23e6f9293d91a40063d9397360af0a71ffdd",
+        "4d12230547deaff3037ed292f049decc05723709",
+        "e3a9352b5d38ce1c1e3e6a0d7b2abc27f64ca819",
+        "20c844a2f9482ea9dfb1df58701a2801f29a92f2"
+      ],
+      "result": "no conformance file passes fewer subtests than before, apart from the files listed under wpt.fileLevel"
+    }
+  ],
+  "servoshellBuilds": {
+    "command": "./mach build --dev (through the space-free symlink, see wpt.runner)",
+    "base": {
+      "commit": "81d8e2999569a8a496142651a1d129aed22fda77",
+      "seconds": 138
+    },
+    "mine": {
+      "commit": "b6fa7f69fb0fe43750c45950d539f91fe1b1d6ca",
+      "seconds": 271
+    },
+    "mine2": {
+      "commit": "20c844a2f9482ea9dfb1df58701a2801f29a92f2",
+      "seconds": 195
+    }
+  },
+  "control": {
+    "file": "../notes-app-2026-10-25/chromium-v3.json",
+    "note": "Chromium in the Claude desktop app's built-in browser, run on 2026-10-25",
+    "fps": 120,
+    "webgl2Extensions": 36,
+    "webgl2PointSizeRange": [
+      1,
+      511
+    ]
+  },
+  "canvasControl": {
+    "file": "../notes-app-2026-10-25/chromium-canvas.json",
+    "chromiumFps": 32,
+    "frameFps": 17,
+    "frameRun": "final-canvas",
+    "note": "force-graph 1.52.0 on Canvas 2D; Frame measured 13 fps on 2026-10-25 and 17 fps here, both debug builds"
+  },
+  "fpsNote": "fps is the number of requestAnimationFrame callbacks in 5 s, in a debug build, on a machine that other builds shared. The same binary (item7c, item8b) gave 7 to 11 fps at a load average of 50 to 70 and 83 to 84 fps at a load average of 18 to 25 (control-* runs), so compare fps only between runs with a similar loadAverage1m. Chromium: 120 fps, with the simulation on.",
+  "wpt": {
+    "runner": "./mach test-wpt --binary <servoshell> --pref dom_webgl2_enabled=true --processes 6, over tests/wpt/webgl/tests/conformance2 and the 17 conformance directories the changes touch. mach refuses a checkout whose path has a space, so it ran through a symlink without one (the working directory stayed the real repository root for resources/wpt-prefs.json, PYTHONPATH=<symlink>/tests/wpt/tests, absolute symlink test paths). The .ini expectation files were recorded with WebGL2 off and were not rewritten, so pass counts are counted from the raw log, not from the expectations.",
+    "baseBinary": "servoshell.base",
+    "mineBinary": "servoshell.mine2",
+    "baseSeconds": 152,
+    "mineSeconds": 149,
+    "subtestNote": "WebGL conformance subtests are named by assertion index, so only the pass counts per file are compared; the per-name comparison reports 151 'regressions' that are assertions whose index moved.",
+    "fileLevel": [
+      {
+        "test": "conformance/textures/misc/texture-upload-size.html",
+        "basePass": "54, 62, 54, 90 of 54, 62, 54, 94 (three single-process runs, then the full suite)",
+        "minePass": "62, 54, 54, 62 of 62, 54, 54, 62",
+        "verdict": "not a regression: the number of subtests this file reports varies from run to run on the base build too"
+      },
+      {
+        "test": "conformance/context/context-release-upon-reload.html, conformance/extensions/ext-clip-control.html, conformance/textures/misc/texture-fakeblack.html",
+        "full suite": "CRASH on the second build, OK on the base build",
+        "rerun": "OK with 77 of 77, 11 of 11 and 4 of 6 on both builds, in two single-process reruns each",
+        "verdict": "not a regression: the 6-process full suite crashes different files on each run (ext-blend-minmax crashes on the base build and passes on the second)"
+      }
+    ],
+    "gaps": [
+      "RGB10_A2 readPixels with UNSIGNED_INT_2_10_10_10_REV is not accepted",
+      "SRGB8_ALPHA8 readback needs GL_FRAMEBUFFER_SRGB on desktop GL (read-pixels-from-fbo-test #111 and #113)",
+      "multisampled depth and stencil renderbuffer validation",
+      "no clear* buffer type match validation (clear-func-buffer-type-match)",
+      "no feedback loop detection (depth-stencil-feedback-loop)",
+      "copyTexImage2D into R8 and RG8",
+      "RED_BITS, DEPTH_BITS and the like on a framebuffer object (framebuffer-object-attachment)",
+      "compressedTexImage3D and compressedTexSubImage3D",
+      "sRGB tolerance in framebuffer-render-to-layer",
+      "WebGL1 float readPixels",
+      "WebGL1 createVertexArray fails with 0x502 on the macOS 2.1 compatibility context",
+      "validate_framebuffer and get_current_framebuffer_size still use the draw framebuffer, so a read framebuffer of another size is mis-measured",
+      "extensions not implemented: WEBGL_debug_renderer_info, EXT_disjoint_timer_query_webgl2, EXT_texture_norm16, WEBGL_provoking_vertex, EXT_depth_clamp",
+      "WebGL2 overloads still commented out: texImage3D PBO and TexImageSource, other texSubImage3D forms, texSubImage2D PBO and srcOffset, compressedTex*3D",
+      "x != x on a NaN stays false in shaders on Apple GL (fast math); isnan() is repaired, comparisons cannot be",
+      "existing TexImage2D bug compares an element count with a byte offset; not changed"
+    ],
+    "perArea": {
+      "conformance/attribs": {
+        "tests": 15,
+        "subtests": 6591,
+        "basePass": 6576,
+        "minePass": 6576
+      },
+      "conformance/buffers": {
+        "tests": 13,
+        "subtests": 345,
+        "basePass": 345,
+        "minePass": 345
+      },
+      "conformance/canvas": {
+        "tests": 18,
+        "subtests": 260,
+        "basePass": 225,
+        "minePass": 225
+      },
+      "conformance/context": {
+        "tests": 21,
+        "subtests": 1201,
+        "basePass": 1191,
+        "minePass": 1114
+      },
+      "conformance/extensions": {
+        "tests": 52,
+        "subtests": 3536,
+        "basePass": 3316,
+        "minePass": 3345
+      },
+      "conformance/glsl": {
+        "tests": 314,
+        "subtests": 7913,
+        "basePass": 7833,
+        "minePass": 7833
+      },
+      "conformance/limits": {
+        "tests": 5,
+        "subtests": 36,
+        "basePass": 36,
+        "minePass": 36
+      },
+      "conformance/misc": {
+        "tests": 17,
+        "subtests": 2759,
+        "basePass": 2725,
+        "minePass": 2725
+      },
+      "conformance/more": {
+        "tests": 53,
+        "subtests": 183,
+        "basePass": 182,
+        "minePass": 182
+      },
+      "conformance/offscreencanvas": {
+        "tests": 12,
+        "subtests": 29,
+        "basePass": 24,
+        "minePass": 24
+      },
+      "conformance/programs": {
+        "tests": 12,
+        "subtests": 268,
+        "basePass": 263,
+        "minePass": 263
+      },
+      "conformance/reading": {
+        "tests": 3,
+        "subtests": 381,
+        "basePass": 365,
+        "minePass": 365
+      },
+      "conformance/renderbuffers": {
+        "tests": 7,
+        "subtests": 735,
+        "basePass": 732,
+        "minePass": 732
+      },
+      "conformance/rendering": {
+        "tests": 44,
+        "subtests": 1149,
+        "basePass": 1141,
+        "minePass": 1141
+      },
+      "conformance/state": {
+        "tests": 9,
+        "subtests": 836,
+        "basePass": 836,
+        "minePass": 836
+      },
+      "conformance/textures": {
+        "tests": 163,
+        "subtests": 29501,
+        "basePass": 29204,
+        "minePass": 29172
+      },
+      "conformance/typedarrays": {
+        "tests": 7,
+        "subtests": 1411,
+        "basePass": 1411,
+        "minePass": 1411
+      },
+      "conformance/uniforms": {
+        "tests": 29,
+        "subtests": 963,
+        "basePass": 963,
+        "minePass": 963
+      },
+      "conformance2/attribs": {
+        "tests": 8,
+        "subtests": 3276,
+        "basePass": 2764,
+        "minePass": 2764
+      },
+      "conformance2/buffers": {
+        "tests": 13,
+        "subtests": 1881,
+        "basePass": 1881,
+        "minePass": 1881
+      },
+      "conformance2/canvas": {
+        "tests": 2,
+        "subtests": 10,
+        "basePass": 10,
+        "minePass": 10
+      },
+      "conformance2/context": {
+        "tests": 9,
+        "subtests": 159,
+        "basePass": 153,
+        "minePass": 153
+      },
+      "conformance2/extensions": {
+        "tests": 30,
+        "subtests": 1124,
+        "basePass": 608,
+        "minePass": 774
+      },
+      "conformance2/glsl3": {
+        "tests": 60,
+        "subtests": 1025,
+        "basePass": 933,
+        "minePass": 1008
+      },
+      "conformance2/misc": {
+        "tests": 8,
+        "subtests": 5366,
+        "basePass": 689,
+        "minePass": 5343
+      },
+      "conformance2/offscreencanvas": {
+        "tests": 8,
+        "subtests": 14,
+        "basePass": 12,
+        "minePass": 12
+      },
+      "conformance2/programs": {
+        "tests": 4,
+        "subtests": 48,
+        "basePass": 48,
+        "minePass": 48
+      },
+      "conformance2/query": {
+        "tests": 3,
+        "subtests": 43,
+        "basePass": 43,
+        "minePass": 43
+      },
+      "conformance2/reading": {
+        "tests": 5,
+        "subtests": 613,
+        "basePass": 378,
+        "minePass": 588
+      },
+      "conformance2/renderbuffers": {
+        "tests": 10,
+        "subtests": 681,
+        "basePass": 581,
+        "minePass": 593
+      },
+      "conformance2/rendering": {
+        "tests": 50,
+        "subtests": 4782,
+        "basePass": 3138,
+        "minePass": 4203
+      },
+      "conformance2/samplers": {
+        "tests": 3,
+        "subtests": 172,
+        "basePass": 172,
+        "minePass": 172
+      },
+      "conformance2/state": {
+        "tests": 4,
+        "subtests": 134,
+        "basePass": 134,
+        "minePass": 134
+      },
+      "conformance2/sync": {
+        "tests": 1,
+        "subtests": 15,
+        "basePass": 15,
+        "minePass": 15
+      },
+      "conformance2/textures": {
+        "tests": 925,
+        "subtests": 13667,
+        "basePass": 2580,
+        "minePass": 6094
+      },
+      "conformance2/transform_feedback": {
+        "tests": 9,
+        "subtests": 349,
+        "basePass": 196,
+        "minePass": 196
+      },
+      "conformance2/uniforms": {
+        "tests": 8,
+        "subtests": 1645,
+        "basePass": 1644,
+        "minePass": 1644
+      },
+      "conformance2/vertex_arrays": {
+        "tests": 2,
+        "subtests": 52,
+        "basePass": 39,
+        "minePass": 39
+      },
+      "conformance2/wasm": {
+        "tests": 18,
+        "subtests": 68,
+        "basePass": 66,
+        "minePass": 66
+      }
+    },
+    "total": {
+      "tests": 1974,
+      "basePass": 73452,
+      "minePass": 83068,
+      "subtests": 93221,
+      "baseOk": 973,
+      "mineOk": 981
+    }
+  },
+  "unitTests": {
+    "servo-config": "cargo test -p servo-config --lib: 4 passed, including webgl2_is_enabled_for_the_listed_schemes_only",
+    "pixelunpack": "6 passed (rustc --test on pixelunpack.rs, which uses only std; the servo-script test target was not built)",
+    "shaderisnan": "4 passed (rustc --test on shaderisnan.rs, which uses only std)"
+  },
+  "limitations": [
+    "passed on a graph-probe run means cosmos.gl initialised without throwing; nodePixels is the check that nodes were drawn",
+    "nodePixels counts pixels of the node color #e8973a in a screenshot taken 1.5 s after load; with the simulation on, the layout is mid-motion and the count differs from run to run (24 to 52 thousand), with the simulation off it is stable (about 109 thousand)",
+    "the errors 'uncaught exception: undefined @ :0:1' and 'ResizeObserver loop completed with undelivered notifications' appear in every run, including the baseline, and do not come from WebGL",
+    "all binaries are debug builds",
+    "the Chromium controls were not re-run on 2026-10-26; they are the 2026-10-25 files",
+    "item0 to item7c ran the page from a local HTTP server (python3 -I -m http.server 8765 --bind 127.0.0.1 over this directory)"
+  ],
+  "cargoBuilds": [
+    {
+      "build": 0,
+      "seconds": 796,
+      "log": "build0.log"
+    },
+    {
+      "build": 1,
+      "seconds": 310,
+      "log": "build1.log"
+    },
+    {
+      "build": 2,
+      "seconds": 188,
+      "log": "build2.log"
+    },
+    {
+      "build": 3,
+      "seconds": 337,
+      "log": "build3.log"
+    },
+    {
+      "build": 4,
+      "seconds": 25,
+      "log": "build4.log"
+    },
+    {
+      "build": 5,
+      "seconds": 131,
+      "log": "build5.log"
+    },
+    {
+      "build": 6,
+      "seconds": 125,
+      "log": "build6.log"
+    },
+    {
+      "build": 7,
+      "seconds": 129,
+      "log": "build7.log"
+    },
+    {
+      "build": 8,
+      "seconds": 130,
+      "log": "build8.log"
+    },
+    {
+      "build": 9,
+      "seconds": 125,
+      "log": "build9.log"
+    },
+    {
+      "build": 10,
+      "seconds": 444,
+      "log": "build10.log"
+    },
+    {
+      "build": 11,
+      "seconds": 227,
+      "log": "build11.log"
+    },
+    {
+      "build": 12,
+      "seconds": 203,
+      "log": "build12.log"
+    },
+    {
+      "build": 13,
+      "seconds": 200,
+      "log": "build13.log"
+    }
+  ],
+  "runs": [
+    {
+      "name": "item0-v3",
+      "binary": "graph_probe.baseline",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0",
+        "r.gl.copyTexSubImage3D is not a function @ (x8)"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 0,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 972160,
+        "nonBackgroundPixels": 972160
+      },
+      "exitCode": 0,
+      "wallSeconds": 13
+    },
+    {
+      "name": "item0-v3-sim0",
+      "binary": "graph_probe.baseline",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [
+        "DrawBuffers x22",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item0-v3-sim0-pointfix",
+      "binary": "graph_probe.baseline",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [
+        "DrawBuffers x22",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item1-v3",
+      "binary": "graph_probe.item1",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0",
+        "r.gl.copyTexSubImage3D is not a function @ (x8)"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 0,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 972160,
+        "nonBackgroundPixels": 972160
+      },
+      "exitCode": 0,
+      "wallSeconds": 12
+    },
+    {
+      "name": "item1-v3-sim0",
+      "binary": "graph_probe.item1",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [
+        "DrawBuffers x23",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item1-v3-sim0-pointfix",
+      "binary": "graph_probe.item1",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [
+        "DrawBuffers x19",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 29,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item2-v3",
+      "binary": "graph_probe.item2",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [
+        "DrawBuffers x51",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 7,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.0324414307904885,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 16
+    },
+    {
+      "name": "item2-v3-sim0",
+      "binary": "graph_probe.item2",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [
+        "DrawBuffers x14",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 12
+    },
+    {
+      "name": "item2-v3-sim0-pointfix",
+      "binary": "graph_probe.item2",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [
+        "DrawBuffers x10",
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 13
+    },
+    {
+      "name": "item3-v3",
+      "binary": "graph_probe.item3",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [
+        "DrawBuffers x468"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 48,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.03735080789430632,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 15
+    },
+    {
+      "name": "item3-v3-sim0",
+      "binary": "graph_probe.item3",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [
+        "DrawBuffers x21"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item3-v3-sim0-pointfix",
+      "binary": "graph_probe.item3",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [
+        "DrawBuffers x23"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 10
+    },
+    {
+      "name": "item4-v3",
+      "binary": "graph_probe.item4",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 85,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.04247173474714404,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 12
+    },
+    {
+      "name": "item4-v3-sim0",
+      "binary": "graph_probe.item4",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item4-v3-sim0-pointfix",
+      "binary": "graph_probe.item4",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item5-readpixels-matrix",
+      "binary": "graph_probe.item5",
+      "url": "http://127.0.0.1:8765/read-pixels-matrix.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": false,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [
+        "RGBA32F texture RGBA/FLOAT",
+        "RGBA32F texture RGBA/UNSIGNED_BYTE (mismatch)",
+        "RGBA16F texture RGBA/FLOAT",
+        "RGBA16F texture RGBA/UNSIGNED_BYTE (mismatch)",
+        "RGBA32F texture RGBA/FLOAT into PIXEL_PACK_BUFFER",
+        "RGBA32F texture RGBA/UNSIGNED_BYTE into PIXEL_PACK_BUFFER (mismatch)"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951828,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20332,
+        "nonBackgroundPixels": 20332
+      },
+      "exitCode": 1,
+      "wallSeconds": 1
+    },
+    {
+      "name": "item5-v3",
+      "binary": "graph_probe.item5",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 83,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.042150234972104586,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 12
+    },
+    {
+      "name": "item5-v3-sim0",
+      "binary": "graph_probe.item5",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item5-v3-sim0-pointfix",
+      "binary": "graph_probe.item5",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item5b-readpixels-matrix",
+      "binary": "graph_probe.item5b",
+      "url": "http://127.0.0.1:8765/read-pixels-matrix.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951936,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20224,
+        "nonBackgroundPixels": 20224
+      },
+      "exitCode": 0,
+      "wallSeconds": 6
+    },
+    {
+      "name": "item5b-v3",
+      "binary": "graph_probe.item5b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 86,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.042501083317604854,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item5b-v3-sim0",
+      "binary": "graph_probe.item5b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item5b-v3-sim0-pointfix",
+      "binary": "graph_probe.item5b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "dbg-item5b-v3-sim0",
+      "binary": "graph_probe.item5b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "trace-item5b-v3-sim0",
+      "binary": "graph_probe.item5b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item6-lifecycle-after",
+      "binary": "graph_probe.item6",
+      "url": "http://127.0.0.1:8765/program-lifecycle.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 955582,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 16578,
+        "nonBackgroundPixels": 16578
+      },
+      "exitCode": 0,
+      "wallSeconds": 5
+    },
+    {
+      "name": "item6-lifecycle-before",
+      "binary": "graph_probe.item6",
+      "url": "http://127.0.0.1:8765/program-lifecycle.html",
+      "glErrors": [
+        "DetachShader x12"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 955582,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 16578,
+        "nonBackgroundPixels": 16578
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item6-v3",
+      "binary": "graph_probe.item6",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 86,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.042530452168343676,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item6-v3-sim0",
+      "binary": "graph_probe.item6",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item6-v3-sim0-pointfix",
+      "binary": "graph_probe.item6",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item7a-v3",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 87,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.042736603149693214,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "item7a-v3-sim0",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2073.59,
+        2043.46,
+        1873.95,
+        2145.23
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item7a-v3-sim0-pointfix",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1879.81,
+        2180.3,
+        2114.79,
+        1894.86
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "dbg-item7a-console-v3-sim0",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2147.64,
+        1884.17,
+        2163.04,
+        2229.26
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "dbg-item7a-wrap-v3-sim0",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&wrap=1",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2062.67,
+        1856.91,
+        1893.95,
+        2128.62
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "trace-item7a-entered-v3-sim0",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1847.6,
+        2192.71,
+        2151.64,
+        2156.23
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "trace-item7a-throws-v3-sim0",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2053.46,
+        2165.07,
+        2229.87,
+        2233.78
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "trace-item7a-v3-sim0",
+      "binary": "graph_probe.item7a",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2038.06,
+        2085.63,
+        2170.6,
+        2037.05
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 972160,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 0,
+        "nonBackgroundPixels": 0
+      },
+      "exitCode": 0,
+      "wallSeconds": 12
+    },
+    {
+      "name": "item7b-shader-nan",
+      "binary": "graph_probe.item7b",
+      "url": "http://127.0.0.1:8765/shader-nan.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": false,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [
+        "isnan(float NaN)",
+        "n != n",
+        "mix(float, float, isnan(float))",
+        "isnan(vec4 NaN).x",
+        "mix(vec4 NaN, default, isnan(vec4))",
+        "abs(1.0 - NaN)"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 956297,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 15863,
+        "nonBackgroundPixels": 15863
+      },
+      "exitCode": 1,
+      "wallSeconds": 3
+    },
+    {
+      "name": "dbg-item7b-full-v3-sim0",
+      "binary": "graph_probe.item7b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1&full=1",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2024.83,
+        1907.28,
+        2180.85,
+        1888.54
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 465910,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 506250,
+        "nonBackgroundPixels": 506250
+      },
+      "exitCode": 0,
+      "wallSeconds": 10
+    },
+    {
+      "name": "dbg-item7b-ring-v3-sim0",
+      "binary": "graph_probe.item7b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1&ring=1",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2116.4,
+        2077.86,
+        2004.93,
+        2074.26
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 464992,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 507168,
+        "nonBackgroundPixels": 507168
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "dbg-item7b-setup-v3-sim0",
+      "binary": "graph_probe.item7b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1&setup=1",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1904.74,
+        1866.83,
+        2156.11,
+        2108.93
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 464237,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 507923,
+        "nonBackgroundPixels": 507923
+      },
+      "exitCode": 0,
+      "wallSeconds": 10
+    },
+    {
+      "name": "trace-item7b-v3-sim0",
+      "binary": "graph_probe.item7b",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&trace=1",
+      "queryRecorded": false,
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 29,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2063.44,
+        1995.16,
+        2154.62,
+        1852.38
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 464752,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 507408,
+        "nonBackgroundPixels": 507408
+      },
+      "exitCode": 0,
+      "wallSeconds": 13
+    },
+    {
+      "name": "item7c-shader-nan",
+      "binary": "graph_probe.item7c",
+      "url": "http://127.0.0.1:8765/shader-nan.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "driverLimits": [
+        "n != n",
+        "abs(1.0 - NaN)"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 956452,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 15708,
+        "nonBackgroundPixels": 15708
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item7c-v3",
+      "binary": "graph_probe.item7c",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 7,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.032419028782278744,
+      "positionSample": [
+        2071.95,
+        2091.99,
+        1982.99,
+        1949.94
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 886421,
+        "nodePixels": 52482,
+        "linkPixels": 11357,
+        "otherPixels": 21900,
+        "nonBackgroundPixels": 85739
+      },
+      "exitCode": 0,
+      "wallSeconds": 11
+    },
+    {
+      "name": "item7c-v3-sim0",
+      "binary": "graph_probe.item7c",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1940.96,
+        1851.96,
+        1992.94,
+        2110.38
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 556050,
+        "nodePixels": 109396,
+        "linkPixels": 183877,
+        "otherPixels": 122837,
+        "nonBackgroundPixels": 416110
+      },
+      "exitCode": 0,
+      "wallSeconds": 11
+    },
+    {
+      "name": "item7c-v3-sim0-pointfix",
+      "binary": "graph_probe.item7c",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2167.57,
+        2024.47,
+        1959.56,
+        2211
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 554855,
+        "nodePixels": 109125,
+        "linkPixels": 181388,
+        "otherPixels": 126792,
+        "nonBackgroundPixels": 417305
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item8-program-lifecycle",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/program-lifecycle.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 955582,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 16578,
+        "nonBackgroundPixels": 16578
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8-read-pixels-matrix",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/read-pixels-matrix.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951936,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20224,
+        "nonBackgroundPixels": 20224
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8-scheme-gate-frame-notes",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/scheme-gate.html?expect=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "scheme": "frame-notes:",
+      "expect": true,
+      "webgl2Context": true,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 967353,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 4807,
+        "nonBackgroundPixels": 4807
+      },
+      "exitCode": 0,
+      "wallSeconds": 6
+    },
+    {
+      "name": "item8-scheme-gate-http",
+      "binary": "graph_probe.item8",
+      "url": "http://127.0.0.1:8765/scheme-gate.html?expect=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "scheme": "http:",
+      "expect": false,
+      "webgl2Context": false,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 967095,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 5065,
+        "nonBackgroundPixels": 5065
+      },
+      "exitCode": 0,
+      "wallSeconds": 1
+    },
+    {
+      "name": "item8-shader-nan",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/shader-nan.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "driverLimits": [
+        "n != n",
+        "abs(1.0 - NaN)"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 956452,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 15708,
+        "nonBackgroundPixels": 15708
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8-tex-storage",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/tex-storage.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951528,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20632,
+        "nonBackgroundPixels": 20632
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8-unpack-params",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/unpack-params.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": false,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [
+        "texImage3D takes layers 6 7 and 12 13",
+        "texSubImage3D takes rows 2 3 and 8 9"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 954516,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 17644,
+        "nonBackgroundPixels": 17644
+      },
+      "exitCode": 1,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8-v3",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 7,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.032351915531420965,
+      "positionSample": [
+        2206.36,
+        1814.98,
+        1735.25,
+        2013.24
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 917465,
+        "nodePixels": 37751,
+        "linkPixels": 6216,
+        "otherPixels": 10728,
+        "nonBackgroundPixels": 54695
+      },
+      "exitCode": 0,
+      "wallSeconds": 12
+    },
+    {
+      "name": "item8-v3-sim0",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 27,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2068.09,
+        2101.98,
+        2048.29,
+        1968.38
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 557758,
+        "nodePixels": 109043,
+        "linkPixels": 181568,
+        "otherPixels": 123791,
+        "nonBackgroundPixels": 414402
+      },
+      "exitCode": 0,
+      "wallSeconds": 10
+    },
+    {
+      "name": "item8-v3-sim0-pointfix",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1876.23,
+        1951.15,
+        1977.55,
+        1942.9
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 556127,
+        "nodePixels": 109897,
+        "linkPixels": 186825,
+        "otherPixels": 119311,
+        "nonBackgroundPixels": 416033
+      },
+      "exitCode": 0,
+      "wallSeconds": 10
+    },
+    {
+      "name": "dbg-item8-tex3d",
+      "binary": "graph_probe.item8",
+      "url": "frame-notes://probe/dbg-tex3d.html",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": null,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-program-lifecycle",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/program-lifecycle.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 955582,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 16578,
+        "nonBackgroundPixels": 16578
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-read-pixels-matrix",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/read-pixels-matrix.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951936,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20224,
+        "nonBackgroundPixels": 20224
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-scheme-gate-frame-notes",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/scheme-gate.html?expect=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "scheme": "frame-notes:",
+      "expect": true,
+      "webgl2Context": true,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 967353,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 4807,
+        "nonBackgroundPixels": 4807
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-scheme-gate-http",
+      "binary": "graph_probe.item8b",
+      "url": "http://127.0.0.1:8765/scheme-gate.html?expect=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "scheme": "http:",
+      "expect": false,
+      "webgl2Context": false,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 967095,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 5065,
+        "nonBackgroundPixels": 5065
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-shader-nan",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/shader-nan.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "driverLimits": [
+        "n != n",
+        "abs(1.0 - NaN)"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 956452,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 15708,
+        "nonBackgroundPixels": 15708
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-tex-storage",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/tex-storage.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951528,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20632,
+        "nonBackgroundPixels": 20632
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-unpack-params",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/unpack-params.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 954516,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 17644,
+        "nonBackgroundPixels": 17644
+      },
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "item8b-v3",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 11,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.03289273604806477,
+      "positionSample": [
+        2348.58,
+        2220.78,
+        2025.77,
+        1908.68
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 935548,
+        "nodePixels": 27169,
+        "linkPixels": 3461,
+        "otherPixels": 5982,
+        "nonBackgroundPixels": 36612
+      },
+      "exitCode": 0,
+      "wallSeconds": 11
+    },
+    {
+      "name": "item8b-v3-sim0",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2083.91,
+        2019.42,
+        2049.8,
+        1975.8
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 556060,
+        "nodePixels": 109316,
+        "linkPixels": 183167,
+        "otherPixels": 123617,
+        "nonBackgroundPixels": 416100
+      },
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "item8b-v3-sim0-pointfix",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        2016.9,
+        1896.45,
+        1877.09,
+        2224.14
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 555409,
+        "nodePixels": 109394,
+        "linkPixels": 185007,
+        "otherPixels": 122350,
+        "nonBackgroundPixels": 416751
+      },
+      "exitCode": 0,
+      "wallSeconds": 11
+    },
+    {
+      "name": "dbg-item8b-tex3d",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/dbg-tex3d.html",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": null,
+      "exitCode": 0,
+      "wallSeconds": 6
+    },
+    {
+      "name": "final-canvas",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/graph-probe-canvas.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 17,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": null,
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1"
+      ],
+      "positionsMovedOf200": 200,
+      "positionSample": [
+        306.54,
+        -766.78
+      ],
+      "ticksPerSecond": 17,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 708998,
+        "nodePixels": 1313,
+        "linkPixels": 207874,
+        "otherPixels": 53975,
+        "nonBackgroundPixels": 263162
+      },
+      "loadAverage1m": 17.64,
+      "exitCode": 0,
+      "wallSeconds": 10
+    },
+    {
+      "name": "final-program-lifecycle",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/program-lifecycle.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 955582,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 16578,
+        "nonBackgroundPixels": 16578
+      },
+      "loadAverage1m": 29.67,
+      "exitCode": 0,
+      "wallSeconds": 1
+    },
+    {
+      "name": "final-read-pixels-matrix",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/read-pixels-matrix.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951936,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20224,
+        "nonBackgroundPixels": 20224
+      },
+      "loadAverage1m": 29.81,
+      "exitCode": 0,
+      "wallSeconds": 1
+    },
+    {
+      "name": "final-readpixels-int",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/dbg-readpixels-int.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 961769,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 10391,
+        "nonBackgroundPixels": 10391
+      },
+      "loadAverage1m": 29.55,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-scheme-gate-frame-notes",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/scheme-gate.html?expect=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "scheme": "frame-notes:",
+      "expect": true,
+      "webgl2Context": true,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 967353,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 4807,
+        "nonBackgroundPixels": 4807
+      },
+      "loadAverage1m": 26.1,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-scheme-gate-http",
+      "binary": "graph_probe.final",
+      "url": "http://127.0.0.1:8765/scheme-gate.html?expect=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "scheme": "http:",
+      "expect": false,
+      "webgl2Context": false,
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 967095,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 5065,
+        "nonBackgroundPixels": 5065
+      },
+      "loadAverage1m": 26.1,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-shader-nan",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/shader-nan.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "driverLimits": [
+        "n != n",
+        "abs(1.0 - NaN)"
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 956452,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 15708,
+        "nonBackgroundPixels": 15708
+      },
+      "loadAverage1m": 29.67,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-tex-storage",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/tex-storage.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 951528,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 20632,
+        "nonBackgroundPixels": 20632
+      },
+      "loadAverage1m": 28.81,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-tex3d",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/dbg-tex3d.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "pixels": null,
+      "loadAverage1m": 29.55,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-unpack-params",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/unpack-params.html",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 954516,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 17644,
+        "nonBackgroundPixels": 17644
+      },
+      "loadAverage1m": 29.67,
+      "exitCode": 0,
+      "wallSeconds": 2
+    },
+    {
+      "name": "final-v3",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 80,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.041744570782629234,
+      "positionSample": [
+        2070.63,
+        1879.61,
+        2458.17,
+        2061.23
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 943575,
+        "nodePixels": 24923,
+        "linkPixels": 989,
+        "otherPixels": 2673,
+        "nonBackgroundPixels": 28585
+      },
+      "loadAverage1m": 27.99,
+      "exitCode": 0,
+      "wallSeconds": 13
+    },
+    {
+      "name": "final-v3-run2",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 84,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.042296068426654045,
+      "positionSample": [
+        1709.33,
+        1999.89,
+        2333.76,
+        1744.21
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 942569,
+        "nodePixels": 25681,
+        "linkPixels": 1150,
+        "otherPixels": 2760,
+        "nonBackgroundPixels": 29591
+      },
+      "loadAverage1m": 24.99,
+      "exitCode": 0,
+      "wallSeconds": 8
+    },
+    {
+      "name": "final-v3-run3",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 84,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.042296068426654045,
+      "positionSample": [
+        1898.83,
+        2261.07,
+        2251.62,
+        1813.55
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 941254,
+        "nodePixels": 26575,
+        "linkPixels": 1341,
+        "otherPixels": 2990,
+        "nonBackgroundPixels": 30906
+      },
+      "loadAverage1m": 24.43,
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "final-v3-sim0",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3&sim=0",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1851.84,
+        2248.23,
+        1979.82,
+        2013.56
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 555307,
+        "nodePixels": 109735,
+        "linkPixels": 182911,
+        "otherPixels": 124207,
+        "nonBackgroundPixels": 416853
+      },
+      "loadAverage1m": 28.77,
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "final-v3-sim0-pointfix",
+      "binary": "graph_probe.final",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 31,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 0,
+      "progress": 0,
+      "positionSample": [
+        1952.33,
+        1961.03,
+        2106.82,
+        1993.08
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 555520,
+        "nodePixels": 109394,
+        "linkPixels": 183322,
+        "otherPixels": 123924,
+        "nonBackgroundPixels": 416640
+      },
+      "loadAverage1m": 29.81,
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "control-baseline-v3",
+      "binary": "graph_probe.baseline",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [
+        "GetParameterFloat2 x2"
+      ],
+      "ready": true,
+      "passed": true,
+      "fps": 30,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0",
+        "r.gl.copyTexSubImage3D is not a function @ (x8)"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0,
+      "positionSample": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 0,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 972160,
+        "nonBackgroundPixels": 972160
+      },
+      "loadAverage1m": 18.3
+    },
+    {
+      "name": "control-item7c-v3",
+      "binary": "graph_probe.item7c",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 83,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.04212112867540682,
+      "positionSample": [
+        2346.75,
+        2209.11,
+        2055.38,
+        1648.65
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 944640,
+        "nodePixels": 24166,
+        "linkPixels": 878,
+        "otherPixels": 2476,
+        "nonBackgroundPixels": 27520
+      },
+      "loadAverage1m": 18.35
+    },
+    {
+      "name": "control-item8b-v3",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/graph-probe.html?lib=v3",
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": 84,
+      "webgl2Extensions": 6,
+      "webgl2PointSizeRange": [
+        1,
+        64
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1",
+        "ResizeObserver loop completed with undelivered notifications. @ :0:0"
+      ],
+      "positionsMovedOf400": 400,
+      "progress": 0.04232529560919851,
+      "positionSample": [
+        2258.12,
+        1490.48,
+        1758.97,
+        2033.74
+      ],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 942866,
+        "nodePixels": 25440,
+        "linkPixels": 1033,
+        "otherPixels": 2821,
+        "nonBackgroundPixels": 29294
+      },
+      "loadAverage1m": 21.37,
+      "exitCode": 0,
+      "wallSeconds": 9
+    },
+    {
+      "name": "dbg-readpixels-int-before",
+      "binary": "graph_probe.item8b",
+      "url": "frame-notes://probe/dbg-readpixels-int.html",
+      "diagnostic": true,
+      "glErrors": [],
+      "ready": true,
+      "passed": true,
+      "fps": null,
+      "pageErrors": [],
+      "failures": [],
+      "pixels": {
+        "size": [
+          1280,
+          820
+        ],
+        "background": 961769,
+        "nodePixels": 0,
+        "linkPixels": 0,
+        "otherPixels": 10391,
+        "nonBackgroundPixels": 10391
+      },
+      "exitCode": 0,
+      "wallSeconds": 4
+    }
+  ]
+}

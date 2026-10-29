@@ -20,6 +20,8 @@ pub struct Marked {
 
 /// A fragment's text, its whitespace collapsed to single spaces.
 pub fn parse(fragment: &str) -> Marked {
+    // Search previews need bounded work even for malformed provider output.
+    let fragment = &fragment[..fragment.floor_char_boundary(64 * 1024)];
     let mut writer = Writer::default();
     if fragment.contains(['<', '&']) {
         let dom = parse_fragment(
@@ -37,54 +39,72 @@ pub fn parse(fragment: &str) -> Marked {
 }
 
 fn walk(node: &Handle, emphasized: bool, writer: &mut Writer) {
-    match &node.data {
-        NodeData::Text { contents } => writer.push(&contents.borrow(), emphasized),
-        NodeData::Element { name, .. } => {
-            let emphasized = emphasized
-                || matches!(
-                    name.local,
-                    local_name!("strong")
-                        | local_name!("b")
-                        | local_name!("em")
-                        | local_name!("i")
-                        | local_name!("mark")
+    // Exit markers preserve block spacing without recursive calls.
+    let mut pending = vec![(Some(node.clone()), emphasized)];
+    while let Some((node, emphasized)) = pending.pop() {
+        let Some(node) = node else {
+            writer.space = true;
+            continue;
+        };
+        match &node.data {
+            NodeData::Text { contents } => writer.push(&contents.borrow(), emphasized),
+            NodeData::Element { name, .. } => {
+                let emphasized = emphasized
+                    || matches!(
+                        name.local,
+                        local_name!("strong")
+                            | local_name!("b")
+                            | local_name!("em")
+                            | local_name!("i")
+                            | local_name!("mark")
+                    );
+                let breaks = match name.local {
+                    local_name!("script")
+                    | local_name!("style")
+                    | local_name!("template")
+                    | local_name!("title")
+                    | local_name!("iframe")
+                    | local_name!("noscript")
+                    | local_name!("noembed")
+                    | local_name!("noframes") => continue,
+                    local_name!("br")
+                    | local_name!("p")
+                    | local_name!("div")
+                    | local_name!("li")
+                    | local_name!("tr")
+                    | local_name!("td")
+                    | local_name!("h1")
+                    | local_name!("h2")
+                    | local_name!("h3")
+                    | local_name!("h4")
+                    | local_name!("h5")
+                    | local_name!("h6") => true,
+                    _ => false,
+                };
+                writer.space |= breaks;
+                if breaks {
+                    pending.push((None, false));
+                }
+                pending.extend(
+                    node.children
+                        .borrow()
+                        .iter()
+                        .rev()
+                        .map(|child| (Some(child.clone()), emphasized)),
                 );
-            let breaks = match name.local {
-                local_name!("script")
-                | local_name!("style")
-                | local_name!("template")
-                | local_name!("title")
-                | local_name!("iframe")
-                | local_name!("noscript")
-                | local_name!("noembed")
-                | local_name!("noframes") => return,
-                local_name!("br")
-                | local_name!("p")
-                | local_name!("div")
-                | local_name!("li")
-                | local_name!("tr")
-                | local_name!("td")
-                | local_name!("h1")
-                | local_name!("h2")
-                | local_name!("h3")
-                | local_name!("h4")
-                | local_name!("h5")
-                | local_name!("h6") => true,
-                _ => false,
-            };
-            writer.space |= breaks;
-            for child in node.children.borrow().iter() {
-                walk(child, emphasized, writer);
             }
-            writer.space |= breaks;
-        }
-        NodeData::Document => {
-            for child in node.children.borrow().iter() {
-                walk(child, emphasized, writer);
+            NodeData::Document => {
+                pending.extend(
+                    node.children
+                        .borrow()
+                        .iter()
+                        .rev()
+                        .map(|child| (Some(child.clone()), emphasized)),
+                );
             }
+            // Comments, doctypes and processing instructions say nothing.
+            _ => {}
         }
-        // Comments, doctypes and processing instructions say nothing.
-        _ => {}
     }
 }
 
@@ -132,6 +152,18 @@ mod tests {
             .iter()
             .map(|range| &marked.text[range.clone()])
             .collect()
+    }
+
+    #[test]
+    fn deeply_nested_markup_uses_bounded_stack_and_keeps_emphasis() {
+        let html = format!(
+            "{}<b>deep</b>{}",
+            "<div>".repeat(4000),
+            "</div>".repeat(4000)
+        );
+        let marked = parse(&html);
+        assert_eq!(marked.text, "deep");
+        assert_eq!(emphasized(&marked), ["deep"]);
     }
 
     #[test]

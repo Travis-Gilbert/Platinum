@@ -1,0 +1,51 @@
+{
+  "native": {
+    "servo_frame": {
+      "count": 521,
+      "total_ms": 1499.7963539999994,
+      "p50_ms": 2.683084,
+      "p95_ms": 5.732125,
+      "max_ms": 7.393875
+    },
+    "servo_frame_interval": {
+      "count": 520,
+      "total_ms": 12079.266875,
+      "p50_ms": 12.125458,
+      "p95_ms": 55.555292,
+      "max_ms": 68.324625
+    },
+    "tint_sample": {
+      "count": 81,
+      "total_ms": 7.597291,
+      "p50_ms": 0.029708000000000002,
+      "p95_ms": 0.512167,
+      "max_ms": 1.5947500000000001
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 702,
+    "interval_count": 702,
+    "p50_ms": 12.80999999999949,
+    "p95_ms": 28.460000000000036,
+    "over_33_ms": 0,
+    "scroll_y": 7239,
+    "video": null
+  },
+  "tint_rgb": [
+    0.7529412508010864,
+    0.3607843518257141,
+    0.46274521946907043
+  ],
+  "mode": "scroll",
+  "variant": "candidate",
+  "repeat": 0,
+  "wall_s": 15.753086665998126,
+  "cpu_s": 5.536740999999999,
+  "host_load": [
+    83.22509765625,
+    108.11181640625,
+    117.1640625
+  ],
+  "session_restored_after_exit": true
+}

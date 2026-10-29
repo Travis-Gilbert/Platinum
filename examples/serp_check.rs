@@ -18,7 +18,9 @@
 //! the system temp directory so a check never touches real browsing data.
 
 extern crate gpui_kit as gpui;
-
+#[allow(dead_code)]
+#[path = "../src/brand.rs"]
+mod brand;
 #[path = "../src/embedder.rs"]
 mod embedder;
 #[path = "../src/favicon.rs"]
@@ -27,6 +29,10 @@ mod favicon;
 mod icons;
 #[path = "../src/markup.rs"]
 mod markup;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
 #[path = "../src/search.rs"]
 mod search;
 #[path = "../src/serp.rs"]

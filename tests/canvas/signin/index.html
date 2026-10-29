@@ -1,0 +1,71 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Platinum canvas session and input fixture</title>
+<style>
+  :root { font: 18px system-ui; color-scheme: light dark; }
+  body { margin: 32px; min-height: 2400px; }
+  textarea { display: block; width: 420px; height: 100px; margin: 16px 0; }
+  button, select, input { font: inherit; margin: 8px; }
+  #target, #drag { width: 180px; height: 80px; display: inline-grid; place-items: center; border: 2px solid; }
+  #target:hover { background: #7ac7bf; color: black; }
+  #drag { touch-action: none; background: #ded3f4; color: black; }
+  #scroller { overflow: auto; height: 90px; width: 420px; border: 1px solid; }
+  #scroller > div { height: 500px; }
+  #selection { user-select: text; width: 480px; }
+</style>
+<h1>One document through the camera</h1>
+<p id="session">Local session cookie set. Reloading creates a new document identity.</p>
+<label for="draft">Unfinished sentence</label>
+<textarea id="draft" spellcheck="false" aria-label="Unfinished sentence"></textarea>
+<button id="target">Click and hover</button>
+<div id="drag">Pointer drag</div>
+<p id="selection">Select these words by dragging across this sentence.</p>
+<div id="scroller"><div>Scroll this region with the wheel.</div></div>
+<label>Choice <select id="choice"><option>First</option><option>Second</option><option>Third</option></select></label>
+<label>Colour <input id="color" type="color"></label>
+<label>File <input id="file" type="file"></label>
+<button id="alert">Alert</button><button id="confirm">Confirm</button><button id="prompt">Prompt</button>
+<label><input id="consumeEscape" type="checkbox"> Page consumes Escape</label>
+<p><a href="../zoom-probe.html">Navigation target</a></p>
+<section id="editables">
+<label>Text <input id="edit-text" type="text"></label>
+<label>Search <input id="edit-search" type="search"></label>
+<label>Email <input id="edit-email" type="email"></label>
+<label>URL <input id="edit-url" type="url"></label>
+<label>Telephone <input id="edit-tel" type="tel"></label>
+<label>Password <input id="edit-password" type="password"></label>
+<label>Number <input id="edit-number" type="number"></label>
+<label>Date <input id="edit-date" type="date"></label>
+<label>Time <input id="edit-time" type="time"></label>
+<label>Datetime <input id="edit-datetime-local" type="datetime-local"></label>
+<label>Month <input id="edit-month" type="month"></label>
+<label>Week <input id="edit-week" type="week"></label>
+<div id="edit-contenteditable" contenteditable="true" style="border:1px solid;padding:16px">Editable text</div>
+<div id="edit-plaintext" contenteditable="plaintext-only" style="border:1px solid;padding:16px">Plain text</div>
+</section>
+<pre id="output"></pre>
+<script>
+  document.cookie = 'frame_canvas_session=m1; SameSite=Lax; Path=/';
+  const state = window.canvasInput = {clicks: 0, hovers: 0, drag: null, wheel: 0, choice: 'First', dialogs: [], escape: 0, space: 0};
+  const target = document.querySelector('#target');
+  target.addEventListener('click', e => { state.clicks++; state.click = [e.clientX, e.clientY]; });
+  target.addEventListener('pointerenter', () => state.hovers++);
+  const drag = document.querySelector('#drag');
+  drag.addEventListener('pointerdown', e => { drag.setPointerCapture(e.pointerId); state.drag = {start: [e.clientX, e.clientY], end: null}; });
+  drag.addEventListener('pointerup', e => { if (state.drag) state.drag.end = [e.clientX, e.clientY]; });
+  document.querySelector('#scroller').addEventListener('scroll', e => state.wheel = e.target.scrollTop);
+  document.querySelector('#choice').addEventListener('change', e => state.choice = e.target.value);
+  for (const kind of ['alert', 'confirm', 'prompt']) {
+    document.querySelector('#' + kind).addEventListener('click', () => {
+      setTimeout(() => state.dialogs.push({kind, response: window[kind]('Canvas ' + kind)}), 250);
+    });
+  }
+  addEventListener('keydown', e => {
+    if (e.key === ' ') state.space++;
+    if (e.key === 'Escape') {
+      state.escape++;
+      if (document.querySelector('#consumeEscape').checked) e.preventDefault();
+    }
+  });
+</script>
+<script src="../probe.js"></script>

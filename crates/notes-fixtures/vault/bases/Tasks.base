@@ -1,0 +1,23 @@
+filters:
+  or:
+    - 'file.hasTag("tasks")'
+    - and:
+        - file.inFolder("daily")
+        - not:
+            - file.name == "2026-10-23"
+    - file.hasLink(this.file)
+views:
+  - type: table
+    name: By tag
+    order:
+      - file.name
+      - file.folder
+      - file.tags
+      - file.links
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: list
+    name: Names
+    order:
+      - file.name

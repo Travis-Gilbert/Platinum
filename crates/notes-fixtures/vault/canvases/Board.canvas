@@ -1,0 +1,30 @@
+{
+	"nodes":[
+		{"id":"f4012eb15e1b5b19","type":"group","x":-40,"y":-40,"width":980,"height":560,"label":"Notes","color":"4"},
+		{"id":"dcef8220f239fb38","type":"text","text":"# Board\n\nA text card with **Markdown**, a [[Headings Target]] link and a #canvas-tag.","x":0,"y":0,"width":300,"height":200,"color":"1"},
+		{"id":"952e8a3e2298ced0","type":"file","file":"Home.md","x":340,"y":0,"width":280,"height":200},
+		{"id":"85b46414ab032ece","type":"file","file":"links/Headings Target.md","x":660,"y":0,"width":260,"height":200,"subpath":"#Second heading"},
+		{"id":"b8563464e9c17466","type":"file","file":"links/Blocks Target.md","x":0,"y":260,"width":300,"height":200,"subpath":"#^quote-block"},
+		{"id":"c95fb0dac48545b5","type":"file","file":"attachments/wide.png","x":340,"y":260,"width":280,"height":200},
+		{"id":"e4845d955e601c2d","type":"file","file":"attachments/sample.pdf","x":660,"y":260,"width":260,"height":200},
+		{"id":"cfa39f082e83084c","type":"file","file":"bases/Notes.base","x":1000,"y":0,"width":300,"height":200},
+		{"id":"35f106c4d463f120","type":"file","file":"canvases/Groups.canvas","x":1000,"y":260,"width":300,"height":200},
+		{"id":"acd6e0f9d62467ba","type":"file","file":"Missing Canvas Target.md","x":1000,"y":520,"width":300,"height":120},
+		{"id":"00c2f72f720ffcec","type":"link","url":"https://obsidian.md","x":1360,"y":0,"width":300,"height":200},
+		{"id":"342dd76dbb8523c6","type":"link","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw","x":1360,"y":260,"width":360,"height":240},
+		{"id":"2607ae0055498ce4","type":"text","text":"A card with a hex colour.","x":0,"y":600,"width":300,"height":120,"color":"#7b6cd9"},
+		{"id":"6d4dfc916188fe65","type":"text","text":"Preset 2","x":340,"y":600,"width":140,"height":120,"color":"2"},
+		{"id":"3487d8b8475c9e1b","type":"text","text":"Preset 3","x":500,"y":600,"width":140,"height":120,"color":"3"},
+		{"id":"4dfc66273106717d","type":"text","text":"Preset 5","x":660,"y":600,"width":140,"height":120,"color":"5"},
+		{"id":"74c34d8fd6b3e97b","type":"text","text":"Preset 6","x":820,"y":600,"width":140,"height":120,"color":"6"}
+	],
+	"edges":[
+		{"id":"aa41cc54e1198c4d","fromNode":"dcef8220f239fb38","toNode":"952e8a3e2298ced0","fromSide":"right","toSide":"left","color":"5","label":"opens"},
+		{"id":"e92cb6734da8d4cd","fromNode":"952e8a3e2298ced0","toNode":"85b46414ab032ece","fromSide":"right","toSide":"left"},
+		{"id":"32515c6fdeacd2b2","fromNode":"b8563464e9c17466","toNode":"c95fb0dac48545b5","fromSide":"right","fromEnd":"arrow","toSide":"left","toEnd":"none","color":"2"},
+		{"id":"a00f0f3a6d3d0d56","fromNode":"f4012eb15e1b5b19","toNode":"cfa39f082e83084c","fromSide":"right","toSide":"left","label":"group to card"},
+		{"id":"55fc6a431a6ef47b","fromNode":"cfa39f082e83084c","toNode":"35f106c4d463f120","fromSide":"bottom","fromEnd":"none","toSide":"top","toEnd":"arrow","color":"#d9a441","label":"hex"},
+		{"id":"d17e71677e971f38","fromNode":"35f106c4d463f120","toNode":"acd6e0f9d62467ba"},
+		{"id":"4b7ab3436ddb3779","fromNode":"00c2f72f720ffcec","toNode":"342dd76dbb8523c6","fromSide":"bottom","fromEnd":"arrow","toSide":"top","toEnd":"arrow"}
+	]
+}

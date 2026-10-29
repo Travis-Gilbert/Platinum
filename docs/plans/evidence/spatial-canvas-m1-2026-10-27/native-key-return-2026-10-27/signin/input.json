@@ -1,0 +1,257 @@
+{
+  "checks": [
+    {
+      "check": "pointer and wheel",
+      "zoom": 0.35,
+      "before": {
+        "clicks": 0,
+        "hovers": 0,
+        "drag": null,
+        "wheel": 0,
+        "choice": "First",
+        "dialogs": [],
+        "escape": 0,
+        "space": 3
+      },
+      "after": {
+        "clicks": 1,
+        "hovers": 1,
+        "drag": {
+          "start": [
+            324,
+            332
+          ],
+          "end": [
+            395,
+            375
+          ]
+        },
+        "wheel": 114.28571319580078,
+        "choice": "First",
+        "dialogs": [],
+        "escape": 0,
+        "space": 3,
+        "click": [
+          130,
+          332
+        ]
+      },
+      "off_card_hover": false,
+      "passed": true
+    },
+    {
+      "check": "text selection",
+      "zoom": 0.35,
+      "selected": "words by dragging across this",
+      "passed": true
+    },
+    {
+      "check": "select anchor geometry",
+      "zoom": 0.35,
+      "expected_points": [
+        438.86749267578125,
+        330.1158447265625
+      ],
+      "actual_points": [
+        439.0,
+        420.0
+      ],
+      "tolerance_points": 2,
+      "passed": false
+    },
+    {
+      "check": "visible popup closes on camera motion",
+      "zoom": 0.35,
+      "selector": "#choice",
+      "opened": true,
+      "closed": true,
+      "passed": true
+    },
+    {
+      "check": "visible popup closes on camera motion",
+      "zoom": 0.35,
+      "selector": "#selection",
+      "opened": true,
+      "closed": true,
+      "passed": true
+    },
+    {
+      "check": "native picker shown and camera-dismissed",
+      "zoom": 0.35,
+      "kind": "color",
+      "opened": true,
+      "focused": "color",
+      "closed": true,
+      "refocused": true,
+      "passed": true,
+      "observation": "AppKit panel isVisible; render_to_image cannot capture system panels"
+    },
+    {
+      "check": "native picker shown and camera-dismissed",
+      "zoom": 0.35,
+      "kind": "file",
+      "opened": true,
+      "focused": "file",
+      "closed": true,
+      "refocused": true,
+      "passed": true,
+      "observation": "AppKit panel isVisible; render_to_image cannot capture system panels"
+    },
+    {
+      "check": "select option through keyboard",
+      "zoom": 0.35,
+      "choice": "Second",
+      "passed": true
+    },
+    {
+      "check": "modal reveal and response",
+      "zoom": 0.35,
+      "kind": "alert",
+      "opened": true,
+      "closed": true,
+      "card_visible": true,
+      "focused_after": true,
+      "responses": [
+        {
+          "kind": "alert"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "check": "modal reveal and response",
+      "zoom": 0.35,
+      "kind": "confirm",
+      "opened": true,
+      "closed": true,
+      "card_visible": true,
+      "focused_after": true,
+      "responses": [
+        {
+          "kind": "alert"
+        },
+        {
+          "kind": "confirm",
+          "response": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "check": "modal reveal and response",
+      "zoom": 0.35,
+      "kind": "prompt",
+      "opened": true,
+      "closed": true,
+      "card_visible": true,
+      "focused_after": true,
+      "responses": [
+        {
+          "kind": "alert"
+        },
+        {
+          "kind": "confirm",
+          "response": true
+        },
+        {
+          "kind": "prompt",
+          "response": ""
+        }
+      ],
+      "passed": true
+    },
+    {
+      "check": "Space drag pans noneditable",
+      "zoom": 0.35,
+      "before": {
+        "camera": [
+          -1107.7142857142858,
+          -515.6214163643974,
+          0.35
+        ],
+        "card": [
+          48.0,
+          48.0,
+          1280.0,
+          832.0
+        ],
+        "selection": [],
+        "marquee": false,
+        "commits": 0,
+        "board_drag": false,
+        "space": false,
+        "cached": false
+      },
+      "after": {
+        "camera": [
+          -1322.0000000000002,
+          -615.6214163643974,
+          0.35
+        ],
+        "card": [
+          48.0,
+          48.0,
+          1280.0,
+          832.0
+        ],
+        "selection": [],
+        "marquee": false,
+        "commits": 0,
+        "board_drag": false,
+        "space": false,
+        "cached": false
+      },
+      "passed": true
+    },
+    {
+      "check": "Space without drag delivered",
+      "zoom": 0.35,
+      "passed": true
+    },
+    {
+      "check": "caption drag",
+      "zoom": 0.35,
+      "before": {
+        "camera": [
+          -1037.7142857142858,
+          -864.5714285714287,
+          0.35
+        ],
+        "card": [
+          48.0,
+          48.0,
+          1280.0,
+          832.0
+        ],
+        "selection": [],
+        "marquee": false,
+        "commits": 0,
+        "board_drag": false,
+        "space": false,
+        "cached": false
+      },
+      "after": {
+        "camera": [
+          -1037.7142857142858,
+          -864.5714285714287,
+          0.35
+        ],
+        "card": [
+          190.85714721679688,
+          133.7142791748047,
+          1280.0,
+          832.0
+        ],
+        "selection": [
+          1
+        ],
+        "marquee": false,
+        "commits": 1,
+        "board_drag": false,
+        "space": false,
+        "cached": false
+      },
+      "passed": true
+    }
+  ]
+}

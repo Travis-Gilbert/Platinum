@@ -53,7 +53,7 @@ use gpui_kit::component::{
 use gpui_kit::{
     AnyElement, App, AppContext as _, ClickEvent, Context, Entity, EventEmitter, FocusHandle,
     Focusable, FontWeight, HighlightStyle, ImageAssetLoader, InteractiveElement, IntoElement,
-    ParentElement, Render, Rems, Resource, ScrollStrategy, SharedString, Styled, StyledText, Task,
+    ParentElement, Rems, Render, Resource, ScrollStrategy, SharedString, Styled, StyledText, Task,
     WeakEntity, Window, div, img, prelude::FluentBuilder as _, px, relative, rems,
 };
 use percent_encoding::percent_decode_str;
@@ -192,7 +192,7 @@ impl Serp {
     }
 
     /// A page showing `result`, with no search behind it.
-    #[cfg(test)]
+    #[cfg(any(test, feature = "snapshot"))]
     pub fn loaded(result: SerpResult, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let mode = if result.ask {
             SerpMode::Ask
@@ -207,6 +207,10 @@ impl Serp {
 
     pub fn query(&self) -> &SharedString {
         &self.query
+    }
+
+    pub fn mode(&self) -> SerpMode {
+        self.mode
     }
 
     /// Tab label.
@@ -372,7 +376,9 @@ impl Serp {
                             h_flex()
                                 .gap_3()
                                 .child(Skeleton::new().size(px(24.)).rounded_full())
-                                .child(v_flex().gap_1().child(line(8., 0.75)).child(line(14., 0.6))),
+                                .child(
+                                    v_flex().gap_1().child(line(8., 0.75)).child(line(14., 0.6)),
+                                ),
                         )
                         .child(line(24., 1.25))
                         .child(line(40., 0.75))
@@ -517,6 +523,27 @@ impl Serp {
             )
     }
 
+    /// Search-wide coverage notices stay visible even when no hits return.
+    fn notices(&self, result: &SerpResult, cx: &App) -> impl IntoElement + use<> {
+        v_flex()
+            .gap_1()
+            .text_sm()
+            .text_color(cx.theme().muted_foreground)
+            .debug_selector(|| "search-notices".into())
+            .children(
+                result
+                    .notes
+                    .iter()
+                    .chain(result.degradations.iter().map(|item| &item.message))
+                    .map(|notice| {
+                        let selector = format!("search-notice:{notice}");
+                        div()
+                            .debug_selector(move || selector.clone())
+                            .child(notice.clone())
+                    }),
+            )
+    }
+
     /// The answer, when asked for, then the results.
     fn results(&self, result: &SerpResult, cx: &mut Context<Self>) -> AnyElement {
         let ask = self.mode == SerpMode::Ask;
@@ -524,8 +551,14 @@ impl Serp {
             .flex_1()
             .min_h_0()
             .gap_4()
+            .child(self.notices(result, cx))
             .when(ask, |this| this.child(self.answer(result, cx)))
-            .child(div().flex_1().min_h_0().child(List::new(&self.list).size_full()))
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .child(List::new(&self.list).size_full()),
+            )
             .into_any_element()
     }
 }
@@ -547,6 +580,7 @@ impl Render for Serp {
                         .when(self.mode == SerpMode::Ask, |this| {
                             this.child(self.answer(result, cx))
                         })
+                        .child(self.notices(result, cx))
                         .child(self.empty(cx)),
                 )
                 .into_any_element(),
@@ -599,7 +633,13 @@ impl ListDelegate for Results {
         cx: &mut Context<ListState<Self>>,
     ) -> Option<ListItem> {
         let hit = self.hits.get(ix.row)?;
-        Some(result_row(hit, self.serp.clone(), self.searched_at?, window, cx))
+        Some(result_row(
+            hit,
+            self.serp.clone(),
+            self.searched_at?,
+            window,
+            cx,
+        ))
     }
 
     fn render_section_footer(
@@ -629,7 +669,12 @@ impl ListDelegate for Results {
         cx.notify();
     }
 
-    fn confirm(&mut self, secondary: bool, _window: &mut Window, cx: &mut Context<ListState<Self>>) {
+    fn confirm(
+        &mut self,
+        secondary: bool,
+        _window: &mut Window,
+        cx: &mut Context<ListState<Self>>,
+    ) {
         let Some(hit) = self.selected.and_then(|row| self.hits.get(row)) else {
             return;
         };
@@ -1019,7 +1064,10 @@ fn summary(result: &SerpResult) -> String {
                 .join(", "),
         );
     }
-    parts.push(format!("searched at {}", result.searched_at.format("%H:%M")));
+    parts.push(format!(
+        "searched at {}",
+        result.searched_at.format("%H:%M")
+    ));
     parts.push(format!("{:.1} s", result.elapsed_ms as f64 / 1000.0));
     parts.join(" · ")
 }
@@ -1089,7 +1137,10 @@ pub(crate) mod tests {
     #[test]
     fn a_web_result_looks_for_its_sites_icon_at_the_root() {
         let page = Url::parse("https://docs.rs/gpui-kit/latest/gpui_kit/?q=1").unwrap();
-        assert_eq!(site_root(&page).map(String::from).as_deref(), Some("https://docs.rs/"));
+        assert_eq!(
+            site_root(&page).map(String::from).as_deref(),
+            Some("https://docs.rs/")
+        );
         let port = Url::parse("http://127.0.0.1:8080/a").unwrap();
         assert_eq!(
             site_root(&port).map(String::from).as_deref(),
@@ -1104,7 +1155,10 @@ pub(crate) mod tests {
         let url = Url::parse("https://doc.rust-lang.org/book/ch01%2000/").unwrap();
         assert_eq!(site(&url), "rust-lang.org");
         assert_eq!(site_mark(&site(&url)), "rust-lang");
-        assert_eq!(breadcrumb(&url), "https://doc.rust-lang.org › book › ch01 00");
+        assert_eq!(
+            breadcrumb(&url),
+            "https://doc.rust-lang.org › book › ch01 00"
+        );
 
         let uk = Url::parse("https://www.bbc.co.uk/").unwrap();
         assert_eq!(site(&uk), "bbc.co.uk");
@@ -1227,6 +1281,37 @@ pub(crate) mod tests {
     }
 
     #[gpui_kit::test]
+    fn search_notices_remain_visible_with_and_without_results(cx: &mut TestAppContext) {
+        let (serp, _, cx) = open_page(vec![], cx);
+        for hits in [vec![], vec![hit("https://a.example/", "warm")]] {
+            cx.update(|window, cx| {
+                serp.update(cx, |serp, cx| {
+                    let mut result = result(hits);
+                    result
+                        .notes
+                        .push("Only news and social sources were searched".into());
+                    result.degradations.push(search::Degradation {
+                        code: "failed".into(),
+                        message: "Provider unavailable".into(),
+                    });
+                    serp.state = State::Loaded(result);
+                    serp.show_scope(window, cx);
+                    cx.notify();
+                })
+            });
+            cx.run_until_parked();
+            assert!(
+                cx.debug_bounds("search-notice:Only news and social sources were searched")
+                    .is_some()
+            );
+            assert!(
+                cx.debug_bounds("search-notice:Provider unavailable")
+                    .is_some()
+            );
+        }
+    }
+
+    #[gpui_kit::test]
     fn the_keyboard_moves_through_results_and_opens_one(cx: &mut TestAppContext) {
         let (serp, opened, cx) = open_page(
             vec![
@@ -1236,11 +1321,17 @@ pub(crate) mod tests {
             ],
             cx,
         );
-        assert_eq!(selected_url(&serp, cx).as_deref(), Some("https://a.example/1"));
+        assert_eq!(
+            selected_url(&serp, cx).as_deref(),
+            Some("https://a.example/1")
+        );
 
         cx.simulate_keystrokes("down");
         cx.run_until_parked();
-        assert_eq!(selected_url(&serp, cx).as_deref(), Some("https://b.example/2"));
+        assert_eq!(
+            selected_url(&serp, cx).as_deref(),
+            Some("https://b.example/2")
+        );
 
         cx.simulate_keystrokes("enter");
         cx.run_until_parked();
@@ -1262,9 +1353,7 @@ pub(crate) mod tests {
     }
 
     #[gpui_kit::test]
-    fn about_this_result_opens_from_its_button_without_opening_the_page(
-        cx: &mut TestAppContext,
-    ) {
+    fn about_this_result_opens_from_its_button_without_opening_the_page(cx: &mut TestAppContext) {
         let (_, opened, cx) = open_page(
             vec![
                 hit("https://a.example/1", "fresh"),
@@ -1308,11 +1397,12 @@ pub(crate) mod tests {
             ],
             cx,
         );
-        cx.update(|window, cx| {
-            serp.update(cx, |serp, cx| serp.set_scope(Scope::Web, window, cx))
-        });
+        cx.update(|window, cx| serp.update(cx, |serp, cx| serp.set_scope(Scope::Web, window, cx)));
         cx.run_until_parked();
-        assert_eq!(selected_url(&serp, cx).as_deref(), Some("https://b.example/2"));
+        assert_eq!(
+            selected_url(&serp, cx).as_deref(),
+            Some("https://b.example/2")
+        );
         let rows = cx.update(|_, cx| serp.read(cx).list.read(cx).delegate().hits.len());
         assert_eq!(rows, 1);
     }

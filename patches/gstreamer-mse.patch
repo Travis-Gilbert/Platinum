@@ -8,7 +8,7 @@ index c44a344..e6e97cb 100644
                                   gpointer              user_data);
 +  void (*append_complete) (GstAppendPipeline * self, gpointer user_data);
  } GstAppendPipelineCallbacks;
- 
+
  GST_MSE_PRIVATE
 diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline.c b/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstappendpipeline.c
 index b8fa990..90dd44a 100644
@@ -120,11 +120,11 @@ index a5c1eee..636a77d 100644
 +  GST_OBJECT_UNLOCK (self);
    return TRUE;
  }
- 
+
 @@ -1678,6 +1707,16 @@ append_successful_unlocked (GstSourceBuffer * self, gboolean ended)
    schedule_event_unlocked (self, ON_UPDATE_END);
  }
- 
+
 +static void
 +on_append_complete (GstAppendPipeline * pipeline, gpointer user_data)
 +{
@@ -148,9 +148,9 @@ index a5c1eee..636a77d 100644
      g_cond_wait_until (&self->pending_data_cond, GST_OBJECT_GET_LOCK (self),
          deadline);
 @@ -1750,6 +1789,21 @@ append_to_buffer_task_func (AppendToBufferTask * task)
- 
+
    GstBuffer *pending_data = await_pending_data_unlocked (self);
- 
+
 +  if (self->pending_remove) {
 +    self->pending_remove = FALSE;
 +    TRACKS_LOCK (self);
@@ -170,20 +170,20 @@ index a5c1eee..636a77d 100644
      append_successful_unlocked (self, TRUE);
      goto done;
 @@ -1762,7 +1816,6 @@ append_to_buffer_task_func (AppendToBufferTask * task)
- 
+
    if (!GST_IS_BUFFER (pending_data)) {
      GST_TRACE_OBJECT (self, "no pending data");
 -    append_successful_unlocked (self, is_ended_unlocked (self));
      goto done;
    }
- 
+
 @@ -1775,7 +1828,7 @@ append_to_buffer_task_func (AppendToBufferTask * task)
      goto done;
    }
- 
+
 -  append_successful_unlocked (self, is_ended_unlocked (self));
 +  /* Completion comes from the parser after samples enter the track buffers. */
- 
+
  done:
    GST_OBJECT_UNLOCK (self);
 diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/mse/meson.build b/subprojects/gst-plugins-bad/gst-libs/gst/mse/meson.build
@@ -193,10 +193,88 @@ index 9404668..3ab6e2b 100644
 @@ -104,7 +104,8 @@ gstmse_private_test_dep = declare_dependency(
    sources: gstmse_headers_public + [gstmse_enums_h],
  )
- 
+
 -gstmse = library('gstmse-' + api_version,
 +# Distinct name prevents linking the system copy ahead of Frame's patched ABI.
 +gstmse = library('gstmse-frame-' + api_version,
    gstmse_sources_all,
    c_args : gstmse_c_args,
    include_directories : [configinc, libsinc],
+diff --git a/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c b/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c
+index 2bef0cb..a60a5b4 100644
+--- a/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c
++++ b/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c
+@@ -2368,16 +2368,11 @@ gst_h264_parse_update_src_caps (GstH264Parse * h264parse, GstCaps * caps)
+
+       caps = gst_caps_copy (sink_caps);
+
+-      /* sps should give this but upstream overrides */
+-      if (s && gst_structure_has_field (s, "width"))
+-        gst_structure_get_int (s, "width", &width);
+-      else
+-        width = h264parse->width;
+-
+-      if (s && gst_structure_has_field (s, "height"))
+-        gst_structure_get_int (s, "height", &height);
+-      else
+-        height = h264parse->height;
++      /* Container caps can retain the initial dimensions across an in-band
++       * SPS change. Advertise the parsed (cropped) dimensions with the new
++       * codec_data so downstream decoders renegotiate the matching size. */
++      width = h264parse->width;
++      height = h264parse->height;
+
+       if (s == NULL ||
+           !gst_structure_get_fraction (s, "pixel-aspect-ratio", &par_n,
+diff --git a/subprojects/gst-plugins-bad/tests/check/elements/h264parse.c b/subprojects/gst-plugins-bad/tests/check/elements/h264parse.c
+index ae04747..c1679d2 100644
+--- a/subprojects/gst-plugins-bad/tests/check/elements/h264parse.c
++++ b/subprojects/gst-plugins-bad/tests/check/elements/h264parse.c
+@@ -1471,6 +1471,39 @@ GST_START_TEST (test_parse_aud_insert)
+
+ GST_END_TEST;
+
++GST_START_TEST (test_parse_stale_container_dimensions)
++{
++  GstHarness *h = gst_harness_new ("h264parse");
++  GstBuffer *buf;
++  GstCaps *caps;
++  GstStructure *s;
++  gsize offset = 0;
++
++  /* An MP4 demuxer can retain its initial width/height after an in-band
++   * SPS change. The output must describe the parsed image, not the stale
++   * container dimensions, including the SPS cropping rectangle. */
++  gst_harness_set_caps_str (h,
++      "video/x-h264, stream-format=byte-stream, alignment=au, width=400, height=300",
++      "video/x-h264, stream-format=avc, alignment=au");
++  buf = gst_buffer_new_and_alloc (sizeof (h264_sps) + sizeof (h264_pps) +
++      sizeof (h264_idrframe));
++  offset += gst_buffer_fill (buf, offset, h264_sps, sizeof (h264_sps));
++  offset += gst_buffer_fill (buf, offset, h264_pps, sizeof (h264_pps));
++  gst_buffer_fill (buf, offset, h264_idrframe, sizeof (h264_idrframe));
++  buf = gst_harness_push_and_pull (h, buf);
++  fail_unless (buf != NULL);
++  gst_buffer_unref (buf);
++  caps = gst_pad_get_current_caps (h->sinkpad);
++  fail_unless (caps != NULL);
++  s = gst_caps_get_structure (caps, 0);
++  fail_unless_structure_field_int_equals (s, "width", 32);
++  fail_unless_structure_field_int_equals (s, "height", 24);
++  gst_caps_unref (caps);
++  gst_harness_teardown (h);
++}
++
++GST_END_TEST;
++
+ GST_START_TEST (test_parse_sei_userdefinedunregistered)
+ {
+   GstVideoSEIUserDataUnregisteredMeta *meta;
+@@ -1810,6 +1843,7 @@ main (int argc, char **argv)
+     tcase_add_test (tc_chain, test_parse_skip_to_4bytes_sc);
+     tcase_add_test (tc_chain, test_parse_aud_insert);
+     tcase_add_test (tc_chain, test_parse_sei_userdefinedunregistered);
++    tcase_add_test (tc_chain, test_parse_stale_container_dimensions);
+     tcase_add_test (tc_chain, test_parse_to_avc3_without_sps);
+     tcase_add_test (tc_chain, test_packetized_avc_drop_corrupt);
+     nf += gst_check_run_suite (s, "h264parse", __FILE__);

@@ -1,0 +1,67 @@
+[
+  {
+    "check": "unit-tests",
+    "exit_code": 0,
+    "elapsed_s": 33.07953212499706
+  },
+  {
+    "check": "all-targets",
+    "exit_code": 0,
+    "elapsed_s": 37.77445904100023
+  },
+  {
+    "check": "production-build",
+    "exit_code": 0,
+    "elapsed_s": 39.73523395800294
+  },
+  {
+    "check": "standard-media",
+    "exit_code": 0
+  },
+  {
+    "check": "mse-media",
+    "exit_code": 0
+  },
+  {
+    "check": "software-diagnostic",
+    "exit_code": 1
+  },
+  {
+    "check": "source/replay subset",
+    "passed": 7,
+    "total": 7,
+    "evidence": "final-regressions-polled.json"
+  },
+  {
+    "check": "supplemental intrinsic resize",
+    "passed": 1,
+    "total": 2,
+    "remaining_failure": "MP4 stops at 0.983s",
+    "evidence": "final-regressions-polled.json"
+  },
+  {
+    "check": "native transitions",
+    "passed": 3,
+    "total": 3,
+    "evidence": "native-final/results.json"
+  },
+  {
+    "check": "smoothness",
+    "valid_pairs": 3,
+    "excluded_runs": 1,
+    "evidence": "selected-summary.json"
+  },
+  {
+    "check": "rendered MP4/WebM pixels",
+    "passed": true,
+    "evidence": "rendered-pixels.json"
+  },
+  {
+    "check": "bootstrap patch idempotency",
+    "passed": true
+  },
+  {
+    "check": "Python lint/format, JavaScript syntax and diff whitespace",
+    "passed": true
+  }
+]

@@ -1,0 +1,87 @@
+[
+  {
+    "check": "selected-tests",
+    "exit_code": 0,
+    "elapsed_s": 61.26240245900044,
+    "passed": 62
+  },
+  {
+    "check": "selected-check",
+    "exit_code": 0,
+    "elapsed_s": 10.362492749998637
+  },
+  {
+    "check": "selected-clippy",
+    "exit_code": 101,
+    "elapsed_s": 6.723577125001611,
+    "existing_failures": 13
+  },
+  {
+    "check": "selected-build",
+    "exit_code": 0,
+    "elapsed_s": 57.08389333300147
+  },
+  {
+    "check": "media-build",
+    "exit_code": 0,
+    "elapsed_s": 13.921899708002456
+  },
+  {
+    "check": "headless-media",
+    "exit_code": 0,
+    "codecs": [
+      "H264/MP4",
+      "VP9/WebM"
+    ],
+    "checks": [
+      "play",
+      "pause",
+      "seek",
+      "resume",
+      "decoded pixels",
+      "rendered pixels"
+    ]
+  },
+  {
+    "check": "native-lifecycle",
+    "exit_code": 0,
+    "checks": [
+      "hidden tab produces no surfaces",
+      "tab resumes",
+      "final static tint",
+      "redirect session restored",
+      "source image key and dimension changes update rendered pixels"
+    ]
+  },
+  {
+    "check": "mse-media",
+    "passed": true,
+    "checks": [
+      "append audio/video buffers",
+      "playback",
+      "repeated play",
+      "seek and resume"
+    ],
+    "evidence": "mse-media.log"
+  },
+  {
+    "check": "selected-live-search",
+    "passed": true,
+    "providers": [
+      "bluesky"
+    ],
+    "gdelt_used": false,
+    "evidence": "selected-live-search/results.json"
+  },
+  {
+    "check": "selected-functional",
+    "passed": true,
+    "checks": [
+      "hidden/resumed tab",
+      "final stopped-frame tint",
+      "source replacement first-frame colors and dimensions"
+    ],
+    "limitation": "Source replacement playback advancement is not established; existing source-switch stall remains.",
+    "evidence": "selected-functional/results.json"
+  }
+]

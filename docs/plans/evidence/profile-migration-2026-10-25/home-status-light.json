@@ -1,0 +1,11 @@
+{
+  "glass_active": true,
+  "glass_below_gpui": true,
+  "frame_opacity": 0.30000001192092896,
+  "left_frame_alpha": 88,
+  "bottom_frame_alpha": 98,
+  "footer_alpha": 255,
+  "passed": true,
+  "theme": "light",
+  "rounded_card_corner_alpha": 88
+}

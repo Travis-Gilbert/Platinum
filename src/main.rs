@@ -1,4 +1,4 @@
-//! Frame: a standalone browser. Servo renders the web, GPUI Kit draws the
+//! Platinum: a standalone browser. Servo renders the web, GPUI Kit draws the
 //! chrome, and RustyWeb is the default search engine.
 
 // The `Action` derive names its crate `gpui`.
@@ -6,7 +6,9 @@ extern crate gpui_kit as gpui;
 
 mod actions;
 mod address;
+mod brand;
 mod browser;
+mod canvas;
 mod controls;
 mod delegate;
 mod downloads;
@@ -16,16 +18,23 @@ mod favicon;
 mod glass;
 mod home;
 mod icons;
+mod inspector;
 mod keys;
 mod markup;
 mod navigator;
 mod page;
+#[cfg(feature = "performance-check")]
+mod performance;
 mod places;
+mod profile_ui;
 mod recents;
 mod scene;
 mod search;
 mod serp;
+mod session;
 mod share;
+mod site;
+mod tabtree;
 mod theme;
 
 use anyhow::Context as _;
@@ -37,24 +46,34 @@ use gpui_kit::{
 };
 
 use crate::actions::{
-    ActivateTab, CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, NextTab, OpenPalette,
-    PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowDownloads, ToggleAsk, ToggleCompact,
+    ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
+    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
+    SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
+    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
 use crate::theme::Appearance;
 
 fn main() -> anyhow::Result<()> {
+    #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
+        return browser::workspace_check::run(output.into());
+    }
+    #[cfg(feature = "performance-check")]
+    if std::env::var_os("FRAME_PERF_ROOT").is_some() {
+        return browser::performance::run();
+    }
     // Logging is Servo's (`Engine::start`): it installs the one logger and
     // reads `RUST_LOG`. Servo's graph links more than one rustls provider, so
     // one has to be named before the first TLS connection.
     let _ = rustls::crypto::ring::default_provider().install_default();
 
-    let data_dir = dirs::data_dir()
-        .context("no application data directory")?
-        .join("Frame");
-    let profile_dir = data_dir.join("profile");
-    std::fs::create_dir_all(&profile_dir)?;
+    let data_dir = brand::app_dir(&dirs::data_dir().context("no application data directory")?);
+    let profile = frame_profile::ProfileStore::open(&data_dir)?;
+    let profile_dir = profile.directory();
+    let search_dir = profile.search_directory();
+    session::adopt(&data_dir, &profile.default_directory());
     // RustyWeb's provider keys: a checkout's `.env` while developing, then
     // the app's own. Neither overrides what the environment already sets.
     let _ = dotenvy::dotenv();
@@ -65,6 +84,7 @@ fn main() -> anyhow::Result<()> {
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);
+            brand::install();
             install_commands(cx);
             Engine::start(&profile_dir, cx);
             // GPUI's images load from a URL through this, a result's favicon
@@ -73,8 +93,11 @@ fn main() -> anyhow::Result<()> {
                 Ok(client) => cx.set_http_client(std::sync::Arc::new(client)),
                 Err(error) => log::error!("http client: {error:#}"),
             }
-            search::init(&data_dir, cx);
-            recents::init(Some(data_dir.join("recents.json")), cx);
+            recents::init(Some(profile_dir.join("recents.json")), cx);
+            search::init(&search_dir, cx);
+            session::init(&profile_dir, cx);
+            session::open_imported_tabs(&profile, cx);
+            cx.set_global(profile_ui::ActiveProfile(profile));
             if let Err(error) = open_window(cx) {
                 log::error!("{error:#}");
                 cx.quit();
@@ -105,8 +128,14 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("cmd-]", GoForward, None),
         KeyBinding::new("cmd-l", FocusAddressBar, None),
         KeyBinding::new("cmd-k", OpenPalette, None),
+        KeyBinding::new("cmd-d", BookmarkPage, None),
+        KeyBinding::new("cmd-y", ShowHistory, None),
+        KeyBinding::new("cmd-shift-p", FillPassword, None),
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
+        KeyBinding::new("ctrl-cmd-s", ToggleSidebar, None),
+        KeyBinding::new("ctrl-cmd-b", crate::actions::ShowCanvas, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
+        KeyBinding::new("alt-cmd-j", ShowConsole, None),
         KeyBinding::new("cmd-q", Quit, None),
         KeyBinding::new("cmd-z", Undo, Some(page::CONTEXT)),
         KeyBinding::new("cmd-shift-z", Redo, Some(page::CONTEXT)),
@@ -133,13 +162,16 @@ fn install_menus(cx: &mut App) {
             .checked(appearance == current)
     });
     cx.set_menus([
-        Menu::new("Frame").items([MenuItem::action("Quit Frame", Quit)]),
+        Menu::new(brand::NAME).items([MenuItem::action(format!("Quit {}", brand::NAME), Quit)]),
         Menu::new("File").items([
             MenuItem::action("New Tab", NewTab),
             MenuItem::action("Open Location", FocusAddressBar),
             MenuItem::action("Search", OpenPalette),
             MenuItem::separator(),
+            MenuItem::action("Import Browser Data…", ImportBrowserData),
+            MenuItem::action("Profiles…", ShowProfiles),
             MenuItem::action("Share...", SharePage),
+            MenuItem::action("Pin Tab", PinTab),
             MenuItem::separator(),
             MenuItem::action("Close Tab", CloseTab),
         ]),
@@ -151,20 +183,33 @@ fn install_menus(cx: &mut App) {
             MenuItem::os_action("Copy", Copy, OsAction::Copy),
             MenuItem::os_action("Paste", Paste, OsAction::Paste),
             MenuItem::os_action("Select All", SelectAll, OsAction::SelectAll),
+            MenuItem::separator(),
+            MenuItem::action("Fill Form Information…", FillForm),
         ]),
         Menu::new("View").items([
             MenuItem::action("Reload Page", Reload),
             MenuItem::separator(),
             MenuItem::action("Compact Mode", ToggleCompact),
+            MenuItem::action("Sidebar", ToggleSidebar),
             MenuItem::submenu(Menu::new("Appearance").items(appearances)),
             MenuItem::separator(),
             MenuItem::action("Show Downloads", ShowDownloads),
+            MenuItem::action("Show Console", ShowConsole),
             MenuItem::separator(),
             MenuItem::action("Ask AI", ToggleAsk),
         ]),
         Menu::new("History").items([
             MenuItem::action("Back", GoBack),
             MenuItem::action("Forward", GoForward),
+            MenuItem::action("Show History…", ShowHistory),
+        ]),
+        Menu::new("Bookmarks").items([
+            MenuItem::action("Bookmark This Page", BookmarkPage),
+            MenuItem::action("Show Bookmarks…", ShowBookmarks),
+        ]),
+        Menu::new("Passwords").items([
+            MenuItem::action("Fill Saved Password…", FillPassword),
+            MenuItem::action("Save or Update Password…", SavePassword),
         ]),
         Menu::new("Window").items([
             MenuItem::action("Next Tab", NextTab),
@@ -183,12 +228,14 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
     if let Some(titlebar) = options.titlebar.as_mut() {
         titlebar.traffic_light_position = Some(point(px(9.), px(10.)));
     }
-    cx.open_window(options, |window, cx| {
+    let _window = cx.open_window(options, |window, cx| {
         glass::install(window, cx);
         let browser = cx.new(|cx| Browser::new(window, cx));
         // The browser paints the frame; the root leaves the glass under it.
         cx.new(|cx| Root::new(browser, window, cx).bg(transparent_black()))
     })?;
+    #[cfg(feature = "snapshot")]
+    keep_snapshots(_window.into(), cx);
     // One window for now: closing it quits.
     cx.on_window_closed(|cx, _| {
         if cx.windows().is_empty() {
@@ -197,4 +244,34 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
     })
     .detach();
     Ok(())
+}
+
+/// Keep a picture of `window` in the file `FRAME_SNAPSHOT` names, redrawn
+/// every two seconds (the `snapshot` feature, for development).
+#[cfg(feature = "snapshot")]
+fn keep_snapshots(window: gpui_kit::AnyWindowHandle, cx: &mut App) {
+    let Some(path) = std::env::var_os("FRAME_SNAPSHOT") else {
+        return;
+    };
+    cx.spawn(async move |cx| {
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_secs(2))
+                .await;
+            let Ok(image) = cx.update_window(window, |_, window, _| window.render_to_image())
+            else {
+                break;
+            };
+            // Written aside and moved over, so the file is always whole.
+            let partial = std::path::Path::new(&path).with_extension("partial.png");
+            let saved = image.and_then(|image| {
+                image.save(&partial)?;
+                Ok(std::fs::rename(&partial, &path)?)
+            });
+            if let Err(error) = saved {
+                log::warn!("snapshot: {error:#}");
+            }
+        }
+    })
+    .detach();
 }
