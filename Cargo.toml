@@ -13,6 +13,8 @@ exclude = ["deps"]
 
 [dependencies]
 gpui-kit = "=0.8.0"
+# Only for the `snapshot` feature: GPUI's window-to-image rendering.
+gpui-pre = { version = "=0.3.9", optional = true }
 # Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
 servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
@@ -56,6 +58,17 @@ sanitize-filename = "0.6"
 serde_json = "1"
 url = "2"
 
+[features]
+# Development only: with `FRAME_SNAPSHOT=<file.png>` in the environment, the
+# window is kept as a picture in that file, redrawn every two seconds, to see
+# the chrome where taking a screenshot needs a permission the session lacks.
+snapshot = [
+    "dep:gpui-pre",
+    "gpui-pre/test-support",
+    "dep:gpui-pre-macos",
+    "gpui-pre-macos/test-support",
+]
+
 [dev-dependencies]
 # Native media acceptance examples use the same CLI parser already in Servo.
 clap = { version = "4", features = ["derive"] }
@@ -68,6 +81,8 @@ gpui-pre = { version = "=0.3.9", features = ["test-support"] }
 env_logger = "0.11"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# Only for the `snapshot` feature: the Mac window's side of rendering to an image.
+gpui-pre-macos = { version = "=0.3.9", optional = true }
 objc2 = "0.6"
 # AppKit's shared color panel for `<input type=color>`; GPUI Kit already
 # builds this crate with its default features.

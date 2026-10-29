@@ -19,6 +19,8 @@ actions!(
         FocusAddressBar,
         OpenPalette,
         ToggleCompact,
+        ToggleSidebar,
+        PinTab,
         ToggleAsk,
         ShowDownloads,
         SharePage,

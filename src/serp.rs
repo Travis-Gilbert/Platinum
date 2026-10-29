@@ -98,6 +98,10 @@ impl Serp {
         &self.query
     }
 
+    pub fn mode(&self) -> SerpMode {
+        self.mode
+    }
+
     /// Tab label.
     pub fn title(&self) -> SharedString {
         self.query.clone()

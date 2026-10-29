@@ -4,9 +4,11 @@
 //! command palette at the top of the window, whether or not the address bar
 //! is on screen.
 //!
-//! The list is local first: the page's own context menu entries, the open
-//! tabs (Switch), Frame's commands, and only then the web (RustyWeb search,
-//! and Ask, which is the one explicit AI entry).
+//! The list is local first: the page's own context menu entries, or those
+//! of the tab or pinned site under the pointer, the open tabs (Switch; in
+//! the right-click menu only once the person types), Frame's commands, and
+//! only then the web (RustyWeb search, and Ask, which is the one explicit AI
+//! entry).
 //!
 //! SOURCING: GPUI Kit's `Command` (search field, groups, keyboard selection,
 //! filtering, keybinding hints) inside GPUI's `anchored` / `deferred`
@@ -26,8 +28,8 @@ use servo::ContextMenuAction;
 use url::Url;
 
 use crate::actions::{
-    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, Quit, Reload, SetAppearance, SharePage,
-    ShowDownloads, ToggleAsk, ToggleCompact,
+    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, PinTab, Quit, Reload, SetAppearance,
+    SharePage, ShowDownloads, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -55,6 +57,53 @@ pub enum Pick {
     Ask(String),
     /// Save the link or image under the pointer.
     Download(Url),
+    Tab(TabAction),
+}
+
+/// What can be done to the tab or pinned site a right-click was on. Tabs are
+/// named by the browser's ids, pins by theirs.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TabAction {
+    Close(u64),
+    /// The tab and every tab under it in the sidebar.
+    CloseBranch(u64),
+    Fold(u64),
+    Unfold(u64),
+    Rename(u64),
+    Pin(u64),
+    Unpin(u64),
+}
+
+impl TabAction {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Close(_) => "Close Tab",
+            Self::CloseBranch(_) => "Close Branch",
+            Self::Fold(_) => "Collapse Branch",
+            Self::Unfold(_) => "Expand Branch",
+            Self::Rename(_) => "Rename...",
+            Self::Pin(_) => "Pin Tab",
+            Self::Unpin(_) => "Unpin Site",
+        }
+    }
+
+    fn icon(self) -> Icon {
+        match self {
+            Self::Close(_) | Self::CloseBranch(_) => Icon::new(IconName::Close),
+            Self::Fold(_) => Icon::new(IconName::ChevronRight),
+            Self::Unfold(_) => Icon::new(IconName::ChevronDown),
+            Self::Rename(_) => icons::rename(),
+            Self::Pin(_) => icons::pin(),
+            Self::Unpin(_) => icons::unpin(),
+        }
+    }
+}
+
+/// The entries for the tab or pinned site under the pointer.
+pub struct TabMenu {
+    /// "Tab" or "Pinned Site".
+    pub label: SharedString,
+    pub actions: Vec<TabAction>,
 }
 
 /// One open tab, as the navigator lists it.
@@ -75,6 +124,9 @@ pub struct BrowserState<'a> {
     pub ask: bool,
     /// The active tab shows a web page that can be shared.
     pub shareable: bool,
+    pub sidebar: bool,
+    /// The active tab shows a site that can be pinned.
+    pub pinnable: bool,
 }
 
 pub struct Navigator {
@@ -83,6 +135,8 @@ pub struct Navigator {
     /// The page whose context menu this is, with its entries; the page holds
     /// the responder until the navigator answers it.
     pub page: Option<(Entity<Page>, PageMenu)>,
+    /// The tab or pinned site whose context menu this is.
+    pub tab: Option<TabMenu>,
     /// Where focus goes back to when the navigator closes.
     pub restore_focus: Option<FocusHandle>,
 }
@@ -126,9 +180,20 @@ impl Navigator {
             groups.push(group);
             picks.push(group_picks);
         }
+        if let Some(menu) = &self.tab {
+            let mut group = CommandGroup::new().label(menu.label.clone());
+            for action in &menu.actions {
+                group = group.item(CommandItem::new().label(action.label()).icon(action.icon()));
+            }
+            groups.push(group);
+            picks.push(menu.actions.iter().copied().map(Pick::Tab).collect());
+        }
 
+        let pointer = matches!(self.placement, Placement::Pointer(_));
+        // The right-click menu leads with what can be done: its tabs show only
+        // once the person types. The palette keeps them, as a switcher.
         let mut tabs = None;
-        if !browser.tabs.is_empty() {
+        if !browser.tabs.is_empty() && (typing || !pointer) {
             let mut group = CommandGroup::new().label("Tabs");
             let mut group_picks = Vec::new();
             for tab in browser.tabs {
@@ -144,15 +209,14 @@ impl Navigator {
             tabs = Some((group, group_picks));
         }
         // Filtering keeps the groups' order and Enter takes the first match.
-        // Untyped, the tabs come first as a switcher; typed, a query that
-        // names a command means the command ("new tab" over a start tab
+        // Untyped, the palette's tabs come first as a switcher; typed, a query
+        // that names a command means the command ("new tab" over a start tab
         // titled "New Tab"), and one that only matches tabs still finds them.
         if !typing && let Some((group, group_picks)) = tabs.take() {
             groups.push(group);
             picks.push(group_picks);
         }
 
-        let pointer = matches!(self.placement, Placement::Pointer(_));
         // (label, icon, action, shown untyped in the right-click menu, checked)
         let mut commands: Vec<(SharedString, Icon, Box<dyn Action>, bool, bool)> = vec![
             ("New Tab".into(), icons::page(), Box::new(NewTab), true, false),
@@ -172,7 +236,29 @@ impl Navigator {
                 true,
                 false,
             ),
+            (
+                if browser.sidebar {
+                    "Hide Sidebar"
+                } else {
+                    "Show Sidebar"
+                }
+                .into(),
+                Icon::new(IconName::PanelLeft),
+                Box::new(ToggleSidebar),
+                true,
+                false,
+            ),
         ];
+        // A tab's own menu pins that tab, which may not be the active one.
+        if browser.pinnable && self.tab.is_none() {
+            commands.push((
+                "Pin Tab".into(),
+                icons::pin(),
+                Box::new(PinTab),
+                !pointer,
+                false,
+            ));
+        }
         if browser.shareable {
             commands.push((
                 "Share Page".into(),

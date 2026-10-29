@@ -1027,12 +1027,83 @@ fn favicon_image(icon: &Image) -> Option<Arc<RenderImage>> {
         PixelFormat::BGRA8 => bgra.extend_from_slice(data.get(..pixels * 4)?),
     }
     let frame = image::RgbaImage::from_raw(icon.width, icon.height, bgra)?;
-    Some(Arc::new(RenderImage::new(vec![image::Frame::new(frame)])))
+    Some(icon_image(frame))
+}
+
+/// The most pixels a side a kept site icon has: twice the largest it is
+/// drawn (the sidebar's tiles), and a little over.
+const ICON_PIXELS: u32 = 64;
+
+/// A site icon's pixels as GPUI draws them. A large icon is scaled down here,
+/// once and with a filter: drawn straight at 18 points, the GPU's sampling of
+/// a 512-pixel icon aliases its edges.
+pub(crate) fn icon_image(frame: image::RgbaImage) -> Arc<RenderImage> {
+    let frame = shrink_icon(frame, ICON_PIXELS);
+    Arc::new(RenderImage::new(vec![image::Frame::new(frame)]))
+}
+
+/// `frame` scaled to fit `max` pixels a side, keeping its shape. The filter
+/// runs on premultiplied color, so the transparent black around an icon does
+/// not darken its edges.
+fn shrink_icon(mut frame: image::RgbaImage, max: u32) -> image::RgbaImage {
+    let (width, height) = frame.dimensions();
+    if width <= max && height <= max {
+        return frame;
+    }
+    let scale = max as f32 / width.max(height) as f32;
+    let fit = |side: u32| ((side as f32 * scale).round() as u32).max(1);
+    for pixel in frame.pixels_mut() {
+        let alpha = u16::from(pixel[3]);
+        for channel in &mut pixel.0[..3] {
+            *channel = ((u16::from(*channel) * alpha + 127) / 255) as u8;
+        }
+    }
+    let mut small = image::imageops::resize(
+        &frame,
+        fit(width),
+        fit(height),
+        image::imageops::FilterType::Lanczos3,
+    );
+    for pixel in small.pixels_mut() {
+        let alpha = u16::from(pixel[3]);
+        if alpha > 0 {
+            for channel in &mut pixel.0[..3] {
+                *channel = ((u16::from(*channel) * 255 + alpha / 2) / alpha).min(255) as u8;
+            }
+        }
+    }
+    small
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn large_icons_are_scaled_down_with_clean_edges() {
+        // White on the right half, transparent black on the left.
+        let big = image::RgbaImage::from_fn(512, 256, |x, _| {
+            if x < 256 {
+                image::Rgba([0, 0, 0, 0])
+            } else {
+                image::Rgba([255, 255, 255, 255])
+            }
+        });
+        let small = shrink_icon(big, 64);
+        assert_eq!(small.dimensions(), (64, 32), "it keeps its shape");
+        for pixel in small.pixels().filter(|pixel| pixel[3] > 8) {
+            assert!(
+                pixel.0[..3].iter().all(|channel| *channel >= 250),
+                "{pixel:?}"
+            );
+        }
+        let favicon = image::RgbaImage::new(16, 16);
+        assert_eq!(
+            shrink_icon(favicon, 64).dimensions(),
+            (16, 16),
+            "small ones stay"
+        );
+    }
 
     fn document(url: &str, content_type: &str, html: &str) -> JSValue {
         JSValue::Array(
