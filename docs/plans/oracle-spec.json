@@ -8,7 +8,7 @@
     "theorem_branch": "claude/notes-foundations",
     "theorem_rev": "7eb1ba024b6ccab8146f7857535dcdc6334eb39b",
     "servo_repo": "https://github.com/Travis-Gilbert/servo.git",
-    "servo_branch": "consolidated",
+    "servo_branch": "main",
     "servo_rev": "efdf7370da024f467f7526798fe5c6e50e784b52",
     "servo_archival_base": "ebc89e684b721f0a8e2407aad20b121a61187779",
     "servo_features": [

@@ -2,7 +2,7 @@
 
 `script/bootstrap-media` checks out Servo commit
 `efdf7370da024f467f7526798fe5c6e50e784b52` from `Travis-Gilbert/servo`
-(branch `consolidated`)
+(branch `main`)
 and applies the GStreamer patch without discarding local work. That commit
 also rounds text selection highlights the way code editors draw them
 (`components/layout/display_list/selection.rs`).
