@@ -1,0 +1,52 @@
+{
+  "url": "file:///Volumes/SSD%20Samsung/frame-worktrees/site-panel/tests/site-panel/index.html",
+  "title": "Site Panel Fixture",
+  "description": "A page with known metadata, fonts and flat colour blocks, for the site panel check.",
+  "theme_color": "#1b3a6b",
+  "fonts": [
+    {
+      "family": "Georgia",
+      "roles": [
+        "Headings"
+      ]
+    },
+    {
+      "family": "Helvetica Neue",
+      "roles": [
+        "Body"
+      ]
+    },
+    {
+      "family": "Menlo",
+      "roles": [
+        "Code"
+      ]
+    }
+  ],
+  "palette": [
+    {
+      "color": "#1f4e79",
+      "share": 0.492
+    },
+    {
+      "color": "#e8b923",
+      "share": 0.257
+    },
+    {
+      "color": "#c0392b",
+      "share": 0.149
+    },
+    {
+      "color": "#2e8b57",
+      "share": 0.095
+    },
+    {
+      "color": "#fdfdfe",
+      "share": 0.007
+    },
+    {
+      "color": "#7f9ab2",
+      "share": 0.001
+    }
+  ]
+}

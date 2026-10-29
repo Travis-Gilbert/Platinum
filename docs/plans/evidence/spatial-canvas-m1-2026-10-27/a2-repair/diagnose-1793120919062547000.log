@@ -1,0 +1,34 @@
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+DIAG 1793120923881 click #choice Point { x: 450px, y: 324.86667px }
+CONTROL 1793120923911 show SelectElement
+CONTROL 1793120923911 popup mounted
+CONTROL 1793120923922 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(0) }; popup=true color=false
+CONTROL 1793120923922 popup dismissed
+DIAG 1793120924024 #choice {"popup":false,"color":false,"file":false}
+DIAG 1793120924233 #choice {"popup":false,"color":false,"file":false}
+DIAG 1793120924756 #choice {"popup":false,"color":false,"file":false}
+DIAG 1793120925511 click #color Point { x: 450px, y: 324.93332px }
+CONTROL 1793120925546 show InputMethod
+CONTROL 1793120925546 show ColorPicker
+CONTROL 1793120925546 color open begin
+CONTROL 1793120925563 color open returned visible=true
+CONTROL 1793120925594 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(2) }; popup=false color=true
+[2026-10-27T17:08:45Z ERROR] RefCell already borrowed
+[2026-10-27T17:08:45Z ERROR] RefCell already borrowed
+CONTROL 1793120925616 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(1) }; popup=false color=false
+DIAG 1793120925616 #color {"popup":false,"color":false,"file":false}
+CONTROL 1793120925629 show InputMethod
+DIAG 1793120925826 #color {"popup":false,"color":false,"file":false}
+DIAG 1793120926348 #color {"popup":false,"color":false,"file":false}
+DIAG 1793120927093 click #file Point { x: 450.18332px, y: 324.86667px }
+CONTROL 1793120927096 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(3) }; popup=false color=false
+CONTROL 1793120927096 show FilePicker
+CONTROL 1793120927097 file open begin
+CONTROL 1793120927097 file open returned
+DIAG 1793120927758 #file {"popup":false,"color":false,"file":true}
+CONTROL 1793120927815 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(4) }; popup=false color=false
+DIAG 1793120927968 #file {"popup":false,"color":false,"file":true}
+DIAG 1793120928493 #file {"popup":false,"color":false,"file":true}
+CONTROL 1793120928583 camera dismiss controls
+[2026-10-27T17:08:48Z ERROR] RefCell already borrowed
+[2026-10-27T17:08:48Z ERROR] RefCell already borrowed

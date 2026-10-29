@@ -141,6 +141,38 @@ impl SceneRenderingContext {
         Some([most[2], most[1], most[0]])
     }
 
+    /// The last frame's pixels, for `read` to look at while the buffer is
+    /// locked: BGRA bytes, rows bottom first, with the width, the height and
+    /// the bytes to a row. `None` before the first frame.
+    pub fn with_pixels<R>(&self, read: impl FnOnce(&[u8], usize, usize, usize) -> R) -> Option<R> {
+        let frame = self.frame()?;
+        let (width, height) = (
+            CVPixelBufferGetWidth(&frame),
+            CVPixelBufferGetHeight(&frame),
+        );
+        let flags = CVPixelBufferLockFlags::ReadOnly;
+        // SAFETY: the buffer is locked while its memory is read, a locked
+        // buffer's base address covers every row, and `read` cannot keep the
+        // slice past the unlock.
+        unsafe {
+            if CVPixelBufferLockBaseAddress(&frame, flags) != kCVReturnSuccess {
+                return None;
+            }
+            let base = CVPixelBufferGetBaseAddress(&frame).cast::<u8>();
+            let read = (!base.is_null()).then(|| {
+                let stride = CVPixelBufferGetBytesPerRow(&frame);
+                read(
+                    std::slice::from_raw_parts(base, stride * height),
+                    width,
+                    height,
+                    stride,
+                )
+            });
+            CVPixelBufferUnlockBaseAddress(&frame, flags);
+            read
+        }
+    }
+
     fn framebuffer(&self) -> gl::GLuint {
         let device = self.device.borrow();
         let context = self.context.borrow();
@@ -388,5 +420,55 @@ mod tests {
         context.present();
 
         assert_eq!(context.top_color(), Some([255, 0, 0]));
+    }
+
+    /// The palette reads a real frame: BGRA bytes, a row's stride, either
+    /// half of the picture.
+    #[test]
+    fn a_presented_frame_hands_its_pixels_over_for_a_palette() {
+        let context = SceneRenderingContext::new(PhysicalSize::new(64, 8)).unwrap();
+        assert!(
+            context.with_pixels(|_, _, _, _| ()).is_none(),
+            "nothing presented yet"
+        );
+        context.make_current().unwrap();
+        context.prepare_for_rendering();
+        let gl = context.gleam_gl_api();
+        gl.clear_color(0.0, 0.0, 1.0, 1.0);
+        gl.clear(gl::COLOR_BUFFER_BIT);
+        gl.enable(gl::SCISSOR_TEST);
+        gl.scissor(0, 4, 64, 4);
+        gl.clear_color(1.0, 0.0, 0.0, 1.0);
+        gl.clear(gl::COLOR_BUFFER_BIT);
+        gl.disable(gl::SCISSOR_TEST);
+        gl.finish();
+        context.present();
+
+        let (width, height, stride, swatches) = context
+            .with_pixels(|pixels, width, height, stride| {
+                (
+                    width,
+                    height,
+                    stride,
+                    crate::site::palette(pixels, width, height, stride),
+                )
+            })
+            .expect("a frame");
+        assert_eq!((width, height), (64, 8));
+        assert!(stride >= 64 * 4);
+        let colors: Vec<_> = swatches.iter().map(|swatch| swatch.color).collect();
+        assert_eq!(swatches.len(), 2, "{colors:?}");
+        // Lab and back moves a channel by a step at most.
+        let has = |want: [u8; 3]| {
+            colors
+                .iter()
+                .any(|color| color.iter().zip(want).all(|(a, b)| a.abs_diff(b) <= 2))
+        };
+        assert!(has([255, 0, 0]) && has([0, 0, 255]), "{colors:?}");
+        assert!(
+            swatches
+                .iter()
+                .all(|swatch| (swatch.share - 0.5).abs() < 0.05)
+        );
     }
 }

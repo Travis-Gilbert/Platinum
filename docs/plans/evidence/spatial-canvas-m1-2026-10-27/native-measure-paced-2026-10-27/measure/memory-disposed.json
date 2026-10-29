@@ -1,0 +1,12 @@
+{
+  "rss_bytes": 393314304,
+  "physical_footprint_bytes": 286575821,
+  "physical_footprint_reported": "273.3M",
+  "iosurface_regions": [
+    "IOSurface                         48.7M    48.5M    48.5M       0K       0K    48.5M       0K       60 "
+  ],
+  "iosurface_region_reported": true,
+  "vmmap_file": "vmmap-disposed.txt",
+  "elapsed_seconds": 1.5771572090000001,
+  "precision": "Physical footprint rounded by vmmap; IOSurface lines retain all original columns. Missing region is not zero."
+}

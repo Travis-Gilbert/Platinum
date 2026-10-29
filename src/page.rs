@@ -8,6 +8,8 @@
 //! child view is gone, since the chrome must draw over pages, and the page
 //! is one of many tabs.
 
+use gpui_kit::StatefulInteractiveElement as _;
+
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Range;
@@ -16,7 +18,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use dpi::PhysicalSize;
-use euclid::Scale;
+use euclid::{Scale, Size2D};
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
 use gpui_kit::component::{ActiveTheme as _, Theme as ChromeTheme};
 use gpui_kit::{
@@ -43,6 +45,7 @@ use crate::engine::Engine;
 use crate::keys;
 use crate::scene::SceneRenderingContext;
 use crate::search::{self, VisitedPage};
+use crate::site::{self, SiteInfo};
 
 /// The key context the Edit menu's shortcuts bind in.
 pub const CONTEXT: &str = "Page";
@@ -50,8 +53,13 @@ pub const CONTEXT: &str = "Page";
 /// The current document's address, type and rendered markup, read together so
 /// they always describe the same document: for the local search index, and
 /// to notice Servo's placeholder for a file it cannot show.
-const READ_DOCUMENT: &str = "[document.URL, document.contentType, \
-    document.documentElement ? document.documentElement.outerHTML : '']";
+// A login form is never serialized into local search/model context. This also
+// excludes a site's own reflected password attributes after a fill.
+const READ_DOCUMENT: &str = include_str!("scripts/read_document.js");
+
+/// The site panel's reading of the current document: its metadata and the
+/// fonts in use, as a JSON string.
+const SITE_PANEL: &str = include_str!("scripts/site-panel.js");
 
 /// servoshell's line height for wheels that scroll by lines.
 const LINE_HEIGHT: f64 = 38.0;
@@ -59,6 +67,9 @@ const LINE_HEIGHT: f64 = 38.0;
 /// Browser shortcuts the page never sees, so no site can take them.
 const RESERVED: &[&str] = &[
     "cmd-k",
+    "cmd-d",
+    "cmd-y",
+    "cmd-shift-p",
     "cmd-t",
     "cmd-w",
     "cmd-l",
@@ -72,6 +83,7 @@ const RESERVED: &[&str] = &[
     "ctrl-tab",
     "ctrl-shift-tab",
     "ctrl-cmd-c",
+    "ctrl-cmd-b",
     "cmd-1",
     "cmd-2",
     "cmd-3",
@@ -87,10 +99,16 @@ const RESERVED: &[&str] = &[
 pub enum PageEvent {
     /// The title, address, load state or history changed.
     Changed,
+    Visited,
+    PasswordFilled(bool),
+    FormFilled(bool),
+    PasswordRead(frame_profile::credentials::Login),
+    PasswordUnavailable,
     /// The page opened new windows; `Page::take_opened` hands them over.
     Opened,
     /// The page's own context menu, which Frame shows as its search menu.
     ContextMenu(PageMenu),
+    RevealCanvas,
     /// The page closed itself.
     Closed,
     /// A file to save rather than show: a link to one, or a page that
@@ -121,12 +139,20 @@ pub struct PageMenuItem {
 pub struct Page {
     focus_handle: FocusHandle,
     pub(crate) webview: WebView,
-    delegate: Rc<Delegate>,
-    context: Rc<SceneRenderingContext>,
+    pub(crate) delegate: Rc<Delegate>,
+    pub(crate) context: Rc<SceneRenderingContext>,
     /// The page element's last layout, in window points, and the scale it
     /// was placed at.
     pub(crate) bounds: Option<Bounds<Pixels>>,
     pub(crate) scale: f32,
+    pub(crate) canvas_zoom: f32,
+    pub(crate) canvas_cached: bool,
+    pub(crate) canvas_world: Option<gpui_kit::Size<Pixels>>,
+    pub(crate) canvas_cap: gpui_kit::Size<Pixels>,
+    pub(crate) canvas_settled: bool,
+    pub(crate) canvas_input: Option<crate::canvas::input::SharedInput>,
+    pub(crate) canvas_focus: Option<FocusHandle>,
+    viewport_size: Option<gpui_kit::Size<Pixels>>,
     cursor: CursorStyle,
     /// Keys down now, so another key-down for one of them is a repeat.
     held: HashSet<String>,
@@ -147,6 +173,8 @@ pub struct Page {
     favicon: Option<(String, Arc<RenderImage>)>,
     /// The color along the top of the page, which the toolbar takes.
     tint: Option<Hsla>,
+    /// What the site panel shows, as of the last `read_site`.
+    site: Option<SiteInfo>,
     /// The corners of the card the page sits in, which round its picture
     /// (`Browser::content`).
     pub(crate) corners: Corners<Pixels>,
@@ -201,11 +229,16 @@ impl Page {
             let replaying = Rc::new(Cell::new(false));
             let subscriptions = vec![
                 cx.on_focus(&focus_handle, window, |page, _, _| {
+                    crate::controls::control_trace("Page focus -> Servo true");
                     page.webview.set_focused(true)
                 }),
-                cx.on_blur(&focus_handle, window, |page, _, _| {
+                cx.on_blur(&focus_handle, window, |page, window, cx| {
+                    let popup_focused = page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
+                    let panel_open = page.controls.owns_native_panel();
+                    crate::controls::control_trace(if popup_focused { "Page blur -> owned popup retains Servo focus" } else if panel_open { "Page blur -> owned panel retains Servo focus" } else { "Page blur -> Servo false" });
                     page.release_buttons();
-                    page.webview.set_focused(false);
+                    if let Some(input) = &page.canvas_input { input.borrow_mut().cancel_space(); }
+                    if !popup_focused && !panel_open { page.webview.set_focused(false); }
                 }),
                 cx.observe_global::<ChromeTheme>(|page, cx| {
                     page.webview.notify_theme_change(servo_theme(cx));
@@ -216,6 +249,14 @@ impl Page {
             Self {
                 focus_handle,
                 scale: window.scale_factor(),
+                canvas_zoom: 1.,
+                canvas_cached: false,
+                canvas_world: None,
+                canvas_cap: window.viewport_size(),
+                canvas_settled: true,
+                canvas_input: None,
+                canvas_focus: None,
+                viewport_size: None,
                 webview,
                 delegate,
                 context,
@@ -233,6 +274,7 @@ impl Page {
                 opened: Vec::new(),
                 favicon: None,
                 tint: None,
+                site: None,
                 corners: Corners::default(),
                 _subscriptions: subscriptions,
             }
@@ -270,6 +312,16 @@ impl Page {
     /// The color along the top of the page.
     pub fn tint(&self) -> Option<Hsla> {
         self.tint
+    }
+
+    /// What the site panel shows, while the page is still on the document
+    /// `read_site` read it from.
+    pub fn site(&self) -> Option<&SiteInfo> {
+        let info = self.site.as_ref()?;
+        let current = self.webview.url()?;
+        let mut read_from = info.url.clone()?;
+        read_from.set_fragment(current.fragment());
+        (read_from == current).then_some(info)
     }
 
     pub fn is_loading(&self) -> bool {
@@ -313,6 +365,7 @@ impl Page {
 
     /// Background tabs stop painting and running timers at full rate.
     pub fn set_visible(&mut self, visible: bool) {
+        self.delegate.set_visible(visible);
         if visible {
             self.webview.show();
         } else {
@@ -350,8 +403,22 @@ impl Page {
                     cx.emit(PageEvent::Changed);
                     cx.notify();
                 }
-                ServoEvent::Loaded => self.read_document(),
+                ServoEvent::Loaded => {
+                    self.read_document();
+                    cx.emit(PageEvent::Visited);
+                }
+                ServoEvent::FormFilled(filled) => cx.emit(PageEvent::FormFilled(filled)),
+                ServoEvent::PasswordFilled(filled) => cx.emit(PageEvent::PasswordFilled(filled)),
+                ServoEvent::PasswordRead(login) => match login {
+                    Some(login) => cx.emit(PageEvent::PasswordRead(login)),
+                    None => cx.emit(PageEvent::PasswordUnavailable),
+                },
                 ServoEvent::Document(page) => search::capture(page, cx),
+                ServoEvent::Site(info) => {
+                    self.site = Some(info);
+                    cx.emit(PageEvent::Changed);
+                    cx.notify();
+                }
                 ServoEvent::Crashed(reason) => self.crashed(&reason, window, cx),
                 ServoEvent::OpenExternally(url) => cx.open_url(url.as_str()),
                 ServoEvent::NewWebView(new) => {
@@ -362,6 +429,57 @@ impl Page {
                 ServoEvent::Download(url) => cx.emit(PageEvent::Download(url)),
             }
         }
+    }
+
+    pub fn fill_form_info(&self, script: &str) {
+        let delegate = self.delegate.clone();
+        self.webview.evaluate_javascript(script, move |r| {
+            delegate.push(ServoEvent::FormFilled(matches!(
+                r,
+                Ok(JSValue::Boolean(true))
+            )))
+        });
+    }
+    pub fn fill_password(&self, script: &str) {
+        let delegate = self.delegate.clone();
+        self.webview.evaluate_javascript(script, move |result| {
+            delegate.push(ServoEvent::PasswordFilled(matches!(
+                result,
+                Ok(JSValue::Boolean(true))
+            )));
+        });
+    }
+
+    pub fn read_password(&self) -> anyhow::Result<()> {
+        let url = self.url().ok_or_else(|| anyhow!("No login page"))?;
+        let script = frame_profile::credentials::read_script(url.as_str())?;
+        let expected = url.origin().ascii_serialization();
+        let delegate = self.delegate.clone();
+        self.webview.evaluate_javascript(script, move |result| {
+            let login = (|| {
+                let JSValue::Array(values) = result.ok()? else {
+                    return None;
+                };
+                let [
+                    JSValue::String(origin),
+                    JSValue::String(username),
+                    JSValue::String(password),
+                ] = <[JSValue; 3]>::try_from(values).ok()?
+                else {
+                    return None;
+                };
+                if origin != expected || password.is_empty() {
+                    return None;
+                }
+                Some(frame_profile::credentials::Login {
+                    origin,
+                    username,
+                    password: zeroize::Zeroizing::new(password),
+                })
+            })();
+            delegate.push(ServoEvent::PasswordRead(login));
+        });
+        Ok(())
     }
 
     /// Read the finished document back: for the local search index, or, when
@@ -385,6 +503,24 @@ impl Page {
                     None => {}
                 },
                 Err(error) => log::debug!("could not read the page back: {error:?}"),
+            });
+    }
+
+    /// Read what the site panel shows: the page's metadata and fonts, from
+    /// the document, and its palette, from the newest frame. Only when the
+    /// panel opens, never on a load, and none of it goes to the search index
+    /// or the model. The answer arrives like Servo's events and is kept for
+    /// `site`.
+    pub fn read_site(&self) {
+        let palette = self.context.with_pixels(site::palette).unwrap_or_default();
+        let delegate = self.delegate.clone();
+        self.webview
+            .evaluate_javascript(SITE_PANEL, move |result| match result {
+                Ok(JSValue::String(answer)) => match SiteInfo::from_answer(&answer, palette) {
+                    Some(info) => delegate.site(info),
+                    None => log::debug!("the site panel's answer was not an object"),
+                },
+                other => log::debug!("could not read the site: {other:?}"),
             });
     }
 
@@ -483,15 +619,25 @@ impl Page {
             let Some(page) = page.upgrade() else {
                 return;
             };
-            if page.update(cx, |page, _| page.key_down(&event.keystroke, window)) {
+            if page.update(cx, |page, cx| page.key_down(&event.keystroke, window, cx)) {
                 cx.stop_propagation();
             }
         })
     }
 
-    fn key_down(&mut self, keystroke: &Keystroke, window: &Window) -> bool {
+    fn key_down(&mut self, keystroke: &Keystroke, window: &Window, cx: &mut Context<Self>) -> bool {
         if !self.focus_handle.is_focused(window) {
             return false;
+        }
+        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().space_pending) {
+            self.canvas_input.as_ref().unwrap().borrow_mut().pending_events.push(gpui_kit::PlatformInput::KeyDown(gpui_kit::KeyDownEvent {
+                keystroke: keystroke.clone(), is_held: false, prefer_character_input: false,
+            }));
+            return true;
+        }
+        if keystroke.key == "space" && self.canvas_input.is_some() {
+            self.canvas_space(keystroke, window, cx);
+            return true;
         }
         self.controls.dismiss_menus();
         let shortcut = keystroke.modifiers.platform || keystroke.modifiers.control;
@@ -500,15 +646,84 @@ impl Page {
         let repeat = !shortcut && !self.held.insert(keystroke.key.clone());
         let event = keys::keyboard_event(keystroke, KeyState::Down, repeat);
         let id = self.send(InputEvent::Keyboard(event));
-        if shortcut {
+        if shortcut || (keystroke.key == "escape" && self.canvas_focus.is_some()) {
             self.shortcuts.insert(id, keystroke.clone());
         }
         true
     }
 
-    fn key_up(&mut self, event: &KeyUpEvent, window: &mut Window, _: &mut Context<Self>) {
+    fn canvas_space(&mut self, key: &Keystroke, window: &Window, cx: &mut Context<Self>) {
+        let input = self.canvas_input.as_ref().unwrap().clone();
+        if input.borrow().space_editable {
+            self.send(InputEvent::Keyboard(keys::keyboard_event(key, KeyState::Down, true)));
+            return;
+        }
+        if input.borrow().space.is_some() { return; }
+        input.borrow_mut().hold_space(key);
+        input.borrow_mut().space_pending = true;
+        let generation = input.borrow().space_generation;
+        let (send, receive) = futures::channel::oneshot::channel();
+        self.webview.evaluate_javascript(r#"(() => {
+            if (document.designMode === 'on') return true;
+            let e = document.activeElement;
+            while (e?.shadowRoot?.activeElement) e = e.shadowRoot.activeElement;
+            return !!e && (e.isContentEditable || e.tagName === 'IFRAME' ||
+                (e.matches('input,textarea,select') && !e.disabled && !e.readOnly));
+        })()"#, move |result| { let _ = send.send(result); });
+        let owner = window.window_handle();
+        cx.spawn(async move |page, cx| {
+            use futures::FutureExt as _;
+            let response = receive.fuse();
+            let timeout = cx.background_executor().timer(std::time::Duration::from_secs(1)).fuse();
+            futures::pin_mut!(response, timeout);
+            let editable = futures::select! {
+                result = response => !matches!(result, Ok(Ok(JSValue::Boolean(false)))),
+                _ = timeout => true,
+            };
+            let queued = page.update(cx, |page, _| {
+                let mut state = input.borrow_mut();
+                if state.space_generation != generation || !state.space_pending { return Vec::new(); }
+                state.space_pending = false;
+                state.space_editable = editable;
+                if editable {
+                    if let Some(key) = state.space.take() {
+                        page.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Down, false)));
+                    }
+                }
+                std::mem::take(&mut state.pending_events)
+            });
+            if let Ok(queued) = queued {
+                let _ = owner.update(cx, |_, window, cx| {
+                    for event in queued { window.dispatch_event(event, cx); }
+                });
+            }
+        }).detach();
+    }
+
+    fn key_up(&mut self, event: &KeyUpEvent, window: &mut Window, cx: &mut Context<Self>) {
         if !self.focus_handle.is_focused(window) {
             return;
+        }
+        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().space_pending) {
+            self.canvas_input.as_ref().unwrap().borrow_mut().pending_events.push(gpui_kit::PlatformInput::KeyUp(event.clone()));
+            cx.stop_propagation();
+            return;
+        }
+        if event.keystroke.key == "space" {
+            if let Some(input) = &self.canvas_input {
+                let mut state = input.borrow_mut();
+                if std::mem::take(&mut state.space_editable) {
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(&event.keystroke, KeyState::Up, false)));
+                } else if self.input_method.is_some() && state.space.is_none() {
+                    self.held.remove(&event.keystroke.key);
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(&event.keystroke, KeyState::Up, false)));
+                } else if let Some(key) = state.release_space() {
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Down, false)));
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Up, false)));
+                }
+                cx.stop_propagation();
+                return;
+            }
         }
         self.held.remove(&event.keystroke.key);
         let event = keys::keyboard_event(&event.keystroke, KeyState::Up, false);
@@ -537,6 +752,12 @@ impl Page {
         };
         if result.intersects(InputEventResult::Consumed | InputEventResult::DefaultPrevented) {
             return;
+        }
+        if keystroke.key == "escape" {
+            if let Some(focus) = &self.canvas_focus {
+                window.focus(focus, cx);
+                return;
+            }
         }
         let replaying = self.replaying.clone();
         window.defer(cx, move |window, cx| {
@@ -582,12 +803,18 @@ impl Page {
 
     // Pointer.
 
+    pub(crate) fn transform(&self) -> Option<crate::canvas::surface::SurfaceTransform> {
+        Some(crate::canvas::surface::SurfaceTransform {
+            bounds: self.bounds?, zoom: self.canvas_zoom, raster_scale: self.scale,
+        })
+    }
+
     fn device_point(&self, position: Point<Pixels>) -> Option<DevicePoint> {
-        let origin = self.bounds?.origin;
-        Some(DevicePoint::new(
-            f32::from(position.x - origin.x) * self.scale,
-            f32::from(position.y - origin.y) * self.scale,
-        ))
+        Some(self.transform()?.device_point(position))
+    }
+
+    pub(crate) fn window_point(&self, x: i32, y: i32) -> Point<Pixels> {
+        self.transform().map_or(point(px(0.), px(0.)), |t| t.window_point(x as f32, y as f32))
     }
 
     fn mouse_down(&mut self, event: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
@@ -640,6 +867,8 @@ impl Page {
     }
 
     fn mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
+        if self.canvas_cached { return; }
+        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().board_drag || input.borrow().space_pending) { return; }
         if let Some(point) = self.device_point(event.position) {
             self.last_pointer = Some(event.position);
             self.send(InputEvent::MouseMove(ServoMouseMove::new(point.into())));
@@ -654,13 +883,15 @@ impl Page {
     }
 
     fn scroll(&mut self, event: &ScrollWheelEvent, _: &mut Window, cx: &mut Context<Self>) {
+        if self.canvas_cached { return; }
+        if self.canvas_input.is_some() && event.modifiers.platform { return; }
         let Some(point) = self.device_point(event.position) else {
             return;
         };
         let (x, y) = match event.delta {
             ScrollDelta::Pixels(delta) => (
-                f64::from(f32::from(delta.x) * self.scale),
-                f64::from(f32::from(delta.y) * self.scale),
+                f64::from(f32::from(delta.x) * self.scale / self.canvas_zoom),
+                f64::from(f32::from(delta.y) * self.scale / self.canvas_zoom),
             ),
             ScrollDelta::Lines(delta) => (
                 f64::from(delta.x) * LINE_HEIGHT,
@@ -686,18 +917,26 @@ impl Page {
 
     /// Size the web view to where the page was laid out.
     fn place(&mut self, bounds: Bounds<Pixels>, scale: f32) {
-        if self.bounds == Some(bounds) && self.scale == scale {
+        self.bounds = Some(bounds);
+        let (world, scale) = if let Some(world) = self.canvas_world {
+            if !self.canvas_settled { return; }
+            (world, crate::canvas::surface::settled_scale(world, self.canvas_zoom, scale, self.canvas_cap))
+        } else {
+            self.canvas_zoom = 1.;
+            (bounds.size, scale)
+        };
+        if self.scale == scale && self.viewport_size == Some(world) {
             return;
         }
-        if self.scale != scale {
-            self.webview.set_hidpi_scale_factor(Scale::new(scale));
+        let css_size = Size2D::new(f32::from(world.width), f32::from(world.height));
+        // `set_viewport` panics unless both sides are finite and positive.
+        let usable = |side: f32| side.is_finite() && side > 0.;
+        if !(usable(css_size.width) && usable(css_size.height)) {
+            return;
         }
-        self.webview.resize(PhysicalSize::new(
-            (f32::from(bounds.size.width) * scale).round().max(1.0) as u32,
-            (f32::from(bounds.size.height) * scale).round().max(1.0) as u32,
-        ));
-        self.bounds = Some(bounds);
+        self.webview.set_viewport(css_size, Scale::new(scale));
         self.scale = scale;
+        self.viewport_size = Some(world);
     }
 
     // Input method.
@@ -842,6 +1081,11 @@ impl Render for Page {
             .on_mouse_up_out(GpuiButton::Middle, cx.listener(Self::mouse_up))
             .on_mouse_move(cx.listener(Self::mouse_move))
             .on_mouse_exit(cx.listener(Self::mouse_exit))
+            .on_hover(cx.listener(|page, hovered, _, _| {
+                if !hovered {
+                    page.send(InputEvent::MouseLeftViewport(MouseLeftViewportEvent::default()));
+                }
+            }))
             .on_scroll_wheel(cx.listener(Self::scroll))
             .on_pinch(cx.listener(Self::pinch))
             .on_key_up(cx.listener(Self::key_up))
@@ -968,19 +1212,16 @@ impl EntityInputHandler for Page {
     fn bounds_for_range(
         &mut self,
         _: Range<usize>,
-        element: Bounds<Pixels>,
+        _element: Bounds<Pixels>,
         _: &mut Window,
         _: &mut Context<Self>,
     ) -> Option<Bounds<Pixels>> {
         if let Some(control) = &self.input_method {
             let rect = control.position();
-            let origin = point(
-                element.origin.x + px(rect.min.x as f32 / self.scale),
-                element.origin.y + px(rect.min.y as f32 / self.scale),
-            );
+            let origin = self.window_point(rect.min.x, rect.min.y);
             let extent = size(
-                px(rect.width() as f32 / self.scale),
-                px(rect.height() as f32 / self.scale),
+                px(rect.width() as f32 / self.scale * self.canvas_zoom),
+                px(rect.height() as f32 / self.scale * self.canvas_zoom),
             );
             return Some(Bounds::new(origin, extent));
         }

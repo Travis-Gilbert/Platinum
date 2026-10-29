@@ -35,13 +35,14 @@ use std::time::Duration;
 
 use gpui_kit::base::dock::{DockArea, DockEvent, DragPanel, NodeId, PanelId, TabGroupContext};
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
-use gpui_kit::component::command::CommandState;
+use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
 use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::notification::Notification;
 use gpui_kit::component::popover::Popover;
 use gpui_kit::component::progress::{Progress, ProgressCircle};
 use gpui_kit::component::spinner::Spinner;
+use gpui_kit::component::status_bar::StatusBar;
 use gpui_kit::component::tab::{Tab as TabItem, TabBar};
 use gpui_kit::component::toolbar::Toolbar;
 use gpui_kit::component::tree::TreeState;
@@ -60,9 +61,10 @@ use url::Url;
 
 use self::dock::{DRAG_PREVIEW, FRAME, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
-    ActivateTab, CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, NextTab, OpenPalette,
-    PinTab, PreviousTab, Quit, Reload, SetAppearance, SharePage, ShowConsole, ShowDownloads,
-    ToggleAsk, ToggleCompact, ToggleSidebar,
+    ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
+    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit,
+    Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads,
+    ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
@@ -73,11 +75,13 @@ use crate::icons;
 use crate::inspector::Inspector;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
+use crate::profile_ui::{ActiveProfile, ProfileEvent, ProfilePanel, Section};
 use crate::serp::{Serp, SerpEvent, SerpMode};
 use crate::session::{Content, Layout, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
+use frame_profile::credentials::{self, Keychain};
 
 /// The height of a row of tabs, the same as the title bar's.
 const TAB_ROW: f32 = 36.;
@@ -318,6 +322,7 @@ fn site_summary(url: &Url, title: &str, loading: bool) -> SharedString {
 }
 
 pub struct Browser {
+    canvas: Option<Entity<crate::canvas::SpatialCanvas>>,
     focus_handle: FocusHandle,
     /// In the dock's order: group by group, left to right, top to bottom.
     tabs: Vec<Tab>,
@@ -330,6 +335,9 @@ pub struct Browser {
     displayed: Vec<PanelId>,
     top_groups: Vec<NodeId>,
     omnibox: Entity<InputState>,
+    suggestion_state: Entity<CommandState>,
+    suggestions: Vec<frame_profile::LibraryEntry>,
+    address_anchor: Rc<RefCell<Option<Bounds<Pixels>>>>,
     /// The person is typing in the address bar; leave its text alone.
     editing: bool,
     /// The address bar asks (RustyWeb's synthesis) instead of searching.
@@ -371,6 +379,8 @@ pub struct Browser {
     written: Option<(Session, Vec<Pin>)>,
     icons_changed: bool,
     _save: Task<()>,
+    profile_panel: Option<Entity<ProfilePanel>>,
+    profile_events: Option<Subscription>,
     _omnibox_events: Subscription,
     _dock_events: Subscription,
     _downloads_events: Subscription,
@@ -428,6 +438,7 @@ impl Browser {
             .unwrap_or(0);
         let next_pin = pins.iter().map(|pin| pin.id + 1).max().unwrap_or(0);
         let mut browser = Self {
+            canvas: None,
             focus_handle: cx.focus_handle(),
             tabs: restored.tabs,
             active: 0,
@@ -436,6 +447,9 @@ impl Browser {
             displayed: Vec::new(),
             top_groups: Vec::new(),
             omnibox,
+            suggestion_state: cx.new(|cx| CommandState::new(window, cx)),
+            suggestions: Vec::new(),
+            address_anchor: Rc::default(),
             editing: false,
             ask: false,
             compact: false,
@@ -460,6 +474,8 @@ impl Browser {
             written: None,
             icons_changed: false,
             _save: Task::ready(()),
+            profile_panel: None,
+            profile_events: None,
             _omnibox_events: omnibox_events,
             _dock_events: dock_events,
             _downloads_events: downloads_events,
@@ -536,6 +552,202 @@ impl Browser {
             active: session.active,
             sidebar: session.sidebar,
             sidebar_width: session.sidebar_width,
+        }
+    }
+
+    fn show_profile_panel(
+        &mut self,
+        section: Section,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.close_navigator(window, cx);
+        let Some(store) = cx.try_global::<ActiveProfile>().map(|p| p.0.clone()) else {
+            return;
+        };
+        let panel = cx.new(|cx| ProfilePanel::new(store, section, window, cx));
+        self.profile_events =
+            Some(
+                cx.subscribe_in(&panel, window, |this, _, event, window, cx| {
+                    let ProfileEvent::Open(url) = event;
+                    window.close_sheet(cx);
+                    this.go(url.clone(), false, false, window, cx);
+                }),
+            );
+        self.profile_panel = Some(panel.clone());
+        window.open_sheet(cx, move |sheet, _, _| {
+            sheet
+                .title("Browser data")
+                .size(px(520.))
+                .child(panel.clone())
+        });
+    }
+
+    fn bookmark_page(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(store) = cx.try_global::<ActiveProfile>() {
+            if let Some(url) = self.tabs[self.active].url(cx) {
+                let result = store
+                    .0
+                    .bookmark(url.as_str(), &self.tabs[self.active].title(cx));
+                window.push_notification(
+                    if result.is_ok() {
+                        Notification::success("Bookmark saved")
+                    } else {
+                        Notification::error("Could not save bookmark")
+                    },
+                    cx,
+                );
+            }
+        }
+    }
+
+    fn choose_password(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.close_navigator(window, cx);
+        let Some(store) = cx.try_global::<ActiveProfile>().map(|p| p.0.clone()) else {
+            return;
+        };
+        let Some(page) = self.tabs[self.active]
+            .page
+            .clone()
+            .filter(|_| self.tabs[self.active].showing == Showing::Page)
+        else {
+            return;
+        };
+        let Some(url) = page
+            .read(cx)
+            .url()
+            .filter(|u| credentials::fill_allowed(u.as_str()))
+        else {
+            window.push_notification(Notification::error("Open a secure login page first"), cx);
+            return;
+        };
+        let accounts = credentials::accounts(&store, url.as_str()).unwrap_or_default();
+        if accounts.is_empty() {
+            window.push_notification(Notification::info("No saved passwords for this site. Import passwords from File > Import Browser Data."),cx);
+            return;
+        }
+        let browser = cx.weak_entity();
+        window.open_dialog(cx, move |dialog, _, _| {
+            let mut list = v_flex().gap_2().child(url.origin().ascii_serialization());
+            for (ix, username) in accounts.iter().enumerate() {
+                let username = username.clone();
+                let url = url.clone();
+                let store = store.clone();
+                let page = page.clone();
+                let browser = browser.clone();
+                list = list.child(
+                    Button::new(("login", ix))
+                        .label(if username.is_empty() {
+                            "Account without username".into()
+                        } else {
+                            username.clone()
+                        })
+                        .on_click(move |_, window, cx| {
+                            window.close_dialog(cx);
+                            let _ = browser.update(cx, |_, cx| {
+                                let username = username.clone();
+                                let store = store.clone();
+                                let page = page.clone();
+                                let url = url.clone();
+                                let expected = url.clone();
+                                let task = cx.background_spawn(async move {
+                                    credentials::password(
+                                        &Keychain::for_profile(&store),
+                                        url.as_str(),
+                                        &username,
+                                    )
+                                    .and_then(|password| {
+                                        credentials::fill_script(url.as_str(), &username, &password)
+                                    })
+                                });
+                                cx.spawn_in(window, async move |_, cx| {
+                                    let result = task.await;
+                                    let _ = cx.update(|window, cx| match result {
+                                        Ok(script) => page.update(cx, |page, _| {
+                                            if page
+                                                .url()
+                                                .is_some_and(|u| u.origin() == expected.origin())
+                                            {
+                                                page.fill_password(&script);
+                                            }
+                                        }),
+                                        Err(_) => window.push_notification(
+                                            Notification::error(
+                                                "Could not access this password in Keychain",
+                                            ),
+                                            cx,
+                                        ),
+                                    });
+                                })
+                                .detach();
+                            });
+                        }),
+                );
+            }
+            dialog.title("Choose an account").child(list)
+        });
+    }
+
+    fn fill_form(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(store) = cx.try_global::<ActiveProfile>().map(|p| p.0.clone()) else {
+            return;
+        };
+        let Some(page) = self.tabs[self.active]
+            .page
+            .clone()
+            .filter(|_| self.tabs[self.active].showing == Showing::Page)
+        else {
+            return;
+        };
+        let Some(url) = page
+            .read(cx)
+            .url()
+            .filter(|u| credentials::fill_allowed(u.as_str()))
+        else {
+            return;
+        };
+        let fields = store.form_values().unwrap_or_default();
+        if fields.is_empty() {
+            window.push_notification(
+                Notification::info("No basic form information imported for this profile"),
+                cx,
+            );
+            return;
+        }
+        window.open_dialog(cx, move |dialog, _, _| {
+            let mut list = v_flex().gap_2().child(url.origin().ascii_serialization());
+            for (ix, (name, value)) in fields.iter().enumerate() {
+                let name = name.clone();
+                let value = value.clone();
+                let url = url.clone();
+                let page = page.clone();
+                list = list.child(
+                    Button::new(("form-value", ix))
+                        .label(format!("{name} · {value}"))
+                        .on_click(move |_, window, cx| {
+                            window.close_dialog(cx);
+                            if let Ok(script) =
+                                credentials::form_script(url.as_str(), &name, &value)
+                            {
+                                page.update(cx, |page, _| page.fill_form_info(&script));
+                            }
+                        }),
+                );
+            }
+            dialog.title("Choose form information").child(list)
+        });
+    }
+
+    fn save_password(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(page) = self.tabs[self.active]
+            .page
+            .as_ref()
+            .filter(|_| self.tabs[self.active].showing == Showing::Page)
+        {
+            let result = page.update(cx, |page, _| page.read_password());
+            if result.is_err() {
+                window.push_notification(Notification::error("Open a secure login form first"), cx);
+            }
         }
     }
 
@@ -888,6 +1100,7 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        self.suggestions.clear();
         if delegate::verdict(&url) == Verdict::Download {
             self.download(url, None, window, cx);
             return;
@@ -1015,6 +1228,86 @@ impl Browser {
             return;
         };
         match event {
+            PageEvent::FormFilled(filled) => {
+                window.push_notification(
+                    if *filled {
+                        Notification::success("Form field filled")
+                    } else {
+                        Notification::info("No matching visible field was found on this page")
+                    },
+                    cx,
+                );
+            }
+            PageEvent::PasswordFilled(filled) => {
+                window.push_notification(
+                    if *filled {
+                        Notification::success("Login details filled. Review the form and sign in.")
+                    } else {
+                        Notification::error("No visible, same-origin login form was found")
+                    },
+                    cx,
+                );
+            }
+            PageEvent::PasswordRead(login) => {
+                let Some(store) = cx.try_global::<ActiveProfile>().map(|p| p.0.clone()) else {
+                    return;
+                };
+                let login = login.clone();
+                window.open_alert_dialog(cx, move |dialog, _, _| {
+                    let store = store.clone();
+                    let login = login.clone();
+                    dialog
+                        .title("Save or update password?")
+                        .description(format!("{} · {}", login.origin, login.username))
+                        .child("The password will be stored in macOS Keychain for this profile.")
+                        .button_props(
+                            gpui_kit::component::dialog::DialogButtonProps::default()
+                                .ok_text("Save password")
+                                .show_cancel(true),
+                        )
+                        .on_ok(move |_, window, cx| {
+                            let store = store.clone();
+                            let login = login.clone();
+                            let task = cx.background_spawn(async move {
+                                credentials::save(
+                                    &store,
+                                    &Keychain::for_profile(&store),
+                                    &login.origin,
+                                    &login.username,
+                                    &login.password,
+                                )
+                            });
+                            window
+                                .spawn(cx, async move |cx| {
+                                    let result = task.await;
+                                    let _ = cx.update(|window, cx| {
+                                        window.push_notification(
+                                            if result.is_ok() {
+                                                Notification::success("Password saved")
+                                            } else {
+                                                Notification::error(
+                                                    "Could not save password in Keychain",
+                                                )
+                                            },
+                                            cx,
+                                        )
+                                    });
+                                })
+                                .detach();
+                            true
+                        })
+                });
+            }
+            PageEvent::PasswordUnavailable => {
+                window.push_notification(Notification::info("Enter a password in a visible login form, then choose Save or Update Password"),cx);
+            }
+            PageEvent::Visited => {
+                if let Some(store) = cx.try_global::<ActiveProfile>() {
+                    if let Some(url) = page.read(cx).url() {
+                        let _ = store.0.visit(url.as_str(), &page.read(cx).title());
+                    }
+                }
+            }
             PageEvent::Changed => {
                 if !page.read(cx).is_loading() {
                     self.tabs[index].requested = None;
@@ -1042,6 +1335,7 @@ impl Browser {
                     self.activate_id(id, window, cx);
                 }
             }
+            PageEvent::RevealCanvas => {},
             PageEvent::ContextMenu(menu) => {
                 let tab = &self.tabs[index];
                 if tab.showing == Showing::Page && self.displayed.contains(&tab.panel_id()) {
@@ -1220,11 +1514,26 @@ impl Browser {
                 }
                 self.sync_chrome(window, cx);
             }
-            InputEvent::Change => {}
+            InputEvent::Change => {
+                let query = omnibox.read(cx).value();
+                self.suggestions.clear();
+                if !self.ask && !query.trim().is_empty() {
+                    if let Some(store) = cx.try_global::<ActiveProfile>() {
+                        self.suggestions = store.0.suggestions(&query, true, 4).unwrap_or_default();
+                        for entry in store.0.suggestions(&query, false, 6).unwrap_or_default() {
+                            if !self.suggestions.iter().any(|e| e.url == entry.url) {
+                                self.suggestions.push(entry);
+                            }
+                        }
+                    }
+                }
+                cx.notify();
+            }
         }
     }
 
     fn submit(&mut self, new_tab: bool, window: &mut Window, cx: &mut Context<Self>) {
+        self.suggestions.clear();
         let text = self.omnibox.read(cx).value().to_string();
         match classify(&text) {
             None => {}
@@ -1256,6 +1565,7 @@ impl Browser {
 
     /// Escape in the address bar puts the address back and returns to the page.
     fn escape_address_bar(&mut self, _: &Escape, window: &mut Window, cx: &mut Context<Self>) {
+        self.suggestions.clear();
         self.editing = false;
         self.sync_chrome(window, cx);
         if self.tabs[self.active].showing != Showing::Start {
@@ -1766,13 +2076,17 @@ impl Browser {
     /// the light one. The theme's background is the color furthest from its
     /// text, so it reads where the text would not.
     fn chrome_ink(tab: &Tab, cx: &App) -> Option<Hsla> {
-        let Rgba { r, g, b, .. } = Self::chrome_fill(tab, cx).to_rgb();
+        Self::background_ink(glass::seen(Self::chrome_fill(tab, cx), cx), cx)
+    }
+
+    fn background_ink(background: Hsla, cx: &App) -> Option<Hsla> {
+        let Rgba { r, g, b, .. } = background.to_rgb();
         let light = 0.299 * r + 0.587 * g + 0.114 * b > 0.5;
         let theme = cx.theme();
         (light == theme.is_dark()).then_some(theme.background)
     }
 
-    /// A toolbar button: in `ink` on a page's color, else the theme's ghost.
+    /// A chrome button: in contrasting `ink` when needed, else the theme's ghost.
     fn inked(button: Button, ink: Option<Hsla>, cx: &App) -> Button {
         match ink {
             Some(ink) => button.custom(
@@ -1998,6 +2312,8 @@ impl Browser {
             return Empty.into_any_element();
         };
         let tab = &self.tabs[index];
+        let home = tab.showing == Showing::Start;
+        let id = tab.id;
         // A page's color runs on into the toolbar; anything else keeps a rule.
         let tinted = tab.tint(cx).is_some();
         let fill = Self::chrome_fill(tab, cx);
@@ -2029,6 +2345,7 @@ impl Browser {
                         .is_some_and(|tab| tab.panel_id() == panel),
                 |card| card.child(self.inspector.clone()),
             )
+            .when(home, |card| card.child(self.home_status_bar(id, cx)))
             .into_any_element()
     }
 
@@ -2113,7 +2430,11 @@ impl Browser {
             // On a page's color the field is drawn here, in that color's ink:
             // the theme's own field would be a dark box on a light page.
             let editing = self.editing;
+            let anchor = self.address_anchor.clone();
             return div()
+                .on_children_prepainted(move |bounds, _, _| {
+                    *anchor.borrow_mut() = bounds.first().copied();
+                })
                 .debug_selector(|| "address-bar".into())
                 .flex_1()
                 .min_w_0()
@@ -2558,6 +2879,37 @@ impl Browser {
             .into_any_element()
     }
 
+    fn home_status_bar(&self, id: u64, cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .id(("home-status-bar", id))
+            .debug_selector(move || format!("home-status-bar-{id}"))
+            .flex_shrink_0()
+            .w_full()
+            .child(
+                StatusBar::new()
+                    .w_full()
+                    .rounded_b(cx.theme().radius_lg)
+                    .left(
+                        Self::inked(
+                            Button::new(("import-browser-data", id)),
+                            Self::background_ink(cx.theme().status_bar, cx),
+                            cx,
+                        )
+                        .debug_selector(move || format!("import-browser-data-{id}"))
+                        .xsmall()
+                        .icon(icons::import_browser_data())
+                        .accessibility_label("Import browser data")
+                        .tooltip("Import browser data…")
+                        .on_click(cx.listener(
+                            move |this, _, window, cx| {
+                                this.activate_id(id, window, cx);
+                                this.show_profile_panel(Section::Import, window, cx);
+                            },
+                        )),
+                    ),
+            )
+    }
+
     /// What a tab's card shows under its toolbar. The card paints the
     /// background, rounded, behind it; only a page's own picture has to be
     /// rounded to the card's corners, its top ones while there is no toolbar.
@@ -2681,6 +3033,76 @@ impl Render for Browser {
             navigator.render(&state, on_pick, on_close, cx)
         });
 
+        let suggestions = if self.suggestions.is_empty()
+            || self.navigator.is_some()
+            || self.address_anchor.borrow().is_none()
+        {
+            None
+        } else {
+            let mut group = CommandGroup::new().label("Bookmarks and history · ↓ to choose");
+            for entry in &self.suggestions {
+                group = group.item(
+                    CommandItem::new()
+                        .label(if entry.title.is_empty() {
+                            entry.url.clone()
+                        } else {
+                            entry.title.clone()
+                        })
+                        .keywords([entry.url.clone()]),
+                );
+            }
+            let anchor = self.address_anchor.borrow().unwrap();
+            let entries = self.suggestions.clone();
+            let browser = cx.weak_entity();
+            Some(
+                gpui_kit::deferred(
+                    gpui_kit::anchored()
+                        .position(anchor.bottom_left())
+                        .snap_to_window_with_margin(px(8.))
+                        .child(
+                            div()
+                                .w(anchor.size.width.max(px(240.)))
+                                .on_mouse_down_out(cx.listener(|this, _, _, cx| {
+                                    this.suggestions.clear();
+                                    cx.notify();
+                                }))
+                                .occlude()
+                                .bg(theme.popover)
+                                .text_color(theme.popover_foreground)
+                                .rounded(theme.radius_lg)
+                                .shadow_lg()
+                                .child(
+                                    Command::new(&self.suggestion_state)
+                                        .searchable(false)
+                                        .filterable(false)
+                                        .group(group)
+                                        .max_h(px(320.))
+                                        .on_confirm(move |ix, window, cx| {
+                                            if let Some(url) = entries
+                                                .get(ix.row)
+                                                .and_then(|e| Url::parse(&e.url).ok())
+                                            {
+                                                let _ = browser.update(cx, |this, cx| {
+                                                    this.go(url, false, false, window, cx)
+                                                });
+                                            }
+                                        })
+                                        .on_cancel({
+                                            let browser = cx.weak_entity();
+                                            move |window, cx| {
+                                                let _ = browser.update(cx, |this, cx| {
+                                                    this.suggestions.clear();
+                                                    this.focus_address_bar(window, cx);
+                                                });
+                                            }
+                                        }),
+                                ),
+                        ),
+                )
+                .with_priority(2),
+            )
+        };
+
         div()
             .id("browser")
             .key_context("Browser")
@@ -2691,6 +3113,30 @@ impl Render for Browser {
             .flex_col()
             .bg(glass::frame(cx))
             .text_color(theme.foreground)
+            .on_action(cx.listener(|browser, _: &ImportBrowserData, window, cx| {
+                browser.show_profile_panel(Section::Import, window, cx)
+            }))
+            .on_action(cx.listener(|browser, _: &ShowProfiles, window, cx| {
+                browser.show_profile_panel(Section::Profiles, window, cx)
+            }))
+            .on_action(cx.listener(|browser, _: &ShowBookmarks, window, cx| {
+                browser.show_profile_panel(Section::Bookmarks, window, cx)
+            }))
+            .on_action(cx.listener(|browser, _: &ShowHistory, window, cx| {
+                browser.show_profile_panel(Section::History, window, cx)
+            }))
+            .on_action(cx.listener(|browser, _: &BookmarkPage, window, cx| {
+                browser.bookmark_page(window, cx)
+            }))
+            .on_action(cx.listener(|browser, _: &FillPassword, window, cx| {
+                browser.choose_password(window, cx)
+            }))
+            .on_action(
+                cx.listener(|browser, _: &FillForm, window, cx| browser.fill_form(window, cx)),
+            )
+            .on_action(cx.listener(|browser, _: &SavePassword, window, cx| {
+                browser.save_password(window, cx)
+            }))
             .on_action(cx.listener(|browser, _: &NewTab, window, cx| browser.new_tab(window, cx)))
             .on_action(cx.listener(|browser, _: &CloseTab, window, cx| {
                 browser.close_tab(browser.active, window, cx)
@@ -2730,7 +3176,30 @@ impl Render for Browser {
             .on_action(cx.listener(|browser, _: &SharePage, window, cx| {
                 browser.share_tab(browser.tabs[browser.active].id, window, cx)
             }))
+            .on_action(cx.listener(|browser, _: &crate::actions::ShowCanvas, window, cx| {
+                if let Some(board) = browser.canvas.take() {
+                    board.update(cx, |board, cx| board.detach(cx));
+                    browser.focus_content(window, cx);
+                } else if let Some(page) = browser.tabs[browser.active].page.clone() {
+                    let board = cx.new(|cx| crate::canvas::SpatialCanvas::new(page, cx));
+                    window.focus(&board.focus_handle(cx), cx);
+                    browser.canvas = Some(board);
+                }
+                cx.notify();
+            }))
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
+            .capture_key_down(
+                cx.listener(|this, event: &gpui_kit::KeyDownEvent, window, cx| {
+                    if event.keystroke.key == "down"
+                        && !this.suggestions.is_empty()
+                        && this.omnibox.focus_handle(cx).is_focused(window)
+                    {
+                        this.suggestion_state
+                            .update(cx, |state, cx| state.focus(window, cx));
+                        cx.stop_propagation();
+                    }
+                }),
+            )
             .on_mouse_down(MouseButton::Right, cx.listener(Self::right_click))
             .child(
                 h_flex()
@@ -2739,7 +3208,10 @@ impl Render for Browser {
                     .when(self.sidebar && !self.compact, |row| {
                         row.child(self.render_sidebar(window, cx))
                     })
-                    .child(div().flex_1().min_w_0().h_full().child(self.dock.clone())),
+                    .child(div().flex_1().min_w_0().h_full().child(match &self.canvas {
+                        Some(board) => board.clone().into_any_element(),
+                        None => self.dock.clone().into_any_element(),
+                    })),
             )
             .when(self.compact, |this| {
                 this.child(
@@ -2763,6 +3235,7 @@ impl Render for Browser {
                 })
             })
             .children(navigator)
+            .children(suggestions)
     }
 }
 

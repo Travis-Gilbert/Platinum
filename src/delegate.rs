@@ -10,7 +10,7 @@
 //! download, so a link to an installer or an archive is caught here, before
 //! Servo fetches it, and handed to `downloads.rs`.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::rc::Rc;
 
@@ -23,11 +23,15 @@ use url::Url;
 
 use crate::scene::SceneRenderingContext;
 use crate::search::VisitedPage;
+use crate::site::SiteInfo;
 
 /// One thing the page has to act on after Servo's turn of the loop.
 pub enum ServoEvent {
     /// Servo painted and presented a frame.
     Frame,
+    PasswordFilled(bool),
+    FormFilled(bool),
+    PasswordRead(Option<frame_profile::credentials::Login>),
     Cursor(Cursor),
     InputHandled(InputEventId, InputEventResult),
     ShowControl(EmbedderControl),
@@ -39,6 +43,8 @@ pub enum ServoEvent {
     Loaded,
     /// The finished page's document, read back for the local search index.
     Document(VisitedPage),
+    /// What the site panel shows, read on demand. It never reaches the index.
+    Site(SiteInfo),
     Crashed(String),
     OpenExternally(Url),
     /// The page opened a new window; it becomes a tab.
@@ -62,11 +68,27 @@ pub struct NewWebView {
 pub struct Delegate {
     events: RefCell<VecDeque<ServoEvent>>,
     status: RefCell<Option<String>>,
+    pub(crate) navigation_starts: Cell<u64>,
+    pub(crate) frames: Cell<u64>,
+    hidden: Cell<bool>,
 }
 
 impl Delegate {
     pub fn new() -> Rc<Self> {
         Rc::new(Self::default())
+    }
+
+    pub(crate) fn set_visible(&self, visible: bool) {
+        self.hidden.set(!visible);
+    }
+
+    fn present_if_visible(&self, paint_and_present: impl FnOnce()) {
+        if self.hidden.get() {
+            return;
+        }
+        paint_and_present();
+        self.frames.set(self.frames.get() + 1);
+        self.push(ServoEvent::Frame);
     }
 
     pub fn take_events(&self) -> VecDeque<ServoEvent> {
@@ -83,12 +105,17 @@ impl Delegate {
         self.push(ServoEvent::Document(page));
     }
 
+    /// What the site panel shows, read back from the page.
+    pub fn site(&self, info: SiteInfo) {
+        self.push(ServoEvent::Site(info));
+    }
+
     /// The page turned out to be a file Servo cannot show.
     pub fn download(&self, url: Url) {
         self.push(ServoEvent::Download(url));
     }
 
-    fn push(&self, event: ServoEvent) {
+    pub(crate) fn push(&self, event: ServoEvent) {
         self.events.borrow_mut().push_back(event);
     }
 }
@@ -109,8 +136,8 @@ pub enum Verdict {
 /// Anything else Servo cannot show is caught after it loads (`page.rs`).
 const DOWNLOADS: &[&str] = &[
     "7z", "apk", "bz2", "csv", "deb", "dmg", "doc", "docx", "epub", "exe", "gz", "ics", "ipa",
-    "iso", "jar", "mobi", "msi", "numbers", "odp", "ods", "odt", "pages", "pdf", "pkg",
-    "ppt", "pptx", "rar", "rpm", "tar", "tgz", "torrent", "vcf", "xls", "xlsx", "xz", "zip", "zst",
+    "iso", "jar", "mobi", "msi", "numbers", "odp", "ods", "odt", "pages", "pdf", "pkg", "ppt",
+    "pptx", "rar", "rpm", "tar", "tgz", "torrent", "vcf", "xls", "xlsx", "xz", "zip", "zst",
 ];
 
 pub fn verdict(url: &Url) -> Verdict {
@@ -124,7 +151,10 @@ pub fn verdict(url: &Url) -> Verdict {
 
 /// Whether the address names a file of a type that is always saved.
 fn is_download(url: &Url) -> bool {
-    let Some(name) = url.path_segments().and_then(|mut segments| segments.next_back()) else {
+    let Some(name) = url
+        .path_segments()
+        .and_then(|mut segments| segments.next_back())
+    else {
         return false;
     };
     let Some((_, extension)) = name.rsplit_once('.') else {
@@ -135,9 +165,10 @@ fn is_download(url: &Url) -> bool {
 
 impl WebViewDelegate for Delegate {
     fn notify_new_frame_ready(&self, webview: WebView) {
-        webview.paint();
-        webview.rendering_context().present();
-        self.push(ServoEvent::Frame);
+        self.present_if_visible(|| {
+            webview.paint();
+            webview.rendering_context().present();
+        });
     }
 
     fn notify_cursor_changed(&self, _: WebView, cursor: Cursor) {
@@ -162,6 +193,9 @@ impl WebViewDelegate for Delegate {
 
     fn notify_load_status_changed(&self, _: WebView, status: LoadStatus) {
         self.push(ServoEvent::Changed);
+        if status == LoadStatus::Started {
+            self.navigation_starts.set(self.navigation_starts.get() + 1);
+        }
         if status == LoadStatus::Complete {
             self.push(ServoEvent::Loaded);
         }
@@ -254,6 +288,26 @@ mod tests {
     }
 
     #[test]
+    fn hidden_frame_notifications_do_not_paint_present_or_replace_the_live_frame() {
+        let delegate = Delegate::default();
+        let surface = Cell::new(0);
+        delegate.present_if_visible(|| surface.set(1));
+        delegate.take_events();
+        delegate.set_visible(false);
+        for _ in 0..4 {
+            delegate.present_if_visible(|| surface.set(2));
+        }
+        assert_eq!(surface.get(), 1);
+        assert_eq!(delegate.frames.get(), 1);
+        assert!(delegate.take_events().is_empty());
+        delegate.set_visible(true);
+        delegate.present_if_visible(|| surface.set(3));
+        assert_eq!(surface.get(), 3);
+        assert_eq!(delegate.frames.get(), 2);
+        assert!(matches!(delegate.take_events().pop_front(), Some(ServoEvent::Frame)));
+    }
+
+    #[test]
     fn the_web_stays_in_the_browser() {
         assert_eq!(verdict_for("https://example.com/"), Verdict::Allow);
         assert_eq!(verdict_for("http://127.0.0.1:9999/"), Verdict::Allow);
@@ -277,9 +331,15 @@ mod tests {
             verdict_for("https://example.com/a/b.TAR.GZ?token=1"),
             Verdict::Download
         );
-        assert_eq!(verdict_for("http://example.com/paper.pdf"), Verdict::Download);
+        assert_eq!(
+            verdict_for("http://example.com/paper.pdf"),
+            Verdict::Download
+        );
         // Pages, and files Servo shows, are not.
-        assert_eq!(verdict_for("https://example.com/download.php?id=3"), Verdict::Allow);
+        assert_eq!(
+            verdict_for("https://example.com/download.php?id=3"),
+            Verdict::Allow
+        );
         assert_eq!(verdict_for("https://example.com/photo.png"), Verdict::Allow);
         assert_eq!(verdict_for("https://example.com/zip"), Verdict::Allow);
         assert_eq!(verdict_for("file:///Users/me/a.zip"), Verdict::Allow);

@@ -1,0 +1,46 @@
+{
+  "documentId": "1793119784538:0.3377758405471625",
+  "innerWidth": 1280,
+  "innerHeight": 800,
+  "devicePixelRatio": 1.40625,
+  "resizeCount": 3,
+  "resizeEvents": [
+    {
+      "at": 3505.82,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "at": 4592.9,
+      "innerWidth": 637,
+      "innerHeight": 398,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "at": 4614.04,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    }
+  ],
+  "scrollX": 0,
+  "scrollY": 40,
+  "cookie": "frame_canvas_session=m1",
+  "text": "I was ha!lfway through",
+  "selectionStart": 9,
+  "selectionEnd": 9,
+  "selectionDirection": "none",
+  "textareaScrollTop": 0,
+  "focused": "draft",
+  "input": {
+    "clicks": 0,
+    "hovers": 0,
+    "drag": null,
+    "wheel": 0,
+    "choice": "First",
+    "dialogs": [],
+    "escape": 0,
+    "space": 3
+  }
+}

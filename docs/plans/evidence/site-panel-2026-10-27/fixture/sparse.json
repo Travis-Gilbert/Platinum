@@ -1,0 +1,41 @@
+{
+  "url": "file:///Volumes/SSD%20Samsung/frame-worktrees/site-panel/tests/site-panel/sparse.html",
+  "title": "Sparse Fixture",
+  "description": "Only an Open Graph description, no theme colour and no code.",
+  "theme_color": null,
+  "fonts": [
+    {
+      "family": "Georgia",
+      "roles": [
+        "Headings",
+        "Body"
+      ]
+    }
+  ],
+  "palette": [
+    {
+      "color": "#ffffff",
+      "share": 0.994
+    },
+    {
+      "color": "#e8e8e8",
+      "share": 0.004
+    },
+    {
+      "color": "#ededed",
+      "share": 0.001
+    },
+    {
+      "color": "#f9f9f9",
+      "share": 0.001
+    },
+    {
+      "color": "#f6f6f6",
+      "share": 0.0
+    },
+    {
+      "color": "#f1f1f1",
+      "share": 0.0
+    }
+  ]
+}

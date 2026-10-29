@@ -1,0 +1,21 @@
+{
+	"nodes":[
+		{"id":"4a8a08f09d37b737","type":"text","text":"Centre","x":0,"y":0,"width":200,"height":100},
+		{"id":"e358efa489f58062","type":"text","text":"Top","x":0,"y":-300,"width":200,"height":100},
+		{"id":"4b43b0aee35624cd","type":"text","text":"Right","x":400,"y":0,"width":200,"height":100},
+		{"id":"92eb5ffee6ae2fec","type":"text","text":"Bottom","x":0,"y":300,"width":200,"height":100},
+		{"id":"2db95e8e1a9267b7","type":"text","text":"Left","x":-400,"y":0,"width":200,"height":100}
+	],
+	"edges":[
+		{"id":"30156a446252e89c","fromNode":"4a8a08f09d37b737","toNode":"e358efa489f58062","fromSide":"top","toSide":"bottom","color":"1","label":"up"},
+		{"id":"7ebdfb58200e0438","fromNode":"4a8a08f09d37b737","toNode":"e358efa489f58062","fromSide":"top","toSide":"bottom","color":"2","label":"a parallel edge"},
+		{"id":"1437bfc13f42a49a","fromNode":"4a8a08f09d37b737","toNode":"4b43b0aee35624cd","fromSide":"right","toSide":"left","color":"2"},
+		{"id":"1ce1e80f368c5bfa","fromNode":"4a8a08f09d37b737","toNode":"92eb5ffee6ae2fec","fromSide":"bottom","toSide":"top","toEnd":"none","color":"3"},
+		{"id":"e253edbba171f0c2","fromNode":"4a8a08f09d37b737","toNode":"2db95e8e1a9267b7","fromSide":"left","fromEnd":"arrow","toSide":"right","color":"4"},
+		{"id":"aa37bf7e185379f1","fromNode":"e358efa489f58062","toNode":"4b43b0aee35624cd","fromSide":"right","toSide":"top","toEnd":"none","color":"5"},
+		{"id":"37d95c6efed151e8","fromNode":"4b43b0aee35624cd","toNode":"92eb5ffee6ae2fec","fromSide":"bottom","fromEnd":"arrow","toSide":"right","toEnd":"arrow","color":"6"},
+		{"id":"1ea6b8693aeab5e9","fromNode":"92eb5ffee6ae2fec","toNode":"2db95e8e1a9267b7","fromSide":"left","toSide":"bottom","color":"#ff00ff","label":"**bold** and `code` in a label"},
+		{"id":"33fc9896e54bf6a9","fromNode":"2db95e8e1a9267b7","toNode":"e358efa489f58062","fromSide":"top","toSide":"left","label":"A label long enough that it has to wrap onto a second line of the edge"},
+		{"id":"43e498b31b017ae3","fromNode":"e358efa489f58062","toNode":"92eb5ffee6ae2fec","fromEnd":"none","toEnd":"none"}
+	]
+}

@@ -1,0 +1,29 @@
+media check: document 0 HeadParsed
+media check: document 0 Complete
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 0 GLD_TEXTURE_INDEX_RECTANGLE is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+[2026-10-26T12:06:22Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:22Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T12:06:23Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+frame screenshot pixels: {"size":[1280,820],"background":972160,"nodePixels":0,"linkPixels":0,"otherPixels":0,"nonBackgroundPixels":0}
+frame screenshot: /var/folders/5f/gw6fzw9n1z15vht733bcn7jr0000gn/T/frame-media-svg-initial.png
+probe exit 0 after 10 s

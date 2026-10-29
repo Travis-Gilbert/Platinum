@@ -1,0 +1,70 @@
+filters:
+  and:
+    - file.inFolder("projects")
+formulas:
+  days_left: 'due - date("2026-10-25")'
+  open: 'if(done, "closed", "open")'
+  related_count: 'list(related).length'
+properties:
+  formula.days_left:
+    displayName: Time left
+  formula.open:
+    displayName: State
+views:
+  - type: kanban
+    name: Board
+    groupBy:
+      property: note.status
+      direction: ASC
+    groupOrder:
+      - Planned
+      - In progress
+      - Done
+      - null
+    order:
+      - file.name
+      - due
+      - rating
+  - type: table
+    name: By status
+    groupBy:
+      property: note.status
+      direction: DESC
+    order:
+      - file.name
+      - note.status
+      - due
+      - formula.days_left
+      - formula.open
+      - done
+    sort:
+      - property: due
+        direction: ASC
+    summaries:
+      rating: Average
+      due: Latest
+      done: Checked
+      file.name: Unique
+  - type: table
+    name: Not done
+    filters:
+      or:
+        - done == false
+        - not:
+            - 'status == "Done"'
+    order:
+      - file.name
+      - status
+      - formula.related_count
+    sort:
+      - property: rating
+        direction: DESC
+      - property: file.name
+        direction: ASC
+    limit: 3
+  - type: cards
+    name: Gallery
+    order:
+      - file.name
+      - cover
+      - status

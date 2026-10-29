@@ -302,7 +302,7 @@ script/setup-media
 script/media-env python3 tests/media/check_native.py
 ```
 
-Serve `deps/servo-mse/tests/wpt/tests` on localhost:8766. Then:
+Serve `deps/servo-consolidated/tests/wpt/tests` on localhost:8766. Then:
 
 ```bash
 script/media-env cargo run --locked --example media_check -- --mse http://127.0.0.1:8766/media-source/

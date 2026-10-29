@@ -28,8 +28,10 @@ use servo::ContextMenuAction;
 use url::Url;
 
 use crate::actions::{
-    CloseTab, FocusAddressBar, GoBack, GoForward, NewTab, PinTab, Quit, Reload, SetAppearance,
-    SharePage, ShowConsole, ShowDownloads, ToggleAsk, ToggleCompact, ToggleSidebar,
+    BookmarkPage, CloseTab, FillPassword, FocusAddressBar, GoBack, GoForward, ImportBrowserData,
+    NewTab, PinTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks,
+    ShowConsole, ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact,
+    ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -288,6 +290,26 @@ impl Navigator {
             !pointer,
             false,
         ));
+        for (label, action) in [
+            (
+                "Import browser data…",
+                Box::new(ImportBrowserData) as Box<dyn Action>,
+            ),
+            ("Profiles…", Box::new(ShowProfiles)),
+            ("History…", Box::new(ShowHistory)),
+            ("Bookmarks…", Box::new(ShowBookmarks)),
+            ("Bookmark this page", Box::new(BookmarkPage)),
+            ("Fill saved password…", Box::new(FillPassword)),
+            ("Save or update password…", Box::new(SavePassword)),
+        ] {
+            commands.push((
+                label.into(),
+                Icon::new(IconName::Globe),
+                action,
+                !pointer,
+                false,
+            ));
+        }
         for appearance in Appearance::ALL {
             commands.push((
                 appearance.command(),

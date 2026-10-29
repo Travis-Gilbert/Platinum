@@ -1,0 +1,50 @@
+[
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.00438791599299293,
+    "output": "disk-1793200877400133000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "zoom",
+    "command": [
+      "script/media-env",
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+      "http://127.0.0.1:57918/zoom-probe.html",
+      "--zoom",
+      "1,0.35,2,1",
+      "--evidence",
+      "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport/docs/plans/evidence/spatial-canvas-r1-2026-10-27/zoom-native-2026-10-28/zoom"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp/frame-canvas-check-oy3m9en4",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 8.401771541990456,
+    "output": "zoom-1793200877463515000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": "a3c6639155dd482f5ecf0ffefc43deb7ec5b39d85ed13ee7c98708f2fea99412",
+    "accepted": true,
+    "probe_result": {
+      "pid": 43678,
+      "passed": true,
+      "error": null
+    }
+  }
+]

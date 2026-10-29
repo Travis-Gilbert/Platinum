@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[2]
-fixtures = root / "deps/servo-mse/tests/wpt/tests/media-source/webm"
+fixtures = root / "deps/servo-consolidated/tests/wpt/tests/media-source/webm"
 flags = shlex.split(subprocess.check_output(
     ["pkg-config", "--cflags", "--libs", "gstreamer-mse-1.0"], text=True))
 with tempfile.TemporaryDirectory(prefix="frame-mse-native-") as directory:

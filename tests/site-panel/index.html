@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Site Panel Fixture</title>
+<meta name="description" content="A page with known metadata, fonts and flat colour blocks, for the site panel check.">
+<meta property="og:description" content="The Open Graph description, used only when there is no meta description.">
+<meta name="theme-color" content="#1b3a6b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e8d9b0" media="(prefers-color-scheme: light)">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  /* Four flat blocks in fixed shares of the viewport: 50%, 25%, 15%, 10%. */
+  .block { box-sizing: border-box; overflow: hidden; padding: 0 24px; }
+  .a { height: 50%; background: #1f4e79; color: #ffffff; }
+  .b { height: 25%; background: #e8b923; }
+  .c { height: 15%; background: #c0392b; }
+  .d { height: 10%; background: #2e8b57; }
+  /* The first family of each stack is not installed, so the second is the one in use. */
+  h1 { font: 700 32px "Totally Missing Face", Georgia, serif; margin: 16px 0 8px; }
+  p  { font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0 0 8px; }
+  pre, code { font: 13px "Missing Mono", Menlo, Monaco, monospace; margin: 0; }
+</style>
+</head>
+<body>
+  <div class="block a">
+    <h1>Known heading</h1>
+    <p>Body text in a known family, set over the largest block.</p>
+    <pre><code>let palette = swatches();</code></pre>
+  </div>
+  <div class="block b"></div>
+  <div class="block c"></div>
+  <div class="block d"></div>
+</body>
+</html>

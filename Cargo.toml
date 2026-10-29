@@ -9,14 +9,24 @@ publish = false
 # Its own workspace: libservo is in this graph. `deps/` holds checkouts that
 # are path dependencies, not members.
 [workspace]
+members = [
+    "crates/profile",
+    "crates/notes",
+    "crates/notes-fixtures",
+    "vendor/zorite-editor",
+    "vendor/zorite-markdown",
+    "vendor/gpui-bidi",
+    "vendor/gpui-whiteboard",
+]
 exclude = ["deps"]
 
 [dependencies]
 gpui-kit = "=0.8.0"
 # Only for the `snapshot` feature: GPUI's window-to-image rendering.
 gpui-pre = { version = "=0.3.9", optional = true }
+gpui-whiteboard = { path = "vendor/gpui-whiteboard" }
 # Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
-servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
+servo = { path = "deps/servo-consolidated/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
 # branch codex/rustyweb-programmable-web-2. `deps/` is created by
 # script/bootstrap.
@@ -56,7 +66,11 @@ reqwest = { version = "0.12", default-features = false, features = ["http2", "ru
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 sanitize-filename = "0.6"
 serde_json = "1"
+zeroize = "1"
+frame-profile = { path = "crates/profile" }
 url = "2"
+kmeans_colors = { version = "0.7.1", default-features = false, features = ["palette_color"] }
+palette = { version = "0.7", default-features = false, features = ["std"] }
 
 [features]
 # Development only: with `FRAME_SNAPSHOT=<file.png>` in the environment, the
@@ -70,6 +84,9 @@ snapshot = [
 ]
 
 [dev-dependencies]
+tempfile = "3"
+# The graph probe's `frame-notes:` file handler sets a Content-Type header.
+http = "1"
 # Native media acceptance examples use the same CLI parser already in Servo.
 clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).
@@ -79,6 +96,10 @@ clap = { version = "4", features = ["derive"] }
 gpui-pre = { version = "=0.3.9", features = ["test-support"] }
 # Shows the search workers' logs in `examples/serp_check.rs`.
 env_logger = "0.11"
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+# Opt into the native backend's existing render-to-image test support.
+gpui-pre-macos = { version = "=0.3.9", features = ["test-support"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # Only for the `snapshot` feature: the Mac window's side of rendering to an image.

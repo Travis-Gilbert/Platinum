@@ -1,0 +1,8 @@
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+
+thread 'main' (1520283) panicked at vendor/gpui-pre/src/app/entity_map.rs:164:36:
+cannot update gpui_base::root::Root while it is already being updated
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+fatal runtime error: failed to initiate panic, error 3, aborting
+Redirecting call to abort() to mozalloc_abort
+

@@ -1,0 +1,17 @@
+{
+  "name": "frame-tests",
+  "cwd": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport",
+  "command": [
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+    "cargo",
+    "test",
+    "--locked",
+    "--bin",
+    "frame"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 849.3423176249999,
+  "environment": {
+    "TMPDIR": "/Volumes/SSD Samsung/tmp"
+  }
+}

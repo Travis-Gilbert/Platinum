@@ -1235,3 +1235,129 @@ fn console_panel_opens_and_closes(cx: &mut TestAppContext) {
     keys(cx, "alt-cmd-j");
     assert!(cx.debug_bounds("Console").is_none());
 }
+
+#[gpui_kit::test]
+fn imported_history_appears_when_typing_in_address_bar_and_has_a_keyboard_path(
+    cx: &mut TestAppContext,
+) {
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    store
+        .visit(
+            "https://docs.example.test/",
+            "Familiar project documentation",
+        )
+        .unwrap();
+    store
+        .bookmark("https://bookmarks.example.test/", "Familiar bookmark")
+        .unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+    let (browser, cx) = open(cx);
+    keys(cx, "cmd-l");
+    cx.simulate_input("Familiar");
+    cx.run_until_parked();
+    let suggestions = cx.update(|_, cx| {
+        browser
+            .read(cx)
+            .suggestions
+            .iter()
+            .map(|e| e.url.clone())
+            .collect::<Vec<_>>()
+    });
+    assert_eq!(suggestions.len(), 2);
+    assert!(suggestions.contains(&"https://docs.example.test/".into()));
+    keys(cx, "down");
+    assert!(cx.update(|window, cx| {
+        browser
+            .read(cx)
+            .suggestion_state
+            .focus_handle(cx)
+            .is_focused(window)
+    }));
+    keys(cx, "escape");
+    assert!(cx.update(|_, cx| browser.read(cx).suggestions.is_empty()));
+    assert!(in_address_bar(&browser, cx));
+}
+
+#[gpui_kit::test]
+fn history_command_opens_native_profile_library_and_session_restores_tab_selection(
+    cx: &mut TestAppContext,
+) {
+    use gpui_kit::component::WindowExt as _;
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    store
+        .save_session(&frame_profile::Session {
+            layout: None,
+            tabs: vec![
+                frame_profile::SessionTab {
+                    url: None,
+                    query: None
+                };
+                3
+            ],
+            active: 1,
+        })
+        .unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store.clone())));
+    let (browser, cx) = open(cx);
+    assert_eq!(tabs(&browser, cx), (3, 1));
+    keys(cx, "cmd-t");
+    let saved = store.session().unwrap();
+    assert_eq!(saved.tabs.len(), 4);
+    assert_eq!(saved.active, 3);
+    keys(cx, "cmd-y");
+    assert!(cx.update(|window, cx| window.has_active_sheet(cx)));
+    assert!(cx.update(|_, cx| browser.read(cx).profile_panel.is_some()));
+    keys(cx, "escape");
+    assert!(!cx.update(|window, cx| window.has_active_sheet(cx)));
+}
+
+#[gpui_kit::test]
+fn home_status_bar_pins_import_to_bottom_left_and_opens_importer(cx: &mut TestAppContext) {
+    use gpui_kit::component::WindowExt as _;
+    let temp = tempfile::tempdir().unwrap();
+    cx.update(|cx| {
+        cx.set_global(crate::profile_ui::ActiveProfile(
+            frame_profile::ProfileStore::open(temp.path()).unwrap(),
+        ))
+    });
+    let (browser, cx) = open(cx);
+    let bar = bounds_of(cx, "home-status-bar-0".into());
+    let button = bounds_of(cx, "import-browser-data-0".into());
+    assert!(
+        bar.origin.y > px(600.),
+        "bar is at the bottom of the home pane"
+    );
+    assert!(
+        button.origin.x < bar.origin.x + px(16.),
+        "import is pinned to the left"
+    );
+    assert!(button.bottom() <= bar.bottom());
+    click(cx, button.center());
+    assert!(cx.update(|window, cx| window.has_active_sheet(cx)));
+    assert!(cx.update(|_, cx| browser.read(cx).profile_panel.is_some()));
+    keys(cx, "escape");
+    assert!(!cx.update(|window, cx| window.has_active_sheet(cx)));
+
+    // Search results use a real native Serp; without a search service the
+    // fixture settles into its unavailable state without any network access.
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.search(
+                "fixture".into(),
+                crate::serp::SerpMode::Search,
+                false,
+                window,
+                cx,
+            )
+        })
+    });
+    cx.run_until_parked();
+    assert!(cx.debug_bounds("home-status-bar-0").is_none());
+    keys(cx, "cmd-t");
+    assert!(cx.debug_bounds("home-status-bar-1").is_some());
+    keys(cx, "cmd-1");
+    assert!(cx.debug_bounds("home-status-bar-0").is_none());
+    assert!(cx.debug_bounds("home-status-bar-1").is_none());
+}

@@ -9,6 +9,14 @@ use crate::theme::Appearance;
 actions!(
     frame,
     [
+        ImportBrowserData,
+        ShowProfiles,
+        ShowBookmarks,
+        ShowHistory,
+        BookmarkPage,
+        FillPassword,
+        FillForm,
+        SavePassword,
         NewTab,
         CloseTab,
         NextTab,
@@ -21,6 +29,7 @@ actions!(
         ToggleCompact,
         ToggleSidebar,
         PinTab,
+        ShowCanvas,
         ToggleAsk,
         ShowDownloads,
         ShowConsole,

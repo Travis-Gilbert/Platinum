@@ -1,0 +1,10 @@
+{
+  "name": "setup-media",
+  "command": [
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+    "script/setup-media"
+  ],
+  "elapsed_seconds": 474.9147950830011,
+  "exit_code": 0,
+  "output": "setup-media.log"
+}

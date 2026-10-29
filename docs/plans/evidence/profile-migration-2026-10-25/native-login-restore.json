@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "phases": [
+    {
+      "phase": "login",
+      "exit_code": 0,
+      "passed": true,
+      "stage": 3
+    },
+    {
+      "phase": "reopen",
+      "exit_code": 0,
+      "passed": true,
+      "stage": 3
+    }
+  ],
+  "events": [
+    {
+      "login_page_requested": true
+    },
+    {
+      "submitted_credentials_valid": true
+    },
+    {
+      "signed_in_cookie": true
+    },
+    {
+      "signed_in_cookie": true
+    }
+  ]
+}

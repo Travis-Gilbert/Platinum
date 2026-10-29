@@ -1,6 +1,7 @@
 //! The page's form controls and dialogs.
 //!
-//! `<select>` is GPUI Kit's `NativeMenu`, alert and confirm are GPUI's native
+//! Canvas menus and dialogs use GPUI Kit overlays so camera motion can dismiss
+//! them. In Tabs, `<select>` is `NativeMenu`, alert and confirm are GPUI's native
 //! prompt, the file picker is GPUI's open panel, the color picker is AppKit's
 //! shared color panel, and `prompt()` is a small GPUI Kit dialog window. The
 //! context menu is not drawn here: the page hands its entries to the browser,
@@ -11,14 +12,16 @@
 //! `EmbedderControl` responders is ours. Adapted from Theorem UI's desktop
 //! host (`desktop/src/controls.rs`).
 
-use std::time::Duration;
+use std::{time::Duration, cell::RefCell, rc::Rc};
 
 use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::input::{Input, InputState};
 use gpui_kit::component::native_menu::NativeMenu;
+use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
+use gpui_kit::component::WindowExt as _;
 use gpui_kit::component::{ActiveTheme as _, Root, h_flex, v_flex};
 use gpui_kit::{
-    Action, App, AppContext as _, Bounds, Context, Entity, IntoElement, NoAction,
+    Action, App, AppContext as _, Bounds, Focusable as _, Subscription, Context, Entity, IntoElement, NoAction,
     ParentElement as _, PathPromptOptions, Pixels, Point, PromptLevel, Render, Styled as _, Task,
     TitlebarOptions, WeakEntity, Window, WindowBounds, WindowKind, WindowOptions, point, px, size,
 };
@@ -48,8 +51,12 @@ pub struct Controls {
     /// the page drops it, and dropping a responder answers Servo with no
     /// change.
     menu: Option<Menu>,
+    pub(crate) popup: Option<(Entity<PopupMenu>, Point<Pixels>, Subscription)>,
+    popup_window: Option<gpui_kit::AnyWindowHandle>,
+    pub(crate) popup_bounds: Option<Bounds<Pixels>>,
     /// Native prompts do not nest; a second one waits for none and is refused.
     dialog_open: bool,
+    file_open: bool,
     color: Option<ColorSession>,
 }
 
@@ -73,8 +80,22 @@ struct ColorSession {
 }
 
 impl Controls {
+    pub(crate) fn popup_has_focus(&self, window: &Window, cx: &App) -> bool {
+        self.popup.as_ref().is_some_and(|(menu, _, _)| menu.focus_handle(cx).is_focused(window))
+    }
+
+    /// The color or file panel Frame opened takes the key window, as in
+    /// other browsers the page keeps focus meanwhile: Servo hides an
+    /// input's controls on blur, which would close the panel at once.
+    pub(crate) fn owns_native_panel(&self) -> bool {
+        self.color.is_some() || self.file_open
+    }
+
     pub fn dismiss_menus(&mut self) {
+        if self.popup.is_some() { control_trace("popup dismissed"); }
         self.menu = None;
+        self.popup = None;
+        self.popup_bounds = None;
     }
 
     /// Claim the one native dialog slot; false when a dialog is already up.
@@ -87,6 +108,12 @@ impl Controls {
     }
 }
 
+pub(crate) fn control_trace(message: &str) {
+    if std::env::var_os("FRAME_CANVAS_TRACE").is_some() {
+        eprintln!("CONTROL {} {message}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+    }
+}
+
 impl Page {
     pub(crate) fn show_control(
         &mut self,
@@ -94,24 +121,42 @@ impl Page {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        control_trace(match &control {
+            EmbedderControl::SelectElement(_) => "show SelectElement",
+            EmbedderControl::ContextMenu(_) => "show ContextMenu",
+            EmbedderControl::ColorPicker(_) => "show ColorPicker",
+            EmbedderControl::FilePicker(_) => "show FilePicker",
+            EmbedderControl::SimpleDialog(_) => "show SimpleDialog",
+            EmbedderControl::InputMethod(_) => "show InputMethod",
+        });
         match control {
             EmbedderControl::SelectElement(select) => self.show_select(select, window, cx),
-            EmbedderControl::ContextMenu(menu) => self.show_context_menu(menu, cx),
+            EmbedderControl::ContextMenu(menu) => self.show_context_menu(menu, window, cx),
             EmbedderControl::FilePicker(picker) => self.show_file_picker(picker, cx),
             EmbedderControl::ColorPicker(picker) => self.show_color_picker(picker, cx),
-            EmbedderControl::SimpleDialog(dialog) => self.show_dialog(dialog, window, cx),
+            EmbedderControl::SimpleDialog(dialog) => {
+                if self.canvas_world.is_some() {
+                    window.focus(&self.focus_handle(cx), cx);
+                    cx.emit(crate::page::PageEvent::RevealCanvas);
+                    let page = cx.entity();
+                    window.defer(cx, move |window, cx| page.update(cx, |p, cx| p.show_canvas_dialog(dialog, window, cx)));
+                } else {
+                    self.show_dialog(dialog, window, cx);
+                }
+            },
             EmbedderControl::InputMethod(control) => self.input_method = Some(control),
         }
     }
 
-    pub(crate) fn hide_control(&mut self, id: EmbedderControlId, _: &mut Context<Self>) {
+    pub(crate) fn hide_control(&mut self, id: EmbedderControlId, cx: &mut Context<Self>) {
+        control_trace(&format!("hide {id:?}; popup={} color={}", self.controls.popup.is_some(), self.controls.color.is_some()));
         if self
             .controls
             .menu
             .as_ref()
             .is_some_and(|menu| menu.id() == id)
         {
-            self.controls.menu = None;
+            self.controls.dismiss_menus();
         }
         if self
             .input_method
@@ -127,26 +172,45 @@ impl Page {
             .is_some_and(|session| session.picker.id() == id)
         {
             self.controls.color = None;
-            color_panel::close();
+            cx.foreground_executor().spawn(async { color_panel::close(); }).detach();
         }
     }
 
-    /// Window coordinates, in points, of a point in the page's device pixels.
-    fn window_point(&self, x: i32, y: i32) -> Point<Pixels> {
-        let origin = self.bounds.map_or(point(px(0.), px(0.)), |b| b.origin);
-        point(
-            origin.x + px(x as f32 / self.scale),
-            origin.y + px(y as f32 / self.scale),
-        )
-    }
-
     fn below(&self, rect: DeviceIntRect) -> Point<Pixels> {
-        self.window_point(rect.min.x, rect.max.y)
+        let [x, y] = select_device_anchor(rect, self.webview.device_pixels_per_css_pixel().get());
+        self.transform().map_or(point(px(0.), px(0.)), |t| t.window_point(x, y))
     }
 
     fn show_select(&mut self, select: SelectElement, window: &mut Window, cx: &mut Context<Self>) {
         let position = self.below(select.position());
         let chosen = select.selected_options();
+        if self.canvas_world.is_some() {
+            let page = cx.entity().downgrade();
+            let focus = self.focus_handle(cx);
+            let popup = PopupMenu::build(window, cx, |mut menu, _, _| {
+                menu = menu.action_context(focus);
+                for entry in select.options() {
+                    let options = match entry {
+                        SelectElementOptionOrOptgroup::Option(option) => std::slice::from_ref(option),
+                        SelectElementOptionOrOptgroup::Optgroup { label, options } => {
+                            menu = menu.label(label.clone());
+                            options.as_slice()
+                        }
+                    };
+                    for option in options {
+                        let page = page.clone();
+                        let id = option.id;
+                        menu = menu.item(PopupMenuItem::new(option.label.clone())
+                            .disabled(option.is_disabled).checked(chosen.contains(&option.id))
+                            .on_click(move |_, window, cx| { let _ = page.update(cx, |p, cx| p.pick_option(&PickOption { id }, window, cx)); }));
+                    }
+                }
+                menu
+            });
+            self.controls.menu = Some(Menu::Select(select));
+            self.mount_popup(popup, position, window, cx);
+            return;
+        }
         let mut menu = NativeMenu::new();
         for entry in select.options() {
             match entry {
@@ -184,11 +248,28 @@ impl Page {
         select.submit();
     }
 
-    fn show_context_menu(&mut self, menu: ContextMenu, cx: &mut Context<Self>) {
-        let position = self.last_pointer.unwrap_or_else(|| {
-            let rect = menu.position();
-            self.window_point(rect.min.x, rect.min.y)
-        });
+    fn show_context_menu(&mut self, menu: ContextMenu, window: &mut Window, cx: &mut Context<Self>) {
+        let rect = menu.position();
+        let position = self.window_point(rect.min.x, rect.min.y);
+        if self.canvas_world.is_some() {
+            let page = cx.entity().downgrade();
+            let focus = self.focus_handle(cx);
+            let popup = PopupMenu::build(window, cx, |mut popup, _, _| {
+                popup = popup.action_context(focus);
+                for item in menu.items() {
+                    if let ContextMenuItem::Item { label, action, enabled } = item {
+                        let page = page.clone();
+                        let action = *action;
+                        popup = popup.item(PopupMenuItem::new(label.clone()).disabled(!enabled)
+                            .on_click(move |_, _, cx| { let _ = page.update(cx, |p, _| p.select_context_action(action)); }));
+                    }
+                }
+                popup
+            });
+            self.controls.menu = Some(Menu::Context(menu));
+            self.mount_popup(popup, position, window, cx);
+            return;
+        }
         let items = menu
             .items()
             .iter()
@@ -219,6 +300,87 @@ impl Page {
         );
     }
 
+    fn mount_popup(&mut self, popup: Entity<PopupMenu>, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
+        let subscription = cx.subscribe_in(&popup, window, |page, _, _: &gpui_kit::DismissEvent, window, cx| {
+            page.controls.dismiss_menus();
+            window.focus(&page.focus_handle(cx), cx);
+            cx.notify();
+        });
+        window.focus(&popup.focus_handle(cx), cx);
+        self.controls.popup_window = Some(window.window_handle());
+        self.controls.popup = Some((popup, position, subscription));
+        control_trace("popup mounted");
+        cx.notify();
+    }
+
+    pub(crate) fn native_picker_visible(&self, kind: &str) -> bool {
+        if kind == "color" { color_panel::is_visible() } else { file_panel_visible(false) }
+    }
+
+    pub(crate) fn camera_moved(&mut self, cx: &mut Context<Self>) {
+        if self.controls.popup.is_some() || self.controls.color.is_some() || self.controls.file_open { control_trace("camera dismiss controls"); }
+        if let Some((popup, _, _)) = &self.controls.popup {
+            let focus = popup.focus_handle(cx);
+            let restore = self.focus_handle(cx);
+            if let Some(owner) = self.controls.popup_window {
+                cx.defer(move |cx| {
+                    let _ = owner.update(cx, |_, window, cx| {
+                        if focus.is_focused(window) { window.focus(&restore, cx); }
+                    });
+                });
+            }
+        }
+        self.controls.dismiss_menus();
+        if self.controls.color.take().is_some() {
+            cx.foreground_executor().spawn(async { color_panel::close(); }).detach();
+        }
+        if self.controls.file_open {
+            cx.foreground_executor().spawn(async { file_panel_visible(true); }).detach();
+        }
+        cx.notify();
+    }
+
+    fn show_canvas_dialog(&mut self, dialog: SimpleDialog, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.controls.begin_dialog() { return; }
+        let (message, initial, cancel) = match &dialog {
+            SimpleDialog::Alert(d) => (d.message().to_owned(), None, false),
+            SimpleDialog::Confirm(d) => (d.message().to_owned(), None, true),
+            SimpleDialog::Prompt(d) => (d.message().to_owned(), Some(d.current_value().to_owned()), true),
+        };
+        let input = initial.map(|value| cx.new(|cx| InputState::new(window, cx).default_value(value)));
+        let responder = Rc::new(RefCell::new(Some(dialog)));
+        let page = cx.entity().downgrade();
+        window.open_alert_dialog(cx, move |dialog, _, _| {
+            let dismissed = responder.clone();
+            let responder = responder.clone();
+            let input_ok = input.clone();
+            let page = page.clone();
+            let dialog = if cancel { dialog.confirm() } else { dialog };
+            dialog.title(message.clone()).close_button(false)
+                .children(input.as_ref().map(|input| Input::new(input)))
+                .on_ok(move |_, _, cx| {
+                    if let Some(dialog) = responder.borrow_mut().take() {
+                        match dialog {
+                            SimpleDialog::Alert(d) => d.confirm(),
+                            SimpleDialog::Confirm(d) => d.confirm(),
+                            SimpleDialog::Prompt(mut d) => {
+                                if let Some(input) = &input_ok { d.set_current_value(&input.read(cx).value()); }
+                                d.confirm();
+                            }
+                        }
+                    }
+                    true
+                })
+                .on_close(move |_, window, cx| {
+                    dismissed.borrow_mut().take();
+                    let _ = page.update(cx, |p, cx| {
+                        p.controls.end_dialog();
+                        window.focus(&p.focus_handle(cx), cx);
+                    });
+                })
+        });
+    }
+
     /// The person chose one of the page's own context menu entries.
     pub fn select_context_action(&mut self, action: ContextMenuAction) {
         if let Some(Menu::Context(menu)) = self.controls.menu.take() {
@@ -234,25 +396,32 @@ impl Page {
     }
 
     fn show_file_picker(&mut self, mut picker: FilePicker, cx: &mut Context<Self>) {
+        control_trace("file open begin");
+        key_owner::remember();
+        self.controls.file_open = true;
         let paths = cx.prompt_for_paths(PathPromptOptions {
             files: true,
             directories: false,
             multiple: picker.allow_select_multiple(),
             prompt: None,
         });
-        cx.spawn(async move |_, _| match paths.await {
-            Ok(Ok(Some(paths))) => {
-                picker.select(&paths);
-                picker.submit();
+        control_trace("file open returned");
+        cx.spawn(async move |page, cx| {
+            match paths.await {
+                Ok(Ok(Some(paths))) => { picker.select(&paths); picker.submit(); }
+                _ => picker.dismiss(),
             }
-            _ => picker.dismiss(),
+            let _ = page.update(cx, |page, _| page.controls.file_open = false);
         })
         .detach();
     }
 
     fn show_color_picker(&mut self, picker: ColorPicker, cx: &mut Context<Self>) {
-        color_panel::open(picker.current_color());
+        let current = picker.current_color();
         let poll = cx.spawn(async move |page, cx| {
+            control_trace("color open begin outside App update");
+            color_panel::open(current);
+            control_trace(&format!("color open returned visible={}", color_panel::is_visible()));
             loop {
                 cx.background_executor().timer(COLOR_PANEL_POLL).await;
                 let open = page.update(cx, |page, _| page.poll_color_panel());
@@ -321,6 +490,31 @@ impl Page {
                     log::error!("prompt(): {error}");
                     self.controls.end_dialog();
                 }
+            }
+        }
+    }
+}
+
+// Servo's no-point select rectangle is CSS pixels despite its DeviceIntRect type.
+fn select_device_anchor(rect: DeviceIntRect, pixels_per_css: f32) -> [f32; 2] {
+    [rect.min.x as f32 * pixels_per_css, rect.max.y as f32 * pixels_per_css]
+}
+
+#[cfg(test)]
+mod anchor_tests {
+    use super::*;
+    use crate::canvas::surface::SurfaceTransform;
+
+    #[test]
+    fn select_css_anchor_maps_through_tabs_and_canvas_at_page_zoom() {
+        let rect = DeviceIntRect::new((123, 87).into(), (223, 117).into());
+        for (camera, hidpi) in [(1., 2.), (0.35, 0.7), (2., 1.40625)] {
+            for page_zoom in [1., 1.25] {
+                let [x, y] = select_device_anchor(rect, hidpi * page_zoom);
+                let t = SurfaceTransform { bounds: Bounds::new(point(px(40.), px(60.)), size(px(800.), px(600.))), zoom: camera, raster_scale: hidpi };
+                let anchor = t.window_point(x, y);
+                assert!((f32::from(anchor.x) - (40. + 123. * page_zoom * camera)).abs() < 0.001);
+                assert!((f32::from(anchor.y) - (60. + 117. * page_zoom * camera)).abs() < 0.001);
             }
         }
     }
@@ -448,6 +642,7 @@ mod color_panel {
                 1.0,
             ));
         }
+        super::key_owner::remember();
         panel.makeKeyAndOrderFront(None);
     }
 
@@ -469,9 +664,53 @@ mod color_panel {
 
     pub fn close() {
         if let Some(panel) = panel() {
+            let key = panel.isKeyWindow();
             panel.orderOut(None);
+            if key {
+                super::key_owner::restore();
+            }
         }
     }
+}
+
+/// AppKit gives the key window back when the person closes a system panel,
+/// but not when Frame orders it out, which leaves the page's window without
+/// the keyboard. Frame hands it back to the window that had it.
+#[cfg(target_os = "macos")]
+mod key_owner {
+    use std::cell::RefCell;
+
+    use objc2::{MainThreadMarker, rc::Weak};
+    use objc2_app_kit::{NSApplication, NSWindow};
+
+    thread_local! {
+        static OWNER: RefCell<Option<Weak<NSWindow>>> = const { RefCell::new(None) };
+    }
+
+    pub fn remember() {
+        let Some(mtm) = MainThreadMarker::new() else {
+            return;
+        };
+        let key = NSApplication::sharedApplication(mtm).keyWindow();
+        OWNER.with(|owner| *owner.borrow_mut() = key.as_ref().map(Weak::from));
+    }
+
+    pub fn restore() {
+        let owner = OWNER.with(|owner| owner.borrow_mut().take());
+        if let Some(window) = owner.and_then(|owner| owner.load()) {
+            if window.isVisible() {
+                window.makeKeyWindow();
+            }
+            super::control_trace(&format!("key returned to owner key={}", window.isKeyWindow()));
+        } else {
+            super::control_trace("key owner gone");
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+mod key_owner {
+    pub fn remember() {}
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -487,3 +726,26 @@ mod color_panel {
     }
     pub fn close() {}
 }
+
+#[cfg(target_os = "macos")]
+fn file_panel_visible(cancel: bool) -> bool {
+    let Some(mtm) = objc2::MainThreadMarker::new() else { return false; };
+    let app = objc2_app_kit::NSApplication::sharedApplication(mtm);
+    let mut visible = false;
+    for window in app.windows().iter() {
+        if let Some(panel) = window.downcast_ref::<objc2_app_kit::NSOpenPanel>() {
+            if panel.isVisible() {
+                visible = true;
+                if cancel {
+                    let key = panel.isKeyWindow();
+                    unsafe { panel.cancel(None); }
+                    if key { key_owner::restore(); }
+                }
+            }
+        }
+    }
+    visible
+}
+
+#[cfg(not(target_os = "macos"))]
+fn file_panel_visible(_: bool) -> bool { false }

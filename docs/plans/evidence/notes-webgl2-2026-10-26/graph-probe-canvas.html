@@ -1,0 +1,93 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Frame canvas graph probe</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0d1117; color: #c9d1d9; font: 12px -apple-system, sans-serif; }
+  #graph { position: absolute; inset: 0; }
+  #log { position: absolute; left: 8px; top: 8px; z-index: 2; white-space: pre; pointer-events: none; }
+</style>
+<div id="graph"></div>
+<div id="log"></div>
+<script type="module">
+// Runs the same graph as graph-probe.html with force-graph 1.52.0, which draws
+// on Canvas 2D and lays out with d3-force, so it needs no WebGL at all.
+const params = new URLSearchParams(location.search);
+const N = Number(params.get('n') || 5000);
+const M = Number(params.get('m') || 10000);
+const out = { lib: 'force-graph', points: N, links: M, ua: navigator.userAgent };
+const log = document.getElementById('log');
+const show = () => { log.textContent = JSON.stringify({ lib: out.lib, ready: out.ready, error: out.graphError, fps: out.fps, ticks: out.ticks }, null, 1); };
+
+const url = 'https://esm.sh/force-graph@1.52.0?bundle';
+out.moduleUrl = url;
+
+const errors = [];
+addEventListener('error', (event) => errors.push(String(event.message) + ' @ ' + event.filename + ':' + event.lineno + ':' + event.colno));
+addEventListener('unhandledrejection', (event) => errors.push(String(event.reason && (event.reason.stack || event.reason))));
+
+// Counts the canvas pixels in the node colour and in the link colour.
+function drawnPixels() {
+  const canvas = document.querySelector('#graph canvas');
+  if (!canvas) return { error: 'no canvas' };
+  const { width, height } = canvas;
+  const data = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+  let node = 0, link = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+    if (r > 200 && g > 120 && g < 180 && b < 90) node++;
+    else if (r > 100 && r < 200 && g < 110 && b < 110 && r - g > 40) link++;
+  }
+  return { width, height, nodePixels: node, linkPixels: link };
+}
+
+try {
+  const started = performance.now();
+  const { default: ForceGraph } = await import(url);
+  out.importMs = Math.round(performance.now() - started);
+  const nodes = Array.from({ length: N }, (_, id) => ({ id }));
+  const links = Array.from({ length: M }, () => ({
+    source: Math.floor(Math.random() * N),
+    target: Math.floor(Math.random() * N),
+  }));
+  let ticks = 0;
+  const graph = new ForceGraph(document.getElementById('graph'))
+    // Distinct from the page so the screenshot shows whether the canvas composites.
+    .backgroundColor('#1d2a3a')
+    .nodeColor(() => '#e8973a')
+    .linkColor(() => '#a05050')
+    .nodeRelSize(3)
+    .cooldownTime(60000)
+    .onEngineTick(() => { ticks++; })
+    .graphData({ nodes, links });
+  out.ready = true;
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  const before = nodes.slice(0, 200).map((node) => [node.x, node.y]);
+  // Screenshot once the layout has started, before it settles.
+  setTimeout(() => { show(); console.log('FRAME_MEDIA_FRAME svg-initial'); }, 500);
+  let frames = 0;
+  const count = () => { frames++; requestAnimationFrame(count); };
+  requestAnimationFrame(count);
+  const ticksBefore = ticks;
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+  out.fps = Math.round(frames / 5);
+  out.ticks = ticks;
+  out.ticksPerSecond = Math.round((ticks - ticksBefore) / 5);
+  let moved = 0;
+  nodes.slice(0, 200).forEach((node, i) => {
+    if (Math.hypot(node.x - before[i][0], node.y - before[i][1]) > 0.5) moved++;
+  });
+  out.positionsMovedOf200 = moved;
+  out.positionSample = [nodes[0].x, nodes[0].y].map((v) => Math.round(v * 100) / 100);
+  try { out.pixels = drawnPixels(); } catch (e) { out.pixelsError = String(e); }
+  graph.pauseAnimation();
+} catch (e) {
+  out.graphError = String(e && (e.stack || e.message) || e);
+}
+out.errors = errors.slice(0, 10);
+show();
+if (!out.ready) console.log('FRAME_MEDIA_FRAME svg-initial');
+setTimeout(() => {
+  out.passed = !!out.ready && !out.graphError;
+  console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out));
+}, 2500);
+</script>

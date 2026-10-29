@@ -1,0 +1,37 @@
+{
+  "native_runs_visible": true,
+  "input_checks_passed": 63,
+  "input_checks_total": 63,
+  "m1_complete": false,
+  "remaining": [
+    "Select popup anchor offset: CSS rectangle treated as device pixels",
+    "Hidden newest frames become blank after set_visible(false)",
+    "Foreground capacity not established: 42 of 48 samples ended inactive; observed capacity 0 under recorded conditions",
+    "R1 zero-resize exception"
+  ],
+  "measurement_run_completed": true,
+  "measurement_verdict": false,
+  "active_sample_endpoints": 6,
+  "total_sample_endpoints": 48,
+  "rss_mib": {
+    "baseline_rss_bytes": 194.6875,
+    "live_rss_bytes": 601.703125,
+    "hidden_rss_bytes": 615.171875,
+    "disposed_rss_bytes": 361.4375,
+    "live_bytes_per_card": 25.4384765625,
+    "hidden_bytes_per_card": 26.2802734375,
+    "disposed_bytes_per_card": 10.421875
+  },
+  "latency_ms": {
+    "hidden_to_live_ms": {
+      "minimum": 14.19275,
+      "median": 27.7789585,
+      "maximum": 55.986541
+    },
+    "disposed_restore_ms": {
+      "minimum": 39.520959000000005,
+      "median": 92.88093749999999,
+      "maximum": 218.773042
+    }
+  }
+}

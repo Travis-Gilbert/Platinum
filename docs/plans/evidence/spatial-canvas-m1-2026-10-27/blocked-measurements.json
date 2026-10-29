@@ -1,0 +1,16 @@
+{
+  "status": "not_measured",
+  "reason": "Driver compiles, but macOS screen locked and native window Hidden. Measurement rejected at visible-window preflight.",
+  "driver": "examples/canvas_check/measurements.rs",
+  "window_evidence": "measure/window.json",
+  "result": "measure/result.json",
+  "display_refresh_hz": null,
+  "live_card_capacity": null,
+  "live_bytes_per_card": null,
+  "hidden_bytes_per_card": null,
+  "disposed_bytes_per_card": null,
+  "hidden_to_live_ms": null,
+  "disposed_restore_ms": null,
+  "hidden_newest_frame_valid": null,
+  "samples": []
+}

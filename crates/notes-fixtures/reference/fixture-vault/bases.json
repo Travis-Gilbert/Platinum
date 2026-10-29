@@ -1,0 +1,1407 @@
+{
+  "base:query path=bases/Notes.base format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Notes.base",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"Name\": \"2026-W43\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"weekly/2026-W43.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Aliases\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"links/Aliases.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Aliases and Cssclasses\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"properties/Aliases and Cssclasses.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"All Callouts\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1\",\n    \"path\": \"callouts/All Callouts.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"All Property Types\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"properties/All Property Types.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Bidirectional Text\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"syntax/Bidirectional Text.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Blocks Target\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"links/Blocks Target.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Broken Frontmatter\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"properties/Broken Frontmatter.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Byte Order Mark\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"syntax/Byte Order Mark.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Callout Titles and Folding\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.7\",\n    \"path\": \"callouts/Callout Titles and Folding.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Case Sensitivity\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"search/Case Sensitivity.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Code Blocks\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1.3\",\n    \"path\": \"syntax/Code Blocks.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Comments and Highlights\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"syntax/Comments and Highlights.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Custom Callout\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"callouts/Custom Callout.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Dataview Fields\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"dataview/Dataview Fields.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Dead End\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"Dead End.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Deck\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"slides/Deck.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Canvas and Base\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"embeds/Embed Canvas and Base.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Images\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"embeds/Embed Images.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Media\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"embeds/Embed Media.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Notes\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"embeds/Embed Notes.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Query\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"embeds/Embed Query.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Empty Frontmatter\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"properties/Empty Frontmatter.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Folding and Lists\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"syntax/Folding and Lists.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Footnotes\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"syntax/Footnotes.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Frontmatter Only\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"properties/Frontmatter Only.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Frontmatter Tags\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"tagging/Frontmatter Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Heading With Hash\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.7\",\n    \"path\": \"review/Heading With Hash.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Headings Target\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"links/Headings Target.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Home\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"2\",\n    \"path\": \"Home.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Inbox\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"inbox/Inbox.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Inline Formatting\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"syntax/Inline Formatting.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Line Endings\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"syntax/Line Endings.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Link Forms\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1.5\",\n    \"path\": \"links/Link Forms.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Link Properties\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"properties/Link Properties.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Links From A\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"a/Links From A.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Links From B\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"b/Links From B.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Loop A\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"embeds/Loop A.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Loop B\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"embeds/Loop B.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Markdown Links\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.8\",\n    \"path\": \"links/Markdown Links.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Math\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"syntax/Math.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Mentions\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"links/Mentions.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Mermaid\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"syntax/Mermaid.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Missing Note Creation\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"review/Missing Note Creation.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Nested Callouts\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"callouts/Nested Callouts.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Note\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"a/Note.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Note\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"b/Note.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Orphan\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"Orphan.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Project Alpha\",\n    \"Rating\": \"5 / 5\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"rating\": \"5\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"Name\": \"Project Beta\",\n    \"Rating\": \"3 / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"projects/Project Beta.md\",\n    \"rating\": \"3\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"Name\": \"Project Delta\",\n    \"Rating\": \"2 / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"projects/Project Delta.md\",\n    \"rating\": \"2\",\n    \"status\": null\n  },\n  {\n    \"Name\": \"Project Gamma\",\n    \"Rating\": \"4 / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"rating\": \"4\",\n    \"status\": \"Done\"\n  },\n  {\n    \"Name\": \"Raw HTML\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"syntax/Raw HTML.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Search Corpus\",\n    \"Rating\": \"4 / 5\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"search/Search Corpus.md\",\n    \"rating\": \"4\",\n    \"status\": \"draft\"\n  },\n  {\n    \"Name\": \"Tables\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"syntax/Tables.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Tags\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"tagging/Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Tags As Text\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"tagging/Tags As Text.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Task Statuses\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1\",\n    \"path\": \"tasks/Task Statuses.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Type Mismatch\",\n    \"Rating\": \"five / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"properties/Type Mismatch.md\",\n    \"rating\": \"five\",\n    \"status\": null\n  },\n  {\n    \"Name\": \"Unicode é 日本\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"Unicode é 日本.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Unicode Tags\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"tagging/Unicode Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Unresolved Links\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.7\",\n    \"path\": \"links/Unresolved Links.md\",\n    \"rating\": null,\n    \"status\": null\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "Name": "2026-W43",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "weekly/2026-W43.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Aliases",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "links/Aliases.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Aliases and Cssclasses",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "properties/Aliases and Cssclasses.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "All Callouts",
+        "Rating": "unrated",
+        "Size (KB)": "1",
+        "path": "callouts/All Callouts.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "All Property Types",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "properties/All Property Types.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Bidirectional Text",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "syntax/Bidirectional Text.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Blocks Target",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "links/Blocks Target.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Broken Frontmatter",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "properties/Broken Frontmatter.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Byte Order Mark",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "syntax/Byte Order Mark.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Callout Titles and Folding",
+        "Rating": "unrated",
+        "Size (KB)": "0.7",
+        "path": "callouts/Callout Titles and Folding.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Case Sensitivity",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "search/Case Sensitivity.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Code Blocks",
+        "Rating": "unrated",
+        "Size (KB)": "1.3",
+        "path": "syntax/Code Blocks.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Comments and Highlights",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "syntax/Comments and Highlights.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Custom Callout",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "callouts/Custom Callout.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Dataview Fields",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "dataview/Dataview Fields.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Dead End",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "Dead End.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Deck",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "slides/Deck.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Canvas and Base",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "embeds/Embed Canvas and Base.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Images",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "embeds/Embed Images.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Media",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "embeds/Embed Media.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Notes",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "embeds/Embed Notes.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Query",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "embeds/Embed Query.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Empty Frontmatter",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "properties/Empty Frontmatter.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Folding and Lists",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "syntax/Folding and Lists.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Footnotes",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "syntax/Footnotes.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Frontmatter Only",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "properties/Frontmatter Only.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Frontmatter Tags",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "tagging/Frontmatter Tags.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Heading With Hash",
+        "Rating": "unrated",
+        "Size (KB)": "0.7",
+        "path": "review/Heading With Hash.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Headings Target",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "links/Headings Target.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Home",
+        "Rating": "unrated",
+        "Size (KB)": "2",
+        "path": "Home.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Inbox",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "inbox/Inbox.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Inline Formatting",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "syntax/Inline Formatting.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Line Endings",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "syntax/Line Endings.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Link Forms",
+        "Rating": "unrated",
+        "Size (KB)": "1.5",
+        "path": "links/Link Forms.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Link Properties",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "properties/Link Properties.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Links From A",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "a/Links From A.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Links From B",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "b/Links From B.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Loop A",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "embeds/Loop A.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Loop B",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "embeds/Loop B.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Markdown Links",
+        "Rating": "unrated",
+        "Size (KB)": "0.8",
+        "path": "links/Markdown Links.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Math",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "syntax/Math.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Mentions",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "links/Mentions.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Mermaid",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "syntax/Mermaid.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Missing Note Creation",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "review/Missing Note Creation.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Nested Callouts",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "callouts/Nested Callouts.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Note",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "a/Note.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Note",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "b/Note.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Orphan",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "Orphan.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Project Alpha",
+        "Rating": "5 / 5",
+        "Size (KB)": "0.3",
+        "path": "projects/Project Alpha.md",
+        "rating": "5",
+        "status": "In progress"
+      },
+      {
+        "Name": "Project Beta",
+        "Rating": "3 / 5",
+        "Size (KB)": "0.2",
+        "path": "projects/Project Beta.md",
+        "rating": "3",
+        "status": "Planned"
+      },
+      {
+        "Name": "Project Delta",
+        "Rating": "2 / 5",
+        "Size (KB)": "0.2",
+        "path": "projects/Project Delta.md",
+        "rating": "2",
+        "status": null
+      },
+      {
+        "Name": "Project Gamma",
+        "Rating": "4 / 5",
+        "Size (KB)": "0.2",
+        "path": "projects/Project Gamma.md",
+        "rating": "4",
+        "status": "Done"
+      },
+      {
+        "Name": "Raw HTML",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "syntax/Raw HTML.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Search Corpus",
+        "Rating": "4 / 5",
+        "Size (KB)": "0.6",
+        "path": "search/Search Corpus.md",
+        "rating": "4",
+        "status": "draft"
+      },
+      {
+        "Name": "Tables",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "syntax/Tables.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Tags",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "tagging/Tags.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Tags As Text",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "tagging/Tags As Text.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Task Statuses",
+        "Rating": "unrated",
+        "Size (KB)": "1",
+        "path": "tasks/Task Statuses.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Type Mismatch",
+        "Rating": "five / 5",
+        "Size (KB)": "0.2",
+        "path": "properties/Type Mismatch.md",
+        "rating": "five",
+        "status": null
+      },
+      {
+        "Name": "Unicode é 日本",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "Unicode é 日本.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Unicode Tags",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "tagging/Unicode Tags.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Unresolved Links",
+        "Rating": "unrated",
+        "Size (KB)": "0.7",
+        "path": "links/Unresolved Links.md",
+        "rating": null,
+        "status": null
+      }
+    ]
+  },
+  "base:query path=bases/Notes.base view=\"All notes\" format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Notes.base",
+      "view=All notes",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"Name\": \"2026-W43\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"weekly/2026-W43.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Aliases\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"links/Aliases.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Aliases and Cssclasses\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"properties/Aliases and Cssclasses.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"All Callouts\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1\",\n    \"path\": \"callouts/All Callouts.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"All Property Types\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"properties/All Property Types.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Bidirectional Text\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"syntax/Bidirectional Text.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Blocks Target\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"links/Blocks Target.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Broken Frontmatter\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"properties/Broken Frontmatter.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Byte Order Mark\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"syntax/Byte Order Mark.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Callout Titles and Folding\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.7\",\n    \"path\": \"callouts/Callout Titles and Folding.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Case Sensitivity\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"search/Case Sensitivity.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Code Blocks\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1.3\",\n    \"path\": \"syntax/Code Blocks.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Comments and Highlights\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"syntax/Comments and Highlights.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Custom Callout\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"callouts/Custom Callout.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Dataview Fields\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"dataview/Dataview Fields.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Dead End\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"Dead End.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Deck\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"slides/Deck.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Canvas and Base\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"embeds/Embed Canvas and Base.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Images\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"embeds/Embed Images.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Media\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"embeds/Embed Media.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Notes\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"embeds/Embed Notes.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Embed Query\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"embeds/Embed Query.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Empty Frontmatter\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"properties/Empty Frontmatter.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Folding and Lists\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"syntax/Folding and Lists.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Footnotes\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.5\",\n    \"path\": \"syntax/Footnotes.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Frontmatter Only\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"properties/Frontmatter Only.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Frontmatter Tags\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"tagging/Frontmatter Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Heading With Hash\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.7\",\n    \"path\": \"review/Heading With Hash.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Headings Target\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"links/Headings Target.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Home\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"2\",\n    \"path\": \"Home.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Inbox\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"inbox/Inbox.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Inline Formatting\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"syntax/Inline Formatting.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Line Endings\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"syntax/Line Endings.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Link Forms\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1.5\",\n    \"path\": \"links/Link Forms.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Link Properties\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"properties/Link Properties.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Links From A\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"a/Links From A.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Links From B\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"b/Links From B.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Loop A\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"embeds/Loop A.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Loop B\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"embeds/Loop B.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Markdown Links\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.8\",\n    \"path\": \"links/Markdown Links.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Math\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"syntax/Math.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Mentions\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"links/Mentions.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Mermaid\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"syntax/Mermaid.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Missing Note Creation\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"review/Missing Note Creation.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Nested Callouts\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.4\",\n    \"path\": \"callouts/Nested Callouts.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Note\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"a/Note.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Note\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"b/Note.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Orphan\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"Orphan.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Project Alpha\",\n    \"Rating\": \"5 / 5\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"rating\": \"5\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"Name\": \"Project Beta\",\n    \"Rating\": \"3 / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"projects/Project Beta.md\",\n    \"rating\": \"3\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"Name\": \"Project Delta\",\n    \"Rating\": \"2 / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"projects/Project Delta.md\",\n    \"rating\": \"2\",\n    \"status\": null\n  },\n  {\n    \"Name\": \"Project Gamma\",\n    \"Rating\": \"4 / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"rating\": \"4\",\n    \"status\": \"Done\"\n  },\n  {\n    \"Name\": \"Raw HTML\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"syntax/Raw HTML.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Search Corpus\",\n    \"Rating\": \"4 / 5\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"search/Search Corpus.md\",\n    \"rating\": \"4\",\n    \"status\": \"draft\"\n  },\n  {\n    \"Name\": \"Tables\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.6\",\n    \"path\": \"syntax/Tables.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Tags\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.9\",\n    \"path\": \"tagging/Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Tags As Text\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.1\",\n    \"path\": \"tagging/Tags As Text.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Task Statuses\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"1\",\n    \"path\": \"tasks/Task Statuses.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Type Mismatch\",\n    \"Rating\": \"five / 5\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"properties/Type Mismatch.md\",\n    \"rating\": \"five\",\n    \"status\": null\n  },\n  {\n    \"Name\": \"Unicode é 日本\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.3\",\n    \"path\": \"Unicode é 日本.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Unicode Tags\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.2\",\n    \"path\": \"tagging/Unicode Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Unresolved Links\",\n    \"Rating\": \"unrated\",\n    \"Size (KB)\": \"0.7\",\n    \"path\": \"links/Unresolved Links.md\",\n    \"rating\": null,\n    \"status\": null\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "Name": "2026-W43",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "weekly/2026-W43.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Aliases",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "links/Aliases.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Aliases and Cssclasses",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "properties/Aliases and Cssclasses.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "All Callouts",
+        "Rating": "unrated",
+        "Size (KB)": "1",
+        "path": "callouts/All Callouts.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "All Property Types",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "properties/All Property Types.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Bidirectional Text",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "syntax/Bidirectional Text.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Blocks Target",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "links/Blocks Target.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Broken Frontmatter",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "properties/Broken Frontmatter.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Byte Order Mark",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "syntax/Byte Order Mark.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Callout Titles and Folding",
+        "Rating": "unrated",
+        "Size (KB)": "0.7",
+        "path": "callouts/Callout Titles and Folding.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Case Sensitivity",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "search/Case Sensitivity.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Code Blocks",
+        "Rating": "unrated",
+        "Size (KB)": "1.3",
+        "path": "syntax/Code Blocks.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Comments and Highlights",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "syntax/Comments and Highlights.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Custom Callout",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "callouts/Custom Callout.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Dataview Fields",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "dataview/Dataview Fields.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Dead End",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "Dead End.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Deck",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "slides/Deck.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Canvas and Base",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "embeds/Embed Canvas and Base.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Images",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "embeds/Embed Images.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Media",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "embeds/Embed Media.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Notes",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "embeds/Embed Notes.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Embed Query",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "embeds/Embed Query.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Empty Frontmatter",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "properties/Empty Frontmatter.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Folding and Lists",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "syntax/Folding and Lists.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Footnotes",
+        "Rating": "unrated",
+        "Size (KB)": "0.5",
+        "path": "syntax/Footnotes.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Frontmatter Only",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "properties/Frontmatter Only.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Frontmatter Tags",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "tagging/Frontmatter Tags.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Heading With Hash",
+        "Rating": "unrated",
+        "Size (KB)": "0.7",
+        "path": "review/Heading With Hash.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Headings Target",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "links/Headings Target.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Home",
+        "Rating": "unrated",
+        "Size (KB)": "2",
+        "path": "Home.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Inbox",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "inbox/Inbox.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Inline Formatting",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "syntax/Inline Formatting.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Line Endings",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "syntax/Line Endings.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Link Forms",
+        "Rating": "unrated",
+        "Size (KB)": "1.5",
+        "path": "links/Link Forms.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Link Properties",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "properties/Link Properties.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Links From A",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "a/Links From A.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Links From B",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "b/Links From B.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Loop A",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "embeds/Loop A.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Loop B",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "embeds/Loop B.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Markdown Links",
+        "Rating": "unrated",
+        "Size (KB)": "0.8",
+        "path": "links/Markdown Links.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Math",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "syntax/Math.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Mentions",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "links/Mentions.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Mermaid",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "syntax/Mermaid.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Missing Note Creation",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "review/Missing Note Creation.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Nested Callouts",
+        "Rating": "unrated",
+        "Size (KB)": "0.4",
+        "path": "callouts/Nested Callouts.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Note",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "a/Note.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Note",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "b/Note.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Orphan",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "Orphan.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Project Alpha",
+        "Rating": "5 / 5",
+        "Size (KB)": "0.3",
+        "path": "projects/Project Alpha.md",
+        "rating": "5",
+        "status": "In progress"
+      },
+      {
+        "Name": "Project Beta",
+        "Rating": "3 / 5",
+        "Size (KB)": "0.2",
+        "path": "projects/Project Beta.md",
+        "rating": "3",
+        "status": "Planned"
+      },
+      {
+        "Name": "Project Delta",
+        "Rating": "2 / 5",
+        "Size (KB)": "0.2",
+        "path": "projects/Project Delta.md",
+        "rating": "2",
+        "status": null
+      },
+      {
+        "Name": "Project Gamma",
+        "Rating": "4 / 5",
+        "Size (KB)": "0.2",
+        "path": "projects/Project Gamma.md",
+        "rating": "4",
+        "status": "Done"
+      },
+      {
+        "Name": "Raw HTML",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "syntax/Raw HTML.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Search Corpus",
+        "Rating": "4 / 5",
+        "Size (KB)": "0.6",
+        "path": "search/Search Corpus.md",
+        "rating": "4",
+        "status": "draft"
+      },
+      {
+        "Name": "Tables",
+        "Rating": "unrated",
+        "Size (KB)": "0.6",
+        "path": "syntax/Tables.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Tags",
+        "Rating": "unrated",
+        "Size (KB)": "0.9",
+        "path": "tagging/Tags.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Tags As Text",
+        "Rating": "unrated",
+        "Size (KB)": "0.1",
+        "path": "tagging/Tags As Text.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Task Statuses",
+        "Rating": "unrated",
+        "Size (KB)": "1",
+        "path": "tasks/Task Statuses.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Type Mismatch",
+        "Rating": "five / 5",
+        "Size (KB)": "0.2",
+        "path": "properties/Type Mismatch.md",
+        "rating": "five",
+        "status": null
+      },
+      {
+        "Name": "Unicode é 日本",
+        "Rating": "unrated",
+        "Size (KB)": "0.3",
+        "path": "Unicode é 日本.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Unicode Tags",
+        "Rating": "unrated",
+        "Size (KB)": "0.2",
+        "path": "tagging/Unicode Tags.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Unresolved Links",
+        "Rating": "unrated",
+        "Size (KB)": "0.7",
+        "path": "links/Unresolved Links.md",
+        "rating": null,
+        "status": null
+      }
+    ]
+  },
+  "base:query path=bases/Notes.base view=\"With a status\" format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Notes.base",
+      "view=With a status",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"Name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"Name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"Name\": \"Project Gamma\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"status\": \"Done\"\n  },\n  {\n    \"Name\": \"Search Corpus\",\n    \"path\": \"search/Search Corpus.md\",\n    \"status\": \"draft\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "Name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "status": "In progress"
+      },
+      {
+        "Name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "status": "Planned"
+      },
+      {
+        "Name": "Project Gamma",
+        "path": "projects/Project Gamma.md",
+        "status": "Done"
+      },
+      {
+        "Name": "Search Corpus",
+        "path": "search/Search Corpus.md",
+        "status": "draft"
+      }
+    ]
+  },
+  "base:query path=bases/Notes.base view=Cards format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Notes.base",
+      "view=Cards",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"Name\": \"Note\",\n    \"path\": \"a/Note.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Note\",\n    \"path\": \"b/Note.md\",\n    \"rating\": null,\n    \"status\": null\n  },\n  {\n    \"Name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"rating\": \"5\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"Name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"rating\": \"3\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"Name\": \"Project Delta\",\n    \"path\": \"projects/Project Delta.md\",\n    \"rating\": \"2\",\n    \"status\": null\n  },\n  {\n    \"Name\": \"Project Gamma\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"rating\": \"4\",\n    \"status\": \"Done\"\n  },\n  {\n    \"Name\": \"Search Corpus\",\n    \"path\": \"search/Search Corpus.md\",\n    \"rating\": \"4\",\n    \"status\": \"draft\"\n  },\n  {\n    \"Name\": \"Tags\",\n    \"path\": \"tagging/Tags.md\",\n    \"rating\": null,\n    \"status\": null\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "Name": "Note",
+        "path": "a/Note.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Note",
+        "path": "b/Note.md",
+        "rating": null,
+        "status": null
+      },
+      {
+        "Name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "rating": "5",
+        "status": "In progress"
+      },
+      {
+        "Name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "rating": "3",
+        "status": "Planned"
+      },
+      {
+        "Name": "Project Delta",
+        "path": "projects/Project Delta.md",
+        "rating": "2",
+        "status": null
+      },
+      {
+        "Name": "Project Gamma",
+        "path": "projects/Project Gamma.md",
+        "rating": "4",
+        "status": "Done"
+      },
+      {
+        "Name": "Search Corpus",
+        "path": "search/Search Corpus.md",
+        "rating": "4",
+        "status": "draft"
+      },
+      {
+        "Name": "Tags",
+        "path": "tagging/Tags.md",
+        "rating": null,
+        "status": null
+      }
+    ]
+  },
+  "base:query path=bases/Projects.base format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Projects.base",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"due\": \"2026-11-15\",\n    \"file name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"rating\": \"5\"\n  },\n  {\n    \"due\": \"2026-12-01\",\n    \"file name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"rating\": \"3\"\n  },\n  {\n    \"due\": \"2027-01-15\",\n    \"file name\": \"Project Delta\",\n    \"path\": \"projects/Project Delta.md\",\n    \"rating\": \"2\"\n  },\n  {\n    \"due\": \"2026-09-30\",\n    \"file name\": \"Project Gamma\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"rating\": \"4\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "due": "2026-11-15",
+        "file name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "rating": "5"
+      },
+      {
+        "due": "2026-12-01",
+        "file name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "rating": "3"
+      },
+      {
+        "due": "2027-01-15",
+        "file name": "Project Delta",
+        "path": "projects/Project Delta.md",
+        "rating": "2"
+      },
+      {
+        "due": "2026-09-30",
+        "file name": "Project Gamma",
+        "path": "projects/Project Gamma.md",
+        "rating": "4"
+      }
+    ]
+  },
+  "base:query path=bases/Projects.base view=\"By status\" format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Projects.base",
+      "view=By status",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"State\": \"closed\",\n    \"Time left\": \"25 days\",\n    \"done\": \"true\",\n    \"due\": \"2026-09-30\",\n    \"file name\": \"Project Gamma\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"status\": \"Done\"\n  },\n  {\n    \"State\": \"open\",\n    \"Time left\": \"21 days\",\n    \"done\": \"false\",\n    \"due\": \"2026-11-15\",\n    \"file name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"State\": \"open\",\n    \"Time left\": \"a month\",\n    \"done\": \"false\",\n    \"due\": \"2026-12-01\",\n    \"file name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"State\": \"open\",\n    \"Time left\": \"3 months\",\n    \"done\": \"false\",\n    \"due\": \"2027-01-15\",\n    \"file name\": \"Project Delta\",\n    \"path\": \"projects/Project Delta.md\",\n    \"status\": null\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "State": "closed",
+        "Time left": "25 days",
+        "done": "true",
+        "due": "2026-09-30",
+        "file name": "Project Gamma",
+        "path": "projects/Project Gamma.md",
+        "status": "Done"
+      },
+      {
+        "State": "open",
+        "Time left": "21 days",
+        "done": "false",
+        "due": "2026-11-15",
+        "file name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "status": "In progress"
+      },
+      {
+        "State": "open",
+        "Time left": "a month",
+        "done": "false",
+        "due": "2026-12-01",
+        "file name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "status": "Planned"
+      },
+      {
+        "State": "open",
+        "Time left": "3 months",
+        "done": "false",
+        "due": "2027-01-15",
+        "file name": "Project Delta",
+        "path": "projects/Project Delta.md",
+        "status": null
+      }
+    ]
+  },
+  "base:query path=bases/Projects.base view=\"Not done\" format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Projects.base",
+      "view=Not done",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"related_count\": \"1\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"file name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"related_count\": \"2\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"file name\": \"Project Delta\",\n    \"path\": \"projects/Project Delta.md\",\n    \"related_count\": null,\n    \"status\": null\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "related_count": "1",
+        "status": "In progress"
+      },
+      {
+        "file name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "related_count": "2",
+        "status": "Planned"
+      },
+      {
+        "file name": "Project Delta",
+        "path": "projects/Project Delta.md",
+        "related_count": null,
+        "status": null
+      }
+    ]
+  },
+  "base:query path=bases/Projects.base view=Board format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Projects.base",
+      "view=Board",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"due\": \"2026-11-15\",\n    \"file name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"rating\": \"5\"\n  },\n  {\n    \"due\": \"2026-12-01\",\n    \"file name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"rating\": \"3\"\n  },\n  {\n    \"due\": \"2027-01-15\",\n    \"file name\": \"Project Delta\",\n    \"path\": \"projects/Project Delta.md\",\n    \"rating\": \"2\"\n  },\n  {\n    \"due\": \"2026-09-30\",\n    \"file name\": \"Project Gamma\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"rating\": \"4\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "due": "2026-11-15",
+        "file name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "rating": "5"
+      },
+      {
+        "due": "2026-12-01",
+        "file name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "rating": "3"
+      },
+      {
+        "due": "2027-01-15",
+        "file name": "Project Delta",
+        "path": "projects/Project Delta.md",
+        "rating": "2"
+      },
+      {
+        "due": "2026-09-30",
+        "file name": "Project Gamma",
+        "path": "projects/Project Gamma.md",
+        "rating": "4"
+      }
+    ]
+  },
+  "base:query path=bases/Projects.base view=Gallery format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Projects.base",
+      "view=Gallery",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"cover\": \"attachments/pixel.png\",\n    \"file name\": \"Project Alpha\",\n    \"path\": \"projects/Project Alpha.md\",\n    \"status\": \"In progress\"\n  },\n  {\n    \"cover\": \"attachments/wide.png\",\n    \"file name\": \"Project Beta\",\n    \"path\": \"projects/Project Beta.md\",\n    \"status\": \"Planned\"\n  },\n  {\n    \"cover\": null,\n    \"file name\": \"Project Delta\",\n    \"path\": \"projects/Project Delta.md\",\n    \"status\": null\n  },\n  {\n    \"cover\": null,\n    \"file name\": \"Project Gamma\",\n    \"path\": \"projects/Project Gamma.md\",\n    \"status\": \"Done\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "cover": "attachments/pixel.png",
+        "file name": "Project Alpha",
+        "path": "projects/Project Alpha.md",
+        "status": "In progress"
+      },
+      {
+        "cover": "attachments/wide.png",
+        "file name": "Project Beta",
+        "path": "projects/Project Beta.md",
+        "status": "Planned"
+      },
+      {
+        "cover": null,
+        "file name": "Project Delta",
+        "path": "projects/Project Delta.md",
+        "status": null
+      },
+      {
+        "cover": null,
+        "file name": "Project Gamma",
+        "path": "projects/Project Gamma.md",
+        "status": "Done"
+      }
+    ]
+  },
+  "base:query path=bases/Tasks.base format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Tasks.base",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file links\": null,\n    \"file name\": \"2026-10-24\",\n    \"file tags\": \"#daily\",\n    \"folder\": \"daily\",\n    \"path\": \"daily/2026-10-24.md\"\n  },\n  {\n    \"file links\": null,\n    \"file name\": \"2026-10-25\",\n    \"file tags\": \"#daily\",\n    \"folder\": \"daily\",\n    \"path\": \"daily/2026-10-25.md\"\n  },\n  {\n    \"file links\": \"[[Dead End|Dead End]], [[Headings Target|Headings Target]]\",\n    \"file name\": \"Task Statuses\",\n    \"file tags\": \"#errand, #task-tag, #tasks\",\n    \"folder\": \"tasks\",\n    \"path\": \"tasks/Task Statuses.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file links": null,
+        "file name": "2026-10-24",
+        "file tags": "#daily",
+        "folder": "daily",
+        "path": "daily/2026-10-24.md"
+      },
+      {
+        "file links": null,
+        "file name": "2026-10-25",
+        "file tags": "#daily",
+        "folder": "daily",
+        "path": "daily/2026-10-25.md"
+      },
+      {
+        "file links": "[[Dead End|Dead End]], [[Headings Target|Headings Target]]",
+        "file name": "Task Statuses",
+        "file tags": "#errand, #task-tag, #tasks",
+        "folder": "tasks",
+        "path": "tasks/Task Statuses.md"
+      }
+    ]
+  },
+  "base:query path=bases/Tasks.base view=\"By tag\" format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Tasks.base",
+      "view=By tag",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file links\": null,\n    \"file name\": \"2026-10-24\",\n    \"file tags\": \"#daily\",\n    \"folder\": \"daily\",\n    \"path\": \"daily/2026-10-24.md\"\n  },\n  {\n    \"file links\": null,\n    \"file name\": \"2026-10-25\",\n    \"file tags\": \"#daily\",\n    \"folder\": \"daily\",\n    \"path\": \"daily/2026-10-25.md\"\n  },\n  {\n    \"file links\": \"[[Dead End|Dead End]], [[Headings Target|Headings Target]]\",\n    \"file name\": \"Task Statuses\",\n    \"file tags\": \"#errand, #task-tag, #tasks\",\n    \"folder\": \"tasks\",\n    \"path\": \"tasks/Task Statuses.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file links": null,
+        "file name": "2026-10-24",
+        "file tags": "#daily",
+        "folder": "daily",
+        "path": "daily/2026-10-24.md"
+      },
+      {
+        "file links": null,
+        "file name": "2026-10-25",
+        "file tags": "#daily",
+        "folder": "daily",
+        "path": "daily/2026-10-25.md"
+      },
+      {
+        "file links": "[[Dead End|Dead End]], [[Headings Target|Headings Target]]",
+        "file name": "Task Statuses",
+        "file tags": "#errand, #task-tag, #tasks",
+        "folder": "tasks",
+        "path": "tasks/Task Statuses.md"
+      }
+    ]
+  },
+  "base:query path=bases/Tasks.base view=Names format=json": {
+    "command": "base:query",
+    "args": [
+      "path=bases/Tasks.base",
+      "view=Names",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file name\": \"2026-10-24\",\n    \"path\": \"daily/2026-10-24.md\"\n  },\n  {\n    \"file name\": \"2026-10-25\",\n    \"path\": \"daily/2026-10-25.md\"\n  },\n  {\n    \"file name\": \"Task Statuses\",\n    \"path\": \"tasks/Task Statuses.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file name": "2026-10-24",
+        "path": "daily/2026-10-24.md"
+      },
+      {
+        "file name": "2026-10-25",
+        "path": "daily/2026-10-25.md"
+      },
+      {
+        "file name": "Task Statuses",
+        "path": "tasks/Task Statuses.md"
+      }
+    ]
+  }
+}

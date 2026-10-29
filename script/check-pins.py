@@ -104,15 +104,16 @@ def parse_bootstrap_scripts(refusals: list[str]) -> dict:
 
     media = read_text(ROOT / "script/bootstrap-media", refusals, "media bootstrap script")
     if media is not None:
-        servo = re.search(rf'checkout\(\s*"servo-mse"\s*,\s*"([^"]+)"\s*,\s*"({SHA})"', media)
+        # A new Servo pin takes a new deps/ name (cargo-targets share artifacts by path).
+        servo = re.search(rf'checkout\(\s*"(servo-[^"]+)"\s*,\s*"([^"]+)"\s*,\s*"({SHA})"', media)
         gst = re.search(
             rf'checkout\(\s*"gstreamer-mse"\s*,\s*"([^"]+)"\s*,\s*"({SHA})"\s*,\s*"([^"]+)"',
             media,
         )
         if servo:
-            pins["servo"] = {"url": servo.group(1), "rev": servo.group(2)}
+            pins["servo"] = {"dir": servo.group(1), "url": servo.group(2), "rev": servo.group(3)}
         else:
-            fail(refusals, "frame_pin_missing", "script/bootstrap-media: servo-mse checkout literal")
+            fail(refusals, "frame_pin_missing", "script/bootstrap-media: servo checkout literal")
         if gst:
             pins["gstreamer"] = {"url": gst.group(1), "rev": gst.group(2), "patch": gst.group(3)}
         else:
@@ -169,7 +170,7 @@ def check_readme(spec: dict | None, pins: dict, refusals: list[str]) -> None:
                  f"patches/README.md does not name the {label} {value}")
 
 
-def check_manifests(spec: dict | None, refusals: list[str]) -> str | None:
+def check_manifests(spec: dict | None, pins: dict, refusals: list[str]) -> str | None:
     toolchain_text = read_text(ROOT / "rust-toolchain.toml", refusals, "toolchain file")
     cargo_text = read_text(ROOT / "Cargo.toml", refusals, "root manifest")
     channel = None
@@ -189,10 +190,10 @@ def check_manifests(spec: dict | None, refusals: list[str]) -> str | None:
             fail(refusals, "frame_pin_unreadable", f"Cargo.toml servo dependency: {error}")
             servo_dep = None
         if servo_dep is not None:
-            if servo_dep.get("path") != "deps/servo-mse/components/servo":
+            expected_path = f"deps/{pins['servo']['dir']}/components/servo" if "servo" in pins else None
+            if expected_path and servo_dep.get("path") != expected_path:
                 fail(refusals, "frame_pin_split",
-                     f"Cargo.toml servo path is {servo_dep.get('path')!r}, expected "
-                     "'deps/servo-mse/components/servo'")
+                     f"Cargo.toml servo path is {servo_dep.get('path')!r}, expected {expected_path!r}")
             features = sorted(servo_dep.get("features") or [])
             if spec and sorted(spec["source_pins"].get("servo_features") or []) != features:
                 fail(refusals, "frame_pin_split",
@@ -237,7 +238,7 @@ def check_deps(pins: dict, spec: dict | None, require: bool, refusals: list[str]
     if "theorem" in pins:
         heads["theorem-rustyweb-pw2"] = pins["theorem"]["rev"]
     if "servo" in pins:
-        heads["servo-mse"] = pins["servo"]["rev"]
+        heads[pins["servo"]["dir"]] = pins["servo"]["rev"]
     if "gstreamer" in pins:
         heads["gstreamer-mse"] = pins["gstreamer"]["rev"]
     for name, rev in heads.items():
@@ -266,7 +267,7 @@ def check_deps(pins: dict, spec: dict | None, require: bool, refusals: list[str]
         if not runtime.is_file():
             fail(refusals, "frame_runtime_missing", f"{runtime}: run script/bootstrap-media")
 
-    fork_toolchain = deps / "servo-mse" / "rust-toolchain.toml"
+    fork_toolchain = deps / pins.get("servo", {}).get("dir", "servo-mse") / "rust-toolchain.toml"
     frame_toolchain = ROOT / "rust-toolchain.toml"
     if fork_toolchain.is_file() and frame_toolchain.is_file():
         try:
@@ -286,7 +287,7 @@ def verify_servo_patch(pins: dict, spec: dict | None, refusals: list[str]) -> No
     """Re-run the archival check: base + patches/servo-mse.patch == pin, byte for byte."""
     if spec is None or "servo" not in pins:
         return
-    repo = ROOT / "deps/servo-mse"
+    repo = ROOT / "deps" / pins["servo"]["dir"]
     if not repo.is_dir():
         fail(refusals, "frame_deps_missing", f"{repo}: run script/bootstrap-media first")
         return
@@ -387,7 +388,7 @@ def main(argv: list[str]) -> int:
     spec = load_spec(refusals)
     check_spec(spec, pins, refusals)
     check_readme(spec, pins, refusals)
-    check_manifests(spec, refusals)
+    check_manifests(spec, pins, refusals)
     check_workflow(pins, spec, refusals)
     deps_record = {} if args.source_only else check_deps(pins, spec, args.require_deps, refusals)
     if args.verify_servo_patch and not refusals:
