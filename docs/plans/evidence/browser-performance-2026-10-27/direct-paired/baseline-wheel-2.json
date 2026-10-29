@@ -1,0 +1,89 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1209,
+      "total_ms": 10.26971600000001,
+      "p50_ms": 0.00725,
+      "p95_ms": 0.017084000000000002,
+      "max_ms": 0.046583
+    },
+    "page_render_interval": {
+      "count": 1208,
+      "total_ms": 12099.148541999986,
+      "p50_ms": 8.502208000000001,
+      "p95_ms": 16.924125,
+      "max_ms": 27.991625
+    },
+    "servo_frame": {
+      "count": 1194,
+      "total_ms": 1661.9828819999982,
+      "p50_ms": 1.1344589999999999,
+      "p95_ms": 3.256125,
+      "max_ms": 5.1325
+    },
+    "servo_frame_interval": {
+      "count": 1193,
+      "total_ms": 12089.977458,
+      "p50_ms": 10.063834,
+      "p95_ms": 12.397083,
+      "max_ms": 34.591041000000004
+    },
+    "servo_spin": {
+      "count": 4776,
+      "total_ms": 1774.8978769999997,
+      "p50_ms": 0.023709,
+      "p95_ms": 1.450666,
+      "max_ms": 6.733125
+    },
+    "surface_present": {
+      "count": 1194,
+      "total_ms": 609.4636240000003,
+      "p50_ms": 0.430042,
+      "p95_ms": 1.139125,
+      "max_ms": 3.170625
+    },
+    "surface_present_interval": {
+      "count": 1193,
+      "total_ms": 12089.647417000006,
+      "p50_ms": 10.002916,
+      "p95_ms": 12.615166,
+      "max_ms": 34.47575
+    },
+    "tint_sample": {
+      "count": 89,
+      "total_ms": 26.783753999999995,
+      "p50_ms": 0.011583000000000001,
+      "p95_ms": 1.577,
+      "max_ms": 4.399792
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1196,
+    "interval_count": 1196,
+    "p50_ms": 10.05999999999949,
+    "p95_ms": 13.1899999999996,
+    "over_33_ms": 0,
+    "scroll_y": 11504,
+    "video": null
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.5411765575408936,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "mode": "wheel",
+  "variant": "baseline",
+  "repeat": 2,
+  "attempt": 0,
+  "wall_s": 15.721017832998768,
+  "cpu_s": 8.877277000000007,
+  "host_load": [
+    7.87744140625,
+    8.75927734375,
+    13.56396484375
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

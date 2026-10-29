@@ -1,0 +1,17 @@
+[
+  {
+    "check": "clippy",
+    "exit_code": 101,
+    "elapsed_s": 4.947868792001827
+  },
+  {
+    "check": "media-build",
+    "exit_code": 0,
+    "elapsed_s": 13.921899708002456
+  },
+  {
+    "check": "production-build",
+    "exit_code": 0,
+    "elapsed_s": 27.49197600000116
+  }
+]

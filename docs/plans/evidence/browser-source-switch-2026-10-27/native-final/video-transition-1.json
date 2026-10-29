@@ -1,0 +1,135 @@
+{
+  "native": {
+    "page_render": {
+      "count": 295,
+      "total_ms": 2.7110769999999986,
+      "p50_ms": 0.009042000000000001,
+      "p95_ms": 0.011083,
+      "max_ms": 0.028958
+    },
+    "page_render_interval": {
+      "count": 294,
+      "total_ms": 11624.762917,
+      "p50_ms": 33.412458,
+      "p95_ms": 42.561583,
+      "max_ms": 525.901166
+    },
+    "servo_frame": {
+      "count": 275,
+      "total_ms": 301.183668,
+      "p50_ms": 1.082375,
+      "p95_ms": 1.268875,
+      "max_ms": 2.45675
+    },
+    "servo_frame_interval": {
+      "count": 274,
+      "total_ms": 9942.072832999997,
+      "p50_ms": 34.976958,
+      "p95_ms": 43.573208,
+      "max_ms": 150.539333
+    },
+    "servo_spin": {
+      "count": 858,
+      "total_ms": 313.27301200000005,
+      "p50_ms": 0.023209,
+      "p95_ms": 1.206541,
+      "max_ms": 2.472458
+    },
+    "surface_present": {
+      "count": 275,
+      "total_ms": 111.83075499999995,
+      "p50_ms": 0.396458,
+      "p95_ms": 0.539709,
+      "max_ms": 1.0225
+    },
+    "surface_present_interval": {
+      "count": 274,
+      "total_ms": 9942.122167,
+      "p50_ms": 34.909959,
+      "p95_ms": 43.54425,
+      "max_ms": 150.45641700000002
+    },
+    "tint_sample": {
+      "count": 65,
+      "total_ms": 18.651456,
+      "p50_ms": 0.016541999999999998,
+      "p95_ms": 1.54025,
+      "max_ms": 2.5655
+    },
+    "webview_paint": {
+      "count": 275,
+      "total_ms": 300.8143369999999,
+      "p50_ms": 1.081458,
+      "p95_ms": 1.267792,
+      "max_ms": 2.454417
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 200,
+      "height": 150,
+      "current": 3,
+      "duration": 3,
+      "ended": true,
+      "sources": [
+        {
+          "src": "/green.mp4",
+          "maxTime": 2.5098105,
+          "playResolved": true
+        },
+        {
+          "src": "/movie.webm",
+          "maxTime": 3.513083333,
+          "playResolved": true
+        },
+        {
+          "src": "/resize.mp4",
+          "maxTime": 3,
+          "playResolved": true
+        }
+      ],
+      "ready": 2,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.0,
+    0.4901961088180542,
+    0.00392150366678834
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [
+    [
+      0.0,
+      0.4901961088180542,
+      0.00392150366678834
+    ],
+    [
+      0.9921568632125854,
+      0.0,
+      0.003921503201127052
+    ]
+  ],
+  "mode": "video-transition",
+  "variant": "single",
+  "repeat": 1,
+  "attempt": 0,
+  "wall_s": 15.990261958999326,
+  "cpu_s": 3.3854249999999997,
+  "host_load": [
+    8.46826171875,
+    9.71728515625,
+    11.54833984375
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

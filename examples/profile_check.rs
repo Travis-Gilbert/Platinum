@@ -1,5 +1,10 @@
 //! Run with tests/profiles/check_native.py. Never touches an installed browser.
 extern crate gpui_kit as gpui;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
+
 #[allow(dead_code)]
 #[path = "../src/engine.rs"]
 mod engine;

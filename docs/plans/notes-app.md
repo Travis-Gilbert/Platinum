@@ -106,7 +106,7 @@ these facts came from.
   of a webview and can answer it, and `UserContentManager::add_script`
   (`components/servo/user_content_manager.rs:34`) adds scripts to pages. The
   fork has no print or PDF output.
-- RustyRed comes from `deps/theorem-rustyweb-pw2`, the checkout of
+- RustyRed comes from `deps/theorem-consolidated`, the checkout of
   Travis-Gilbert/Theorem that Frame already uses for
   `theorem-browser-substrate` and `rustyred-web`. `script/bootstrap` pins it
   at `7ef4dfe` on `claude/rustyweb-synthesis-on-request` and stops at any

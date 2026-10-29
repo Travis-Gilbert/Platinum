@@ -1,0 +1,22 @@
+[
+  {
+    "case": "real file preserved",
+    "exit_code": 1,
+    "expected_success": false
+  },
+  {
+    "case": "unrecognized symlink preserved",
+    "exit_code": 1,
+    "expected_success": false
+  },
+  {
+    "case": "known system link upgraded",
+    "exit_code": 0,
+    "expected_success": true
+  },
+  {
+    "case": "repeat setup idempotent",
+    "exit_code": 0,
+    "expected_success": true
+  }
+]

@@ -4,7 +4,8 @@
 # Platinum's RustyWeb and notes crates are path dependencies under deps/, a
 # read-only checkout of Theorem at a pinned commit of claude/notes-foundations,
 # which builds on claude/rustyweb-synthesis-on-request and
-# codex/rustyweb-programmable-web-2.
+# codex/rustyweb-programmable-web-2. The small detached-search API patch is
+# applied idempotently without replacing local work.
 # deps/ and the Cargo target directory can live on another disk: a Servo build
 # needs about 25 GB.
 #
@@ -19,7 +20,7 @@ theorem_branch="claude/notes-foundations"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"
-checkout="$deps_dir/theorem-rustyweb-pw2"
+checkout="$deps_dir/theorem-consolidated"
 mkdir -p "$deps_dir"
 if [[ "$deps_dir" != "$root/deps" ]]; then
   if [[ -e "$root/deps" && ! -L "$root/deps" ]]; then
@@ -41,7 +42,17 @@ if [[ ! -d "$checkout" ]]; then
 fi
 actual="$(git -C "$checkout" rev-parse HEAD)"
 if [[ "$actual" != "$theorem_rev" ]]; then
-  echo "deps/theorem-rustyweb-pw2 is at $actual, Platinum pins $theorem_rev" >&2
+  echo "deps/theorem-consolidated is at $actual, Platinum pins $theorem_rev" >&2
+  exit 1
+fi
+
+patch="$root/patches/browser-search-concurrency.patch"
+if git -C "$checkout" apply --reverse --check "$patch" 2>/dev/null; then
+  : # Already applied.
+elif git -C "$checkout" apply --check "$patch"; then
+  git -C "$checkout" apply "$patch"
+else
+  echo "Search patch conflicts with local dependency changes; leaving them untouched." >&2
   exit 1
 fi
 

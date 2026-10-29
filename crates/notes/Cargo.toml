@@ -7,11 +7,11 @@ publish = false
 
 [dependencies]
 # Document authority and vault filesystem from Frame's pinned Theorem checkout.
-theorem-ide-runtime = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/theorem-ide-runtime" }
-theorem-ide-authority = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/theorem-ide-authority" }
-rustyred-thg-vfs = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-vfs" }
+theorem-ide-runtime = { path = "../../deps/theorem-consolidated/rustyredcore_THG/crates/theorem-ide-runtime" }
+theorem-ide-authority = { path = "../../deps/theorem-consolidated/rustyredcore_THG/crates/theorem-ide-authority" }
+rustyred-thg-vfs = { path = "../../deps/theorem-consolidated/rustyredcore_THG/crates/rustyred-thg-vfs" }
 
-rustyred-thg-core = { path = "../../deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-core" }
+rustyred-thg-core = { path = "../../deps/theorem-consolidated/rustyredcore_THG/crates/rustyred-thg-core" }
 
 anyhow = "1"
 libc = "0.2"

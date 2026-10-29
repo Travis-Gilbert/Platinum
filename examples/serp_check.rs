@@ -17,6 +17,11 @@
 //! the system temp directory so a check never touches real browsing data.
 
 extern crate gpui_kit as gpui;
+#[cfg(feature = "performance-check")]
+#[allow(dead_code)]
+#[path = "../src/performance.rs"]
+mod performance;
+
 
 #[path = "../src/embedder.rs"]
 mod embedder;

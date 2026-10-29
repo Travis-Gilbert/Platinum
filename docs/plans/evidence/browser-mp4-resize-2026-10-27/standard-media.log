@@ -1,0 +1,6 @@
+media check: document 0 HeadParsed
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+media check: document 0 Complete
+frame screenshot: /var/folders/5f/gw6fzw9n1z15vht733bcn7jr0000gn/T/frame-media-movie_5.mp4.png
+frame screenshot: /var/folders/5f/gw6fzw9n1z15vht733bcn7jr0000gn/T/frame-media-movie_5.webm.png
+{"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Servo/0.7.0 Firefox/153.0","mediaSource":true,"sourceBuffer":true,"codecs":[{"type":"video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"","canPlayType":"probably","mse":true},{"type":"video/webm; codecs=\"vp8, vorbis\"","canPlayType":"probably","mse":true},{"type":"video/webm; codecs=\"vp9, opus\"","canPlayType":"probably","mse":true},{"type":"video/mp4; codecs=\"av01.0.04M.08\"","canPlayType":"probably","mse":true}],"playback":[{"file":"movie_5.mp4","passed":true,"framePixel":[255,0,0,255],"width":320,"height":240,"duration":5.153333333,"audioTracks":1},{"file":"movie_5.webm","passed":true,"framePixel":[254,0,1,255],"width":320,"height":240,"duration":5.008,"audioTracks":1}],"passed":true}

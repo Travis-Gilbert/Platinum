@@ -1,0 +1,28 @@
+[
+  {
+    "file": "frame-media-movie_5.mp4.png",
+    "size": [
+      1280,
+      820
+    ],
+    "rendered_center_pixel": [
+      255,
+      0,
+      0,
+      255
+    ]
+  },
+  {
+    "file": "frame-media-movie_5.webm.png",
+    "size": [
+      1280,
+      820
+    ],
+    "rendered_center_pixel": [
+      254,
+      0,
+      1,
+      255
+    ]
+  }
+]

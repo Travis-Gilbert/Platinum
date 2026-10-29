@@ -217,7 +217,7 @@ def check_workflow(pins: dict, spec: dict | None, refusals: list[str]) -> None:
         if "repository: Travis-Gilbert/Theorem" not in text:
             fail(refusals, "frame_pin_split",
                  "workflow does not check out repository Travis-Gilbert/Theorem")
-    checkout_path = "deps/theorem-rustyweb-pw2"
+    checkout_path = "deps/theorem-consolidated"
     if spec:
         checkout_path = spec["source_pins"].get("theorem_checkout_path", checkout_path)
     if f"path: {checkout_path}" not in text:
@@ -236,7 +236,7 @@ def check_deps(pins: dict, spec: dict | None, require: bool, refusals: list[str]
     record["checked"] = True
     heads = {}
     if "theorem" in pins:
-        heads["theorem-rustyweb-pw2"] = pins["theorem"]["rev"]
+        heads["theorem-consolidated"] = pins["theorem"]["rev"]
     if "servo" in pins:
         heads[pins["servo"]["dir"]] = pins["servo"]["rev"]
     if "gstreamer" in pins:

@@ -54,7 +54,7 @@ jobs:
           repository: Travis-Gilbert/Theorem
           ref: 7eb1ba024b6ccab8146f7857535dcdc6334eb39b
           token: ${{ secrets.THEOREM_READONLY_TOKEN }}
-          path: deps/theorem-rustyweb-pw2
+          path: deps/theorem-consolidated
 
       - name: Install media build dependencies
         run: brew install gstreamer libnice-gstreamer meson ninja

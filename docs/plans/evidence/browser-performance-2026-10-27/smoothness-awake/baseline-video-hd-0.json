@@ -1,0 +1,101 @@
+{
+  "native": {
+    "inactive_page_render": {
+      "count": 823,
+      "total_ms": 5.183844999999992,
+      "p50_ms": 0.006166,
+      "p95_ms": 0.007708,
+      "max_ms": 0.042917000000000004
+    },
+    "page_render": {
+      "count": 1250,
+      "total_ms": 9.186699999999977,
+      "p50_ms": 0.007167,
+      "p95_ms": 0.009084,
+      "max_ms": 0.044333
+    },
+    "page_render_interval": {
+      "count": 1249,
+      "total_ms": 12050.943666999994,
+      "p50_ms": 8.36425,
+      "p95_ms": 16.638208000000002,
+      "max_ms": 19.925083
+    },
+    "servo_frame": {
+      "count": 1229,
+      "total_ms": 1207.7967120000008,
+      "p50_ms": 1.177834,
+      "p95_ms": 1.4367500000000002,
+      "max_ms": 3.671166
+    },
+    "servo_frame_interval": {
+      "count": 1228,
+      "total_ms": 12043.918334000004,
+      "p50_ms": 10.056125000000002,
+      "p95_ms": 10.104792,
+      "max_ms": 22.791541
+    },
+    "servo_spin": {
+      "count": 4407,
+      "total_ms": 1264.1351959999997,
+      "p50_ms": 0.018292,
+      "p95_ms": 1.326917,
+      "max_ms": 3.740084
+    },
+    "surface_present": {
+      "count": 1229,
+      "total_ms": 387.5472910000002,
+      "p50_ms": 0.349416,
+      "p95_ms": 0.5008750000000001,
+      "max_ms": 0.967625
+    },
+    "surface_present_interval": {
+      "count": 1228,
+      "total_ms": 12044.59191699999,
+      "p50_ms": 9.752917,
+      "p95_ms": 10.728667000000002,
+      "max_ms": 23.656333
+    },
+    "tint_sample": {
+      "count": 89,
+      "total_ms": 27.994622999999997,
+      "p50_ms": 0.010625,
+      "p95_ms": 1.656458,
+      "max_ms": 4.065042
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 1242,
+    "interval_count": 1242,
+    "p50_ms": 10.049999999999272,
+    "p95_ms": 10.1200000000008,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "current": 14.108489417,
+      "ready": 4,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.8705881834030151,
+    0.43529409170150757,
+    0.4901961088180542
+  ],
+  "window_active": false,
+  "mode": "video-hd",
+  "variant": "baseline",
+  "repeat": 0,
+  "attempt": 0,
+  "wall_s": 15.681037833997834,
+  "cpu_s": 12.295964999999995,
+  "host_load": [
+    15.833984375,
+    23.59619140625,
+    27.6494140625
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": false
+}

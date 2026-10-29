@@ -9,7 +9,7 @@
     "theorem_rev": "7eb1ba024b6ccab8146f7857535dcdc6334eb39b",
     "servo_repo": "https://github.com/Travis-Gilbert/servo.git",
     "servo_branch": "consolidated",
-    "servo_rev": "d29fdb0ae280e6e30d54e400fd847d7eef955fa5",
+    "servo_rev": "efdf7370da024f467f7526798fe5c6e50e784b52",
     "servo_archival_base": "ebc89e684b721f0a8e2407aad20b121a61187779",
     "servo_features": [
       "brotli-compression-stream",
@@ -24,7 +24,7 @@
     "rust_toolchain": "1.97.1",
     "mse_runtime_library": "deps/gstreamer-mse-runtime/lib/libgstmse-frame-1.0.dylib",
     "workflow": ".github/workflows/browser-oracle.yml",
-    "theorem_checkout_path": "deps/theorem-rustyweb-pw2"
+    "theorem_checkout_path": "deps/theorem-consolidated"
   },
   "fixture_server": {
     "command": "python3 -m http.server 8766 --bind 127.0.0.1 --directory deps/servo-consolidated/tests/wpt/tests",

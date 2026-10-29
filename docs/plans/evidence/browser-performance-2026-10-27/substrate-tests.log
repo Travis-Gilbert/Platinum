@@ -1,0 +1,97 @@
+warning: methods `full_builds` and `index_bytes` are never used
+   --> deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-core/src/graph/vector_index.rs:467:19
+    |
+180 | impl VectorIndex {
+    | ---------------- methods in this implementation
+...
+467 |     pub(crate) fn full_builds(&self) -> usize {
+    |                   ^^^^^^^^^^^
+...
+471 |     pub(crate) fn index_bytes(&self) -> Option<Vec<u8>> {
+    |                   ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `object_field` is never used
+   --> deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-core/src/symbolic.rs:314:4
+    |
+314 | fn object_field<'a>(value: &'a Value, key: &str) -> &'a str {
+    |    ^^^^^^^^^^^^
+
+warning: function `hydrate_in_memory_graph_from_payload_index` is never used
+    --> deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-core/src/versioned_graph.rs:5522:15
+     |
+5522 | pub(crate) fn hydrate_in_memory_graph_from_payload_index(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `rustyred-thg-core` (lib) generated 3 warnings
+warning: fields `labels`, `feature_map`, `emission_weights`, and `transition_weights` are never read
+  --> deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-nlp/src/model_registry.rs:11:9
+   |
+10 | pub(crate) struct ValidatedNerModel {
+   |                   ----------------- fields in this struct
+11 |     pub labels: Vec<String>,
+   |         ^^^^^^
+12 |     pub feature_map: HashMap<String, usize>,
+   |         ^^^^^^^^^^^
+13 |     pub emission_weights: Vec<f32>,
+   |         ^^^^^^^^^^^^^^^^
+14 |     pub transition_weights: Vec<f32>,
+   |         ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `ValidatedNerModel` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `validate_ner_model` is never used
+   --> deps/theorem-rustyweb-pw2/rustyredcore_THG/crates/rustyred-thg-nlp/src/model_registry.rs:274:15
+    |
+274 | pub(crate) fn validate_ner_model(bytes: &[u8]) -> Result<ValidatedNerModel, String> {
+    |               ^^^^^^^^^^^^^^^^^^
+
+warning: `rustyred-thg-nlp` (lib) generated 2 warnings
+   Compiling theorem-browser-substrate v0.0.0 (/Volumes/SSD Samsung/frame-performance/baseline-source/deps/theorem-rustyweb-pw2/apps/browser-substrate)
+warning: unused import: `GraphWrite`
+    --> deps/theorem-rustyweb-pw2/apps/browser-substrate/src/programmable_search.rs:1469:29
+     |
+1469 |     use rustyred_thg_core::{GraphWrite, InMemoryGraphStore};
+     |                             ^^^^^^^^^^
+     |
+     = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `theorem-browser-substrate` (lib test) generated 1 warning
+    Finished `test` profile [optimized] target(s) in 25.15s
+     Running unittests src/lib.rs (/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/deps/theorem_browser_substrate-65be8c18891f3fe2)
+
+running 30 tests
+test programmable_search::tests::a_page_changed_after_it_was_read_stays_pending ... ok
+test programmable_search::tests::browser_citation_reads_exact_verified_span_and_refuses_other_tenant ... ok
+test programmable_search::tests::browser_preference_requires_capability_and_publishes_revision ... ok
+test programmable_search::tests::browser_preferred_social_resource_roundtrips_type_and_refuses_identity_reassignment ... ok
+test programmable_search::tests::browser_search_reads_canonical_tensor_payloads_and_uses_query_embedder ... ok
+test programmable_search::tests::browser_search_views_and_live_promotion_preserve_identity ... ok
+test programmable_search::tests::opening_the_answer_asks_for_one_once ... ok
+test programmable_search::tests::pending_pages_embed_outside_the_store_and_publish_once ... ok
+test programmable_search::tests::prepared_search_keeps_old_generation_and_cannot_finish_in_other_store ... ok
+test programmable_search::tests::search_canvas_spatial_transaction_roundtrips_durable_without_policy_change ... ok
+test search_campaign::tests::a_campaign_fetches_only_results_the_session_holds_no_content_for ... ok
+test search_campaign::tests::a_search_without_new_results_plans_no_campaign ... ok
+test search_campaign::tests::one_failed_seed_does_not_cost_the_others ... ok
+test tests::browser_affordances_expose_rustyred_and_rustyweb ... ok
+test tests::browser_session_can_fetch_open_web_page_and_ingest_it ... ok
+test tests::browser_session_store_ingests_pages_and_renders_search ... ok
+test tests::browser_session_store_receipts_increment_run_ids ... ok
+test tests::capture_policy_off_writes_nothing ... ok
+test tests::chrome_keep_request_promotes_active_page ... ok
+test tests::chrome_state_routes_url_search_and_ask ... ok
+test tests::chrome_state_tracks_three_tabs_close_and_reorder ... ok
+test tests::compatibility_outcome_files_item_with_screenshot_reference ... ok
+test tests::full_capture_ingests_page_and_receipt ... ok
+test tests::ingesting_a_page_writes_page_link_and_snapshot_nodes_to_the_store ... ok
+test tests::keep_page_writes_item_style_record_with_provenance ... ok
+test tests::loaded_page_maps_status_and_content_type ... ok
+test tests::per_site_override_beats_default_capture_dial ... ok
+test tests::receipts_only_writes_receipt_without_page_content ... ok
+test tests::search_or_crawl_fetches_unfetched_frontier_links ... ok
+test tests::substrate_search_page_renders_from_browser_written_graph_state ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.41s

@@ -1,0 +1,62 @@
+{
+  "frame_head": "2e135c046d2feba70b57980c8d70e5bb7667822d",
+  "servo_head": "5c8325a389555f3b1adc476106d8529791afe13e",
+  "theorem_head": "6e57dbb39124f472d8619fb20a9984e89eb225e8",
+  "hardware": "Apple M1 Max, 10 logical CPUs, 32 GiB RAM",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434\n",
+  "rust": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "profile": "dev, application and dependencies opt-level=2, debug=0",
+  "frame_head_note": "Pre-commit source base; the committed patch and source hashes define the tested candidate.",
+  "gstreamer_head": "1b2a95a1b72787cda146b46df9605b168e5b683b",
+  "native_build": "GStreamer 1.28.8 private videoparsers, Meson debugoptimized, optimization=2; baseline Homebrew 1.28.8_1",
+  "binaries": {
+    "h264-before": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/h264-before/frame-ready",
+      "sha256": "21ffb339f1e6010ef46038d4b643150934bfd09bc93c358d310e04a26cb8331c",
+      "bytes": 219897728
+    },
+    "h264-after": {
+      "path": "/Volumes/SSD Samsung/cargo-targets/frame-performance/debug/h264-after/frame-ready",
+      "sha256": "21ffb339f1e6010ef46038d4b643150934bfd09bc93c358d310e04a26cb8331c",
+      "bytes": 219897728
+    }
+  },
+  "plugins": {
+    "h264-before": {
+      "path": "/opt/homebrew/Cellar/gstreamer/1.28.8_1/lib/gstreamer-1.0/libgstvideoparsersbad.dylib",
+      "sha256": "035012f2090da6247ae8abc44a998f47469e22579d12e34938320dcbad03b80f",
+      "bytes": 386048
+    },
+    "h264-after": {
+      "path": "/Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/gstreamer-1.0/libgstvideoparsersbad.dylib",
+      "sha256": "17e61aa931b6a6d915e7ddd9350593540cd100a0a06efb3de7d3e9cdfb405b34",
+      "bytes": 485320
+    }
+  },
+  "different_plugin_paths": [
+    "libgstvideoparsersbad.dylib"
+  ],
+  "fixtures": {
+    "/Volumes/SSD Samsung/frame-performance/media/motion-1080p60.mp4": {
+      "path": "/Volumes/SSD Samsung/frame-performance/media/motion-1080p60.mp4",
+      "sha256": "70ed06971bce39b24d0c0aaa508c83d0ea34d9a4078cdeda4bdd5e6c70928a09",
+      "bytes": 55448182
+    },
+    "deps/servo-mse/tests/wpt/tests/media/400x300-red-resize-200x150-green.mp4": {
+      "path": "deps/servo-mse/tests/wpt/tests/media/400x300-red-resize-200x150-green.mp4",
+      "sha256": "7fa7d6c9754d3314811911e553b8dc75e0d4d50cc3a4731497e493be44554636",
+      "bytes": 17425
+    }
+  },
+  "sources": {
+    "patches/gstreamer-mse.patch": "403442383bc2cf247f399663832e771000323cfb6192eacaf925036ddb0c8d08",
+    "patches/servo-video-frame-pacing.patch": "22725851edb91be7b4b0b4d5916c4eb68a97539cc0b5ba22ba3e25318f9d213b",
+    "src/browser/performance.rs": "fe0ddb93417eace535f3e1de37d65ddee884468bd1d738322bffe62a71876483",
+    "tests/performance/compare.py": "e0fab5fd0e7143369060748cf9c958e6113e536e1a9df99db76c63a6737f211e",
+    "tests/performance/page.html": "4aea98dbcfd59fc9b3d32d1c866212fbadf974c36eb8e80afe4e4b2d3855456f",
+    "tests/media/source-switch.js": "26d433695537cfd286533952a3f49578c0c5fd2aeb6bb1c6b42447a5c300d45f",
+    "tests/media/check_h264.py": "5fa22d3de5c5a4ef78cca8ee25ebad1d74fa32d4204be2f1d3b25377cf725d1d",
+    "script/setup-media": "6a04d1df61afa487ab772ae849501ddeb665a131c1e2bc4aa5d01a1d47a82930",
+    "script/bootstrap-media": "161622540aeb3cabc44e7663ac359d4511ca8e266d01c757a4d8d2cd59417d00"
+  }
+}

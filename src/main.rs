@@ -20,6 +20,8 @@ mod inspector;
 mod keys;
 mod navigator;
 mod page;
+#[cfg(feature = "performance-check")]
+mod performance;
 mod profile_ui;
 mod scene;
 mod search;
@@ -49,6 +51,10 @@ use crate::engine::Engine;
 use crate::theme::Appearance;
 
 fn main() -> anyhow::Result<()> {
+    #[cfg(feature = "performance-check")]
+    if std::env::var_os("FRAME_PERF_ROOT").is_some() {
+        return browser::performance::run();
+    }
     // Logging is Servo's (`Engine::start`): it installs the one logger and
     // reads `RUST_LOG`. Servo's graph links more than one rustls provider, so
     // one has to be named before the first TLS connection.

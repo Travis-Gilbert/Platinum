@@ -1,0 +1,96 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1444,
+      "total_ms": 1627.6373070000016,
+      "p50_ms": 1.0816249999999998,
+      "p95_ms": 1.4670830000000001,
+      "max_ms": 2.315375
+    },
+    "page_render_interval": {
+      "count": 1443,
+      "total_ms": 12057.627833000024,
+      "p50_ms": 8.321416999999999,
+      "p95_ms": 9.23025,
+      "max_ms": 18.30425
+    },
+    "servo_frame": {
+      "count": 1446,
+      "total_ms": 3.0979759999999863,
+      "p50_ms": 0.002166,
+      "p95_ms": 0.0029170000000000003,
+      "max_ms": 0.010125
+    },
+    "servo_frame_interval": {
+      "count": 1445,
+      "total_ms": 12057.672332999988,
+      "p50_ms": 8.329292,
+      "p95_ms": 9.23825,
+      "max_ms": 29.333583
+    },
+    "servo_spin": {
+      "count": 5765,
+      "total_ms": 144.23976200000013,
+      "p50_ms": 0.006167000000000001,
+      "p95_ms": 0.0725,
+      "max_ms": 10.063291
+    },
+    "surface_present": {
+      "count": 1443,
+      "total_ms": 638.5502389999999,
+      "p50_ms": 0.428375,
+      "p95_ms": 0.582375,
+      "max_ms": 1.4686670000000002
+    },
+    "surface_present_interval": {
+      "count": 1442,
+      "total_ms": 12057.613958000007,
+      "p50_ms": 8.32425,
+      "p95_ms": 9.240417,
+      "max_ms": 28.796167
+    },
+    "tint_sample": {
+      "count": 89,
+      "total_ms": 7.097090000000001,
+      "p50_ms": 0.012417,
+      "p95_ms": 0.244917,
+      "max_ms": 2.1539580000000003
+    },
+    "webview_paint": {
+      "count": 1443,
+      "total_ms": 1610.5761109999983,
+      "p50_ms": 1.069375,
+      "p95_ms": 1.454583,
+      "max_ms": 2.3039169999999998
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1447,
+    "interval_count": 1447,
+    "p50_ms": 8.319999999999709,
+    "p95_ms": 9.239999999999782,
+    "over_33_ms": 0,
+    "scroll_y": 11512,
+    "video": null
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.5411765575408936,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "mode": "wheel",
+  "variant": "candidate",
+  "repeat": 1,
+  "attempt": 0,
+  "wall_s": 15.54897520799932,
+  "cpu_s": 9.423730999999975,
+  "host_load": [
+    16.62353515625,
+    21.9892578125,
+    26.64794921875
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

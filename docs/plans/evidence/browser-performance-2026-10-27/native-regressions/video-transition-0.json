@@ -1,0 +1,103 @@
+{
+  "native": {
+    "page_render": {
+      "count": 351,
+      "total_ms": 617.9136689999998,
+      "p50_ms": 1.216541,
+      "p95_ms": 3.4719170000000004,
+      "max_ms": 5.74225
+    },
+    "page_render_interval": {
+      "count": 350,
+      "total_ms": 11807.578707999997,
+      "p50_ms": 32.215166,
+      "p95_ms": 50.344459,
+      "max_ms": 526.0464999999999
+    },
+    "servo_frame": {
+      "count": 337,
+      "total_ms": 0.850306999999999,
+      "p50_ms": 0.0022919999999999998,
+      "p95_ms": 0.0038330000000000005,
+      "max_ms": 0.013542
+    },
+    "servo_frame_interval": {
+      "count": 336,
+      "total_ms": 9789.876207999992,
+      "p50_ms": 30.012041,
+      "p95_ms": 51.861833000000004,
+      "max_ms": 203.310375
+    },
+    "servo_spin": {
+      "count": 1004,
+      "total_ms": 20.983955999999992,
+      "p50_ms": 0.016042,
+      "p95_ms": 0.033290999999999994,
+      "max_ms": 1.480292
+    },
+    "surface_present": {
+      "count": 326,
+      "total_ms": 208.3422119999999,
+      "p50_ms": 0.433708,
+      "p95_ms": 1.2412079999999999,
+      "max_ms": 2.637125
+    },
+    "surface_present_interval": {
+      "count": 325,
+      "total_ms": 9815.064500000002,
+      "p50_ms": 32.099416999999995,
+      "p95_ms": 49.847457999999996,
+      "max_ms": 199.811541
+    },
+    "tint_sample": {
+      "count": 64,
+      "total_ms": 6.855453999999999,
+      "p50_ms": 0.02025,
+      "p95_ms": 0.200334,
+      "max_ms": 2.1862079999999997
+    },
+    "webview_paint": {
+      "count": 326,
+      "total_ms": 610.1957910000002,
+      "p50_ms": 1.229416,
+      "p95_ms": 3.460208,
+      "max_ms": 5.719875
+    }
+  },
+  "fixture": {
+    "mode": "video",
+    "frames": 0,
+    "interval_count": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "over_33_ms": 0,
+    "scroll_y": 0,
+    "video": {
+      "width": 400,
+      "height": 300,
+      "current": 0,
+      "ready": 2,
+      "advancing": true,
+      "quality": null
+    }
+  },
+  "tint_rgb": [
+    0.9882352948188782,
+    0.0,
+    0.0
+  ],
+  "window_active": true,
+  "hidden_surface_presents": null,
+  "transition_tints": [
+    [
+      0.0,
+      0.4901961088180542,
+      0.00392150366678834
+    ],
+    [
+      0.9960784316062927,
+      0.0,
+      0.003921804018318653
+    ]
+  ]
+}

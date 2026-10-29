@@ -1,0 +1,58 @@
+{
+  "sequential": [
+    {
+      "ms": 4226,
+      "hits": 10,
+      "degraded": [
+        "warm_index_shadow",
+        "provider_error:gdelt"
+      ]
+    },
+    {
+      "ms": 4004,
+      "hits": 10,
+      "degraded": [
+        "warm_index_shadow",
+        "provider_error:gdelt"
+      ]
+    }
+  ],
+  "concurrent": [
+    {
+      "ms": 4004,
+      "hits": 10,
+      "degraded": [
+        "warm_index_shadow",
+        "provider_error:gdelt"
+      ]
+    },
+    {
+      "ms": 4005,
+      "hits": 10,
+      "degraded": [
+        "warm_index_shadow",
+        "provider_error:gdelt"
+      ]
+    },
+    {
+      "ms": 4005,
+      "hits": 10,
+      "degraded": [
+        "warm_index_shadow",
+        "provider_error:gdelt"
+      ]
+    }
+  ],
+  "batch_ms": 4007.6547910000004,
+  "capture_ms": 199.636541,
+  "mode": "search",
+  "variant": "candidate",
+  "repeat": 0,
+  "wall_s": 13.317543791999924,
+  "cpu_s": 1.2222220000000001,
+  "host_load": [
+    106.40673828125,
+    109.92919921875,
+    115.62109375
+  ]
+}

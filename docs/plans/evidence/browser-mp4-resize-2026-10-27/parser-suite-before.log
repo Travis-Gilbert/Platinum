@@ -1,0 +1,21 @@
+Running suite(s): h264parse_to_bs_nal
+100%: Checks: 7, Failures: 0, Errors: 0
+Check suite h264parse_to_bs_nal ran in 0.070s (tests failed: 0)
+Running suite(s): h264parse_to_bs_au
+100%: Checks: 8, Failures: 0, Errors: 0
+Check suite h264parse_to_bs_au ran in 0.075s (tests failed: 0)
+Running suite(s): h264parse_to_avc_au
+100%: Checks: 7, Failures: 0, Errors: 0
+Running suite(s): h264parse_to_avc3_au
+100%: Checks: 7, Failures: 0, Errors: 0
+Check suite h264parse_to_avc3_au ran in 0.087s (tests failed: 0)
+Running suite(s): h264parse_packetized
+100%: Checks: 1, Failures: 0, Errors: 0
+Check suite h264parse_packetized ran in 0.012s (tests failed: 0)
+Running suite(s): h264parse_sliced
+100%: Checks: 4, Failures: 0, Errors: 0
+Check suite h264parse_sliced ran in 0.044s (tests failed: 0)
+Running suite(s): h264parse
+87%: Checks: 8, Failures: 1, Errors: 0
+/Users/travisgilbert/Tech Dev Local/Creative/Frame/deps/gstreamer-mse/subprojects/gst-plugins-bad/tests/check/elements/h264parse.c:1499:F:general:test_parse_stale_container_dimensions:0: 'structure_get_int(s,"width")' (400) is not equal to '32' (32)
+Check suite h264parse ran in 0.082s (tests failed: 1)

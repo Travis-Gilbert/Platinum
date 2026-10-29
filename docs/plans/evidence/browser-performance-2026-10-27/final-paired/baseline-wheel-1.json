@@ -1,0 +1,89 @@
+{
+  "native": {
+    "page_render": {
+      "count": 1246,
+      "total_ms": 9.913054999999973,
+      "p50_ms": 0.007666000000000001,
+      "p95_ms": 0.011125,
+      "max_ms": 0.031667
+    },
+    "page_render_interval": {
+      "count": 1245,
+      "total_ms": 12116.02733400001,
+      "p50_ms": 8.373375000000001,
+      "p95_ms": 16.645417,
+      "max_ms": 19.035166
+    },
+    "servo_frame": {
+      "count": 1229,
+      "total_ms": 1526.3962519999998,
+      "p50_ms": 1.201916,
+      "p95_ms": 1.674709,
+      "max_ms": 4.262917
+    },
+    "servo_frame_interval": {
+      "count": 1228,
+      "total_ms": 12110.813666,
+      "p50_ms": 10.059083999999999,
+      "p95_ms": 10.124125,
+      "max_ms": 17.959166
+    },
+    "servo_spin": {
+      "count": 4906,
+      "total_ms": 1625.2510610000004,
+      "p50_ms": 0.023625,
+      "p95_ms": 1.468458,
+      "max_ms": 4.273167
+    },
+    "surface_present": {
+      "count": 1229,
+      "total_ms": 580.9047769999994,
+      "p50_ms": 0.45837500000000003,
+      "p95_ms": 0.663375,
+      "max_ms": 1.466375
+    },
+    "surface_present_interval": {
+      "count": 1228,
+      "total_ms": 12111.128291999987,
+      "p50_ms": 9.888333,
+      "p95_ms": 10.480375,
+      "max_ms": 19.058
+    },
+    "tint_sample": {
+      "count": 89,
+      "total_ms": 27.342088999999998,
+      "p50_ms": 0.012416,
+      "p95_ms": 1.913417,
+      "max_ms": 5.763125
+    }
+  },
+  "fixture": {
+    "mode": "scroll",
+    "frames": 1221,
+    "interval_count": 1221,
+    "p50_ms": 10.039999999999964,
+    "p95_ms": 10.200000000000728,
+    "over_33_ms": 0,
+    "scroll_y": 11528,
+    "video": null
+  },
+  "tint_rgb": [
+    0.8392157554626465,
+    0.5294118523597717,
+    0.3607843518257141
+  ],
+  "window_active": true,
+  "mode": "wheel",
+  "variant": "baseline",
+  "repeat": 1,
+  "attempt": 0,
+  "wall_s": 16.154078875002597,
+  "cpu_s": 9.43100299999999,
+  "host_load": [
+    9.794921875,
+    15.0166015625,
+    18.59765625
+  ],
+  "session_restored_after_exit": true,
+  "valid_foreground": true
+}

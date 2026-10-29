@@ -1,0 +1,452 @@
+Cleaning... 0 files.
+The Meson build system
+Version: 1.12.1
+Source dir: /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad
+Build dir: /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build
+Build type: native build
+Project name: gst-plugins-bad
+Project version: 1.28.8
+C compiler for the host machine: /opt/homebrew/bin/sccache cc (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.1)")
+C linker for the host machine: cc ld64 27106.1
+C++ compiler for the host machine: /opt/homebrew/bin/sccache c++ (clang 21.0.0 "Apple clang version 21.0.0 (clang-2100.3.34.1)")
+C++ linker for the host machine: c++ ld64 27106.1
+Host machine cpu family: aarch64
+Host machine cpu: aarch64
+Objective-C compiler for the host machine: /opt/homebrew/bin/sccache clang (clang 21.0.0)
+Objective-C linker for the host machine: clang ld64 27106.1
+Objective-C++ compiler for the host machine: /opt/homebrew/bin/sccache clang++ (clang 21.0.0)
+Objective-C++ linker for the host machine: clang++ ld64 27106.1
+Compiler for C++ supports arguments -Wno-non-virtual-dtor: YES (cached)
+Compiler for C supports link arguments -Wl,-Bsymbolic-functions: NO (cached)
+Compiler for C supports link arguments -Wl,-z,nodelete: NO (cached)
+Compiler for C++ supports link arguments -Wl,-z,nodelete: NO (cached)
+Compiler for C supports arguments -fvisibility=hidden: YES (cached)
+Compiler for C supports arguments -fno-strict-aliasing: YES (cached)
+Compiler for C++ supports arguments -fno-strict-aliasing: YES (cached)
+Message: Disabling GLib cast checks
+Has header "dlfcn.h" : YES (cached)
+Has header "fcntl.h" : YES (cached)
+Has header "inttypes.h" : YES (cached)
+Has header "memory.h" : YES (cached)
+Has header "netinet/in.h" : YES (cached)
+Has header "netinet/ip.h" : YES (cached)
+Has header "netinet/tcp.h" : YES (cached)
+Has header "pthread.h" : YES (cached)
+Has header "pwd.h" : YES (cached)
+Has header "stdint.h" : YES (cached)
+Has header "stdlib.h" : YES (cached)
+Has header "strings.h" : YES (cached)
+Has header "string.h" : YES (cached)
+Has header "sys/param.h" : YES (cached)
+Has header "sys/socket.h" : YES (cached)
+Has header "sys/stat.h" : YES (cached)
+Has header "sys/time.h" : YES (cached)
+Has header "sys/types.h" : YES (cached)
+Has header "sys/utsname.h" : YES (cached)
+Has header "unistd.h" : YES (cached)
+Has header "windows.h" : NO (cached)
+Has header "winsock2.h" : NO (cached)
+Has header "ws2tcpip.h" : NO (cached)
+Checking for function "dcgettext" : NO (cached)
+Checking for function "getpagesize" : YES (cached)
+Checking for function "gmtime_r" : YES (cached)
+Checking for function "memfd_create" : NO (cached)
+Checking for function "mmap" : YES (cached)
+Checking for function "pipe2" : YES (cached)
+Checking for function "getrusage" : YES (cached)
+Checking for size of "char" : 1 (cached)
+Checking for size of "int" : 4 (cached)
+Checking for size of "long" : 8 (cached)
+Checking for size of "short" : 2 (cached)
+Checking for size of "void*" : 8 (cached)
+Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+Compiler for C supports arguments -Wold-style-definition: YES (cached)
+Compiler for C supports arguments -Waggregate-return: YES (cached)
+Compiler for C++ supports arguments -Wformat-nonliteral: YES (cached)
+Compiler for C supports arguments -Waddress: YES (cached)
+Compiler for C++ supports arguments -Waddress: YES (cached)
+Compiler for C supports arguments -Wformat: YES (cached)
+Compiler for C++ supports arguments -Wformat: YES (cached)
+Compiler for C supports arguments -Wformat-security: YES (cached)
+Compiler for C++ supports arguments -Wformat-security: YES (cached)
+Compiler for C supports arguments -Wimplicit-fallthrough=3: NO (cached)
+Compiler for C++ supports arguments -Wimplicit-fallthrough=3: NO (cached)
+Compiler for C supports arguments -Winit-self: YES (cached)
+Compiler for C++ supports arguments -Winit-self: YES (cached)
+Compiler for C supports arguments -Wmissing-declarations: YES (cached)
+Compiler for C++ supports arguments -Wmissing-declarations: YES (cached)
+Compiler for C supports arguments -Wmissing-include-dirs: YES (cached)
+Compiler for C++ supports arguments -Wmissing-include-dirs: YES (cached)
+Compiler for C supports arguments -Wmissing-parameter-type: NO (cached)
+Compiler for C++ supports arguments -Wmissing-parameter-type: NO (cached)
+Compiler for C supports arguments -Wno-multichar: YES (cached)
+Compiler for C++ supports arguments -Wno-multichar: YES (cached)
+Compiler for C supports arguments -Wpointer-arith: YES (cached)
+Compiler for C++ supports arguments -Wpointer-arith: YES (cached)
+Compiler for C supports arguments -Wredundant-decls: YES (cached)
+Compiler for C++ supports arguments -Wredundant-decls: YES (cached)
+Compiler for C supports arguments -Wshift-negative-value: YES (cached)
+Compiler for C++ supports arguments -Wshift-negative-value: YES (cached)
+Compiler for C supports arguments -Wtype-limits: YES (cached)
+Compiler for C++ supports arguments -Wtype-limits: YES (cached)
+Compiler for C supports arguments -Wundef: YES (cached)
+Compiler for C++ supports arguments -Wundef: YES (cached)
+Compiler for C supports arguments -Wvla: YES (cached)
+Compiler for C++ supports arguments -Wvla: YES (cached)
+Compiler for C supports arguments -Wwrite-strings: YES (cached)
+Compiler for C++ supports arguments -Wwrite-strings: YES (cached)
+Dependency gstreamer-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-base-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-net-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-controller-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-pbutils-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-allocators-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-app-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-audio-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-fft-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-riff-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-rtp-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-rtsp-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-sdp-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-tag-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-video-1.0 for host machine found: YES 1.28.8 (cached)
+Dependency gstreamer-check-1.0 for host machine skipped: feature tests disabled
+Dependency gstreamer-gl-1.0 for host machine skipped: feature gl disabled
+Dependency gstreamer-gl-prototypes-1.0 for host machine skipped: feature gl disabled
+Library m found: YES
+Dependency gio-2.0 for host machine found: YES 2.90.1 (cached)
+Dependency gmodule-no-export-2.0 for host machine found: YES 2.90.1 (cached)
+Dependency x11 for host machine skipped: feature x11 disabled
+Dependency orc-0.4 for host machine skipped: feature orc disabled
+Program orcc skipped: feature orc-compiler disabled
+../../../../../Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/meson.build:486: WARNING: Orc not found or disabled, will use backup C code
+Header "gst/gstconfig.h" has symbol "GST_DISABLE_GST_DEBUG" with dependency gstreamer-1.0: NO (cached)
+Message: GStreamer debug system is enabled
+Program python3 found: YES (/opt/homebrew/opt/python@3.15/bin/python3.15)
+Program g-ir-scanner skipped: feature introspection disabled
+Found pkg-config: YES (/opt/homebrew/bin/pkg-config) 3.0.10
+Compiler for C supports arguments -Wno-misleading-indentation: YES (cached)
+Compiler for C supports arguments -Wno-redundant-decls: YES (cached)
+Compiler for C supports arguments -Wno-unused-but-set-variable: YES (cached)
+Compiler for C supports arguments -Wno-unknown-pragmas: YES (cached)
+Compiler for C supports arguments -Wno-switch: YES (cached)
+Compiler for C supports arguments -Wimplicit-fallthrough=0: NO (cached)
+Compiler for C supports arguments -Wno-undef: YES (cached)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency wayland-client for host machine skipped: feature wayland disabled
+Dependency libdrm for host machine skipped: feature wayland disabled
+Dependency wayland-protocols for host machine skipped: feature wayland disabled
+Program wayland-scanner skipped: feature wayland disabled
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency glib-2.0 for host machine found: YES 2.90.1 (cached)
+Program /opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums found: YES (/opt/homebrew/Cellar/glib/2.90.1/bin/glib-mkenums)
+Dependency nice for host machine skipped: feature webrtc disabled
+Has header "jni.h" skipped: feature androidmedia disabled
+Dependency bluez for host machine skipped: feature bluez disabled
+Dependency gio-unix-2.0 for host machine skipped: feature bluez disabled
+Compiler for C supports arguments -Wno-misleading-indentation: YES (cached)
+Compiler for C supports arguments -Wno-redundant-decls: YES (cached)
+Compiler for C supports arguments -Wno-unused-but-set-variable: YES (cached)
+Compiler for C supports arguments -Wno-unknown-pragmas: YES (cached)
+Compiler for C supports arguments -Wno-switch: YES (cached)
+Compiler for C supports arguments -Wimplicit-fallthrough=0: NO (cached)
+Compiler for C supports arguments -Wno-undef: YES (cached)
+Compiler for C supports arguments -Wno-undef: YES (cached)
+Library dl skipped: feature decklink disabled
+Library ml_audio skipped: feature magicleap disabled
+Library lumin_rt_core_1_7 skipped: feature magicleap disabled
+Library lumin_rt_app_1_7 skipped: feature magicleap disabled
+Compiler for C supports arguments -Wno-aggregate-return: YES (cached)
+Dependency gudev-1.0 for host machine skipped: feature uvch264 disabled
+Dependency libusb-1.0 for host machine skipped: feature uvch264 disabled
+Has header "linux/uvcvideo.h" : NO (cached)
+Dependency gudev-1.0 for host machine skipped: feature v4l2codecs disabled
+Message: V4L2 CODECs plugin is disabled
+Dependency gudev-1.0 for host machine skipped: feature uvcgadget disabled
+Message: UVCSink plugin is disabled
+Dependency openssl for host machine skipped: feature aes disabled
+Dependency pangocairo for host machine skipped: feature analyticsoverlay disabled
+Dependency libass for host machine skipped: feature assrender disabled
+Dependency aom for host machine skipped: feature aom disabled
+Dependency aom for host machine skipped: feature aom disabled
+Dependency aom for host machine skipped: feature aom disabled
+Dependency libbs2b for host machine skipped: feature bs2b disabled
+Library bz2 skipped: feature bz2 disabled
+Dependency libchromaprint for host machine skipped: feature chromaprint disabled
+Dependency json-glib-1.0 for host machine skipped: feature codec2json disabled
+Dependency lcms2 for host machine skipped: feature colormanagement disabled
+Dependency libcurl for host machine skipped: feature curl disabled
+Dependency libxml-2.0 for host machine skipped: feature dash disabled
+Dependency libdc1394-2 for host machine skipped: feature dc1394 disabled
+Dependency directfb for host machine skipped: feature directfb disabled
+Dependency openssl for host machine skipped: feature dtls disabled
+Dependency libcrypto for host machine skipped: feature dtls disabled
+Library faac skipped: feature faac disabled
+Header "faac.h" has symbol "faacEncOpen" : NO (cached)
+Dependency fdk-aac for host machine skipped: feature fdkaac disabled
+Dependency fluidsynth for host machine skipped: feature fluidsynth disabled
+Dependency google_cloud_cpp_storage for host machine skipped: feature gs disabled
+Dependency dssim for host machine skipped: feature iqa disabled
+Fetching value of define "_MSC_VER" : (undefined) (cached)
+Dependency webrtc-audio-coding-1 for host machine skipped: feature isac disabled
+Compiler for C supports arguments -Wno-complain-wrong-lang: NO (cached)
+Dependency lc3 for host machine skipped: feature lc3 disabled
+Dependency lcevc_dec for host machine skipped: feature lcevcdecoder disabled
+Dependency lcevc_eil for host machine skipped: feature lcevcencoder disabled
+Dependency ldacBT-enc for host machine skipped: feature ldac disabled
+Dependency libde265 for host machine skipped: feature libde265 disabled
+Dependency lilv-0 for host machine skipped: feature lv2 disabled
+Dependency microdns for host machine skipped: feature microdns disabled
+Compiler for language cpp skipped: feature modplug disabled
+Dependency mjpegtools for host machine skipped: feature mpeg2enc disabled
+Library mpeg2encpp skipped: feature mpeg2enc disabled
+Dependency mpeghdec for host machine skipped: feature mpeghdec disabled
+Dependency mjpegtools for host machine skipped: feature mplex disabled
+Library mplex2 skipped: feature mplex disabled
+Library mpcdec skipped: feature musepack disabled
+Dependency neon for host machine skipped: feature neon disabled
+Dependency openal for host machine skipped: feature openal disabled
+Dependency OpenEXR(modules: OpenEXR::IlmImf) for host machine skipped: feature openexr disabled
+Dependency openh264 for host machine skipped: feature openh264 disabled
+Dependency libopenjp2 for host machine skipped: feature openjpeg disabled
+Dependency libopenmpt for host machine skipped: feature openmpt disabled
+Compiler for language cpp skipped: feature openni2 disabled
+Dependency opus for host machine skipped: feature opus disabled
+Dependency libqrencode for host machine skipped: feature qroverlay disabled
+Dependency dvdnav for host machine skipped: feature resindvd disabled
+Dependency dvdread for host machine skipped: feature resindvd disabled
+Dependency cairo for host machine skipped: feature rsvg disabled
+Dependency librsvg-2.0 for host machine skipped: feature rsvg disabled
+Dependency librtmp for host machine skipped: feature rtmp disabled
+Dependency sbc for host machine skipped: feature sbc disabled
+Dependency libxml-2.0 for host machine skipped: feature smoothstreaming disabled
+Dependency sndfile for host machine skipped: feature sndfile disabled
+Dependency spandsp for host machine skipped: feature spandsp disabled
+Dependency SvtAv1Enc for host machine skipped: feature svtav1 disabled
+Dependency SvtHevcEnc for host machine skipped: feature svthevcenc disabled
+Dependency SvtJpegxs for host machine skipped: feature svtjpegxs disabled
+Dependency zvbi-0.2 for host machine skipped: feature teletext disabled
+Dependency libxml-2.0 for host machine skipped: feature ttml disabled
+Dependency pango for host machine skipped: feature ttml disabled
+Dependency cairo for host machine skipped: feature ttml disabled
+Dependency pangocairo for host machine skipped: feature ttml disabled
+Dependency vo-aacenc for host machine skipped: feature voaacenc disabled
+Dependency vo-amrwbenc for host machine skipped: feature voamrwbenc disabled
+Dependency libwebp for host machine skipped: feature webp disabled
+Dependency libwebpmux for host machine skipped: feature webp disabled
+Dependency x265 for host machine skipped: feature x265 disabled
+Dependency zxing for host machine skipped: feature zxing disabled
+Dependency zbar for host machine skipped: feature zbar disabled
+Program xgettext skipped: feature nls disabled
+Program scripts/extract-release-date-from-doap-file.py found: YES (/Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/scripts/extract-release-date-from-doap-file.py)
+Message: Package release date: 2026-10-08
+Configuring config.h using configuration
+Message: Introspection not built, won't build documentation requiring it
+Program gst-plugins-doc-cache-generator found: YES (/opt/homebrew/Cellar/gstreamer/1.28.8_1/libexec/gstreamer-1.0/gst-plugins-doc-cache-generator)
+Build targets in project: 33
+
+gst-plugins-bad 1.28.8
+
+    Plugins               : mse, videoparsersbad
+    (A)GPL license allowed: false
+
+  User defined options
+    auto_features         : disabled
+    examples              : disabled
+    introspection         : disabled
+    mse                   : enabled
+    prefix                : /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime
+    tests                 : disabled
+    videoparsers          : enabled
+
+Found ninja-1.13.2 at /opt/homebrew/bin/ninja
+ninja: Entering directory `/Users/travisgilbert/Tech Dev Local/Creative/Frame/deps/gstreamer-mse-build'
+[1/2] Generating symbol file gst-libs/gst/mse/libgstmse-frame-1.0.0.dylib.p/libgstmse-frame-1.0.0.dylib.symbols
+ninja: Entering directory `/Volumes/SSD Samsung/frame-deps/gstreamer-mse-build'
+ninja: no work to do.
+Installing gst-libs/gst/uridownloader/libgsturidownloader-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/adaptivedemux/libgstadaptivedemux-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/audio/libgstbadaudio-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/basecamerabinsrc/libgstbasecamerabinsrc-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/codecparsers/libgstcodecparsers-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/codecs/libgstcodecs-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/insertbin/libgstinsertbin-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/interfaces/photography-enumtypes.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/interfaces
+Installing gst-libs/gst/interfaces/libgstphotography-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/isoff/libgstisoff-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/mpegts/gstmpegts-enumtypes.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing gst-libs/gst/mpegts/libgstmpegts-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/mse/mse-enumtypes.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing gst-libs/gst/mse/libgstmse-frame-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/play/libgstplay-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/player/libgstplayer-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/sctp/libgstsctp-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/transcoder/transcoder-enumtypes.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/transcoder
+Installing gst-libs/gst/transcoder/libgsttranscoder-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/webrtc/webrtc-enumtypes.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing gst-libs/gst/webrtc/libgstwebrtc-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst-libs/gst/analytics/libgstanalytics-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib
+Installing gst/mse/libgstmse.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/gstreamer-1.0
+Installing gst/videoparsers/libgstvideoparsersbad.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/gstreamer-1.0
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/uridownloader/uridownloader-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/uridownloader
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/uridownloader/gstfragment.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/uridownloader
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/uridownloader/gsturidownloader.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/uridownloader
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/uridownloader/gsturidownloader_debug.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/uridownloader
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/audio/gstnonstreamaudiodecoder.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/audio
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/audio/audio-bad-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/audio
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/audio/gstplanaraudioadapter.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/audio
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/basecamerabinsrc/basecamerabinsrc-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/basecamerabinsrc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/basecamerabinsrc/gstcamerabin-enum.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/basecamerabinsrc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/basecamerabinsrc/gstcamerabinpreview.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/basecamerabinsrc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/basecamerabinsrc/gstbasecamerasrc.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/basecamerabinsrc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/codecparsers-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstmpegvideoparser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gsth264bitwriter.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gsth264parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstvc1parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstmpeg4parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gsth265parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstvp8parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstvp8rangedecoder.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstjpeg2000sampling.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstjpegbitwriter.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstjpegparser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstmpegvideometa.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstvp9parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstav1bitwriter.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstav1parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstlcevcmeta.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gsth266parser.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/codecparsers
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/insertbin/gstinsertbin.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/insertbin
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/interfaces/photography.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/interfaces
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/interfaces/photography-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/interfaces
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/isoff/gstisoff.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/isoff
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gstmpegtssection.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-atsc-section.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-dvb-section.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-scte-section.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-hdmv-section.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gstmpegtsdescriptor.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-atsc-descriptor.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-dvb-descriptor.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/gst-isdb-descriptor.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/mpegts-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mpegts/mpegts.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mpegts
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstmediasource.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstsourcebuffer.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstsourcebufferlist.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mse/gstmsesrc.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mse/mse.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/mse/mse-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/mse
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/play.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/play-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay-types.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay-signal-adapter.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay-video-renderer.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay-media-info.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay-video-overlay-video-renderer.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/play/gstplay-visualization.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/play
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/player.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/player-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-types.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-signal-dispatcher.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-video-renderer.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-media-info.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-g-main-context-signal-dispatcher.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-video-overlay-video-renderer.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/player/gstplayer-visualization.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/player
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/sctp/sctpreceivemeta.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/sctp
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/sctp/sctpsendmeta.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/sctp
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/sctp/sctp-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/sctp
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/transcoder/gsttranscoder.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/transcoder
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/transcoder/transcoder-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/transcoder
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/transcoder/gsttranscoder-signal-adapter.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/transcoder
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/dtlstransport.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/icestream.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/icetransport.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/rtcsessiondescription.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/rtpreceiver.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/rtpsender.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/rtptransceiver.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/datachannel.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/webrtc_fwd.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/webrtc.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/sctptransport.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/webrtc
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/analytics.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticsmeta.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/analytics-meta-prelude.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticsclassificationmtd.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticsobjectdetectionmtd.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticsobjecttrackingmtd.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticssegmentationmtd.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticstensormtd.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalyticsbatchmeta.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gsttensormeta.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gsttensor.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/gstanalytics_image_util.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/gst-libs/gst/analytics/modelinfo.h to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/include/gstreamer-1.0/gst/analytics
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-plugins-bad-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-bad-audio-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-codecparsers-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-insertbin-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-photography-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-mpegts-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-mse-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-play-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-player-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-sctp-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-transcoder-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-webrtc-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse-build/meson-private/gstreamer-analytics-1.0.pc to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/pkgconfig
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/ogv.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/oga.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/mkv.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/mp3.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/webm.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/flv.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/mp4.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/ts.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/file-extension/avi.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/file-extension
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/online-service/youtube.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/online-services
+Installing /Volumes/SSD Samsung/frame-deps/gstreamer-mse/subprojects/gst-plugins-bad/data/targets/device/dvd.gep to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/share/gstreamer-1.0/encoding-profiles/device
+Installing symlink pointing to libgsturidownloader-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgsturidownloader-1.0.dylib
+Installing symlink pointing to libgstadaptivedemux-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstadaptivedemux-1.0.dylib
+Installing symlink pointing to libgstbadaudio-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstbadaudio-1.0.dylib
+Installing symlink pointing to libgstbasecamerabinsrc-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstbasecamerabinsrc-1.0.dylib
+Installing symlink pointing to libgstcodecparsers-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstcodecparsers-1.0.dylib
+Installing symlink pointing to libgstcodecs-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstcodecs-1.0.dylib
+Installing symlink pointing to libgstinsertbin-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstinsertbin-1.0.dylib
+Installing symlink pointing to libgstphotography-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstphotography-1.0.dylib
+Installing symlink pointing to libgstisoff-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstisoff-1.0.dylib
+Installing symlink pointing to libgstmpegts-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstmpegts-1.0.dylib
+Installing symlink pointing to libgstmse-frame-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstmse-frame-1.0.dylib
+Installing symlink pointing to libgstplay-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstplay-1.0.dylib
+Installing symlink pointing to libgstplayer-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstplayer-1.0.dylib
+Installing symlink pointing to libgstsctp-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstsctp-1.0.dylib
+Installing symlink pointing to libgsttranscoder-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgsttranscoder-1.0.dylib
+Installing symlink pointing to libgstwebrtc-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstwebrtc-1.0.dylib
+Installing symlink pointing to libgstanalytics-1.0.0.dylib to /Volumes/SSD Samsung/frame-deps/gstreamer-mse-runtime/lib/libgstanalytics-1.0.dylib
+Ready: script/media-env cargo build --locked

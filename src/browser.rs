@@ -25,6 +25,8 @@
 //! `Button`, `Input`, `Kbd`, `Spinner`, `Popover` and `Progress`; the navigator is GPUI Kit's `Command` (`navigator.rs`).
 
 mod dock;
+#[cfg(feature = "performance-check")]
+pub mod performance;
 mod sidebar;
 
 use std::cell::RefCell;
@@ -1308,6 +1310,13 @@ impl Browser {
                     }
                 }
             }
+            PageEvent::TintChanged => {
+                // The card's toolbar, its selected tab and the window's chrome
+                // take the tint; nothing the session keeps changed.
+                self.tabs[index].panel.update(cx, |_, cx| cx.notify());
+                self.dock.update(cx, |_, cx| cx.notify());
+                cx.notify();
+            }
             PageEvent::Changed => {
                 if !page.read(cx).is_loading() {
                     self.tabs[index].requested = None;
@@ -1589,6 +1598,8 @@ impl Browser {
 
     /// The address bar's text and the window's title follow the active tab.
     fn sync_chrome(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        #[cfg(feature = "performance-check")]
+        let _measure = crate::performance::Span::new("chrome_sync");
         let tab = &self.tabs[self.active];
         if !self.editing {
             let summary = tab.summary(cx);
