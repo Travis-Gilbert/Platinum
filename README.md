@@ -93,10 +93,12 @@ next search on the topic finds them locally.
 The chrome uses the Asciinema theme in dark mode and GitHub Sharp in light,
 with the frame around each page drawn in the title-bar color (`#e1e4e8` in
 light). On macOS 26 and later that frame, the row of tabs included, is
-Liquid Glass: clear glass tinted to the title-bar color, at 65% in dark and
-60% in light, so the desktop shows through it. The glass follows Platinum's
-appearance, not the system's. A page's toolbar and its selected tab take the
-page's color as a half-transparent wash over the glass; pages stay opaque,
+Liquid Glass: regular glass tinted to the title-bar color, at 85% in dark
+and 60% in light, so the desktop's colors show softly through it. While the
+window is inactive, AppKit draws the glass too light for the text, so the
+frame takes its solid color. The glass follows Platinum's appearance, not the
+system's. A page's toolbar and its selected tab take the page's color as a
+half-transparent wash over the glass; pages stay opaque,
 and the address field keeps a nearly opaque surface of the theme's own.
 With Reduce Transparency on, or on an older macOS, the frame is solid.
 As in Dia, the selected tab rises out of its page's toolbar, and both

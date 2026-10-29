@@ -3360,7 +3360,7 @@ impl Render for Browser {
             .size_full()
             .flex()
             .flex_col()
-            .bg(glass::frame(cx))
+            .bg(glass::frame(window, cx))
             .text_color(theme.foreground)
             .on_action(cx.listener(|browser, _: &ImportBrowserData, window, cx| {
                 browser.show_profile_panel(Section::Import, window, cx)
