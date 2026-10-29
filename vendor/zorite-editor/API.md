@@ -51,7 +51,13 @@ the **pre-edit** text: `byte_range_to_scalar`; use an Offsets for the resulting
 text for the selection. Reverse session ranges with `scalar_range_to_byte`.
 Mac input in the editor uses `str_indices::utf16::from_byte_idx` and
 `to_byte_idx` (0.4.4), the same indexing library used by the host's ropey-backed
-Offsets. The editor retains no conversion cache or application-core dependency.
+Offsets. A single `Cell<(generation, byte, utf16)>` retains the last normalized
+boundary in EditorState. For a matching generation and a target at/after it,
+str_indices converts only the suffix from the anchor; backward targets count
+from the start. Every splice, load and remote edit advances the generation,
+so queries cannot reuse an anchor for old text. Partial scalars/surrogates
+round down and past-end requests clamp before the normalized boundary is saved.
+The editor has no normal dependency on the application core.
 Host ranges convert with `byte_range_to_utf16`/`utf16_range_to_byte`.
 Combining characters and ZWJ components count as separate
 scalars, never as graphemes; graphemes remain the editor's cursor-step unit.

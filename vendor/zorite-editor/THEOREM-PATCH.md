@@ -58,9 +58,12 @@ source changes; keep this file, API.md and the replay tests with the fork.
   its existing impl and reuse the host's Rope-based scalar/UTF-16 conversions.
   No editor scanner or conversion cache lives in the notes core.
 - `src/lib.rs`: use `str_indices::utf16::from_byte_idx` / `to_byte_idx` for
-  all byte/UTF-16 conversion. Remove the former generation anchor and resume
-  scanner. Clamping and rounding down partial scalars/surrogates are supplied
-  by the library. Keep the buffer generation for authority and layout staleness.
+  all byte/UTF-16 counting. Retain one generation-scoped anchor in EditorState:
+  count from its boundary for forward queries, otherwise from the start. Save
+  normalized offsets after clamping/rounding down partial scalars/surrogates;
+  use the standard library's floor_char_boundary for the saved byte boundary.
+  No character-counting loop is carried. Buffer generation protects this anchor,
+  authority responses and layout caches. See the cached measurements below.
 - `Cargo.toml`/root lock: pin normal dependency `str_indices = "=0.4.4"`,
   already locked for ropey, MIT OR Apache-2.0, with no dependencies of its own.
   `frame-notes` is a **dev-dependency only** for offset fixtures and real Vault
@@ -169,7 +172,7 @@ interactive demo were not run; the consumer evidence here is headless GPUI plus
 the real filesystem-backed Vault. The separate notes UI lane must attach this
 seam to its production host subscription.
 
-## Layering revision after 297352a (2026-10-29)
+## Layering revision at 944cae9: uncached baseline (2026-10-29)
 
 The initial seam made the vendored UI crate depend normally on the notes core
 just for the editor's former UTF-16 resume scanner. This revision removes that
@@ -258,3 +261,91 @@ latency acceptance is claimed; a native input budget and native/release profile
 would be needed to judge whether an IME-specific cache is warranted. The String
 storage and seam/history contracts are unchanged. Mounted UI/demo rendering
 remains unverified.
+
+
+## Generation-scoped library anchor after 944cae9 (2026-10-29)
+
+The uncached baseline's 11.59 ms mean / 116.86 ms maximum eight-conversion IME
+batch justified retaining the editor's original constant-space prefix anchor.
+EditorState owns exactly one `Cell<(generation, byte, utf16)>`; it retains no
+text, secondary index or unbounded collection. A query may resume only when
+its generation matches the current buffer and its target is at or after the
+saved boundary in the requested units. Earlier targets count from the start.
+The anchor is updated to the normalized boundary after each query.
+
+`str_indices` 0.4.4 performs all counting: byte-to-unit uses `from_byte_idx` on
+the suffix; unit-to-byte uses `to_byte_idx` on the suffix followed by `count`
+on the consumed portion to save the actual units (not a partial surrogate or
+past-end request). `str::floor_char_boundary` clamps/rounds the saved byte
+position. No handwritten character scanner returns. `frame-notes` remains
+dev-only; its Offset helpers and Cargo.lock are unchanged by this revision.
+
+Generation invalidation is unchanged and source-audited: all 17 original
+recorded splice sites go through `record_edit`; set_text, snapshot restore,
+IME composition and with_text each advance it; apply_remote advances it for
+every edit in the validated batch. No query runs between the generation bump
+and text replacement. The immutable text used for a query therefore matches
+its generation, and an old anchor is never used for a new text value.
+
+The existing exhaustive editor-versus-ropey fixture test remains intact.
+The new `utf16_anchor_is_invalidated_between_edits_and_queries` primes the old
+anchor before every transition, then interleaves forward/backward byte and unit
+queries (including partial characters, surrogate pairs and usize::MAX) against
+fresh ropey-backed Offsets. It covers structural replacement, typing, IME
+composition and commit, undo/redo restore, set_text, a two-edit remote batch and
+reusing the consuming with_text builder. It asserts the exact generation delta
+and that the final anchor belongs to the current generation.
+
+### Cached verification and comparison
+
+Tested from this worktree on base `944cae9` plus the anchor revision. The same
+Rust 1.97.1, macOS 27.0.1/26A434, Apple M1 Max/32 GiB environment and Cargo test
+profile were used (unoptimized editor with debuginfo, dependency overrides
+opt-level 2/debug 0). SSD free space was 14 GiB before each build, checked with
+`df -h "/Volumes/SSD Samsung"`. Commands used the shared lock and media script:
+
+```sh
+"/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" sh -c 'find vendor/zorite-editor -type f -exec touch {} + && cargo test --locked -p zorite-editor -- --nocapture'
+"/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" cargo test --locked -p frame-notes offsets
+rustfmt --edition 2024 --check vendor/zorite-editor/src/lib.rs vendor/zorite-editor/src/authority_tests.rs
+git diff --check
+```
+
+Editor: **77 passed**, zero failed/ignored (32.06 s compile, 8.74 s tests),
+including the exhaustive fixtures, new edit/query test and real-Vault consumer.
+Doc tests selected zero tests. Existing dependency dead-code warnings remain;
+the editor emitted no warnings. Touched-file formatting and diff checks pass.
+Offsets: **10 passed**, zero failed/ignored (23.88 s compile, 0.01 s tests);
+88 other library tests and all integration targets were filtered out.
+
+The four benchmark workloads, arguments and fixture are unchanged from the
+uncached baseline at `944cae9`: 600,190 bytes / 900 multilingual sections,
+100 warm-up iterations and 1,000 measured samples per workload. Uncached values
+below are the previously recorded run at that commit; cached values are the
+new run above. These are separate runs on a shared machine, not paired or
+isolated measurements. Values are microseconds.
+
+| Workload | Uncached mean | Cached mean | Uncached p95 | Cached p95 | Uncached max | Cached max |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Input mutation / keystroke | 27.56 | 39.57 | 54.08 | 106.96 | 176.50 | 845.00 |
+| Byte to UTF-16, document end | 1447.48 | 0.06 | 1577.17 | 0.08 | 2775.71 | 7.79 |
+| UTF-16 to byte, document end | 1156.28 | 0.20 | 1287.54 | 0.12 | 2843.79 | 80.71 |
+| IME batch, eight conversions | 11589.62 | 7966.49 | 13915.83 | 15580.58 | 116861.08 | 79856.29 |
+
+Cached medians, in the same row order: 28.83, 0.04, 0.08 and 6139.04 us.
+The end-of-document rows repeatedly query the same position; their initial
+full-prefix miss occurs during warm-up and is excluded from timed samples.
+Their sub-microsecond cached times measure warm anchor hits, not the first
+conversion after each edit. The IME workload still alternates the selected
+caret, earlier marked range, requested text and actual returned range, so
+backward queries repeatedly exercise the required full-prefix fallback.
+A unit-to-byte miss also counts the consumed prefix to normalize the anchor.
+
+IME batch mean and maximum fell in this run; its p95 and the typing timings
+increased. No uniform tail-latency or end-to-end speedup is claimed from these
+separate noisy runs. Typing here has no UTF-16 range argument and performs no
+conversion, so its timing difference is not evidence of cache overhead.
+Generation invalidation still makes the first query after a text mutation a
+prefix scan. Layout/paint, files and session persistence remain outside these
+timers. The String rebuild and authority seam are unchanged; native input and
+mounted UI latency remain unverified.

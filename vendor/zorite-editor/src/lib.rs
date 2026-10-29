@@ -1012,9 +1012,13 @@ pub struct EditorState {
     /// but different heights means an async (non-edit) height change, the
     /// scroll-anchoring trigger.
     last_paint_gen: u64,
-    /// Bumped on every content mutation — staleness key for scan/shape caches
-    /// and authority responses. UTF-16 conversions retain no state.
+    /// Bumped on every content mutation — staleness key for scan/shape caches,
+    /// the UTF-16 anchor, and authority responses.
     content_gen: u64,
+    /// Last normalized (generation, byte, UTF-16) boundary. IME queries reuse
+    /// a matching-generation prefix; counting is always delegated to str_indices.
+    /// Constant space: no retained text or index, invalidated on every mutation.
+    utf16_anchor: std::cell::Cell<(u64, usize, usize)>,
     /// A `$$…$$` block being edited in-line: its byte range + the host-supplied view (the
     /// structural editor) painted in a reserved gap at the block's spot. `None` = none.
     editing_block: Option<EditingBlock>,
@@ -1166,6 +1170,7 @@ impl EditorState {
             table_thumb_drag: None,
             grip_inset: px(0.),
             content_gen: 0,
+            utf16_anchor: std::cell::Cell::new((0, 0, 0)),
             editing_block: None,
             inline_math_rects: Vec::new(),
             editing_inline: None,
@@ -5065,11 +5070,37 @@ impl EditorState {
     // --- UTF-16 + grapheme boundaries (IME / cursor movement) ----------------
 
     fn offset_from_utf16(&self, offset: usize) -> usize {
-        utf16_to_byte(&self.content, offset)
+        let (byte, unit) = self.utf16_resume(offset, false);
+        let tail = &self.content[byte..];
+        let relative_byte = str_indices::utf16::to_byte_idx(tail, offset - unit);
+        // The requested unit may be past the end or inside a surrogate pair.
+        // Save the actual boundary's units, never the unnormalized request.
+        let unit = unit + str_indices::utf16::count(&tail[..relative_byte]);
+        let byte = byte + relative_byte;
+        self.utf16_anchor.set((self.content_gen, byte, unit));
+        byte
     }
 
     fn offset_to_utf16(&self, offset: usize) -> usize {
-        str_indices::utf16::from_byte_idx(&self.content, offset)
+        let offset = self
+            .content
+            .floor_char_boundary(offset.min(self.content.len()));
+        let (byte, unit) = self.utf16_resume(offset, true);
+        let unit = unit + str_indices::utf16::from_byte_idx(&self.content[byte..], offset - byte);
+        self.utf16_anchor.set((self.content_gen, offset, unit));
+        unit
+    }
+
+    /// Resume only for the same text and a target at/after the saved boundary;
+    /// backward queries count from the document start. This selects a slice,
+    /// not a character scanner: str_indices owns all counting and conversion.
+    fn utf16_resume(&self, target: usize, by_byte: bool) -> (usize, usize) {
+        let (generation, byte, unit) = self.utf16_anchor.get();
+        if generation == self.content_gen && (if by_byte { byte } else { unit }) <= target {
+            (byte, unit)
+        } else {
+            (0, 0)
+        }
     }
 
     fn range_to_utf16(&self, range: &Range<usize>) -> Range<usize> {

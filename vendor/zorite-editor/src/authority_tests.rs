@@ -510,6 +510,80 @@ fn utf16_conversions_match_host_offsets_at_every_boundary(cx: &mut TestAppContex
     }
 }
 
+/// Every transition primes the old anchor and changes the prefix; ignoring its
+/// generation would produce wrong offsets or slice at a non-character boundary.
+#[gpui::test]
+fn utf16_anchor_is_invalidated_between_edits_and_queries(cx: &mut TestAppContext) {
+    fn prime(e: &EditorState) -> u64 {
+        e.offset_to_utf16(e.text().len());
+        e.generation()
+    }
+    fn verify(e: &EditorState, generation: u64, edits: u64) {
+        assert_eq!(e.generation(), generation + edits);
+        let offsets = Offsets::new(e.text());
+        // Interleave directions and backward/forward queries, including
+        // mid-scalar/surrogate requests that must save normalized anchors.
+        for byte in (0..e.text().len() + 3).rev().chain([usize::MAX]) {
+            let unit = offsets.byte_to_utf16(byte);
+            assert_eq!(e.offset_to_utf16(byte), unit);
+            assert_eq!(e.offset_from_utf16(unit), offsets.utf16_to_byte(unit));
+        }
+        for unit in (0..e.text().encode_utf16().count() + 3).chain([usize::MAX]) {
+            let byte = offsets.utf16_to_byte(unit);
+            assert_eq!(e.offset_from_utf16(unit), byte);
+            assert_eq!(e.offset_to_utf16(byte), offsets.byte_to_utf16(byte));
+        }
+        assert_eq!(e.utf16_anchor.get().0, e.generation());
+    }
+    let h = Harness::new(cx, false, "a😀b");
+    h.update(cx, |e, w, cx| {
+        let generation = prime(e);
+        e.replace_range(0..1, "👩‍💻", cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.replace_text_in_range(Some(0..0), "日本", w, cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.replace_and_mark_text_in_range(Some(0..2), "e\u{301}", Some(1..1), w, cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.replace_text_in_range(None, "שלום", w, cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.undo(&Undo, w, cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.redo(&Redo, w, cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.set_text("ab😀", cx);
+        verify(e, generation, 1);
+        let generation = prime(e);
+        e.apply_remote(
+            generation,
+            &[
+                TextEdit {
+                    range: 0..0,
+                    text: "😀".into(),
+                },
+                TextEdit {
+                    range: 0..4,
+                    text: "e\u{301}".into(),
+                },
+            ],
+            cx,
+        )
+        .unwrap();
+        verify(e, generation, 2);
+
+        // The consuming load builder also permits reuse of an editor value.
+        let mut built = EditorState::new(w, cx).with_text("ab😀");
+        let generation = prime(&built);
+        built = built.with_text("😀ab");
+        verify(&built, generation, 1);
+    });
+}
+
 fn report_cost(label: &str, bytes: usize, samples: &mut [u128]) {
     samples.sort_unstable();
     let mean = samples.iter().sum::<u128>() as f64 / samples.len() as f64 / 1000.;
@@ -521,7 +595,7 @@ fn report_cost(label: &str, bytes: usize, samples: &mut [u128]) {
     );
 }
 
-/// Real input mutation and uncached conversion paths, excluding rendering, files and sessions.
+/// Real input mutation and anchored conversion paths, excluding rendering, files and sessions.
 #[gpui::test]
 fn typing_cost_on_900_sections(cx: &mut TestAppContext) {
     use std::hint::black_box;
@@ -546,8 +620,10 @@ fn typing_cost_on_900_sections(cx: &mut TestAppContext) {
         }
         assert_eq!(e.text().len(), bytes + 1100);
 
-        // Restore the exact 600,190-byte fixture. End-of-document conversions
-        // scan the full String every time, with no anchor or retained index.
+        // Same queries as the uncached baseline at 944cae9, now using the
+        // generation-scoped anchor. Warm-up includes the first full-prefix miss.
+        // Repeated end queries then hit the anchor; backward IME queries below
+        // deliberately exercise fallback to a full-prefix scan.
         e.set_text(note, cx);
         let units = e.text().encode_utf16().count();
         for i in 0..1100 {
