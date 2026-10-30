@@ -96,6 +96,11 @@ enum Command {
         /// text of their subtree (a script such as Prism wraps the text). Repeatable.
         #[arg(long)]
         opaque_text: Vec<String>,
+        /// A class name of `span`s a script fills with block-level content (the PDF viewer, a
+        /// Bases view): the content is cut from the markup before parsing, since a parser would
+        /// end the paragraph around the span at the first `div` in it. Repeatable.
+        #[arg(long)]
+        hollow: Vec<String>,
         /// Let an expected recording end before the actual one: Obsidian renders a long note's
         /// sections as they scroll into view.
         #[arg(long)]
@@ -199,6 +204,7 @@ fn main() -> Result<()> {
             ignore,
             opaque,
             opaque_text,
+            hollow,
             allow_truncated_expected,
             resource_prefix,
             max_differences,
@@ -210,6 +216,7 @@ fn main() -> Result<()> {
                     ignore,
                     opaque,
                     opaque_text,
+                    hollow,
                     allow_truncated_expected,
                     resource_prefix,
                     max_differences,

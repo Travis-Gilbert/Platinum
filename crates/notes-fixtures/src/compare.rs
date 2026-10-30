@@ -71,7 +71,93 @@ const IGNORED_ATTRIBUTES: &[(&str, &str)] = &[
 /// serialized DOM; a renderer that shows the value has to write them as attributes.
 const EDITOR_VALUE_ATTRIBUTES: &[&str] = &["value", "checked"];
 
-/// Classes the scripts of the page add to what they have finished with.
+/// Attributes starting with this are Frame's own annotations (the vault path a script needs to
+/// fill an embed), absent from Obsidian's DOM.
+const FRAME_ATTRIBUTE_PREFIX: &str = "data-frame-";
+
+/// Obsidian fills the properties' error box the first time a note with invalid properties is
+/// shown and keeps the text, hidden, for every note after it, so the same note records with or
+/// without those children depending on what was opened before it. A hidden box shows nothing,
+/// and its content is not compared; a visible one is.
+fn hidden_error_container(el: &ElementRef) -> bool {
+    let value = el.value();
+    value.classes().any(|c| c == "metadata-error-container")
+        && value
+            .attr("style")
+            .is_some_and(|s| s.replace(' ', "").contains("display:none"))
+}
+
+/// `html` with the content of each `<span class="… name …">` for a `name` in `classes` removed.
+/// The tags are found by a scan that respects quotes in attributes and counts nested spans.
+fn hollow_spans(html: &str, classes: &[String]) -> String {
+    if classes.is_empty() {
+        return html.to_string();
+    }
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(at) = rest.find("<span") {
+        let (before, from) = rest.split_at(at);
+        out.push_str(before);
+        let Some(end) = tag_end(from) else {
+            break;
+        };
+        let (tag, after) = from.split_at(end);
+        out.push_str(tag);
+        rest = after;
+        let hollow = tag
+            .split("class=\"")
+            .nth(1)
+            .and_then(|c| c.split('"').next())
+            .is_some_and(|class| {
+                class
+                    .split_whitespace()
+                    .any(|c| classes.iter().any(|h| h == c))
+            });
+        if !hollow || tag.ends_with("/>") {
+            continue;
+        }
+        // Skip to the matching `</span>`, which stays.
+        let mut depth = 1;
+        let mut scan = 0;
+        while depth > 0 {
+            let Some(next) = rest[scan..].find("<") else {
+                scan = rest.len();
+                break;
+            };
+            let tag = &rest[scan + next..];
+            if tag.starts_with("</span>") {
+                depth -= 1;
+                if depth == 0 {
+                    scan += next;
+                    break;
+                }
+            } else if tag.starts_with("<span") && tag[5..].starts_with([' ', '>', '/']) {
+                depth += 1;
+            }
+            scan += next + 1;
+        }
+        rest = &rest[scan..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// The length of the start tag `tag` begins with, `>` included; quoted attribute values may hold `>`.
+fn tag_end(tag: &str) -> Option<usize> {
+    let mut quote = None;
+    for (i, c) in tag.char_indices() {
+        match (quote, c) {
+            (None, '"' | '\'') => quote = Some(c),
+            (Some(q), c) if c == q => quote = None,
+            (None, '>') => return Some(i + 1),
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Classes the scripts of the page add to what they have finished with (Obsidian adds
+/// `is-loaded` to an embed once its image has loaded).
 const SCRIPT_CLASSES: &[&str] = &["is-loaded"];
 
 /// Elements the recorder's footnote ids use: `fn-1-<16 hex>`, `fnref-1-1-<16 hex>`.
@@ -139,6 +225,11 @@ pub struct Options {
     /// CSS selectors for elements compared by tag, classes, `data-*` attributes and the plain
     /// text of their subtree: a script (Prism) wraps the text in elements.
     pub opaque_text: Vec<String>,
+    /// Class names of `span`s a script fills with block-level content (the PDF viewer, a Bases
+    /// view). The content is cut from the markup before it is parsed, because an HTML parser
+    /// ends the paragraph around the span at the first `div` inside it and moves the rest out;
+    /// the span itself, with its attributes, is still compared.
+    pub hollow: Vec<String>,
     /// The expected side may end before the actual one. Obsidian renders a note's sections as
     /// they come into view, so the recording of a long note stops where the window did. The
     /// blocks present are compared; the verdict says how many of the actual ones that is.
@@ -156,6 +247,7 @@ impl Default for Options {
             ignore: Vec::new(),
             opaque: Vec::new(),
             opaque_text: Vec::new(),
+            hollow: Vec::new(),
             allow_truncated_expected: false,
             resource_prefix: "/files/".into(),
             max_differences: 12,
@@ -395,6 +487,7 @@ struct Walker {
     ignore: Vec<Selector>,
     opaque: Vec<Selector>,
     opaque_text: Vec<Selector>,
+    hollow: Vec<String>,
     excluded: Vec<Selector>,
     root: Selector,
     footnote: Regex,
@@ -413,6 +506,7 @@ impl Walker {
             ignore: selectors(&o.ignore)?,
             opaque: selectors(&o.opaque)?,
             opaque_text: selectors(&o.opaque_text)?,
+            hollow: o.hollow.clone(),
             excluded: selectors(
                 &EXCLUDED_CHILDREN
                     .iter()
@@ -428,7 +522,8 @@ impl Walker {
     /// The tree of the content root's children, or of the whole fragment when the recording
     /// is one (a rendered `html` before the page wraps it).
     fn tree(&self, html: &str) -> Elem {
-        let doc = Html::parse_fragment(html);
+        let html = hollow_spans(html, &self.hollow);
+        let doc = Html::parse_fragment(&html);
         let root = doc.root_element();
         let root = root.select(&self.root).next().unwrap_or(root);
         let mut footnotes = Vec::new();
@@ -446,14 +541,17 @@ impl Walker {
         let scripted = opaque || opaque_text;
         let classes = value
             .classes()
-            .filter(|c| !(scripted && SCRIPT_CLASSES.contains(c)))
+            .filter(|c| !SCRIPT_CLASSES.contains(c))
             .map(str::to_string)
             .collect();
-        let editor_value = value.classes().any(|c| c.starts_with("metadata-input"));
+        let editor_value = value
+            .classes()
+            .any(|c| c.starts_with("metadata-input") || c == "metadata-property-key-input");
         let mut attrs = BTreeMap::new();
         for (name, v) in value.attrs() {
             let name = name.to_ascii_lowercase();
             let ignored = name == "class"
+                || name.starts_with(FRAME_ATTRIBUTE_PREFIX)
                 || IGNORED_ATTRIBUTES.iter().any(|(n, _)| *n == name)
                 || (editor_value && EDITOR_VALUE_ATTRIBUTES.contains(&name.as_str()));
             // Only a `data-*` attribute is compared on an element whose content a script
@@ -461,9 +559,14 @@ impl Walker {
             if ignored || (scripted && !name.starts_with("data-")) {
                 continue;
             }
-            attrs.insert(name.clone(), self.attribute(&name, v, footnotes));
+            let v = self.attribute(&name, v, footnotes);
+            // An empty `style=""` is what a script leaves after it removes a rule; it is no style.
+            if name == "style" && v.is_empty() {
+                continue;
+            }
+            attrs.insert(name, v);
         }
-        let children = if opaque {
+        let children = if opaque || hidden_error_container(&el) {
             Vec::new()
         } else if opaque_text {
             let text: String = el.text().collect();
@@ -884,6 +987,41 @@ mod tests {
             .matches()
         );
         assert!(!run(&e, &wrap(r#"<img src="/files/attachments/other.png">"#), &o).matches());
+    }
+
+    #[test]
+    fn a_hollow_span_leaves_its_paragraph_whole() {
+        let o = Options {
+            hollow: vec!["pdf-embed".into()],
+            ..Options::default()
+        };
+        let e = wrap(
+            r#"<div class="el-p"><p dir="auto"><span class="internal-embed pdf-embed" style="height: 800px;"><div class="pdf-toolbar"><span>a</span></div><div class="pdf-container"></div></span></p></div>"#,
+        );
+        let a = wrap(
+            r#"<div class="el-p"><p dir="auto"><span class="internal-embed pdf-embed" style="height: 800px;"></span></p></div>"#,
+        );
+        assert!(run(&e, &a, &o).matches());
+        // The span's own attributes are still compared.
+        assert!(!run(&e, &a.replace("800px", "700px"), &o).matches());
+        // Parsed as written, the toolbar leaves the paragraph and the two differ.
+        assert!(!run(&e, &a, &Options::default()).matches());
+    }
+
+    #[test]
+    fn what_the_recording_session_left_behind_is_not_structure() {
+        let o = Options::default();
+        let e = wrap(
+            r#"<div class="metadata-error-container" style="display: none;"><div class="metadata-error-title">Invalid properties</div></div><div class="metadata-add-button" style="">x</div><span class="image-embed is-loaded"></span>"#,
+        );
+        let a = wrap(
+            r#"<div class="metadata-error-container" style="display: none;"></div><div class="metadata-add-button">x</div><span class="image-embed" data-frame-file="a.png"></span>"#,
+        );
+        assert!(run(&e, &a, &o).matches());
+        // An error box that is shown is compared with its text.
+        let shown = e.replace("display: none;", "");
+        let hidden = a.clone();
+        assert!(!run(&shown, &hidden, &o).matches());
     }
 
     #[test]
