@@ -1,6 +1,6 @@
 //! The workbench's navigator: the workspace's projects and the selected
-//! project's conversations, newest first, on the tab's pane with no fill of
-//! its own (level 0).
+//! project's conversations, newest first, on the window's frame with no fill
+//! of its own (level 0), beside the places bump on the window's edge.
 //!
 //! SOURCING: GPUI Kit's `ListItem`, `Skeleton`, `Tag` and `resize_handle`.
 
@@ -29,7 +29,8 @@ use theoremweb_agent_runtime::{ChatHostPhase, ChatHostProjection, ChatThreadSumm
 
 use super::driver::Connection;
 use super::workbench::{NAVIGATOR_WIDTH, NewConversation, ResizeNavigator, Workbench};
-use crate::browser::FRAME;
+use crate::browser::{Browser, FRAME, TAB_ROW};
+use crate::places::PlacesBump;
 
 const ROW: f32 = 1.625;
 const SECTION: f32 = 1.5;
@@ -181,17 +182,28 @@ impl Workbench {
             .id("theorem-navigator")
             .debug_selector(|| "theorem-navigator".into())
             .relative()
-            .w(rems(self.navigator_width))
             .h_full()
             .flex_shrink_0()
-            .child(header)
+            // Over the traffic lights, which the card beside it clears.
+            .child(Browser::drag_strip().h(px(TAB_ROW)))
             .child(
-                div()
-                    .id("theorem-navigator-rows")
-                    .flex_1()
-                    .min_h_0()
-                    .overflow_y_scrollbar()
-                    .child(body),
+                // Clear of the places bump, which stands on the window's
+                // edge in the room this leaves.
+                v_flex().flex_1().min_h_0().pl(px(PlacesBump::WIDTH)).child(
+                    v_flex()
+                        .w(rems(self.navigator_width))
+                        .flex_1()
+                        .min_h_0()
+                        .child(header)
+                        .child(
+                            div()
+                                .id("theorem-navigator-rows")
+                                .flex_1()
+                                .min_h_0()
+                                .overflow_y_scrollbar()
+                                .child(body),
+                        ),
+                ),
             )
             .child(edge)
     }

@@ -8,6 +8,7 @@ mod actions;
 mod address;
 mod brand;
 mod browser;
+mod bump;
 mod canvas;
 mod controls;
 mod delegate;
@@ -50,7 +51,7 @@ use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
     GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
     SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
-    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces, ToggleSidebar,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
@@ -61,6 +62,10 @@ fn main() -> anyhow::Result<()> {
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
         return browser::workspace_check::run(output.into());
+    }
+    #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_THEOREM_LIVE_CHECK") {
+        return browser::theorem_live_check::run(output.into());
     }
     #[cfg(feature = "performance-check")]
     if std::env::var_os("FRAME_PERF_ROOT").is_some() {
@@ -201,6 +206,7 @@ fn install_menus(cx: &mut App) {
             MenuItem::separator(),
             MenuItem::action("Compact Mode", ToggleCompact),
             MenuItem::action("Sidebar", ToggleSidebar),
+            MenuItem::action("Always Show Places", TogglePlaces),
             MenuItem::submenu(Menu::new("Appearance").items(appearances)),
             MenuItem::separator(),
             MenuItem::action("Show Downloads", ShowDownloads),

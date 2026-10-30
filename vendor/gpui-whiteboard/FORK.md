@@ -109,6 +109,9 @@ dependencies, so the crate builds in Frame only from the port commit after it.
   inferred. These existing test-only lints fail Frame's strict all-targets
   clippy check; test behavior is unchanged.
 - No GPUI Rust API changes were needed to build the rebased source.
+- `src/paint.rs`, `src/lib.rs`: `paint_board` is `pub` and re-exported, so
+  Frame's cards (`src/bump.rs`) draw the board's dot grid rather than a
+  second one. Its behavior is unchanged.
 
 ## Rebase procedure
 

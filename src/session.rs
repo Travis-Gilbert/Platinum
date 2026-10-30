@@ -283,6 +283,7 @@ mod tests {
         Session {
             sidebar: false,
             sidebar_width: Some(sidebar_width),
+            places_pinned: false,
             active: None,
             tabs: Vec::new(),
             dock: Layout::default(),

@@ -1,11 +1,18 @@
-//! The composer at the card's foot: an inset field on its own fill, with what
-//! goes along with the next send (attachments, a quote, an edit, queued
-//! sends) above the text, and the send or stop control at its trailing edge.
+//! The composer: the bump at the card's foot (`bump.rs`), with what goes
+//! along with the next send (an edit, a quote, queued sends, and what the
+//! send will use: its project, an edit's references and attachments) and
+//! the reason a send is refused above one row of attach, the text and the
+//! send or stop control.
+//!
+//! At rest it is narrower than the column; in use (focused, written in, or
+//! carrying something) it widens to the column and shows what the send will
+//! use. It grows upward as the text does, its base on the card's foot.
 //!
 //! The composer document decides what may be sent; this only draws its
 //! answer and says the reason when the answer is no.
 //!
-//! SOURCING: GPUI Kit's `Textarea` and `Button`.
+//! SOURCING: GPUI Kit's `Textarea`, `Button` and `Separator`; the widths at
+//! rest and in use follow Zephium's work bar (`WorkBar.svelte`).
 
 use gpui_kit::assets::IconName as Lucide;
 use gpui_kit::component::{
@@ -13,29 +20,51 @@ use gpui_kit::component::{
     button::{Button, ButtonVariants as _},
     h_flex,
     input::Textarea,
+    separator::Separator,
     v_flex,
 };
 use gpui_kit::{
-    AnyElement, Context, InteractiveElement as _, IntoElement, ParentElement as _, SharedString,
-    Styled as _, Window, div, prelude::FluentBuilder as _, rems,
+    AnyElement, Context, Div, Focusable as _, Hsla, InteractiveElement as _, IntoElement,
+    ParentElement as _, SharedString, Styled as _, Window, div, prelude::FluentBuilder as _, rems,
 };
 use theorem_surface_contracts::composer::{
     AttachmentState, ComposerAttachment, ComposerMode, ComposerQueueLane, SendAffordance,
 };
 use theorem_surface_contracts::intent::ComposerIntent;
 
+use super::card::under_content;
 use super::transcript::COLUMN;
 use super::workbench::{StopRun, Workbench};
+use crate::bump::Slot;
+
+/// The composer's width at rest, in rems; in use it widens to the column's.
+const AT_REST: f32 = 39.;
 
 fn id(kind: &str, key: &str) -> SharedString {
     SharedString::from(format!("theorem-composer-{kind}:{key}"))
 }
 
 impl Workbench {
-    pub(super) fn render_composer(&self, _: &mut Window, cx: &Context<Self>) -> AnyElement {
+    /// The composer, drawn into `slot` so the card's outline runs around it.
+    pub(super) fn render_composer(
+        &self,
+        slot: Slot,
+        window: &mut Window,
+        cx: &Context<Self>,
+    ) -> AnyElement {
         let theme = cx.theme();
-        let composer = &self.driver().read(cx).projection().composer;
+        let projection = self.driver().read(cx).projection();
+        let composer = &projection.composer;
         let text = self.composer.read(cx).value().to_string();
+        let edit_chips = composer
+            .edit
+            .as_ref()
+            .map_or(&[][..], |edit| edit.chips.as_slice());
+        let engaged = self.composer.focus_handle(cx).contains_focused(window, cx)
+            || !text.trim().is_empty()
+            || !composer.attachments.is_empty()
+            || composer.quote.is_some()
+            || composer.mode == ComposerMode::Edit;
         let affordance = composer.affordance(&text);
         let stoppable = composer.can_cancel();
         // An empty field is not worth a sentence: the field's placeholder
@@ -155,13 +184,38 @@ impl Workbench {
                 }))
         });
 
-        let attachments = (!composer.attachments.is_empty()).then(|| {
-            h_flex().flex_wrap().gap_1().children(
-                composer
-                    .attachments
-                    .iter()
-                    .map(|attachment| self.attachment_chip(attachment, cx)),
-            )
+        // What the send will use: the project it goes to, the references an
+        // edit lifted from its message, and the attachments.
+        let project = projection
+            .selected_project_id
+            .as_deref()
+            .and_then(|id| projection.projects.iter().find(|p| p.project_id == id));
+        let uses = project.is_some() || !edit_chips.is_empty() || !composer.attachments.is_empty();
+        let context = (engaged && uses).then(|| {
+            h_flex()
+                .id("theorem-composer-context")
+                .debug_selector(|| "theorem-composer-context".into())
+                .flex_wrap()
+                .gap_1()
+                .children(project.map(|project| {
+                    chip(Lucide::FolderOpen, None, project.title.clone(), cx)
+                        .pr_2()
+                        .debug_selector(|| "theorem-composer-context-project".into())
+                }))
+                .children(edit_chips.iter().map(|reference| {
+                    let icon = if reference.resource_path.is_some() {
+                        Lucide::Paperclip
+                    } else {
+                        Lucide::Link
+                    };
+                    chip(icon, None, reference.label.clone(), cx).pr_2()
+                }))
+                .children(
+                    composer
+                        .attachments
+                        .iter()
+                        .map(|attachment| self.attachment_chip(attachment, cx)),
+                )
         });
 
         let send: AnyElement = if stoppable {
@@ -185,33 +239,40 @@ impl Workbench {
                 .into_any_element()
         };
 
+        let reason = reason.map(|reason| {
+            div()
+                .px_1()
+                .truncate()
+                .text_xs()
+                .text_color(theme.muted_foreground)
+                .child(reason)
+        });
+
         let field = v_flex()
             .id("theorem-composer")
             .debug_selector(|| "theorem-composer".into())
+            .relative()
             .w_full()
+            .max_w(rems(if engaged { COLUMN } else { AT_REST }))
             .gap_1p5()
-            .p_2()
-            .rounded(theme.radius_lg)
-            .bg(theme.secondary)
-            .border_1()
-            .border_color(theme.border)
+            .px_2()
+            .pt_2()
+            .pb_2()
+            .child(slot.recorder())
             .children(edit)
             .children(quote)
             .children(queue)
-            .children(attachments)
-            .child(
-                Textarea::new(&self.composer)
-                    .appearance(false)
-                    .aria_label("Message to Theorem"),
-            )
+            .children(context)
+            .children(reason)
             .child(
                 h_flex()
+                    .items_end()
                     .gap_1()
                     .child(
                         Button::new("theorem-composer-attach")
                             .ghost()
                             .small()
-                            .icon(Lucide::Paperclip)
+                            .icon(Lucide::Plus)
                             .accessibility_label("Attach files")
                             .tooltip("Attach files")
                             .disabled(!composer.allows_attachments())
@@ -219,27 +280,19 @@ impl Workbench {
                                 this.composer_intent(ComposerIntent::PickAttachment, cx)
                             })),
                     )
+                    .child(Separator::vertical().h_4().mb_1())
                     .child(
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .truncate()
-                            .text_xs()
-                            .text_color(theme.muted_foreground)
-                            .children(reason),
+                        div().flex_1().min_w_0().child(
+                            Textarea::new(&self.composer)
+                                .appearance(false)
+                                .aria_label("Message to Theorem"),
+                        ),
                     )
                     .child(send),
             );
 
-        div()
-            .w_full()
-            .flex()
-            .justify_center()
-            .px_4()
-            .pb_3()
-            .pt_1()
-            .child(div().w_full().max_w(rems(COLUMN)).child(field))
-            .into_any_element()
+        // Flush with the card's foot, so the bump rises from it.
+        under_content(field).pt_1().into_any_element()
     }
 
     fn attachment_chip(&self, attachment: &ComposerAttachment, cx: &Context<Self>) -> AnyElement {
@@ -252,34 +305,12 @@ impl Workbench {
         };
         let remove_id = key.clone();
         let retry_id = key.clone();
-        h_flex()
-            .h(rems(1.5))
-            .gap_1()
-            .pl_2()
-            .rounded(theme.radius)
-            .border_1()
-            .border_color(if failed { theme.danger } else { theme.border })
-            .bg(theme.background)
-            .text_xs()
-            .child(
-                Icon::new(if failed {
-                    Lucide::CircleAlert
-                } else {
-                    Lucide::Paperclip
-                })
-                .xsmall()
-                .text_color(if failed {
-                    theme.danger
-                } else {
-                    theme.muted_foreground
-                }),
-            )
-            .child(
-                div()
-                    .max_w(rems(12.))
-                    .truncate()
-                    .child(attachment.name.clone()),
-            )
+        let (icon, alarm) = if failed {
+            (Lucide::CircleAlert, Some(theme.danger))
+        } else {
+            (Lucide::Paperclip, None)
+        };
+        chip(icon, alarm, attachment.name.clone(), cx)
             .children(detail.map(|detail| div().text_color(theme.muted_foreground).child(detail)))
             .when(failed, |this| {
                 this.child(
@@ -317,4 +348,30 @@ impl Workbench {
             )
             .into_any_element()
     }
+}
+
+/// A chip for one thing a send will use: its icon and name, edged and
+/// tinted with `alarm` when it failed.
+fn chip(
+    icon: Lucide,
+    alarm: Option<Hsla>,
+    name: impl Into<SharedString>,
+    cx: &Context<Workbench>,
+) -> Div {
+    let theme = cx.theme();
+    h_flex()
+        .h(rems(1.5))
+        .gap_1()
+        .pl_2()
+        .rounded(theme.radius)
+        .border_1()
+        .border_color(alarm.unwrap_or(theme.border))
+        .bg(theme.background)
+        .text_xs()
+        .child(
+            Icon::new(icon)
+                .xsmall()
+                .text_color(alarm.unwrap_or(theme.muted_foreground)),
+        )
+        .child(div().max_w(rems(12.)).truncate().child(name.into()))
 }

@@ -15,6 +15,7 @@ use theoremweb_agent_runtime::{ChatAuthorityKind, ChatHostPhase, DeterministicDe
 
 use super::Workbench;
 use super::driver::{Connection, TheoremDriver};
+use super::starters::Role;
 use super::transcript::{Block, blocks};
 use super::workbench::{CONTEXT, NewConversation, NextConversation, PreviousConversation, StopRun};
 
@@ -147,10 +148,13 @@ fn without_configuration_the_card_says_what_to_set_and_offers_the_demo(cx: &mut 
             .collect::<Vec<_>>()
     });
     assert!(!threads.is_empty());
+    let bump = bounds(cx, "places-bump").expect("the places bump drawn");
     for thread in threads {
+        let row = bounds(cx, format!("theorem-thread:{thread}"))
+            .unwrap_or_else(|| panic!("{thread} listed"));
         assert!(
-            drawn(cx, format!("theorem-thread:{thread}")),
-            "{thread} listed"
+            row.left() >= bump.right(),
+            "{thread} clear of the bump on the window's edge: {row:?} beside {bump:?}"
         );
     }
     assert!(drawn(cx, "theorem-composer"));
@@ -166,6 +170,30 @@ fn without_configuration_the_card_says_what_to_set_and_offers_the_demo(cx: &mut 
             "once hydrated, the runtime's request for the composer is handed on"
         )
     });
+}
+
+#[gpui_kit::test]
+fn a_starter_fills_the_composer_and_says_how_to_start(cx: &mut TestAppContext) {
+    let (workbench, _, cx) = demo(DeterministicDemoAuthority::new(), cx);
+    click(cx, "theorem-thread:demo-thread-parity");
+    assert!(drawn(cx, "theorem-starters"), "nothing said yet");
+    assert!(drawn(cx, "theorem-starter-review-change"));
+    click(cx, "theorem-starter-review-change");
+    let (text, focused) = cx.update(|window, cx| {
+        let composer = workbench.read(cx).composer.read(cx);
+        (
+            composer.value().to_string(),
+            composer.focus_handle(cx).is_focused(window),
+        )
+    });
+    assert!(text.starts_with("Review this change"), "{text:?}");
+    assert!(focused, "ready to add what matters, or Return");
+
+    // Another role offers its own starters.
+    cx.update(|_, cx| workbench.update(cx, |this, cx| this.set_role(Role::Founder, cx)));
+    cx.run_until_parked();
+    assert!(drawn(cx, "theorem-starter-pressure-test"));
+    assert!(!drawn(cx, "theorem-starter-review-change"));
 }
 
 #[gpui_kit::test]
@@ -413,14 +441,45 @@ fn stop_without_a_run_leaves_the_key_to_others(cx: &mut TestAppContext) {
     );
 }
 
-#[test]
-fn a_window_draws_the_workbench_in_one_pane() {
-    use super::mounted_in;
-    let agent = [1, 3];
-    let shows = |pane: usize| agent.contains(&pane);
-    // The active pane, when it shows the place.
-    assert_eq!(mounted_in(3, [0, 1, 2, 3], shows), Some(3));
-    // Else the first displayed pane that does.
-    assert_eq!(mounted_in(2, [0, 3, 1], shows), Some(3));
-    assert_eq!(mounted_in(0, [0, 2], shows), None);
+#[gpui_kit::test]
+fn the_composer_widens_in_use_and_shows_what_the_send_will_use(cx: &mut TestAppContext) {
+    let (_workbench, _, cx) = demo(DeterministicDemoAuthority::new(), cx);
+    cx.update(|window, cx| window.blur(cx));
+    cx.run_until_parked();
+    let at_rest = bounds(cx, "theorem-composer").expect("composer drawn");
+    assert!(
+        !drawn(cx, "theorem-composer-context"),
+        "at rest the composer is only its field"
+    );
+
+    click(cx, "theorem-composer");
+    let in_use = bounds(cx, "theorem-composer").expect("composer drawn");
+    assert!(
+        in_use.size.width > at_rest.size.width,
+        "focused, it widens to the column: {at_rest:?} then {in_use:?}"
+    );
+    assert!(
+        drawn(cx, "theorem-composer-context-project"),
+        "and names the project the send goes to"
+    );
+    assert_eq!(
+        in_use.bottom(),
+        at_rest.bottom(),
+        "its base stays on the card's foot"
+    );
+
+    // Written in, it stays in use with the keyboard elsewhere, and grows
+    // upward with the text.
+    cx.simulate_input("First line");
+    keys(cx, "shift-enter");
+    cx.simulate_input("Second line");
+    cx.run_until_parked();
+    cx.update(|window, cx| window.blur(cx));
+    cx.run_until_parked();
+    let written = bounds(cx, "theorem-composer").expect("composer drawn");
+    assert_eq!(written.size.width, in_use.size.width, "still in use");
+    assert!(
+        written.size.height > in_use.size.height && written.bottom() == in_use.bottom(),
+        "a second line raises its top, not its base: {in_use:?} then {written:?}"
+    );
 }

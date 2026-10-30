@@ -1,19 +1,19 @@
 //! The native workspace beneath the pages (`docs/vision/native-workspace.md`):
 //! what the window shows while no tab is open, at launch and after the last
-//! tab closes. It has routes of its own, Home, results and the places, with
-//! their own Back and Forward, and a search field where the address bar
-//! would be. Opening a page or a result, or a new tab, brings the tabs back.
+//! tab closes. It has routes of its own, Home and results, with their own
+//! Back and Forward, and a search field where the address bar would be.
+//! Opening a page or a result, or a new tab, brings the tabs back. A place
+//! shows over it and leaves it as it was (`place.rs`).
 //!
 //! While it shows, the browser keeps one fresh tab behind it, the tab it
 //! stands for: a page opened from here loads there.
 //!
-//! Home and the places are part of the chrome and sit on the window's frame
-//! itself. A results page is a document, so it sits on a flat, opaque card
+//! Home is part of the chrome and sits on the window's frame itself. A results page is a document, so it sits on a flat, opaque card
 //! with a border, where a page's card is raised on a shadow: the workspace and
 //! the web differ by texture as well as color.
 //!
-//! SOURCING: GPUI Kit's `Input`, `Button` and `TitleBar`; Home (`home.rs`),
-//! the results page (`serp.rs`) and the places (`places.rs`).
+//! SOURCING: GPUI Kit's `Input`, `Button` and `TitleBar`; Home (`home.rs`)
+//! and the results page (`serp.rs`).
 
 use std::rc::Rc;
 
@@ -37,7 +37,6 @@ use crate::delegate::{self, Verdict};
 use crate::glass;
 use crate::home::{Home, HomeEvent};
 use crate::icons;
-use crate::places::{Place, PlaceView};
 use crate::recents;
 use crate::serp::{Serp, SerpMode};
 
@@ -56,7 +55,6 @@ pub(super) enum Route {
     /// A results page, and the subscription that hands its picks to the
     /// browser; both move to the tab when a result is opened.
     Results(Entity<Serp>, Rc<Subscription>),
-    Place(Place),
 }
 
 impl Route {
@@ -64,7 +62,6 @@ impl Route {
         match (self, other) {
             (Route::Home, Route::Home) => true,
             (Route::Results(a, _), Route::Results(b, _)) => a == b,
-            (Route::Place(a), Route::Place(b)) => a == b,
             _ => false,
         }
     }
@@ -88,7 +85,6 @@ impl Underlay {
         match &self.route {
             Route::Home => "Home".into(),
             Route::Results(serp, _) => serp.read(cx).title(),
-            Route::Place(place) => place.label().into(),
         }
     }
 
@@ -130,7 +126,7 @@ impl Browser {
         cx.notify();
     }
 
-    /// Open a tab from the workspace, preserving an existing result or place.
+    /// Open a tab from the workspace, preserving an existing result.
     pub(super) fn reveal_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let route = self.underlay.route.clone();
         self.hide_underlay(cx);
@@ -145,7 +141,6 @@ impl Browser {
                 self.tabs[0]._serp_events = Some(events);
                 self.tabs[0].showing = super::Showing::Serp;
             }
-            Route::Place(place) => self.tabs[0].showing = super::Showing::Place(place),
         }
         self.new_tab_beside(0, window, cx);
     }
@@ -195,7 +190,7 @@ impl Browser {
     fn underlay_arrived(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let text = match &self.underlay.route {
             Route::Results(serp, _) => serp.read(cx).query().clone(),
-            Route::Home | Route::Place(_) => SharedString::default(),
+            Route::Home => SharedString::default(),
         };
         self.underlay.field.update(cx, |field, cx| {
             if field.value() != text {
@@ -213,10 +208,6 @@ impl Browser {
                 .field
                 .update(cx, |field, cx| field.focus(window, cx)),
             Route::Results(serp, _) => window.focus(&serp.focus_handle(cx), cx),
-            Route::Place(Place::Agent) if let Some((workbench, _)) = &self.theorem => {
-                workbench.update(cx, |workbench, cx| workbench.focus_composer(window, cx));
-            }
-            Route::Place(_) => window.focus(&self.focus_handle, cx),
         }
     }
 
@@ -467,12 +458,6 @@ impl Browser {
                     .into_any_element()
             }
             Route::Results(serp, _) => serp.into_any_element(),
-            // No tab is drawn while the workspace shows, so the workbench is
-            // drawn here alone.
-            Route::Place(Place::Agent) if let Some((workbench, _)) = &self.theorem => {
-                workbench.clone().into_any_element()
-            }
-            Route::Place(place) => PlaceView::new(place).into_any_element(),
         };
 
         v_flex()

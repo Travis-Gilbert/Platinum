@@ -1479,47 +1479,117 @@ fn a_search_in_the_workspace_shows_results_with_their_own_history(cx: &mut TestA
     assert_eq!(route(&browser, cx), "tides and the moon");
 }
 
-#[gpui_kit::test]
-fn places_open_from_the_palette_and_back_returns(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
-    keys(cx, "cmd-k");
-    cx.simulate_input("mail");
-    cx.run_until_parked();
-    keys(cx, "enter");
-    assert_eq!(route(&browser, cx), "Mail");
-    keys(cx, "cmd-[");
-    assert_eq!(route(&browser, cx), "Home");
+/// The place the window shows, if one is.
+fn place(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> Option<NativePlace> {
+    cx.update(|_, cx| browser.read(cx).place)
+}
 
-    // In a tab, a place opens over the tab's Home, and Back returns to it.
-    keys(cx, "cmd-t");
+/// Open a place from the palette.
+fn open_from_palette(cx: &mut VisualTestContext, name: &str) {
     keys(cx, "cmd-k");
-    cx.simulate_input("library");
+    cx.simulate_input(name);
     cx.run_until_parked();
     keys(cx, "enter");
-    assert!(showing(&browser, cx) == Showing::Place(NativePlace::Library));
-    assert_eq!(tabs(&browser, cx), (1, 0), "in the same tab");
-    keys(cx, "cmd-[");
-    assert!(showing(&browser, cx) == Showing::Start);
 }
 
 /// Open the Agent place from the palette.
 fn open_agent(cx: &mut VisualTestContext) {
-    keys(cx, "cmd-k");
-    cx.simulate_input("agent");
-    cx.run_until_parked();
+    open_from_palette(cx, "agent");
+}
+
+#[gpui_kit::test]
+fn a_place_shows_over_the_workspace_and_its_bump_moves_between_places(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    assert!(
+        !drawn(cx, "places-bump".into()),
+        "Home lists the places itself"
+    );
+    open_from_palette(cx, "mail");
+    assert_eq!(place(&browser, cx), Some(NativePlace::Mail));
+    assert!(workspace(&browser, cx), "the workspace stays beneath");
+    assert!(cx.debug_bounds("underlay").is_none());
+    assert!(drawn(cx, "places-bump".into()));
+
+    // The bump moves between the places and back out.
+    let at = center_of(cx, "bump-library".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Library));
+    let at = center_of(cx, "bump-exit".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(in_workspace_field(&browser, cx));
+
+    // Back leaves a place for what is beneath it, as it was.
+    cx.simulate_input("tides and the moon");
     keys(cx, "enter");
+    assert_eq!(route(&browser, cx), "tides and the moon");
+    open_from_palette(cx, "library");
+    keys(cx, "cmd-[");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(route(&browser, cx), "tides and the moon");
+    // The bump's way out goes Home.
+    open_from_palette(cx, "library");
+    let at = center_of(cx, "bump-exit".into());
+    click(cx, at);
+    assert_eq!(route(&browser, cx), "Home");
+}
+
+#[gpui_kit::test]
+fn a_place_shows_over_the_tabs_without_their_chrome(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    let [tab] = ids(&browser, cx)[..] else {
+        panic!("one tab")
+    };
+    assert!(drawn(cx, format!("tab-{tab}")));
+    assert!(cx.debug_bounds("address-bar").is_some(), "Home searches");
+    open_agent(cx);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Agent));
+    assert!(drawn(cx, "theorem-card".into()));
+    assert!(drawn(cx, "places-bump".into()));
+    assert!(!drawn(cx, format!("tab-{tab}")), "no tab row over a place");
+    assert!(
+        cx.debug_bounds("address-bar").is_none(),
+        "the agent is the application's, not a page"
+    );
+
+    // ⌘W closes the place, not the tab beneath it.
+    keys(cx, "cmd-w");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(tabs(&browser, cx), (1, 0));
+    assert!(showing(&browser, cx) == Showing::Start);
+
+    // An address leaves the place for the tab's address bar.
+    open_agent(cx);
+    keys(cx, "cmd-l");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(tabs(&browser, cx), (1, 0));
+    assert!(in_address_bar(&browser, cx));
+
+    // Over the tabs, the bump's way out shows them.
+    open_from_palette(cx, "notes");
+    let at = center_of(cx, "bump-exit".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), None);
+    assert!(drawn(cx, format!("tab-{tab}")));
+    assert!(!workspace(&browser, cx));
 }
 
 #[gpui_kit::test]
 fn the_agent_place_is_theorem_with_the_keyboard_in_it(cx: &mut TestAppContext) {
     let (browser, cx) = open(cx);
     open_agent(cx);
-    assert_eq!(route(&browser, cx), "Agent");
-    assert!(
-        drawn(cx, "theorem-navigator".into()),
-        "the workspace draws the workbench"
-    );
+    assert_eq!(place(&browser, cx), Some(NativePlace::Agent));
+    assert!(drawn(cx, "theorem-navigator".into()));
     assert!(drawn(cx, "theorem-card".into()));
+    let bump = bounds_of(cx, "places-bump".into());
+    let card = bounds_of(cx, "theorem-card".into());
+    let navigator = bounds_of(cx, "theorem-navigator".into());
+    assert!(
+        bump.left() == navigator.left() && bump.right() <= card.left(),
+        "the bump stands on the window's leading edge, clear of the card: \
+         {bump:?} beside {card:?}"
+    );
     let in_theorem = |cx: &mut VisualTestContext| {
         cx.update(|window, cx| {
             let (workbench, _) = browser
@@ -1534,54 +1604,40 @@ fn the_agent_place_is_theorem_with_the_keyboard_in_it(cx: &mut TestAppContext) {
 
     // Back reaches the browser from inside the workbench.
     keys(cx, "cmd-[");
+    assert_eq!(place(&browser, cx), None);
     assert_eq!(route(&browser, cx), "Home");
     assert!(!drawn(cx, "theorem-navigator".into()));
-    keys(cx, "cmd-]");
-    assert_eq!(route(&browser, cx), "Agent");
+    open_agent(cx);
     assert!(in_theorem(cx));
 }
 
 #[gpui_kit::test]
-fn theorem_draws_in_one_pane_and_moves_where_it_is_asked(cx: &mut TestAppContext) {
-    let dir = data_dir("theorem-panes");
-    std::fs::write(
-        dir.join("session.json"),
-        r#"{
-            "version": 1,
-            "active": 2,
-            "tabs": [{ "id": 1 }, { "id": 2 }],
-            "dock": {
-                "split": "horizontal",
-                "sizes": [500, 500],
-                "children": [
-                    { "tabs": [1], "shown": 0 },
-                    { "tabs": [2], "shown": 0 }
-                ]
-            }
-        }"#,
-    )
-    .unwrap();
+fn always_show_places_stands_the_bump_over_home_and_tabs_and_is_saved(cx: &mut TestAppContext) {
+    let dir = data_dir("places-pinned");
     cx.update(|cx| session::init(&dir, cx));
     let (browser, cx) = open(cx);
-    open_agent(cx);
-    assert_eq!(active_id(&browser, cx), 2);
-    // The other pane's Home opens it there too; the palette would switch
-    // to the tab already showing it instead.
-    let tile = center_of(cx, "home-place-agent".into());
-    click(cx, tile);
-    assert_eq!(active_id(&browser, cx), 1);
-    assert!(showing(&browser, cx) == Showing::Place(NativePlace::Agent));
+    assert!(!drawn(cx, "places-bump".into()));
+    keys(cx, "cmd-k");
+    cx.simulate_input("always show places");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    assert!(cx.update(|_, cx| browser.read(cx).places_pinned));
+    assert!(drawn(cx, "places-bump".into()), "over Home");
+    assert!(!drawn(cx, "bump-exit".into()), "nothing to leave");
+    keys(cx, "cmd-t");
+    assert!(drawn(cx, "places-bump".into()), "over the tabs");
 
-    // One view draws in one place: the active pane has it, the other says
-    // where it is.
-    let middle = px(500.);
-    assert!(bounds_of(cx, "theorem-navigator".into()).left() < middle);
-    let here = center_of(cx, "theorem-show-here".into());
-    assert!(here.x > middle);
-    click(cx, here);
-    assert_eq!(active_id(&browser, cx), 2);
-    assert!(bounds_of(cx, "theorem-navigator".into()).left() > middle);
-    assert!(center_of(cx, "theorem-show-here".into()).x < middle);
+    // A bump opens a place; there it leads with its way out.
+    let at = center_of(cx, "bump-notes".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Notes));
+    assert!(drawn(cx, "bump-exit".into()));
+
+    cx.executor().advance_clock(Duration::from_secs(2));
+    cx.run_until_parked();
+    let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
+    let saved = session::parse_session(&saved).expect("Platinum's session");
+    assert!(saved.places_pinned);
     let _ = std::fs::remove_dir_all(&dir);
 }
 

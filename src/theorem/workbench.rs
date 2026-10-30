@@ -1,10 +1,12 @@
-//! The Agent place's view: the navigator on the tab's pane, the work card
-//! raised beside it (`docs/plans/theorem-workbench.md`, Layout).
+//! The Agent place's view: the places bump on the window's leading edge, the
+//! navigator on the window's frame beside it, and the work card, cut around
+//! the composer (`docs/plans/theorem-workbench.md`, Layout).
 //!
 //! The driver owns every piece of conversation state; this view owns only
 //! what drawing it needs: the navigator's width, which activity rows are open,
-//! the composer's field and the transcript's scroll. `navigator.rs`,
-//! `transcript.rs` and `composer.rs` draw its parts.
+//! the composer's field, the transcript's scroll, the role the starters are
+//! for and where the places bump leads out. `navigator.rs`, `transcript.rs`,
+//! `starters.rs` and `composer.rs` draw its parts.
 //!
 //! SOURCING: GPUI Kit's `MessageScroller`, `Textarea` and `resize_handle`;
 //! Theorem's chat host through `TheoremDriver`.
@@ -17,13 +19,16 @@ use gpui_kit::component::{ActiveTheme as _, h_flex};
 use gpui_kit::{
     AppContext as _, Context, DragMoveEvent, Empty, Entity, FocusHandle, Focusable,
     InteractiveElement as _, IntoElement, ParentElement as _, Render, Styled as _, Subscription,
-    Window, actions,
+    Window, actions, div, px,
 };
 use theorem_surface_contracts::intent::{ComposerIntent, ThreadIntent};
 use theorem_surface_contracts::thread::ThreadRunState;
 
 use super::driver::TheoremDriver;
 use super::saved;
+use super::starters::Role;
+use crate::bump;
+use crate::places::{Exit, Place, PlacesBump};
 
 actions!(
     theorem,
@@ -42,20 +47,6 @@ actions!(
 /// The key context the workbench's bindings belong to.
 pub const CONTEXT: &str = "TheoremWorkbench";
 
-/// Which of the panes showing the workbench draws it, since a view draws in
-/// one place a frame: the active pane when it shows the workbench, else the
-/// first displayed pane that does.
-pub fn mounted_in(
-    active: usize,
-    displayed: impl IntoIterator<Item = usize>,
-    shows: impl Fn(usize) -> bool,
-) -> Option<usize> {
-    if shows(active) {
-        return Some(active);
-    }
-    displayed.into_iter().find(|&pane| shows(pane))
-}
-
 /// The navigator's width, in rems: its default and the range it is dragged in.
 pub(super) const NAVIGATOR_WIDTH: f32 = 15.;
 const NAVIGATOR_MIN: f32 = 12.5;
@@ -70,8 +61,12 @@ pub struct Workbench {
     pub(super) navigator_width: f32,
     /// Activity groups and rows the reader opened, by their part's id.
     pub(super) expanded: HashSet<String>,
+    /// Whose starters the empty conversation offers.
+    pub(super) role: Role,
+    /// Where the places bump's way out goes, as the browser last said.
+    pub(super) exit: Exit,
     shown: Shown,
-    _subscriptions: [Subscription; 2],
+    _subscriptions: [Subscription; 4],
 }
 
 /// What the transcript and the composer last took from the projection, so
@@ -104,11 +99,15 @@ impl Workbench {
                 .placeholder("Ask Theorem")
         });
         let transcript = cx.new(|cx| MessageScrollerState::new(0, cx));
+        // The composer widens while it is in use, so its focus redraws it.
+        let field = composer.focus_handle(cx);
         let subscriptions = [
             cx.observe_in(&driver, window, |this, _, window, cx| this.sync(window, cx)),
             cx.subscribe_in(&composer, window, |this, _, event, window, cx| {
                 this.composer_event(event, window, cx)
             }),
+            cx.on_focus_in(&field, window, |_, _, cx| cx.notify()),
+            cx.on_focus_out(&field, window, |_, _, _, cx| cx.notify()),
         ];
         let mut this = Self {
             driver,
@@ -119,6 +118,8 @@ impl Workbench {
                 width.clamp(NAVIGATOR_MIN, NAVIGATOR_MAX)
             }),
             expanded: HashSet::new(),
+            role: Role::default(),
+            exit: Exit::Tabs,
             shown: Shown::default(),
             _subscriptions: subscriptions,
         };
@@ -128,6 +129,14 @@ impl Workbench {
 
     pub fn driver(&self) -> &Entity<TheoremDriver> {
         &self.driver
+    }
+
+    /// Where the places bump's way out goes: what the place stands over.
+    pub fn set_exit(&mut self, exit: Exit, cx: &mut Context<Self>) {
+        if self.exit != exit {
+            self.exit = exit;
+            cx.notify();
+        }
     }
 
     /// Put the keyboard in the composer, as opening the place does. While
@@ -381,15 +390,33 @@ impl Render for Workbench {
             .on_action(cx.listener(Self::on_next))
             .on_drag_move(cx.listener(
                 |this, event: &DragMoveEvent<ResizeNavigator>, window, cx| {
-                    let width = event.event.position.x - event.bounds.left();
+                    let width =
+                        event.event.position.x - event.bounds.left() - px(PlacesBump::WIDTH);
                     this.set_navigator_width(f32::from(width) / f32::from(window.rem_size()), cx);
                 },
             ))
+            .relative()
             .size_full()
             .min_h_0()
             .items_stretch()
             .text_color(cx.theme().foreground)
             .child(self.render_navigator(window, cx))
             .child(self.render_card(window, cx))
+            // On the window's own edge, where the navigator leaves it room,
+            // rising out of the frame as the composer does at the foot.
+            .child(
+                div()
+                    .absolute()
+                    .top_0()
+                    .bottom_0()
+                    .left_0()
+                    .flex()
+                    .items_center()
+                    .child(
+                        PlacesBump::new(Some(Place::Agent))
+                            .exit(self.exit)
+                            .fill(bump::leading_fill(cx)),
+                    ),
+            )
     }
 }

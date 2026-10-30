@@ -16,16 +16,17 @@ use std::rc::Rc;
 use async_compat::Compat;
 use gpui_kit::{AppContext as _, AsyncApp, Context, EventEmitter, PathPromptOptions, WeakEntity};
 use theorem_surface_contracts::intent::{ComposerIntent, ThreadIntent};
+use theorem_surface_contracts::thread::ThreadRunState;
 use theorem_surface_contracts::workspace::{WorkspaceActor, WorkspaceReceipt, WorkspaceRefusal};
 use theoremweb_agent_runtime::chat_host::SIGN_IN_ROUTE;
 use theoremweb_agent_runtime::client::ClientError;
 use theoremweb_agent_runtime::sse::RunEventEnvelope;
-use theoremweb_agent_runtime::wire::ThreadSnapshot;
+use theoremweb_agent_runtime::wire::{Project, ThreadSnapshot};
 use theoremweb_agent_runtime::{
     ApprovalAnswer, AttachmentUpload, BootstrapTarget, ChatAuthorityKind, ChatHostController,
     ChatHostEffect, ChatHostPhase, ChatHostProjection, ChatTransport, DeterministicDemoAuthority,
-    Following, HttpChatTransport, SubmitTurn, TransportFuture, TurnBinding, TurnFollow,
-    TurnFollower, WorkspaceAnswer, live_run_id, reported_run_state,
+    Following, HttpChatTransport, Hydration, RunState, SubmitTurn, TransportFuture, TurnBinding,
+    TurnFollow, TurnFollower, WorkspaceAnswer, live_run_id, reported_run_state,
 };
 use url::Url;
 
@@ -36,6 +37,9 @@ pub enum Connection {
     Native,
     Demo,
 }
+
+const UNCLOSED_RUN_NOTICE: &str = "Theorem never closed this conversation's last run, so it \
+    refuses new messages here. Start a new conversation to continue.";
 
 /// Browser operations the composition root fulfills outside this entity.
 pub enum DriverEvent {
@@ -52,6 +56,23 @@ pub struct TheoremDriver {
     pending_new_conversation: bool,
     pending_thread_selection: Option<String>,
     creating_conversation: Option<u64>,
+    /// The generation whose turn the authority has not settled yet.
+    ///
+    /// A run's last event arrives before the authority has written its answer
+    /// into the conversation, and until the settled conversation is adopted
+    /// the controller holds the revision from before the turn. A message sent
+    /// in that gap names a revision the authority has moved past, so the
+    /// composer reads as sending until then.
+    settling: Option<u64>,
+    /// The run the current turn's observer was handed.
+    followed_run: Option<String>,
+    /// A run this window saw end that the authority still names as live.
+    ///
+    /// An authority that restarts mid-run keeps the run linked to its
+    /// conversation with nothing left to settle it, and refuses every later
+    /// turn there. Following it again only waits out a settlement that never
+    /// comes, so a conversation naming it is shown as interrupted instead.
+    unclosed_run: Option<String>,
     attachment_sources: BTreeMap<String, AttachmentSource>,
     workspace_requests_answered: BTreeSet<String>,
     last_saved: (Option<String>, Option<String>),
@@ -130,6 +151,9 @@ impl TheoremDriver {
             pending_new_conversation: false,
             pending_thread_selection: None,
             creating_conversation: None,
+            settling: None,
+            followed_run: None,
+            unclosed_run: None,
             attachment_sources: BTreeMap::new(),
             workspace_requests_answered: BTreeSet::new(),
             last_saved: super::saved::selection(cx),
@@ -299,6 +323,11 @@ impl TheoremDriver {
             self.begin_new_conversation(cx);
         }
         self.projection = self.controller.projection();
+        if self.settling == Some(self.generation.get())
+            && !self.projection.thread.run_state.is_live()
+        {
+            self.projection.composer.is_sending = true;
+        }
         self.attachment_sources.retain(|id, _| {
             self.projection
                 .composer
@@ -485,7 +514,7 @@ impl TheoremDriver {
                     // during publication. Do not rebind its former live run.
                     if this.generation.get() == generation {
                         if let Some(snapshot) = recovery {
-                            this.resume_turn(snapshot, cx);
+                            this.follow_named_run(snapshot, cx);
                         }
                     }
                 }
@@ -538,16 +567,7 @@ impl TheoremDriver {
             Observer::Supersede,
             move |transport, _| transport.load_thread(thread_id),
             |this, loaded, cx| match loaded {
-                Ok(snapshot) => {
-                    let recovery = live_run_id(&snapshot).is_some().then(|| snapshot.clone());
-                    let generation = this.generation.get();
-                    this.adopt_snapshot(snapshot, cx);
-                    if this.generation.get() == generation {
-                        if let Some(snapshot) = recovery {
-                            this.resume_turn(snapshot, cx);
-                        }
-                    }
-                }
+                Ok(snapshot) => this.present_loaded(snapshot, cx),
                 Err(error) => this.report_notice(
                     format!("Theorem could not load that conversation: {error}"),
                     cx,
@@ -557,34 +577,215 @@ impl TheoremDriver {
         );
     }
 
+    /// Show a conversation read from the authority and follow a run it names.
+    fn present_loaded(&mut self, snapshot: ThreadSnapshot, cx: &mut Context<Self>) {
+        let recovery = live_run_id(&snapshot).is_some().then(|| snapshot.clone());
+        let generation = self.generation.get();
+        self.adopt_snapshot(snapshot, cx);
+        if self.generation.get() == generation {
+            if let Some(snapshot) = recovery {
+                self.follow_named_run(snapshot, cx);
+            }
+        }
+    }
+
+    /// Follow the run a loaded conversation names, unless it is the unclosed
+    /// one.
+    fn follow_named_run(&mut self, snapshot: ThreadSnapshot, cx: &mut Context<Self>) {
+        if self.unclosed_run.is_some() && live_run_id(&snapshot) == self.unclosed_run {
+            let owed = self
+                .controller
+                .adopt_report(snapshot, RunState::Interrupted);
+            self.controller.report_notice(UNCLOSED_RUN_NOTICE);
+            self.publish_and_fulfill(owed, cx);
+        } else {
+            self.resume_turn(snapshot, cx);
+        }
+    }
+
+    /// Settling `run` failed. If this window had seen it end, remember it as
+    /// unclosed and say whether it did.
+    fn note_unclosed(&mut self, run: Option<String>) -> bool {
+        if run.is_none() || self.projection.thread.run_state.is_live() {
+            return false;
+        }
+        self.unclosed_run = run;
+        true
+    }
+
+    /// Read the session and the conversation again after the authority
+    /// refused a turn in it.
+    ///
+    /// Two refusals leave this window holding something the authority has
+    /// moved past. It can keep the message and then refuse its run, while the
+    /// controller restores the conversation as it stood before the send; and
+    /// it forgets its CSRF sessions when it restarts or their lease ends.
+    /// Left there, every later send is refused as a revision conflict or an
+    /// expired token. The refusal stays on screen unless the conversation
+    /// turns out to name a run: one running after all, or the unclosed one,
+    /// which explains the refusal itself.
+    fn reread_after_refusal(&mut self, thread_id: String, cx: &mut Context<Self>) {
+        let refusal = self.projection.notice.clone();
+        let target = BootstrapTarget {
+            project_id: self.projection.selected_project_id.clone(),
+            thread_id: Some(thread_id.clone()),
+        };
+        self.authority_call(
+            Observer::Current,
+            move |transport, _| transport.bootstrap(target),
+            move |this, hydrated, cx| {
+                this.settling = None;
+                this.present_reread(&thread_id, refusal, hydrated, cx);
+            },
+            cx,
+        );
+        self.settling = Some(self.generation.get());
+        self.publish(cx);
+    }
+
+    /// Show what a read after a refusal found, keeping `refusal` on screen
+    /// as `reread_after_refusal` describes.
+    fn present_reread(
+        &mut self,
+        thread_id: &str,
+        refusal: Option<String>,
+        hydrated: Result<Hydration, ClientError>,
+        cx: &mut Context<Self>,
+    ) {
+        if self.projection.selected_thread_id.as_deref() != Some(thread_id) {
+            self.publish(cx);
+            return;
+        }
+        let hydration = match hydrated {
+            Ok(hydration) => hydration,
+            Err(error) => {
+                return self.report_notice(
+                    format!("Theorem could not reload that conversation: {error}"),
+                    cx,
+                );
+            }
+        };
+        if !self.controller.refresh_csrf_token(&hydration.bootstrap) {
+            return self.report_notice(
+                "The Theorem session now belongs to another account. Reconnect before sending.",
+                cx,
+            );
+        }
+        let Some(snapshot) = hydration.snapshot else {
+            return self.report_notice("Theorem no longer has that conversation.", cx);
+        };
+        let names_run = live_run_id(&snapshot).is_some();
+        self.present_loaded(snapshot, cx);
+        if let Some(refusal) = refusal.filter(|_| !names_run) {
+            self.report_notice(refusal, cx);
+        }
+    }
+
     fn resume_turn(&mut self, snapshot: ThreadSnapshot, cx: &mut Context<Self>) {
+        let run = live_run_id(&snapshot);
         self.authority_call(
             Observer::Current,
             move |transport, follower| transport.resume_turn(snapshot, follower),
-            |this, settled, cx| {
+            move |this, settled, cx| {
+                this.settling = None;
+                if settled.is_err() && this.note_unclosed(run) {
+                    return this.report_notice(UNCLOSED_RUN_NOTICE, cx);
+                }
                 this.settle_snapshot(settled, "recover that conversation's run", cx)
             },
             cx,
         );
+        self.settling = Some(self.generation.get());
     }
 
     fn submit(&mut self, turn: SubmitTurn, cx: &mut Context<Self>) {
+        self.send_turn(turn, true, cx);
+    }
+
+    /// Send `turn`. When `renew` allows it, a refusal before the turn's run
+    /// started goes through `renew_and_resend` first.
+    fn send_turn(&mut self, turn: SubmitTurn, renew: bool, cx: &mut Context<Self>) {
         let sent = turn.clone();
+        self.followed_run = None;
         self.authority_call(
             Observer::Supersede,
             move |transport, follower| transport.submit_turn(turn, follower),
-            move |this, settled, cx| match settled {
-                Ok(snapshot) => {
-                    this.controller.settle_turn_success(&sent);
-                    this.adopt_snapshot(snapshot, cx);
-                }
-                Err(error) => {
-                    this.controller.reject_turn(&sent, error.message());
-                    this.publish(cx);
+            move |this, settled, cx| {
+                this.settling = None;
+                match settled {
+                    Ok(snapshot) => {
+                        this.controller.settle_turn_success(&sent);
+                        this.adopt_written_turn(snapshot, cx);
+                    }
+                    Err(error) => {
+                        let followed = this.followed_run.take();
+                        if renew && followed.is_none() {
+                            return this.renew_and_resend(sent, error, cx);
+                        }
+                        this.note_unclosed(followed);
+                        this.refuse_turn(&sent, &error, cx);
+                    }
                 }
             },
             cx,
         );
+        self.settling = Some(self.generation.get());
+        self.publish(cx);
+    }
+
+    fn refuse_turn(&mut self, sent: &SubmitTurn, error: &ClientError, cx: &mut Context<Self>) {
+        self.controller.reject_turn(sent, error.message());
+        self.publish(cx);
+        if let Some(snapshot) = &sent.snapshot {
+            self.reread_after_refusal(snapshot.thread.id.clone(), cx);
+        }
+    }
+
+    /// Renew the CSRF session after the authority refused `sent` before its
+    /// run started, and send it once more when nothing of it was written.
+    ///
+    /// The authority keeps one CSRF session per account until its lease ends
+    /// and forgets them all when it restarts, so the first send after either
+    /// is refused at that gate. A session token other than the one `sent`
+    /// carried, with the conversation still at the revision `sent` was
+    /// written against, is that refusal: the same message goes again with the
+    /// new token. Anything else is the refusal it looks like, and this read
+    /// stands in for the one `reread_after_refusal` would make.
+    fn renew_and_resend(&mut self, sent: SubmitTurn, refusal: ClientError, cx: &mut Context<Self>) {
+        let Some((thread_id, revision)) = sent
+            .snapshot
+            .as_ref()
+            .map(|snapshot| (snapshot.thread.id.clone(), snapshot.thread.revision))
+        else {
+            return self.refuse_turn(&sent, &refusal, cx);
+        };
+        let target = BootstrapTarget {
+            project_id: self.projection.selected_project_id.clone(),
+            thread_id: Some(thread_id.clone()),
+        };
+        self.authority_call(
+            Observer::Current,
+            move |transport, _| transport.bootstrap(target),
+            move |this, hydrated, cx| {
+                this.settling = None;
+                if let Ok(hydration) = &hydrated
+                    && hydration.bootstrap.csrf_token != sent.csrf_token
+                    && hydration.snapshot.as_ref().map(|s| s.thread.revision) == Some(revision)
+                    && this.controller.refresh_csrf_token(&hydration.bootstrap)
+                {
+                    let mut turn = sent;
+                    turn.csrf_token.clone_from(&hydration.bootstrap.csrf_token);
+                    return this.send_turn(turn, false, cx);
+                }
+                this.controller.reject_turn(&sent, refusal.message());
+                this.publish(cx);
+                let notice = this.projection.notice.clone();
+                this.present_reread(&thread_id, notice, hydrated, cx);
+            },
+            cx,
+        );
+        self.settling = Some(self.generation.get());
+        self.publish(cx);
     }
 
     fn settle_snapshot(
@@ -597,6 +798,28 @@ impl TheoremDriver {
             Ok(snapshot) => self.adopt_snapshot(snapshot, cx),
             Err(error) => self.report_notice(format!("Theorem could not {operation}: {error}"), cx),
         }
+    }
+
+    /// Adopt the conversation the authority wrote after the run of a turn
+    /// this window followed.
+    ///
+    /// The authority writes a failed run's turn without its failure: the
+    /// answer holds only the first progress part, still running, and the
+    /// conversation names no run, which reads as a turn that finished. When
+    /// the run's stream ended it unfinished, that ending is kept.
+    fn adopt_written_turn(&mut self, snapshot: ThreadSnapshot, cx: &mut Context<Self>) {
+        let streamed = match self.projection.thread.run_state {
+            ThreadRunState::Failed => Some(RunState::Failed),
+            ThreadRunState::Aborted => Some(RunState::Cancelled),
+            ThreadRunState::Interrupted => Some(RunState::Interrupted),
+            _ => None,
+        };
+        let reported = match (reported_run_state(&snapshot), streamed) {
+            (RunState::Idle, Some(ended)) => ended,
+            (reported, _) => reported,
+        };
+        let owed = self.controller.adopt_report(snapshot, reported);
+        self.publish_and_fulfill(owed, cx);
     }
 
     fn adopt_snapshot(&mut self, snapshot: ThreadSnapshot, cx: &mut Context<Self>) {
@@ -618,24 +841,7 @@ impl TheoremDriver {
                         self.publish(cx);
                         return;
                     };
-                    self.authority_call(
-                        Observer::Supersede,
-                        move |transport, _| transport.create_conversation(project, csrf_token),
-                        |this, settled, cx| {
-                            this.creating_conversation = None;
-                            match settled {
-                                Ok(snapshot) => this.adopt_snapshot(snapshot, cx),
-                                Err(error) => {
-                                    this.controller.reject_new_conversation(error.to_string());
-                                    this.publish(cx);
-                                }
-                            }
-                        },
-                        cx,
-                    );
-                    // The spawn cannot settle inside this entity update.
-                    // Keep its reservation while Loading is published.
-                    self.creating_conversation = Some(self.generation.get());
+                    self.create_conversation(project, csrf_token, true, cx);
                 } else {
                     self.advance_generation();
                     self.controller.begin_new_conversation();
@@ -651,6 +857,79 @@ impl TheoremDriver {
                     .report_notice("Connect to Theorem before starting a new conversation.");
             }
         }
+    }
+
+    /// Create a conversation in `project`. When `renew` allows it, a refusal
+    /// goes through `renew_and_create` first.
+    fn create_conversation(
+        &mut self,
+        project: Option<Project>,
+        csrf_token: String,
+        renew: bool,
+        cx: &mut Context<Self>,
+    ) {
+        let sent = (project.clone(), csrf_token.clone());
+        self.authority_call(
+            Observer::Supersede,
+            move |transport, _| transport.create_conversation(project, csrf_token),
+            move |this, settled, cx| match settled {
+                Ok(snapshot) => {
+                    this.creating_conversation = None;
+                    this.adopt_snapshot(snapshot, cx);
+                }
+                Err(error) if renew => this.renew_and_create(sent, error, cx),
+                Err(error) => this.refuse_new_conversation(&error, cx),
+            },
+            cx,
+        );
+        // The spawn cannot settle inside this entity update.
+        // Keep its reservation while Loading is published.
+        self.creating_conversation = Some(self.generation.get());
+    }
+
+    fn refuse_new_conversation(&mut self, error: &ClientError, cx: &mut Context<Self>) {
+        self.creating_conversation = None;
+        self.controller.reject_new_conversation(error.to_string());
+        self.publish(cx);
+    }
+
+    /// Renew the CSRF session after the authority refused a new
+    /// conversation, and create it once more if the session had lapsed.
+    ///
+    /// As with a send (`renew_and_resend`), a session token other than the
+    /// one the request carried says it was refused at the CSRF gate. A
+    /// create that reached an authority which then restarted before
+    /// answering can leave one empty conversation behind; it holds nothing
+    /// the reader wrote.
+    fn renew_and_create(
+        &mut self,
+        (project, refused_token): (Option<Project>, String),
+        refusal: ClientError,
+        cx: &mut Context<Self>,
+    ) {
+        let target = BootstrapTarget {
+            project_id: self.projection.selected_project_id.clone(),
+            thread_id: None,
+        };
+        self.authority_call(
+            Observer::Current,
+            move |transport, _| transport.bootstrap(target),
+            move |this, hydrated, cx| {
+                if let Ok(hydration) = hydrated
+                    && hydration.bootstrap.csrf_token != refused_token
+                    && this.controller.refresh_csrf_token(&hydration.bootstrap)
+                {
+                    return this.create_conversation(
+                        project,
+                        hydration.bootstrap.csrf_token,
+                        false,
+                        cx,
+                    );
+                }
+                this.refuse_new_conversation(&refusal, cx);
+            },
+            cx,
+        );
     }
 
     fn answer_workspace_requests(&mut self, cx: &mut Context<Self>) {
@@ -902,13 +1181,13 @@ struct DriverFollower {
 }
 
 impl DriverFollower {
-    fn deliver(&self, apply: impl FnOnce(&mut ChatHostController) -> TurnFollow) -> Following {
+    fn deliver(&self, apply: impl FnOnce(&mut TheoremDriver) -> TurnFollow) -> Following {
         if self.abandoned() {
             return Following::Detached;
         }
         let mut following = Following::Detached;
         let _ = self.driver.update(&mut *self.cx.borrow_mut(), |this, cx| {
-            let followed = apply(&mut this.controller);
+            let followed = apply(this);
             // Even a refusal with no follow-up effect must reach the reader.
             this.publish(cx);
             if let TurnFollow::Followed(effect) = followed {
@@ -924,7 +1203,10 @@ impl DriverFollower {
 
 impl TurnFollower for DriverFollower {
     fn bind(&self, binding: TurnBinding) -> Following {
-        self.deliver(|controller| controller.bind_turn(binding))
+        self.deliver(|driver| {
+            driver.followed_run = Some(binding.run_id.clone());
+            driver.controller.bind_turn(binding)
+        })
     }
 
     fn commit(
@@ -934,7 +1216,8 @@ impl TurnFollower for DriverFollower {
         events: Vec<RunEventEnvelope>,
     ) -> Result<Following, String> {
         let mut refused = None;
-        let following = self.deliver(|controller| {
+        let following = self.deliver(|driver| {
+            let controller = &mut driver.controller;
             controller
                 .follow_run_events(thread_id, run_id, events)
                 .unwrap_or_else(|reason| {
@@ -955,7 +1238,7 @@ impl TurnFollower for DriverFollower {
 mod tests {
     use super::*;
     use gpui_kit::{Entity, TestAppContext};
-    use theorem_surface_contracts::thread::{ThreadActor, ThreadPart, ThreadRunState};
+    use theorem_surface_contracts::thread::{ThreadActor, ThreadPart};
     use theorem_surface_contracts::workspace::{WorkspaceOperation, WorkspaceOutcome};
 
     fn demo(
@@ -982,6 +1265,21 @@ mod tests {
             );
         });
         cx.run_until_parked();
+    }
+
+    fn times_sent(projection: &ChatHostProjection, prompt: &str) -> usize {
+        projection
+            .thread
+            .messages
+            .iter()
+            .filter(|message| {
+                message.actor == ThreadActor::User
+                    && message
+                        .parts
+                        .iter()
+                        .any(|part| matches!(part, ThreadPart::Text { text, .. } if text == prompt))
+            })
+            .count()
     }
 
     fn has_reply(projection: &ChatHostProjection, prompt: &str) -> bool {
@@ -1288,6 +1586,457 @@ mod tests {
             let this = driver.read(cx);
             assert_eq!(this.projection().thread.run_state, ThreadRunState::Idle);
             assert_eq!(this.workspace_requests_answered.len(), 1);
+        });
+    }
+
+    /// The demo authority with the real one's revision check: a send naming
+    /// a revision the conversation has moved past is refused as a conflict,
+    /// which the demo itself never does.
+    ///
+    /// It can also refuse a run after keeping its message, as a session
+    /// without `models:invoke` is refused (the kept message only moves the
+    /// revision, which is all the check reads); hold a turn's settlement back
+    /// after its run's last event, as the authority writes the answer into
+    /// the conversation after the stream ends; forget the CSRF session it
+    /// issued, as it does when it restarts; fail a run and write its turn
+    /// without the failure, as it does when the model provider refuses its
+    /// key; and lose a run across a restart, as it does today: the
+    /// conversation stays linked to the run, nothing settles it, and every
+    /// later turn there is refused as a conflict.
+    #[derive(Default)]
+    struct StrictAuthority {
+        inner: DeterministicDemoAuthority,
+        csrf_token: RefCell<String>,
+        kept: Cell<u64>,
+        refuse_next_run: Cell<bool>,
+        fail_next_run: Cell<bool>,
+        settlement_held: Cell<bool>,
+        settlement: RefCell<Option<std::task::Waker>>,
+        orphaned: Cell<bool>,
+        resumed: Cell<usize>,
+    }
+
+    impl StrictAuthority {
+        fn held(&self, mut snapshot: ThreadSnapshot) -> ThreadSnapshot {
+            snapshot.thread.revision += self.kept.get();
+            snapshot
+        }
+
+        fn release_settlement(&self) {
+            self.settlement_held.set(false);
+            self.give_up_settling();
+        }
+
+        /// Restart with the run in flight forgotten.
+        fn restart_mid_run(&self) {
+            self.orphaned.set(true);
+        }
+
+        /// End the wait a turn's settlement loop gives a run, which for a
+        /// lost run ends in failure.
+        fn give_up_settling(&self) {
+            if let Some(waker) = self.settlement.take() {
+                waker.wake();
+            }
+        }
+
+        fn unsettled(&self, thread_id: &str) -> ClientError {
+            let run = self
+                .inner
+                .snapshot(thread_id)
+                .as_ref()
+                .and_then(live_run_id)
+                .unwrap_or_default();
+            ClientError::from_runtime(format!(
+                "Theorem run {run} ended before its durable conversation settlement became visible"
+            ))
+        }
+    }
+
+    impl ChatTransport for StrictAuthority {
+        fn bootstrap(
+            &self,
+            target: BootstrapTarget,
+        ) -> TransportFuture<'_, theoremweb_agent_runtime::Hydration> {
+            Box::pin(async move {
+                let mut hydration = self.inner.bootstrap(target).await?;
+                hydration.bootstrap.csrf_token = self.csrf_token.borrow().clone();
+                hydration.snapshot = hydration.snapshot.map(|s| self.held(s));
+                Ok(hydration)
+            })
+        }
+
+        fn load_project_threads(
+            &self,
+            project_id: String,
+        ) -> TransportFuture<
+            '_,
+            theoremweb_agent_runtime::wire::Page<theoremweb_agent_runtime::wire::Thread>,
+        > {
+            self.inner.load_project_threads(project_id)
+        }
+
+        fn load_thread(&self, thread_id: String) -> TransportFuture<'_, ThreadSnapshot> {
+            Box::pin(async move {
+                self.inner
+                    .load_thread(thread_id)
+                    .await
+                    .map(|s| self.held(s))
+            })
+        }
+
+        fn submit_turn(
+            &self,
+            turn: SubmitTurn,
+            follower: Rc<dyn TurnFollower>,
+        ) -> TransportFuture<'_, ThreadSnapshot> {
+            Box::pin(async move {
+                if turn.csrf_token != *self.csrf_token.borrow() {
+                    return Err(ClientError::from_runtime(
+                        "The chat CSRF token is invalid or expired",
+                    ));
+                }
+                let sent = turn.snapshot.as_ref().expect("sent from a conversation");
+                let thread_id = sent.thread.id.clone();
+                let current = self.held(self.inner.snapshot(&thread_id).expect("held"));
+                let lost_run = self.orphaned.get() && live_run_id(&current).is_some();
+                if lost_run || sent.thread.revision != current.thread.revision {
+                    return Err(ClientError::from_runtime(format!(
+                        "chat revision conflict: expected {}, current {}",
+                        sent.thread.revision, current.thread.revision
+                    )));
+                }
+                if self.refuse_next_run.replace(false) {
+                    self.kept.set(self.kept.get() + 1);
+                    return Err(ClientError::from_runtime(
+                        "The authenticated identity lacks a required chat scope",
+                    ));
+                }
+                let follower: Rc<dyn TurnFollower> = if self.fail_next_run.replace(false) {
+                    Rc::new(Failing(follower))
+                } else {
+                    follower
+                };
+                let mut run = self.inner.submit_turn(turn, follower);
+                let settled = std::future::poll_fn(|task| {
+                    if self.orphaned.get() {
+                        return std::task::Poll::Ready(Err(self.unsettled(&thread_id)));
+                    }
+                    *self.settlement.borrow_mut() = Some(task.waker().clone());
+                    run.as_mut().poll(task)
+                })
+                .await;
+                std::future::poll_fn(|task| {
+                    if self.settlement_held.get() {
+                        *self.settlement.borrow_mut() = Some(task.waker().clone());
+                        std::task::Poll::Pending
+                    } else {
+                        std::task::Poll::Ready(())
+                    }
+                })
+                .await;
+                settled.map(|s| self.held(s))
+            })
+        }
+
+        fn resume_turn(
+            &self,
+            snapshot: ThreadSnapshot,
+            follower: Rc<dyn TurnFollower>,
+        ) -> TransportFuture<'_, ThreadSnapshot> {
+            if self.orphaned.get() {
+                self.resumed.set(self.resumed.get() + 1);
+                let lost = self.unsettled(&snapshot.thread.id);
+                return Box::pin(std::future::ready(Err(lost)));
+            }
+            self.inner.resume_turn(snapshot, follower)
+        }
+
+        fn cancel_run(
+            &self,
+            run_id: String,
+            thread_id: String,
+            csrf_token: String,
+        ) -> TransportFuture<'_, ThreadSnapshot> {
+            if self.orphaned.get() {
+                // The cancel is recorded, and the conversation stays linked.
+                let linked = self.inner.snapshot(&thread_id).map(|s| self.held(s));
+                return Box::pin(std::future::ready(
+                    linked.ok_or_else(|| ClientError::from_runtime("no such conversation")),
+                ));
+            }
+            self.inner.cancel_run(run_id, thread_id, csrf_token)
+        }
+
+        fn decide_approval(&self, decision: ApprovalAnswer) -> TransportFuture<'_, ThreadSnapshot> {
+            self.inner.decide_approval(decision)
+        }
+
+        fn answer_workspace_request(&self, answer: WorkspaceAnswer) -> TransportFuture<'_, ()> {
+            self.inner.answer_workspace_request(answer)
+        }
+
+        fn open_conversation(
+            &self,
+            thread_id: String,
+            current_project_id: Option<String>,
+        ) -> TransportFuture<
+            '_,
+            (
+                Option<
+                    theoremweb_agent_runtime::wire::Page<theoremweb_agent_runtime::wire::Thread>,
+                >,
+                ThreadSnapshot,
+            ),
+        > {
+            self.inner.open_conversation(thread_id, current_project_id)
+        }
+
+        fn create_conversation(
+            &self,
+            project: Option<theoremweb_agent_runtime::wire::Project>,
+            csrf_token: String,
+        ) -> TransportFuture<'_, ThreadSnapshot> {
+            if csrf_token != *self.csrf_token.borrow() {
+                return Box::pin(std::future::ready(Err(ClientError::from_runtime(
+                    "The chat CSRF token is invalid or expired",
+                ))));
+            }
+            self.inner.create_conversation(project, csrf_token)
+        }
+
+        fn delete_conversations(
+            &self,
+            deletion: theoremweb_agent_runtime::ConversationDeletion,
+        ) -> TransportFuture<'_, theoremweb_agent_runtime::ConversationDeletionReport> {
+            self.inner.delete_conversations(deletion)
+        }
+
+        fn upload_attachment(
+            &self,
+            attachment: AttachmentUpload,
+        ) -> TransportFuture<'_, theoremweb_agent_runtime::wire::Upload> {
+            self.inner.upload_attachment(attachment)
+        }
+
+        fn remove_attachment(
+            &self,
+            upload_id: String,
+            revision: u64,
+            csrf_token: String,
+        ) -> TransportFuture<'_, ()> {
+            self.inner
+                .remove_attachment(upload_id, revision, csrf_token)
+        }
+    }
+
+    /// Passes a run's events on, ending it failed where the demo closes it.
+    struct Failing(Rc<dyn TurnFollower>);
+
+    impl TurnFollower for Failing {
+        fn bind(&self, binding: TurnBinding) -> Following {
+            self.0.bind(binding)
+        }
+
+        fn commit(
+            &self,
+            thread_id: &str,
+            run_id: &str,
+            mut events: Vec<RunEventEnvelope>,
+        ) -> Result<Following, String> {
+            for event in &mut events {
+                if event.source_event_type == "RUN.CLOSED" {
+                    "RUN.FAILED".clone_into(&mut event.source_event_type);
+                    event.payload = serde_json::json!({
+                        "reason": "The model provider refused the authority's key",
+                    });
+                }
+            }
+            self.0.commit(thread_id, run_id, events)
+        }
+
+        fn abandoned(&self) -> bool {
+            self.0.abandoned()
+        }
+    }
+
+    fn strict(authority: Rc<StrictAuthority>, cx: &mut TestAppContext) -> Entity<TheoremDriver> {
+        let driver = cx.new(|cx| {
+            TheoremDriver::with_transport(ChatAuthorityKind::DeterministicDemo, authority, cx)
+        });
+        cx.run_until_parked();
+        driver
+    }
+
+    #[gpui_kit::test]
+    fn the_next_message_waits_until_the_authority_settles_the_last(cx: &mut TestAppContext) {
+        let authority = Rc::new(StrictAuthority::default());
+        authority.settlement_held.set(true);
+        let driver = strict(authority.clone(), cx);
+        send(&driver, "Answered, not yet settled", cx);
+        cx.update(|cx| {
+            let composer = &driver.read(cx).projection().composer;
+            assert_eq!(composer.run_state, ThreadRunState::Idle);
+            assert!(has_reply(
+                driver.read(cx).projection(),
+                "Answered, not yet settled"
+            ));
+            assert!(composer.is_sending);
+            assert!(!composer.affordance("Sent after settlement").is_send());
+        });
+        authority.release_settlement();
+        cx.run_until_parked();
+        cx.update(|cx| {
+            let composer = &driver.read(cx).projection().composer;
+            assert!(composer.affordance("Sent after settlement").is_send());
+        });
+        send(&driver, "Sent after settlement", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(!notice.contains("refused"), "{notice}");
+            assert!(has_reply(projection, "Sent after settlement"));
+        });
+    }
+
+    #[gpui_kit::test]
+    fn a_refused_turn_leaves_the_conversation_at_the_authority_revision(cx: &mut TestAppContext) {
+        let authority = Rc::new(StrictAuthority::default());
+        authority.refuse_next_run.set(true);
+        let driver = strict(authority, cx);
+        send(&driver, "Refused at the run", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(notice.contains("refused that turn"), "{notice}");
+            assert_eq!(projection.composer.draft, "Refused at the run");
+        });
+        send(&driver, "Sent after the refusal", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(!notice.contains("refused"), "{notice}");
+            assert!(has_reply(projection, "Sent after the refusal"));
+        });
+    }
+
+    #[gpui_kit::test]
+    fn a_send_after_the_authority_restarts_uses_its_new_session(cx: &mut TestAppContext) {
+        let authority = Rc::new(StrictAuthority::default());
+        let driver = strict(authority.clone(), cx);
+        authority
+            .csrf_token
+            .replace("issued after the restart".to_owned());
+        send(&driver, "Sent across the restart", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(!notice.contains("refused"), "{notice}");
+            assert!(has_reply(projection, "Sent across the restart"));
+            assert_eq!(times_sent(projection, "Sent across the restart"), 1);
+            assert!(projection.composer.draft.is_empty());
+        });
+    }
+
+    #[gpui_kit::test]
+    fn a_send_is_renewed_once_and_then_refused_as_it_is(cx: &mut TestAppContext) {
+        let authority = Rc::new(StrictAuthority::default());
+        let driver = strict(authority.clone(), cx);
+        authority
+            .csrf_token
+            .replace("issued after the restart".to_owned());
+        authority.refuse_next_run.set(true);
+        send(&driver, "Refused after the renewal", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(notice.contains("required chat scope"), "{notice}");
+            assert_eq!(projection.composer.draft, "Refused after the renewal");
+            assert!(!projection.composer.is_sending);
+        });
+        send(&driver, "Sent after the renewal", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(!notice.contains("refused"), "{notice}");
+            assert!(has_reply(projection, "Sent after the renewal"));
+        });
+    }
+
+    #[gpui_kit::test]
+    fn a_new_conversation_after_the_authority_restarts_uses_its_new_session(
+        cx: &mut TestAppContext,
+    ) {
+        let authority = Rc::new(StrictAuthority::default());
+        let driver = cx.new(|cx| {
+            TheoremDriver::with_transport(ChatAuthorityKind::NativeTransport, authority.clone(), cx)
+        });
+        cx.run_until_parked();
+        authority
+            .csrf_token
+            .replace("issued after the restart".to_owned());
+        driver.update(cx, |this, cx| this.new_conversation(cx));
+        cx.run_until_parked();
+        cx.update(|cx| {
+            let this = driver.read(cx);
+            assert_eq!(this.projection().notice, None);
+            assert_eq!(this.projection().phase, ChatHostPhase::Ready);
+            let thread = this.projection().selected_thread_id.as_deref().unwrap();
+            assert!(thread.starts_with("demo-thread-new-"), "{thread}");
+            assert!(this.creating_conversation.is_none());
+        });
+    }
+
+    #[gpui_kit::test]
+    fn a_failed_run_stays_failed_once_the_authority_writes_its_turn(cx: &mut TestAppContext) {
+        let authority = Rc::new(StrictAuthority::default());
+        authority.fail_next_run.set(true);
+        let driver = strict(authority, cx);
+        send(&driver, "Failed at the provider", cx);
+        cx.update(|cx| {
+            let projection = driver.read(cx).projection();
+            let notice = projection.notice.as_deref().unwrap_or_default();
+            assert!(!notice.contains("refused"), "{notice}");
+            assert_eq!(projection.thread.run_state, ThreadRunState::Failed);
+            assert!(!projection.composer.is_sending);
+            assert_eq!(times_sent(projection, "Failed at the provider"), 1);
+        });
+    }
+
+    #[gpui_kit::test]
+    fn a_run_the_authority_lost_is_not_followed_again(cx: &mut TestAppContext) {
+        let authority = Rc::new(StrictAuthority {
+            inner: DeterministicDemoAuthority::new().holding_runs(),
+            ..StrictAuthority::default()
+        });
+        let driver = strict(authority.clone(), cx);
+        send(&driver, "Lost across the restart", cx);
+        authority.restart_mid_run();
+        driver.update(cx, |this, cx| this.stop(cx));
+        cx.run_until_parked();
+        authority.give_up_settling();
+        cx.run_until_parked();
+        let stuck = |driver: &Entity<TheoremDriver>, cx: &mut TestAppContext| {
+            cx.update(|cx| {
+                let projection = driver.read(cx).projection();
+                let notice = projection.notice.as_deref().unwrap_or_default();
+                assert!(notice.contains("new conversation"), "{notice}");
+                assert_eq!(projection.thread.run_state, ThreadRunState::Interrupted);
+                assert!(!projection.composer.can_cancel());
+                assert!(!projection.composer.is_sending);
+            });
+            assert_eq!(
+                authority.resumed.get(),
+                0,
+                "the lost run was followed again"
+            );
+        };
+        stuck(&driver, cx);
+        send(&driver, "Refused in the stuck conversation", cx);
+        stuck(&driver, cx);
+        cx.update(|cx| {
+            let draft = &driver.read(cx).projection().composer.draft;
+            assert_eq!(draft, "Refused in the stuck conversation");
         });
     }
 

@@ -62,6 +62,8 @@ pub struct Session {
     pub sidebar: bool,
     /// How wide the sidebar was dragged; `None` leaves it at its default.
     pub sidebar_width: Option<f32>,
+    /// The places bump stands over the tabs and the workspace too.
+    pub places_pinned: bool,
     pub active: Option<u64>,
     /// Parents before their children and siblings in order: the tree's order.
     pub tabs: Vec<SavedTab>,
@@ -243,6 +245,7 @@ pub fn session_to_json(session: &Session) -> Value {
         "version": VERSION,
         "sidebar": session.sidebar,
         "sidebar_width": session.sidebar_width,
+        "places_pinned": session.places_pinned,
         "active": session.active,
         "tabs": tabs,
         "dock": layout_to_json(&session.dock),
@@ -353,6 +356,10 @@ pub fn session_from_json(value: &Value) -> Option<Session> {
             .get("sidebar_width")
             .and_then(Value::as_f64)
             .map(|width| width as f32),
+        places_pinned: value
+            .get("places_pinned")
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
         active: number(value, "active"),
         tabs,
         dock,
@@ -434,6 +441,7 @@ mod tests {
         let session = Session {
             sidebar: true,
             sidebar_width: Some(312.),
+            places_pinned: true,
             active: Some(3),
             tabs: vec![
                 SavedTab {
@@ -573,6 +581,7 @@ mod tests {
             session.sidebar_width, None,
             "an older file keeps the default"
         );
+        assert!(!session.places_pinned, "an older file keeps the default");
     }
 
     #[test]

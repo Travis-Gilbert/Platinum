@@ -4,6 +4,7 @@
 
 use gpui_kit::{Action, actions};
 
+use crate::places::Place;
 use crate::theme::Appearance;
 
 actions!(
@@ -28,6 +29,8 @@ actions!(
         OpenPalette,
         ToggleCompact,
         ToggleSidebar,
+        TogglePlaces,
+        LeavePlace,
         PinTab,
         ShowCanvas,
         ToggleAsk,
@@ -50,4 +53,11 @@ pub struct ActivateTab {
 #[action(namespace = frame, no_json)]
 pub struct SetAppearance {
     pub appearance: Appearance,
+}
+
+/// Show a place over the tabs or the workspace (the places bump, `places.rs`).
+#[derive(Clone, Debug, PartialEq, Action)]
+#[action(namespace = frame, no_json)]
+pub struct OpenPlace {
+    pub place: Place,
 }

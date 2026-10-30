@@ -33,7 +33,10 @@
 mod dock;
 #[cfg(feature = "performance-check")]
 pub mod performance;
+mod place;
 mod sidebar;
+#[cfg(feature = "snapshot")]
+pub mod theorem_live_check;
 mod underlay;
 #[cfg(feature = "snapshot")]
 pub mod workspace_check;
@@ -50,10 +53,6 @@ use std::time::Duration;
 use gpui_kit::base::dock::{DockArea, DockEvent, DragPanel, NodeId, PanelId, TabGroupContext};
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
-use gpui_kit::component::empty::{
-    Empty as EmptyState, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia,
-    EmptyMediaVariant, EmptyTitle,
-};
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
 use gpui_kit::component::notification::Notification;
 use gpui_kit::component::popover::Popover;
@@ -79,9 +78,10 @@ use url::Url;
 use self::dock::{DRAG_PREVIEW, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
-    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
-    SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
-    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    GoForward, ImportBrowserData, LeavePlace, NewTab, NextTab, OpenPalette, OpenPlace, PinTab,
+    PreviousTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole,
+    ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces,
+    ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::delegate::{self, Verdict};
@@ -93,7 +93,7 @@ use crate::icons;
 use crate::inspector::Inspector;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
-use crate::places::{Place, PlaceView};
+use crate::places::Place;
 use crate::profile_ui::{ActiveProfile, ProfileEvent, ProfilePanel, Section};
 use crate::recents::{self, Recents};
 use crate::serp::{Serp, SerpEvent, SerpMode};
@@ -101,13 +101,13 @@ use crate::session::{Content, Layout, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
-use crate::theorem::{DriverEvent, Workbench};
+use crate::theorem::Workbench;
 use frame_profile::credentials::{self, Keychain};
 
 use self::underlay::Underlay;
 
 /// The height of a row of tabs, the same as the title bar's.
-const TAB_ROW: f32 = 36.;
+pub(crate) const TAB_ROW: f32 = 36.;
 /// How wide a tab in the rows is, as Dia's are, and the narrowest it gets
 /// when they are full.
 const TAB_WIDTH: f32 = 160.;
@@ -134,6 +134,7 @@ struct Restored {
     active: Option<u64>,
     sidebar: bool,
     sidebar_width: Option<f32>,
+    places_pinned: bool,
 }
 
 /// What the address bar and Home's field say while they search, and while
@@ -147,15 +148,13 @@ enum Showing {
     Start,
     Page,
     Serp,
-    /// One of the places beneath the pages, opened from Home.
-    Place(Place),
 }
 
 /// The page commands may use, or none when the tab is not showing a webpage.
 fn displayed_page_id(showing: Showing, page_id: Option<String>) -> Option<String> {
     match showing {
         Showing::Page => page_id,
-        Showing::Start | Showing::Serp | Showing::Place(_) => None,
+        Showing::Start | Showing::Serp => None,
     }
 }
 
@@ -219,7 +218,6 @@ impl Tab {
                 .serp
                 .as_ref()
                 .map_or("Search".into(), |serp| serp.read(cx).title()),
-            Showing::Place(place) => place.label().into(),
         }
     }
 
@@ -241,7 +239,7 @@ impl Tab {
             Some(Content::Start) | None => {}
         }
         match self.showing {
-            Showing::Start | Showing::Place(_) => SharedString::default(),
+            Showing::Start => SharedString::default(),
             Showing::Page => self
                 .url(cx)
                 .map_or(SharedString::default(), |url| url.to_string().into()),
@@ -289,7 +287,7 @@ impl Tab {
                 }
                 None => Content::Start,
             },
-            Showing::Start | Showing::Place(_) => Content::Start,
+            Showing::Start => Content::Start,
         }
     }
 
@@ -318,9 +316,9 @@ impl Tab {
         self.page.as_ref()?.read(cx).tint()
     }
 
-    /// Whether the tab shows one of Frame's own surfaces, Home or a place.
+    /// Whether the tab shows one of Frame's own surfaces: Home.
     fn native(&self) -> bool {
-        matches!(self.showing, Showing::Start | Showing::Place(_))
+        self.showing == Showing::Start
     }
 
     /// The site's icon, while the tab shows the site.
@@ -341,7 +339,6 @@ impl Tab {
             Showing::Start => icons::page(),
             Showing::Page => Icon::new(IconName::Globe),
             Showing::Serp => Icon::new(IconName::Search),
-            Showing::Place(place) => place.icon(),
         }
     }
 }
@@ -363,9 +360,14 @@ fn site_summary(url: &Url, title: &str, loading: bool) -> SharedString {
 pub struct Browser {
     canvas: Option<Entity<crate::canvas::SpatialCanvas>>,
     /// Theorem's workbench, made the first time the Agent place opens, and
-    /// the subscription that opens the pages it asks for. It is one view, so
-    /// it draws in one pane at a time (`theorem_pane`).
+    /// the subscription that opens the pages it asks for.
     theorem: Option<(Entity<Workbench>, Subscription)>,
+    /// The place the window shows, over the tabs or the workspace, which it
+    /// leaves as they were (`place.rs`).
+    place: Option<Place>,
+    /// Always Show Places: the places bump stands over the tabs and the
+    /// workspace too.
+    places_pinned: bool,
     focus_handle: FocusHandle,
     /// In the dock's order: group by group, left to right, top to bottom.
     tabs: Vec<Tab>,
@@ -516,6 +518,8 @@ impl Browser {
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
             underlay,
+            place: None,
+            places_pinned: restored.places_pinned,
             sidebar: restored.sidebar,
             sidebar_width: sidebar::fit_width(restored.sidebar_width.unwrap_or(sidebar::WIDTH)),
             tree: restored.tree,
@@ -608,6 +612,7 @@ impl Browser {
             active: session.active,
             sidebar: session.sidebar,
             sidebar_width: session.sidebar_width,
+            places_pinned: session.places_pinned,
         }
     }
 
@@ -931,6 +936,7 @@ impl Browser {
 
     /// From the workspace, the tab behind it; else a new one.
     fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             self.reveal_tab(window, cx);
         } else {
@@ -960,6 +966,7 @@ impl Browser {
             return;
         };
         let (id, panel) = (tab.id, tab.panel_id());
+        self.place = None;
         self.close_navigator(window, cx);
         self.dock
             .update(cx, |dock, cx| dock.select_panel(panel, window, cx));
@@ -1144,7 +1151,11 @@ impl Browser {
         }
     }
 
-    fn focus_content(&self, window: &mut Window, cx: &mut Context<Self>) {
+    fn focus_content(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(place) = self.place {
+            self.focus_place(place, window, cx);
+            return;
+        }
         if self.underlay.shown {
             self.focus_underlay(window, cx);
             return;
@@ -1157,13 +1168,6 @@ impl Browser {
             Showing::Serp if let Some(serp) = &tab.serp => {
                 window.focus(&serp.focus_handle(cx), cx);
             }
-            // Theorem's composer takes the keyboard; Back still reaches the
-            // browser through it.
-            Showing::Place(Place::Agent) if let Some((workbench, _)) = &self.theorem => {
-                workbench.update(cx, |workbench, cx| workbench.focus_composer(window, cx));
-            }
-            // The window keeps focus, so that Back reaches the browser.
-            Showing::Place(_) => window.focus(&self.focus_handle, cx),
             // With the chrome hidden the address bar is not drawn; the window
             // keeps focus so that shortcuts still reach the browser.
             _ if self.compact && !self.revealed => window.focus(&self.focus_handle, cx),
@@ -1189,6 +1193,7 @@ impl Browser {
             self.download(url, None, window, cx);
             return;
         }
+        self.leave_place(window, cx);
         // Workspace has no open tab; its backing tab becomes the destination.
         let new_tab = if self.underlay.shown {
             if let underlay::Route::Results(serp, _) = self.underlay.route.clone() {
@@ -1253,6 +1258,7 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             if new_tab {
                 self.reveal_tab(window, cx);
@@ -1336,85 +1342,16 @@ impl Browser {
         );
     }
 
-    /// A place, in the workspace, in this tab if it shows Home or a place,
-    /// or else in a new one.
-    fn open_place(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
-        if place == Place::Agent && self.theorem.is_none() {
-            self.open_theorem(window, cx);
-        }
-        if self.underlay.shown {
-            self.underlay_go(underlay::Route::Place(place), window, cx);
-            return;
-        }
-        let index = match self.tabs[self.active].showing {
-            Showing::Start | Showing::Place(_) => self.active,
-            Showing::Page | Showing::Serp => self.insert_tab_after_active(Origin::Root, window, cx),
-        };
-        self.tabs[index].showing = Showing::Place(place);
-        self.activate(index, window, cx);
-    }
-
-    /// Make Theorem's workbench, which connects to the configured authority.
-    /// The pages it asks for, a sign-in page or a cited source, open in a
-    /// tab beside it.
-    fn open_theorem(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let workbench = cx.new(|cx| Workbench::new(window, cx));
-        let driver = workbench.read(cx).driver().clone();
-        let events = cx.subscribe_in(
-            &driver,
-            window,
-            |browser, _, event: &DriverEvent, window, cx| {
-                let DriverEvent::OpenUrl(url) = event;
-                browser.theorem_open(url.clone(), window, cx);
-            },
-        );
-        self.theorem = Some((workbench, events));
-    }
-
-    fn theorem_open(&mut self, url: Url, window: &mut Window, cx: &mut Context<Self>) {
-        // From the workspace, the Agent place becomes a tab first, so the
-        // page opens beside it rather than in its place.
-        if self.underlay.shown
-            && matches!(self.underlay.route, underlay::Route::Place(Place::Agent))
-        {
-            self.reveal_tab(window, cx);
-            self.go(url, None, true, window, cx);
-            return;
-        }
-        let opener = self
-            .tabs
-            .iter()
-            .find(|tab| tab.showing == Showing::Place(Place::Agent))
-            .map_or(Origin::Root, |tab| Origin::From(tab.id));
-        self.go(url, Some(opener), true, window, cx);
-    }
-
-    /// The tab whose pane draws Theorem's workbench: the active tab when it
-    /// shows the Agent place, else the first pane that does. Any other pane
-    /// showing it says where it is.
-    fn theorem_pane(&self) -> Option<usize> {
-        let displayed = self
-            .displayed
-            .iter()
-            .filter_map(|panel| self.panel_index(*panel));
-        crate::theorem::mounted_in(self.active, displayed, |index| {
-            self.tabs[index].showing == Showing::Place(Place::Agent)
-        })
-    }
-
-    /// Home: the workspace's, or this tab's if it shows a place, or a new
-    /// tab's.
+    /// Home: the workspace's, or this tab's if it shows Home, or a new
+    /// tab's. A place showing closes.
     fn open_home(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             self.underlay_go(underlay::Route::Home, window, cx);
             return;
         }
         match self.tabs[self.active].showing {
             Showing::Start => self.focus_content(window, cx),
-            Showing::Place(_) => {
-                self.tabs[self.active].showing = Showing::Start;
-                self.after_switch(window, cx);
-            }
             Showing::Page | Showing::Serp => self.new_tab(window, cx),
         }
     }
@@ -1704,6 +1641,10 @@ impl Browser {
     }
 
     fn back(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.place.is_some() {
+            self.close_place(window, cx);
+            return;
+        }
         if self.underlay.shown {
             self.underlay_back(window, cx);
             return;
@@ -1719,16 +1660,14 @@ impl Browser {
                     self.after_switch(window, cx);
                 }
             }
-            // A place opened from the tab's Home.
-            Showing::Place(_) => {
-                tab.showing = Showing::Start;
-                self.after_switch(window, cx);
-            }
             Showing::Serp | Showing::Start => {}
         }
     }
 
     fn forward(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.place.is_some() {
+            return;
+        }
         if self.underlay.shown {
             self.underlay_forward(window, cx);
             return;
@@ -1744,11 +1683,14 @@ impl Browser {
                 tab.showing = Showing::Page;
                 self.after_switch(window, cx);
             }
-            Showing::Serp | Showing::Start | Showing::Place(_) => {}
+            Showing::Serp | Showing::Start => {}
         }
     }
 
     fn reload(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.place.is_some() {
+            return;
+        }
         if self.underlay.shown {
             self.underlay_reload(window, cx);
             return;
@@ -1842,6 +1784,7 @@ impl Browser {
     }
 
     fn focus_address_bar(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             self.focus_underlay_field(window, cx);
             return;
@@ -1898,7 +1841,9 @@ impl Browser {
                     .update(cx, |input, cx| input.set_value(summary, window, cx));
             }
         }
-        let title = if self.underlay.shown {
+        let title = if let Some(place) = self.place {
+            place.label().into()
+        } else if self.underlay.shown {
             self.underlay.title(cx)
         } else {
             tab.title(cx)
@@ -2024,6 +1969,7 @@ impl Browser {
         let session = Session {
             sidebar: self.sidebar,
             sidebar_width: Some(f32::from(self.sidebar_width)),
+            places_pinned: self.places_pinned,
             active: (!empty_workspace).then(|| self.tabs[self.active].id),
             tabs,
             dock: if empty_workspace {
@@ -2192,6 +2138,7 @@ impl Browser {
             ask: self.ask,
             shareable: self.share_url(self.active, cx).is_some(),
             sidebar: self.sidebar,
+            places_pinned: self.places_pinned,
             pinnable: self.pinnable_url(self.active, cx).is_some(),
         }
     }
@@ -2488,8 +2435,9 @@ impl Browser {
     }
 
     /// The window-drag area in a row of tabs: over the traffic lights at the
-    /// start of the top-left row, and the rest of every top row.
-    fn drag_strip() -> TitleBar {
+    /// start of the top-left row, and the rest of every top row. A place's
+    /// navigator stands under one too.
+    pub(crate) fn drag_strip() -> TitleBar {
         TitleBar::new().border_b_0().bg(transparent_black())
     }
 
@@ -2728,7 +2676,6 @@ impl Browser {
                 )
             }
             (Showing::Serp, page) => (false, page.is_some()),
-            (Showing::Place(_), _) => (true, false),
             _ => (false, false),
         };
         let can_reload = matches!(tab.showing, Showing::Page | Showing::Serp);
@@ -3246,55 +3193,9 @@ impl Browser {
                 page.clone().into_any_element()
             }
             Showing::Serp if let Some(serp) = &tab.serp => serp.clone().into_any_element(),
-            Showing::Place(Place::Agent) => match &self.theorem {
-                Some((workbench, _)) if self.theorem_pane() == Some(index) => {
-                    workbench.clone().into_any_element()
-                }
-                _ => self.theorem_elsewhere(tab.id, cx),
-            },
-            Showing::Place(place) => PlaceView::new(place).into_any_element(),
             _ if tab.asleep.is_some() => self.asleep_surface(index, cx),
             _ => self.start_surface(tab.id, cx),
         }
-    }
-
-    /// A pane showing the Agent place while another draws the workbench.
-    fn theorem_elsewhere(&self, id: u64, cx: &mut Context<Self>) -> AnyElement {
-        div()
-            .size_full()
-            .flex()
-            .items_center()
-            .justify_center()
-            .p_6()
-            .child(
-                EmptyState::new()
-                    .max_w_96()
-                    .header(
-                        EmptyHeader::new()
-                            .media(
-                                EmptyMedia::new()
-                                    .with_variant(EmptyMediaVariant::Icon)
-                                    .child(Place::Agent.icon()),
-                            )
-                            .title(EmptyTitle::new().child("Theorem is open in another pane"))
-                            .description(
-                                EmptyDescription::new()
-                                    .child("A window shows Theorem in one pane at a time."),
-                            ),
-                    )
-                    .content(
-                        EmptyContent::new().child(
-                            Button::new(("theorem-show-here", id))
-                                .debug_selector(|| "theorem-show-here".into())
-                                .outline()
-                                .label("Show here")
-                                .on_click(cx.listener(move |browser, _, window, cx| {
-                                    browser.activate_id(id, window, cx)
-                                })),
-                        ),
-                    ),
-            )
-            .into_any_element()
     }
 
     /// A tab whose page is not loaded, shown beside the active one in a
@@ -3502,7 +3403,11 @@ impl Render for Browser {
             }))
             .on_action(cx.listener(|browser, _: &NewTab, window, cx| browser.new_tab(window, cx)))
             .on_action(cx.listener(|browser, _: &CloseTab, window, cx| {
-                browser.close_tab(browser.active, window, cx)
+                if browser.place.is_some() {
+                    browser.close_place(window, cx);
+                } else {
+                    browser.close_tab(browser.active, window, cx);
+                }
             }))
             .on_action(cx.listener(|browser, _: &NextTab, window, cx| browser.cycle(1, window, cx)))
             .on_action(
@@ -3523,6 +3428,13 @@ impl Render for Browser {
             .on_action(cx.listener(|browser, _: &ToggleCompact, window, cx| {
                 browser.toggle_compact(window, cx)
             }))
+            .on_action(cx.listener(|browser, action: &OpenPlace, window, cx| {
+                browser.open_place(action.place, window, cx)
+            }))
+            .on_action(
+                cx.listener(|browser, _: &LeavePlace, window, cx| browser.exit_place(window, cx)),
+            )
+            .on_action(cx.listener(|browser, _: &TogglePlaces, _, cx| browser.toggle_places(cx)))
             .on_action(cx.listener(|browser, _: &ToggleSidebar, window, cx| {
                 browser.toggle_sidebar(window, cx)
             }))
@@ -3571,36 +3483,53 @@ impl Render for Browser {
                     .flex_1()
                     .min_h_0()
                     .when(
-                        self.sidebar && !self.compact && !self.underlay.shown,
+                        self.sidebar
+                            && !self.compact
+                            && !self.underlay.shown
+                            && self.place.is_none(),
                         |row| row.child(self.render_sidebar(window, cx)),
                     )
-                    .child(div().flex_1().min_w_0().h_full().child(match &self.canvas {
-                        Some(board) => board.clone().into_any_element(),
-                        None if self.underlay.shown => self.render_underlay(window, cx),
-                        None => self.dock.clone().into_any_element(),
-                    })),
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .h_full()
+                            .relative()
+                            .child(match (self.place, &self.canvas) {
+                                (Some(place), _) => self.render_place(place, cx),
+                                (None, Some(board)) => board.clone().into_any_element(),
+                                (None, None) if self.underlay.shown => {
+                                    self.render_underlay(window, cx)
+                                }
+                                (None, None) => self.dock.clone().into_any_element(),
+                            })
+                            .children(self.render_pinned_places(cx)),
+                    ),
             )
-            .when(self.compact && !self.underlay.shown, |this| {
-                this.child(
-                    // Pointing at the top edge brings the chrome back over the page.
-                    div()
-                        .id("reveal")
-                        .absolute()
-                        .top_0()
-                        .left_0()
-                        .right_0()
-                        .h(px(FRAME * 2.))
-                        .on_hover(cx.listener(|browser, hovered: &bool, _, cx| {
-                            if *hovered && !browser.revealed {
-                                browser.revealed = true;
-                                cx.notify();
-                            }
-                        })),
-                )
-                .when(self.revealed, |this| {
-                    this.child(self.compact_chrome(window, cx))
-                })
-            })
+            .when(
+                self.compact && !self.underlay.shown && self.place.is_none(),
+                |this| {
+                    this.child(
+                        // Pointing at the top edge brings the chrome back over the page.
+                        div()
+                            .id("reveal")
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .right_0()
+                            .h(px(FRAME * 2.))
+                            .on_hover(cx.listener(|browser, hovered: &bool, _, cx| {
+                                if *hovered && !browser.revealed {
+                                    browser.revealed = true;
+                                    cx.notify();
+                                }
+                            })),
+                    )
+                    .when(self.revealed, |this| {
+                        this.child(self.compact_chrome(window, cx))
+                    })
+                },
+            )
             .children(navigator)
             .children(suggestions)
     }

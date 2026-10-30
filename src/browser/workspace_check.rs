@@ -143,16 +143,17 @@ pub fn run(output: PathBuf) -> anyhow::Result<()> {
                         && browser.tabs[1].showing == Showing::Page
                 }), "Command-Return address preserves results and opens a separate tab");
 
-                // Theorem's workbench in the Agent place, opened from the page
-                // tab: before any authority, then on the demo with a
-                // conversation open and a message sent; last, in the
-                // workspace once every tab has closed.
+                // Theorem's workbench in the Agent place, opened over the page
+                // tab: before any authority, then on the demo with nothing
+                // said yet, a conversation open and a message sent; last, in
+                // the workspace once every tab has closed, then another place
+                // and Always Show Places over Home.
                 handle.update(cx, |_, window, cx| browser.update(cx, |browser, cx| {
                     browser.open_place(Place::Agent, window, cx);
                 })).unwrap();
                 let driver = browser.read_with(cx, |browser, cx| {
-                    assert_eq!(browser.tabs[browser.active].showing, Showing::Place(Place::Agent));
-                    assert_eq!(browser.theorem_pane(), Some(browser.active), "the active tab mounts the workbench");
+                    assert_eq!(browser.place, Some(Place::Agent));
+                    assert_eq!(browser.tabs[browser.active].showing, Showing::Page, "the tab beneath stays as it was");
                     let (workbench, _) = browser.theorem.as_ref().expect("the Agent place makes the workbench");
                     workbench.read(cx).driver().clone()
                 });
@@ -167,12 +168,28 @@ pub fn run(output: PathBuf) -> anyhow::Result<()> {
                     let projection = driver.projection();
                     projection.phase == ChatHostPhase::Ready && !projection.threads.is_empty()
                 })).await, "the demo hydrates its projects and conversations");
+                driver.update(cx, |driver, cx| driver.select_thread("demo-thread-parity", cx));
+                assert!(until(cx, |cx| driver.read_with(cx, |driver, _| {
+                    let thread = &driver.projection().thread;
+                    thread.thread_id == "demo-thread-parity" && thread.messages.is_empty()
+                })).await, "a conversation with nothing said yet offers the starters");
+                for (name, appearance) in [("agent-starters-light", Appearance::Light), ("agent-starters-dark", Appearance::Dark)] {
+                    capture(handle, appearance, &output.join(format!("{name}.png")), cx).await;
+                    captures.push(name);
+                }
                 driver.update(cx, |driver, cx| driver.select_thread("demo-thread-controller", cx));
                 assert!(until(cx, |cx| driver.read_with(cx, |driver, _| {
                     let thread = &driver.projection().thread;
                     thread.thread_id == "demo-thread-controller" && !thread.messages.is_empty()
                 })).await, "the conversation opens with its transcript");
                 for (name, appearance) in [("agent-demo-light", Appearance::Light), ("agent-demo-dark", Appearance::Dark)] {
+                    capture(handle, appearance, &output.join(format!("{name}.png")), cx).await;
+                    captures.push(name);
+                }
+                // With the keyboard elsewhere and nothing written, the
+                // composer rests at its narrower width.
+                handle.update(cx, |_, window, cx| window.blur(cx)).unwrap();
+                for (name, appearance) in [("agent-rest-light", Appearance::Light), ("agent-rest-dark", Appearance::Dark)] {
                     capture(handle, appearance, &output.join(format!("{name}.png")), cx).await;
                     captures.push(name);
                 }
@@ -203,9 +220,27 @@ pub fn run(output: PathBuf) -> anyhow::Result<()> {
                     }
                     assert!(browser.underlay.shown, "with every tab closed, the workspace shows");
                     browser.open_place(Place::Agent, window, cx);
-                    assert!(matches!(browser.underlay.route, underlay::Route::Place(Place::Agent)));
+                    assert_eq!(browser.place, Some(Place::Agent));
                 })).unwrap();
                 for (name, appearance) in [("agent-workspace-light", Appearance::Light), ("agent-workspace-dark", Appearance::Dark)] {
+                    capture(handle, appearance, &output.join(format!("{name}.png")), cx).await;
+                    captures.push(name);
+                }
+
+                handle.update(cx, |_, window, cx| browser.update(cx, |browser, cx| {
+                    browser.open_place(Place::Mail, window, cx);
+                })).unwrap();
+                for (name, appearance) in [("place-mail-light", Appearance::Light), ("place-mail-dark", Appearance::Dark)] {
+                    capture(handle, appearance, &output.join(format!("{name}.png")), cx).await;
+                    captures.push(name);
+                }
+
+                handle.update(cx, |_, window, cx| browser.update(cx, |browser, cx| {
+                    browser.exit_place(window, cx);
+                    browser.toggle_places(cx);
+                    assert!(browser.places_pinned && browser.place.is_none());
+                })).unwrap();
+                for (name, appearance) in [("pinned-home-light", Appearance::Light), ("pinned-home-dark", Appearance::Dark)] {
                     capture(handle, appearance, &output.join(format!("{name}.png")), cx).await;
                     captures.push(name);
                 }
@@ -217,7 +252,9 @@ pub fn run(output: PathBuf) -> anyhow::Result<()> {
                         "live_search": false, "servo_navigation": true, "back_to_native_results": true,
                         "command_return_address_preserves_results": true,
                         "agent_place": { "connection_at_start": connection, "demo_hydrated": true,
-                            "conversation_opened": true, "message_answered": true, "workspace_mounted": true }
+                            "starters_offered": true, "conversation_opened": true, "message_answered": true,
+                            "workspace_mounted": true },
+                        "places": { "mail_over_workspace": true, "pinned_over_home": true }
                     }))
                     .unwrap(),
                 )
@@ -231,7 +268,7 @@ pub fn run(output: PathBuf) -> anyhow::Result<()> {
 }
 
 /// Draw the window in `appearance` once it has settled, and save it.
-async fn capture(
+pub(super) async fn capture(
     handle: gpui_kit::AnyWindowHandle,
     appearance: Appearance,
     path: &Path,
@@ -258,8 +295,17 @@ async fn capture(
 }
 
 /// Whether `ready` holds within five seconds.
-async fn until(cx: &mut AsyncApp, mut ready: impl FnMut(&mut AsyncApp) -> bool) -> bool {
-    for _ in 0..50 {
+async fn until(cx: &mut AsyncApp, ready: impl FnMut(&mut AsyncApp) -> bool) -> bool {
+    until_within(Duration::from_secs(5), cx, ready).await
+}
+
+/// Whether `ready` holds within `limit`, checked every tenth of a second.
+pub(super) async fn until_within(
+    limit: Duration,
+    cx: &mut AsyncApp,
+    mut ready: impl FnMut(&mut AsyncApp) -> bool,
+) -> bool {
+    for _ in 0..limit.as_millis().div_ceil(100) {
         if ready(cx) {
             return true;
         }

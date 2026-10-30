@@ -1,0 +1,355 @@
+{
+  "authority": "http://127.0.0.1:18083",
+  "steps": [
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "not running"
+    },
+    {
+      "step": "down-at-launch",
+      "passed": true,
+      "detail": {
+        "connection": "Native",
+        "settled_within_30s": true,
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Refused",
+          "notice": "Could not load this Theorem workspace: error sending request for url (http://127.0.0.1:18083/api/chat/v1/bootstrap)."
+        }
+      }
+    },
+    {
+      "store": "start",
+      "passed": true,
+      "said": "up (77992)"
+    },
+    {
+      "step": "retry-connects",
+      "passed": true,
+      "detail": {
+        "projects": 0,
+        "threads": 0,
+        "selected_project": null,
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "new-conversation",
+      "passed": true,
+      "detail": {
+        "projects": 1,
+        "selected_project": "chatproj_sha256:6c719a1c58deaac5b3d0e4788",
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "live-answer",
+      "passed": true,
+      "detail": {
+        "first_part_ms": 4692,
+        "live_part_counts": 4,
+        "settled_ms": 26208,
+        "written_ms": 27628,
+        "last": {
+          "messages": 2,
+          "parts": 5,
+          "answer_chars": 842,
+          "answer_start": "Air molecules scatter short wavelengths far more than long ones — a process called Rayleigh scattering — so the blue in sunlight is bounced around the sky in ev",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "stop-mid-answer",
+      "passed": true,
+      "detail": {
+        "streaming_before_stop": true,
+        "settled_within_30s": true,
+        "at_stop": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Streaming",
+          "can_cancel": true,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        },
+        "after": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Aborted",
+          "can_cancel": false,
+          "sending": true,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start",
+      "passed": true,
+      "said": "up (78251)"
+    },
+    {
+      "step": "outage-mid-answer",
+      "passed": false,
+      "detail": {
+        "streaming_before_outage": true,
+        "during_outage": {
+          "messages": 6,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Streaming",
+          "can_cancel": true,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        },
+        "settled_after_restart_ms": null,
+        "after": {
+          "messages": 6,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Streaming",
+          "can_cancel": true,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "stop-clears-orphaned-run",
+      "passed": true,
+      "detail": {
+        "settled_within_30s": true,
+        "after": {
+          "messages": 6,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Aborted",
+          "can_cancel": false,
+          "sending": true,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "answers-after-outage",
+      "passed": false,
+      "detail": {
+        "settled_ms": null,
+        "after": {
+          "messages": 7,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Interrupted",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": "Theorem never closed this conversation's last run, so it refuses new messages here. Start a new conversation to continue."
+        }
+      }
+    },
+    {
+      "step": "stuck-conversation-is-explained",
+      "passed": true,
+      "detail": {
+        "explained_ms": 2203,
+        "after": {
+          "messages": 7,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Interrupted",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": "Theorem never closed this conversation's last run, so it refuses new messages here. Start a new conversation to continue."
+        }
+      }
+    },
+    {
+      "step": "new-conversation-after-outage",
+      "passed": true,
+      "detail": {
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "second-window-follows-live-run",
+      "passed": true,
+      "detail": {
+        "streaming_in_first": true,
+        "second_saw_live_run": true,
+        "second_live_part_counts": 4,
+        "settled_ms": 74403,
+        "written_in_both": true,
+        "second": {
+          "messages": 2,
+          "parts": 3,
+          "answer_chars": 4768,
+          "answer_start": "Twelve well-known rivers:\n\n1. **Nile** — The Nile flows roughly 6,650 km north through Sudan and Egypt into the Mediterranean, and is generally cited as the wor",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        },
+        "first": {
+          "messages": 2,
+          "parts": 3,
+          "answer_chars": 4768,
+          "answer_start": "Twelve well-known rivers:\n\n1. **Nile** — The Nile flows roughly 6,650 km north through Sudan and Egypt into the Mediterranean, and is generally cited as the wor",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start-bad-provider",
+      "passed": true,
+      "said": "up (79450)"
+    },
+    {
+      "step": "provider-failure-is-shown",
+      "passed": false,
+      "detail": {
+        "first_part_ms": 19763,
+        "live_part_counts": 2,
+        "settled_ms": 20744,
+        "written_ms": 23827,
+        "last": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start-refusing",
+      "passed": true,
+      "said": "up (79596)"
+    },
+    {
+      "step": "refused-credential-signs-out",
+      "passed": true,
+      "detail": {
+        "settled_within_30s": true,
+        "card": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Unauthenticated",
+          "notice": "Sign in to this Theorem workspace to continue; nothing has been lost. The sign-in page is at /v1/wiki/sign-in."
+        },
+        "sign_in": "http://127.0.0.1:18083/v1/wiki/sign-in"
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start",
+      "passed": true,
+      "said": "up (79628)"
+    },
+    {
+      "step": "reconnects-after-sign-in",
+      "passed": true,
+      "detail": {
+        "card": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "sending": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    }
+  ]
+}

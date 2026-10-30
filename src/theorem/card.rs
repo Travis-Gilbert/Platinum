@@ -1,8 +1,12 @@
-//! The work card: level 1, raised beside the navigator, opaque so dense text
-//! never sits on glass (`docs/plans/theorem-workbench.md`, Layout and States).
+//! The work card: level 1, beside the navigator, opaque so dense text never
+//! sits on glass (`docs/plans/theorem-workbench.md`, Layout and States). Its
+//! outline runs around the composer, a bump of the frame at its foot
+//! (`bump.rs`).
 //!
 //! SOURCING: GPUI Kit's `MessageScroller`, `Empty`, `Skeleton`, `Spinner`,
-//! `Button` and `DropdownMenu`.
+//! `Button` and `DropdownMenu`; the card's shape is `bump::card`. The fade
+//! under the header mirrors `MessageScroller`'s own above the composer,
+//! which has no counterpart at the top.
 
 use gpui_kit::assets::IconName as Lucide;
 use gpui_kit::component::{
@@ -20,9 +24,9 @@ use gpui_kit::component::{
     v_flex,
 };
 use gpui_kit::{
-    AnyElement, App, Context, InteractiveElement as _, IntoElement, ParentElement as _,
-    SharedString, StyleRefinement, Styled as _, Window, div, prelude::FluentBuilder as _, relative,
-    rems,
+    AnyElement, App, Context, Div, InteractiveElement as _, IntoElement, ParentElement as _,
+    SharedString, StyleRefinement, Styled as _, Window, div, linear_color_stop, linear_gradient,
+    prelude::FluentBuilder as _, px, relative, rems,
 };
 use theorem_surface_contracts::intent::ThreadIntent;
 use theoremweb_agent_runtime::ChatHostPhase;
@@ -32,8 +36,15 @@ use super::driver::Connection;
 use super::transcript::{self, COLUMN};
 use super::workbench::{NewConversation, StopRun, Workbench};
 use crate::browser::FRAME;
+use crate::bump::{self, Slot};
 
 const HEADER: f32 = 2.25;
+
+/// A row under the card's content, the composer or what goes with it,
+/// centered under what it answers.
+pub(super) fn under_content(element: impl IntoElement) -> Div {
+    div().w_full().flex().justify_center().px_4().child(element)
+}
 
 /// What the card's body shows, from the connection and the host's phase.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -80,34 +91,35 @@ impl Workbench {
     }
 
     pub(super) fn render_card(&self, window: &mut Window, cx: &Context<Self>) -> AnyElement {
-        let theme = cx.theme();
-        let content = match self.body(cx) {
+        let body = self.body(cx);
+        let bottom = Slot::default();
+        let content = match body {
             Body::NotConnected => self.not_connected(cx),
             Body::Connecting => skeleton_transcript(),
             Body::SignedOut => self.signed_out(cx),
             Body::Refused => self.refused(cx),
-            Body::Empty => self.ready(false, window, cx),
-            Body::Transcript => self.ready(true, window, cx),
+            Body::Empty => self.ready(false, bottom.clone(), window, cx),
+            Body::Transcript => self.ready(true, bottom.clone(), window, cx),
         };
         div()
             .flex_1()
             .min_w_0()
             .min_h_0()
-            .pt(gpui_kit::px(FRAME))
-            .pr(gpui_kit::px(FRAME))
-            .pb(gpui_kit::px(FRAME))
+            .pt(px(FRAME))
+            .pr(px(FRAME))
+            .pb(px(FRAME))
             .child(
                 v_flex()
                     .id("theorem-card")
                     .debug_selector(|| "theorem-card".into())
+                    .relative()
                     .size_full()
                     .min_h_0()
-                    .overflow_hidden()
-                    .rounded(theme.radius_lg)
-                    .border_1()
-                    .border_color(theme.border)
-                    .bg(theme.background)
-                    .shadow_sm()
+                    // The theme's raised surface, edged with the line it
+                    // draws between a sidebar and its content. In the light
+                    // theme the general border is the frame's own color and
+                    // would vanish against the navigator.
+                    .child(bump::card(None, body.has_composer().then_some(bottom), cx))
                     .child(self.card_header(cx))
                     .child(div().flex_1().min_h_0().child(content)),
             )
@@ -141,53 +153,19 @@ impl Workbench {
             .flex_shrink_0()
             .h(rems(HEADER))
             .gap_2()
-            .pl_4()
-            .pr_1p5()
-            .border_b_1()
-            .border_color(theme.border)
+            .px_1p5()
             .text_sm()
-            .child(div().min_w_0().truncate().font_semibold().child(title))
-            .children(project.map(|project| {
-                div()
-                    .flex_shrink_0()
-                    .max_w(rems(14.))
-                    .truncate()
-                    .text_xs()
-                    .text_color(theme.muted_foreground)
-                    .child(project)
-            }))
-            .child(div().flex_1())
-            .children(word.map(|word| {
-                h_flex()
-                    .flex_shrink_0()
-                    .gap_1p5()
-                    .text_xs()
-                    .text_color(theme.muted_foreground)
-                    .when(streaming, |this| {
-                        this.child(Spinner::new().xsmall().color(theme.muted_foreground))
-                    })
-                    .child(word)
-            }))
-            .when(stoppable, |this| {
-                this.child(
-                    Button::new("theorem-card-stop")
-                        .debug_selector(|| "theorem-card-stop".into())
-                        .outline()
-                        .xsmall()
-                        .icon(Lucide::Square)
-                        .label("Stop")
-                        .tooltip_with_action("Stop the run", &StopRun, None)
-                        .on_click(cx.listener(|this, _, _, cx| this.stop(cx))),
-                )
-            })
             .child(
                 Button::new("theorem-card-menu")
+                    .debug_selector(|| "theorem-card-menu".into())
                     .ghost()
-                    .xsmall()
-                    .icon(Lucide::Ellipsis)
-                    .accessibility_label("Conversation options")
-                    .tooltip("Options")
-                    .dropdown_menu_with_anchor(gpui_kit::Anchor::TopRight, move |menu, _, _| {
+                    .small()
+                    .min_w_0()
+                    .font_semibold()
+                    .label(title)
+                    .dropdown_caret(true)
+                    .tooltip("Conversation options")
+                    .dropdown_menu_with_anchor(gpui_kit::Anchor::TopLeft, move |menu, _, _| {
                         let new = workbench.clone();
                         let retry = workbench.clone();
                         let demo = workbench.clone();
@@ -241,10 +219,49 @@ impl Workbench {
                         )
                     }),
             )
+            .children(project.map(|project| {
+                div()
+                    .flex_shrink_0()
+                    .max_w(rems(14.))
+                    .truncate()
+                    .text_xs()
+                    .text_color(theme.muted_foreground)
+                    .child(project)
+            }))
+            .child(div().flex_1())
+            .children(word.map(|word| {
+                h_flex()
+                    .flex_shrink_0()
+                    .gap_1p5()
+                    .text_xs()
+                    .text_color(theme.muted_foreground)
+                    .when(streaming, |this| {
+                        this.child(Spinner::new().xsmall().color(theme.muted_foreground))
+                    })
+                    .child(word)
+            }))
+            .when(stoppable, |this| {
+                this.child(
+                    Button::new("theorem-card-stop")
+                        .debug_selector(|| "theorem-card-stop".into())
+                        .outline()
+                        .xsmall()
+                        .icon(Lucide::Square)
+                        .label("Stop")
+                        .tooltip_with_action("Stop the run", &StopRun, None)
+                        .on_click(cx.listener(|this, _, _, cx| this.stop(cx))),
+                )
+            })
             .into_any_element()
     }
 
-    fn ready(&self, transcript: bool, window: &mut Window, cx: &Context<Self>) -> AnyElement {
+    fn ready(
+        &self,
+        transcript: bool,
+        composer: Slot,
+        window: &mut Window,
+        cx: &Context<Self>,
+    ) -> AnyElement {
         let theme = cx.theme();
         let projection = self.driver().read(cx).projection();
         let notice = projection.notice.clone();
@@ -271,13 +288,13 @@ impl Workbench {
                     )
                 }))
         });
-        let above_composer = |element: AnyElement| {
-            div()
-                .w_full()
-                .flex()
-                .justify_center()
-                .px_4()
-                .child(div().w_full().max_w(rems(COLUMN)).child(element))
+        let above_composer =
+            |element: AnyElement| under_content(div().w_full().max_w(rems(COLUMN)).child(element));
+        // The transcript eases out under the header, as it does above the
+        // composer, once more of it lies above.
+        let scrolled = transcript && {
+            let top = self.transcript.read(cx).logical_scroll_top();
+            top.item_ix > 0 || top.offset_in_item > px(0.)
         };
 
         let body: AnyElement = if transcript {
@@ -294,30 +311,10 @@ impl Workbench {
                 style.padding.bottom = Some(rems(1.).into());
                 style
             })
-            .with_bottom_fade(theme.background)
+            .with_bottom_fade(theme.popover)
             .into_any_element()
         } else {
-            div()
-                .size_full()
-                .flex()
-                .items_center()
-                .justify_center()
-                .p_6()
-                .child(
-                    Empty::new().max_w_96().header(
-                        EmptyHeader::new()
-                            .media(
-                                EmptyMedia::new()
-                                    .with_variant(EmptyMediaVariant::Icon)
-                                    .child(Icon::new(Lucide::MessageSquare)),
-                            )
-                            .title(EmptyTitle::new().child("Ask Theorem anything"))
-                            .description(EmptyDescription::new().child(
-                                "Write below to start a conversation. Theorem's work shows here as it happens.",
-                            )),
-                    ),
-                )
-                .into_any_element()
+            self.render_starters(cx)
         };
 
         v_flex()
@@ -334,9 +331,19 @@ impl Workbench {
                         }
                         .into()
                     })
+                    .relative()
                     .flex_1()
                     .min_h_0()
-                    .child(body),
+                    .child(body)
+                    .when(scrolled, |body| {
+                        body.child(div().absolute().top_0().left_0().right_0().h(rems(1.5)).bg(
+                            linear_gradient(
+                                180.,
+                                linear_color_stop(theme.popover, 0.),
+                                linear_color_stop(theme.popover.opacity(0.), 1.),
+                            ),
+                        ))
+                    }),
             )
             .children(notice.map(|notice| {
                 above_composer(
@@ -351,7 +358,7 @@ impl Workbench {
                 )
             }))
             .children(suggestions.map(|row| above_composer(row.pb_1().into_any_element())))
-            .child(self.render_composer(window, cx))
+            .child(self.render_composer(composer, window, cx))
             .into_any_element()
     }
 

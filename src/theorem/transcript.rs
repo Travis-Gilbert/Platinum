@@ -30,8 +30,8 @@ use gpui_kit::{
 };
 use theorem_surface_contracts::intent::ThreadIntent;
 use theorem_surface_contracts::thread::{
-    HostCallState, LineMark, MessageFeedback, PartStatus, ReasoningState, ThreadActor,
-    ThreadMessage, ThreadMessageReason, ThreadMessageState, ThreadPart,
+    HostCallState, LineMark, MessageFeedback, PartStatus, ProgramPart, ReasoningState, ThreadActor,
+    ThreadMessage, ThreadMessageReason, ThreadMessageState, ThreadMessageStatus, ThreadPart,
 };
 
 use super::workbench::Workbench;
@@ -108,6 +108,18 @@ pub(super) fn duration(ms: u64) -> String {
     }
 }
 
+/// A program part the authority left streaming reads as unfinished once its
+/// message has settled, as an unfinished activity part does.
+fn program_label(program: &ProgramPart, running: bool) -> String {
+    let source = first_line(&program.source);
+    match (program.streaming, running, source.is_empty()) {
+        (true, true, _) => "Writing a program".to_owned(),
+        (true, false, true) => "Unfinished program".to_owned(),
+        (true, false, false) => format!("Unfinished program: {source}"),
+        (false, _, _) => format!("Program: {source}"),
+    }
+}
+
 fn first_line(text: &str) -> &str {
     text.lines()
         .find(|line| !line.trim().is_empty())
@@ -145,8 +157,20 @@ fn host_call_status(state: HostCallState) -> PartStatus {
     }
 }
 
-/// An activity part's own status, for its glyph and the group's liveness.
-fn activity_status(part: &ThreadPart) -> PartStatus {
+/// An activity part's status as the reader sees it, for its glyph and the
+/// group's liveness. Once its message has settled, a part the authority never
+/// finished (a failed run leaves its tool calls pending) reads as incomplete,
+/// not as still working.
+fn activity_status(part: &ThreadPart, running: bool) -> PartStatus {
+    let status = reported_status(part);
+    if !running && status.is_live() {
+        PartStatus::Incomplete
+    } else {
+        status
+    }
+}
+
+fn reported_status(part: &ThreadPart) -> PartStatus {
     match part {
         ThreadPart::Reasoning(reasoning) => match reasoning.state {
             ReasoningState::Streaming { .. } => PartStatus::Running,
@@ -217,8 +241,11 @@ fn activity_text(part: &ThreadPart) -> (String, String, String) {
 }
 
 /// The folded group's summary: what is happening now, or how long it took.
-pub(super) fn activity_summary(parts: &[ThreadPart]) -> (bool, String) {
-    let live = parts.iter().any(|part| activity_status(part).is_live());
+/// `running` is whether its message is still being written.
+pub(super) fn activity_summary(parts: &[ThreadPart], running: bool) -> (bool, String) {
+    let live = parts
+        .iter()
+        .any(|part| activity_status(part, running).is_live());
     let tools = parts
         .iter()
         .filter(|part| matches!(part, ThreadPart::ToolCall { .. }))
@@ -234,11 +261,15 @@ pub(super) fn activity_summary(parts: &[ThreadPart]) -> (bool, String) {
         let current = parts
             .iter()
             .rev()
-            .find(|part| activity_status(part).is_live())
-            .map(|part| activity_text(part).0);
+            .find(|part| activity_status(part, running).is_live());
         match current {
-            Some(label) if !label.is_empty() => format!("Working: {label}"),
-            _ => "Working".to_owned(),
+            // A progress label is already a sentence: "Working", "Searching".
+            Some(ThreadPart::Progress { label, .. }) if !label.is_empty() => label.clone(),
+            Some(part) => match activity_text(part).0 {
+                label if label.is_empty() => "Working".to_owned(),
+                label => format!("Working: {label}"),
+            },
+            None => "Working".to_owned(),
         }
     } else if elapsed > 0 {
         format!("Worked for {}", duration(elapsed))
@@ -310,6 +341,35 @@ pub(super) fn row(workbench: &Entity<Workbench>, index: usize, cx: &App) -> AnyE
         .into_any_element()
 }
 
+/// The sentence under a Theorem answer that did not finish.
+///
+/// The authority writes a failed run's answer as the activity it had
+/// started, still running, under a status that says nothing went wrong. An
+/// answer holding only activity, some of it never finished, did not finish
+/// either, whatever its status says.
+fn ending(status: ThreadMessageStatus, blocks: &[Block<'_>]) -> Option<&'static str> {
+    let cut_off = !blocks.is_empty()
+        && blocks
+            .iter()
+            .all(|block| matches!(block, Block::Activity(_)))
+        && blocks.iter().any(|block| {
+            matches!(block, Block::Activity(parts)
+                if parts.iter().any(|part| reported_status(part).is_live()))
+        });
+    match (status.state, status.reason) {
+        (ThreadMessageState::Incomplete, Some(ThreadMessageReason::Error)) => {
+            Some("This answer stopped because of an error.")
+        }
+        (ThreadMessageState::Incomplete, Some(ThreadMessageReason::Cancelled)) => Some("Stopped."),
+        (ThreadMessageState::Incomplete, Some(ThreadMessageReason::Length)) => {
+            Some("This answer reached its length limit.")
+        }
+        (ThreadMessageState::Incomplete, _) => Some("This answer is incomplete."),
+        (ThreadMessageState::Complete, _) if cut_off => Some("This answer is incomplete."),
+        _ => None,
+    }
+}
+
 fn joined_text(message: &ThreadMessage) -> String {
     message
         .parts
@@ -374,6 +434,7 @@ fn theorem_message(
     let theme = cx.theme();
     let running = message.status.state == ThreadMessageState::Running;
     let blocks = blocks(&message.parts);
+    let ending = ending(message.status, &blocks);
     let mut content = MessageContent::new().gap(rems(0.375)).w_full();
     if blocks.is_empty() && running {
         content = content.child(
@@ -387,22 +448,11 @@ fn theorem_message(
     }
     for block in blocks {
         content = content.child(match block {
-            Block::Activity(parts) => activity(parts, index, expanded, workbench, cx),
+            Block::Activity(parts) => activity(parts, running, index, expanded, workbench, cx),
             Block::Citations(parts) => citations(message, parts, workbench),
-            Block::Part(part) => part_view(part, workbench, cx),
+            Block::Part(part) => part_view(part, running, workbench, cx),
         });
     }
-    let ending = match (message.status.state, message.status.reason) {
-        (ThreadMessageState::Incomplete, Some(ThreadMessageReason::Error)) => {
-            Some("This answer stopped because of an error.")
-        }
-        (ThreadMessageState::Incomplete, Some(ThreadMessageReason::Cancelled)) => Some("Stopped."),
-        (ThreadMessageState::Incomplete, Some(ThreadMessageReason::Length)) => {
-            Some("This answer reached its length limit.")
-        }
-        (ThreadMessageState::Incomplete, _) => Some("This answer is incomplete."),
-        _ => None,
-    };
     if let Some(ending) = ending {
         content = content.child(
             div()
@@ -550,6 +600,7 @@ fn actions(message: &ThreadMessage, workbench: &WeakEntity<Workbench>, cx: &App)
 
 fn activity(
     parts: &[ThreadPart],
+    running: bool,
     row: usize,
     expanded: &HashSet<String>,
     workbench: &WeakEntity<Workbench>,
@@ -558,7 +609,7 @@ fn activity(
     let theme = cx.theme();
     let key = format!("group:{}", parts[0].part_id());
     let open = expanded.contains(&key);
-    let (live, summary) = activity_summary(parts);
+    let (live, summary) = activity_summary(parts, running);
     let header = h_flex()
         .id(id("activity", &key))
         .debug_selector({
@@ -601,7 +652,7 @@ fn activity(
                     .children(
                         parts
                             .iter()
-                            .map(|part| activity_row(part, row, expanded, workbench, cx)),
+                            .map(|part| activity_row(part, running, row, expanded, workbench, cx)),
                     ),
             )
         })
@@ -610,16 +661,17 @@ fn activity(
 
 fn activity_row(
     part: &ThreadPart,
+    running: bool,
     row: usize,
     expanded: &HashSet<String>,
     workbench: &WeakEntity<Workbench>,
     cx: &App,
 ) -> AnyElement {
     let theme = cx.theme();
-    let status = activity_status(part);
+    let status = activity_status(part, running);
     let (label, detail, opened) = activity_text(part);
     let word = match part {
-        ThreadPart::HostCall(call) => host_call_word(call.state),
+        ThreadPart::HostCall(call) if status == reported_status(part) => host_call_word(call.state),
         _ => status_word(status),
     };
     let key = format!("part:{}", part.part_id());
@@ -802,16 +854,22 @@ fn attachment(part_id: &str, name: &str, media_type: &str, state: &str, cx: &App
 }
 
 /// A part that is not one of the folded kinds.
-fn part_view(part: &ThreadPart, workbench: &WeakEntity<Workbench>, cx: &App) -> AnyElement {
+fn part_view(
+    part: &ThreadPart,
+    running: bool,
+    workbench: &WeakEntity<Workbench>,
+    cx: &App,
+) -> AnyElement {
     let theme = cx.theme();
     let note = |icon: Lucide, text: String| {
         h_flex()
+            .w_full()
             .gap_1p5()
             .min_h(rems(ACTIVITY_ROW))
             .text_xs()
             .text_color(theme.muted_foreground)
             .child(Icon::new(icon).xsmall())
-            .child(div().flex_1().min_w_0().child(text))
+            .child(div().flex_1().min_w_0().truncate().child(text))
     };
     match part {
         ThreadPart::Text { part_id, text, .. } => div()
@@ -997,9 +1055,26 @@ fn part_view(part: &ThreadPart, workbench: &WeakEntity<Workbench>, cx: &App) -> 
             code,
             message: text,
             ..
-        } => Alert::error(id("error", part_id), SharedString::from(text.clone()))
-            .when(!code.is_empty(), |this| this.title(code.clone()))
-            .into_any_element(),
+        } => {
+            let sentence = if text.is_empty() { code } else { text };
+            v_flex()
+                .w_full()
+                .gap_1()
+                .child(Alert::error(
+                    id("error", part_id),
+                    SharedString::from(sentence.clone()),
+                ))
+                .when(!code.is_empty() && !text.is_empty(), |this| {
+                    this.child(
+                        div()
+                            .text_xs()
+                            .text_color(theme.muted_foreground)
+                            .font_family(theme.mono_font_family.clone())
+                            .child(code.clone()),
+                    )
+                })
+                .into_any_element()
+        }
         ThreadPart::Usage {
             input_tokens,
             output_tokens,
@@ -1028,15 +1103,9 @@ fn part_view(part: &ThreadPart, workbench: &WeakEntity<Workbench>, cx: &App) -> 
             "Theorem's figure couldn't be drawn.".to_owned(),
         )
         .into_any_element(),
-        ThreadPart::Program(program) => note(
-            Lucide::Workflow,
-            if program.streaming {
-                "Writing a program".to_owned()
-            } else {
-                format!("Program: {}", first_line(&program.source))
-            },
-        )
-        .into_any_element(),
+        ThreadPart::Program(program) => {
+            note(Lucide::Workflow, program_label(program, running)).into_any_element()
+        }
         ThreadPart::TurnReceipt(receipt) => note(
             Lucide::CircleCheck,
             format!("Turn recorded as {}", receipt.receipt_ref),
@@ -1130,18 +1199,105 @@ mod tests {
     fn a_finished_group_says_how_long_it_worked_and_a_live_one_what_it_is_doing() {
         let parts = [reasoning("r", Some(1200)), tool("t1", PartStatus::Complete)];
         assert_eq!(
-            activity_summary(&parts),
+            activity_summary(&parts, false),
             (false, "Worked for 2s · 1 tool call".into())
         );
 
         let parts = [reasoning("r", None), tool("t1", PartStatus::Running)];
         assert_eq!(
-            activity_summary(&parts),
+            activity_summary(&parts, true),
             (true, "Working: search · 1 tool call".into())
         );
 
         let parts = [reasoning("r", None)];
-        assert_eq!(activity_summary(&parts), (false, "Worked · 1 step".into()));
+        assert_eq!(
+            activity_summary(&parts, false),
+            (false, "Worked · 1 step".into())
+        );
+    }
+
+    #[test]
+    fn a_progress_label_is_the_summary_and_a_settled_turn_stops_working() {
+        let progress = ThreadPart::Progress {
+            part_id: "p".into(),
+            label: "Working".into(),
+            lane_id: String::new(),
+            lane_label: String::new(),
+            status: PartStatus::Running,
+            details: Vec::new(),
+        };
+        assert_eq!(
+            activity_summary(std::slice::from_ref(&progress), true),
+            (true, "Working · 1 step".into())
+        );
+
+        // A failed run leaves its last tool call running; once the message
+        // has settled, nothing in it reads as live.
+        let parts = [progress, tool("t1", PartStatus::Running)];
+        assert_eq!(
+            activity_summary(&parts, false),
+            (false, "Worked · 1 tool call".into())
+        );
+        assert_eq!(activity_status(&parts[1], false), PartStatus::Incomplete);
+    }
+
+    #[test]
+    fn a_settled_turn_is_not_still_writing_its_program() {
+        let program = |source: &str, streaming| ProgramPart {
+            part_id: "program".into(),
+            source: source.into(),
+            streaming,
+        };
+        assert_eq!(program_label(&program("", true), true), "Writing a program");
+        assert_eq!(
+            program_label(&program("", true), false),
+            "Unfinished program"
+        );
+        assert_eq!(
+            program_label(&program("\n(search \"sky\")\n", true), false),
+            "Unfinished program: (search \"sky\")"
+        );
+        assert_eq!(
+            program_label(&program("(answer)", false), false),
+            "Program: (answer)"
+        );
+    }
+
+    #[test]
+    fn an_answer_cut_off_in_its_activity_reads_as_incomplete() {
+        let written = ThreadMessageStatus::default();
+        let progress = ThreadPart::Progress {
+            part_id: "p".into(),
+            label: "Working".into(),
+            lane_id: String::new(),
+            lane_label: String::new(),
+            status: PartStatus::Running,
+            details: Vec::new(),
+        };
+        // How the authority writes a failed run's answer.
+        assert_eq!(
+            ending(written, &blocks(std::slice::from_ref(&progress))),
+            Some("This answer is incomplete.")
+        );
+        // Finished activity alone, or activity followed by an answer, says
+        // nothing more.
+        assert_eq!(
+            ending(written, &blocks(&[tool("t", PartStatus::Complete)])),
+            None
+        );
+        assert_eq!(
+            ending(written, &blocks(&[progress.clone(), text("a")])),
+            None
+        );
+        // An ending the runtime knows is said as it is.
+        let failed = ThreadMessageStatus {
+            state: ThreadMessageState::Incomplete,
+            reason: Some(ThreadMessageReason::Error),
+        };
+        assert_eq!(
+            ending(failed, &blocks(std::slice::from_ref(&progress))),
+            Some("This answer stopped because of an error.")
+        );
     }
 
     #[test]
