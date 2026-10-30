@@ -36,3 +36,5 @@ walkdir = "2"
 
 [dev-dependencies]
 pretty_assertions = "1"
+# The reading view's headless test compares its output with Obsidian's recorded DOM.
+notes-fixtures = { path = "../notes-fixtures" }
