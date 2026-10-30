@@ -12,6 +12,23 @@
 //! dark one, and `sparse.html`; it exits 1 if a field or a dominant color is
 //! wrong. A URL run exits 1 only if no reading comes back.
 extern crate gpui_kit as gpui;
+#[path = "../src/actions.rs"]
+mod actions;
+#[path = "../src/theme.rs"]
+mod theme;
+#[path = "../src/icons.rs"]
+mod icons;
+#[path = "../src/markup.rs"]
+mod markup;
+#[path = "../src/bump.rs"]
+mod bump;
+#[path = "../src/notes.rs"]
+mod notes;
+#[path = "../src/places.rs"]
+mod places;
+#[allow(dead_code)]
+#[path = "../src/session.rs"]
+mod session;
 
 #[allow(dead_code)]
 #[path = "../src/brand.rs"]
@@ -451,3 +468,6 @@ async fn until(
         sleep(cx, Duration::from_millis(50)).await;
     }
 }
+
+#[path = "../src/spoken.rs"]
+mod spoken;

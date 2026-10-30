@@ -11,7 +11,8 @@
 //!
 //! Without the `Store` global (the UI tests) nothing is read or written.
 
-mod format;
+#[path = "session/format.rs"]
+pub(crate) mod format;
 
 use std::collections::HashSet;
 use std::fs;
@@ -281,6 +282,9 @@ mod tests {
 
     fn session(sidebar_width: f32) -> Session {
         Session {
+            visit_session: 0,
+            voice: Default::default(),
+            board: format::BoardState::default(),
             sidebar: false,
             sidebar_width: Some(sidebar_width),
             places_pinned: false,

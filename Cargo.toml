@@ -21,7 +21,8 @@ members = [
 exclude = ["deps"]
 
 [dependencies]
-gpui-kit = "=0.8.0"
+gpui-kit = { version = "=0.8.0", features = ["speech"] }
+parakeet-rs = { version = "=0.4.3", default-features = false, features = ["cpu", "api-28"] }
 # Only for the `snapshot` feature: GPUI's window-to-image rendering.
 gpui-pre = { version = "=0.3.9", optional = true }
 gpui-whiteboard = { path = "vendor/gpui-whiteboard" }
@@ -94,6 +95,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 zeroize = "1"
 frame-profile = { path = "crates/profile" }
+frame-notes = { path = "crates/notes" }
+zorite-editor = { path = "vendor/zorite-editor" }
 url = { version = "2", features = ["serde"] }
 kmeans_colors = { version = "0.7.1", default-features = false, features = ["palette_color"] }
 palette = { version = "0.7", default-features = false, features = ["std"] }
@@ -112,6 +115,7 @@ snapshot = [
 ]
 
 [dev-dependencies]
+hound = "3.5"
 tempfile = "3"
 # The graph probe's `frame-notes:` file handler sets a Content-Type header.
 http = "1"

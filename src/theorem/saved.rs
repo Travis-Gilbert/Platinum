@@ -12,6 +12,8 @@ struct Record {
     #[serde(default)]
     project_id: Option<String>,
     #[serde(default)]
+    routing: theorem_surface_contracts::model_routing::ModelRoutingRequest,
+    #[serde(default)]
     thread_id: Option<String>,
     /// In rems; `None` until the person first drags the navigator's edge.
     #[serde(default)]
@@ -116,6 +118,7 @@ mod tests {
             project_id: Some("p1".into()),
             thread_id: Some("t1".into()),
             navigator_width: Some(16.5),
+            routing: Default::default(),
         };
         persist(&path, &record);
         assert_eq!(load(&path), record);
@@ -128,5 +131,15 @@ mod tests {
         assert_eq!(load(&path), Record::default());
         std::fs::write(&path, b"not json").unwrap();
         assert_eq!(load(&path), Record::default());
+    }
+}
+
+/// Credentials remain with the authority, never in the profile's model choices.
+pub fn routing(cx: &App) -> theorem_surface_contracts::model_routing::ModelRoutingRequest {
+    cx.try_global::<Saved>().map(|saved| saved.record.routing.clone()).unwrap_or_default()
+}
+pub fn set_routing(routing: theorem_surface_contracts::model_routing::ModelRoutingRequest, cx: &mut App) {
+    if cx.has_global::<Saved>() {
+        cx.global_mut::<Saved>().record.routing = routing;
     }
 }

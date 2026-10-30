@@ -37,3 +37,10 @@ Re-applying them on a GPUI Kit upgrade: copy the new `gpui-component` from the
 registry, carry the marked changes, and build Frame. Drop any the new release
 makes unnecessary (`tabs_sit_in_capsules_with_new_tab_after_them` in Frame's
 tests covers the tab wrapper and the capsules).
+
+## Dictation completion
+
+`SpeechState::require_final_result` is opt-in. Platinum uses it with Parakeet so
+a decoder timeout emits an error and rolls back composition instead of
+committing an incomplete transcript as final. Default callers retain their
+existing timeout behavior.

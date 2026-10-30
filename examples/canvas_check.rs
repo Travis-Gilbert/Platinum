@@ -1,8 +1,12 @@
 //! Native M1 probe using the production Page and SpatialCanvas, with an isolated profile.
 extern crate gpui_kit as gpui;
+#[path = "../src/actions.rs"]
+mod actions;
 #[allow(dead_code)]
 #[path = "../src/brand.rs"]
 mod brand;
+#[path = "../src/bump.rs"]
+mod bump;
 #[allow(dead_code)]
 #[path = "../src/canvas/mod.rs"]
 mod canvas;
@@ -24,6 +28,8 @@ mod icons;
 #[allow(dead_code)]
 #[path = "../src/keys.rs"]
 mod keys;
+#[path = "../src/notes.rs"]
+mod notes;
 #[allow(dead_code)]
 #[path = "../src/page.rs"]
 mod page;
@@ -31,12 +37,19 @@ mod page;
 #[allow(dead_code)]
 #[path = "../src/performance.rs"]
 mod performance;
+#[path = "../src/places.rs"]
+mod places;
 #[allow(dead_code)]
 #[path = "../src/scene.rs"]
 mod scene;
 #[allow(dead_code)]
 #[path = "../src/search.rs"]
 mod search;
+#[path = "../src/markup.rs"]
+mod markup;
+#[allow(dead_code)]
+#[path = "../src/session.rs"]
+mod session;
 #[allow(dead_code)]
 #[path = "../src/site.rs"]
 mod site;
@@ -496,3 +509,6 @@ fn main() -> anyhow::Result<()> {
     );
     Ok(())
 }
+
+#[path = "../src/spoken.rs"]
+mod spoken;

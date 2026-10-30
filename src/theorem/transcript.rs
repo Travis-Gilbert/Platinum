@@ -1081,11 +1081,17 @@ fn part_view(
             provider,
             model,
             model_disclosure,
+            model_routing,
             ..
         } => {
             let mut text = format!("{input_tokens} tokens in, {output_tokens} out");
             if let Some(model) = model_disclosure.transcript_attribution(provider, model) {
                 text.push_str(&format!(" · {model}"));
+            }
+            if let Some(routing) = model_routing {
+                text.push_str(&format!(" · {} · requested {} · ran {}", routing.role.label(),
+                    routing.requested.as_ref().map(|m| m.name()).unwrap_or_else(|| "Automatic".into()), routing.bound.name()));
+                if let Some(reason) = &routing.fallback_reason { text.push_str(&format!(" · fallback: {reason}")); }
             }
             div()
                 .text_xs()

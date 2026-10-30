@@ -59,6 +59,10 @@ pub struct SavedTab {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Session {
+    pub visit_session: i64,
+    pub voice: crate::spoken::Preferences,
+    /// Spatial presentation, independent of the live tab and dock lifetimes.
+    pub board: BoardState,
     pub sidebar: bool,
     /// How wide the sidebar was dragged; `None` leaves it at its default.
     pub sidebar_width: Option<f32>,
@@ -69,6 +73,56 @@ pub struct Session {
     pub tabs: Vec<SavedTab>,
     /// How the dock held the tabs: its groups and the splits between them.
     pub dock: Layout,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct BoardState {
+    pub hidden: Vec<u64>,
+    pub connections: Vec<[u64; 2]>,
+    pub groups: Vec<Vec<u64>>,
+    pub cards: Vec<CardPlacement>,
+    pub notes: Vec<NotePlacement>,
+    pub camera: Option<[f64; 3]>,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct CardPlacement {
+    pub tab: u64,
+    pub rect: [f64; 4],
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct NotePlacement {
+    pub id: u64,
+    pub path: String,
+    pub rect: [f64; 4],
+}
+
+impl BoardState {
+    /// Reject invalid geometry before it reaches layout or the GPU. Missing
+    /// fields in older sessions leave the board at its default arrangement.
+    pub fn validate(mut self) -> Self {
+        let mut ids = HashSet::new();
+        self.cards.retain(|card| {
+            ids.insert(card.tab)
+                && card.rect.iter().all(|n| n.is_finite() && n.abs() < 1e7)
+                && (60. ..=8192.).contains(&card.rect[2])
+                && (40. ..=8192.).contains(&card.rect[3])
+        });
+        self.notes.retain(|note| {
+            ids.insert(note.id)
+                && !note.path.contains("..")
+                && !std::path::Path::new(&note.path).is_absolute()
+                && note.rect.iter().all(|n| n.is_finite() && n.abs() < 1e7)
+                && (60. ..=8192.).contains(&note.rect[2])
+                && (40. ..=8192.).contains(&note.rect[3])
+        });
+        self.camera = self.camera.filter(|c| {
+            c.iter().all(|n| n.is_finite() && n.abs() < 1e7) && (0.02..=4.).contains(&c[2])
+        });
+        self
+    }
 }
 
 impl Session {
@@ -246,6 +300,9 @@ pub fn session_to_json(session: &Session) -> Value {
         "sidebar": session.sidebar,
         "sidebar_width": session.sidebar_width,
         "places_pinned": session.places_pinned,
+        "visit_session": session.visit_session,
+        "board": session.board,
+        "voice": session.voice,
         "active": session.active,
         "tabs": tabs,
         "dock": layout_to_json(&session.dock),
@@ -348,6 +405,21 @@ pub fn session_from_json(value: &Value) -> Option<Session> {
         .and_then(layout_from_json)
         .unwrap_or_default();
     Some(Session {
+        visit_session: value
+            .get("visit_session")
+            .and_then(Value::as_i64)
+            .unwrap_or_default(),
+        voice: value
+            .get("voice")
+            .cloned()
+            .and_then(|v| serde_json::from_value(v).ok())
+            .unwrap_or_default(),
+        board: value
+            .get("board")
+            .cloned()
+            .and_then(|v| serde_json::from_value::<BoardState>(v).ok())
+            .unwrap_or_default()
+            .validate(),
         sidebar: value
             .get("sidebar")
             .and_then(Value::as_bool)
@@ -439,6 +511,9 @@ mod tests {
     #[test]
     fn sessions_round_trip() {
         let session = Session {
+            visit_session: 0,
+            voice: Default::default(),
+            board: BoardState::default(),
             sidebar: true,
             sidebar_width: Some(312.),
             places_pinned: true,
@@ -615,5 +690,70 @@ mod tests {
     fn hosts_become_safe_file_names() {
         assert_eq!(icon_file_name("www.YouTube.com"), "www.youtube.com.icon");
         assert_eq!(icon_file_name("[::1]"), "___1_.icon");
+    }
+}
+
+#[cfg(test)]
+mod spatial_tests {
+    use super::*;
+    #[test]
+    fn board_round_trip_preserves_identity_geometry_camera_and_visit_namespace() {
+        let session = Session {
+            visit_session: 42,
+            board: BoardState {
+                cards: vec![CardPlacement {
+                    tab: 7,
+                    rect: [10., 20., 1200., 832.],
+                }],
+                notes: vec![NotePlacement {
+                    id: u64::MAX - 1,
+                    path: "Note.md".into(),
+                    rect: [1300., 20., 480., 400.],
+                }],
+                camera: Some([27., -18., 0.4]),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let value = session_to_json(&session);
+        let loaded = session_from_json(&value).unwrap();
+        assert_eq!(loaded.board, session.board);
+        assert_eq!(loaded.visit_session, 42);
+    }
+    #[test]
+    fn corrupt_board_geometry_and_duplicate_identifiers_do_not_reach_renderer() {
+        let board = BoardState {
+            cards: vec![
+                CardPlacement {
+                    tab: 3,
+                    rect: [0., 0., 100., 100.],
+                },
+                CardPlacement {
+                    tab: 3,
+                    rect: [0., 0., 200., 200.],
+                },
+                CardPlacement {
+                    tab: 8,
+                    rect: [0., 0., f64::NAN, 100.],
+                },
+            ],
+            notes: vec![
+                NotePlacement {
+                    id: 3,
+                    path: "Note.md".into(),
+                    rect: [0., 0., 100., 100.],
+                },
+                NotePlacement {
+                    id: 4,
+                    path: "../escape.md".into(),
+                    rect: [0., 0., 100., 100.],
+                },
+            ],
+            camera: Some([0., 0., f64::INFINITY]),
+            ..Default::default()
+        }
+        .validate();
+        assert_eq!(board.cards.len(), 1);
+        assert!(board.notes.is_empty() && board.camera.is_none());
     }
 }

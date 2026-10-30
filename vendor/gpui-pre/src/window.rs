@@ -5549,6 +5549,20 @@ impl Window {
         }
     }
 
+    /// THEOREM PATCH: access the currently mounted text input only while its
+    /// captured focus is still current. Native dictation uses the same IME
+    /// selection, composition and commit operations as the platform keyboard.
+    pub fn with_focused_text_input<R>(&mut self, focus: &FocusHandle, cx: &mut App,
+        edit: impl FnOnce(&mut dyn InputHandler, &mut Window, &mut App) -> R) -> Option<R> {
+        if !focus.is_focused(self) || self.rendered_frame.focus != Some(focus.id) { return None; }
+        let mut input = self.platform_window.take_input_handler()?;
+        let result = if input.accepts_text_input(self, cx) {
+            Some(input.edit(self, cx, edit))
+        } else { None };
+        self.platform_window.set_input_handler(input);
+        result
+    }
+
     /// Dispatch a given keystroke as though the user had typed it.
     /// You can create a keystroke with Keystroke::parse("").
     pub fn dispatch_keystroke(&mut self, keystroke: Keystroke, cx: &mut App) -> bool {

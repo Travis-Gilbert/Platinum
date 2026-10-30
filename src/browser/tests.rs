@@ -68,6 +68,33 @@ fn open_with_tab(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestCo
     (browser, cx)
 }
 
+#[gpui_kit::test]
+fn board_keeps_sleeping_pages_and_their_saved_placement(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            let url = Url::parse("https://example.org/saved").unwrap();
+            b.tabs[0].asleep = Some(Content::Page {
+                url: url.clone(),
+                title: "Saved source".into(),
+            });
+            assert_eq!(b.tabs[0].url(cx), Some(url));
+            let id = b.tabs[0].id;
+            b.board_state.cards = vec![crate::session::format::CardPlacement {
+                tab: id,
+                rect: [230., 450., 900., 600.],
+            }];
+            b.toggle_canvas(window, cx);
+            let state = b.canvas.as_ref().unwrap().read(cx).state(cx);
+            assert_eq!(state.cards, b.board_state.cards);
+            assert!(
+                b.tabs[0].page.is_none(),
+                "overview must not wake sleeping pages"
+            );
+        });
+    });
+}
+
 fn workspace(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> bool {
     cx.update(|_, cx| browser.read(cx).underlay.shown)
 }

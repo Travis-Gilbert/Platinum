@@ -10,6 +10,7 @@ mod card;
 mod composer;
 mod driver;
 mod navigator;
+mod models;
 mod saved;
 mod starters;
 #[cfg(test)]
@@ -21,6 +22,8 @@ pub use driver::DriverEvent;
 #[cfg(feature = "snapshot")]
 pub use driver::TheoremDriver;
 pub use saved::init;
+#[cfg(feature = "snapshot")]
+pub(crate) use models::open as open_models;
 pub use workbench::{
     CONTEXT, NewConversation, NextConversation, PreviousConversation, StopRun, Workbench,
 };

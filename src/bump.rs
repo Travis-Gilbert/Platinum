@@ -515,3 +515,16 @@ mod tests {
         assert_eq!(area(&bands), inside - cut);
     }
 }
+
+/// The same foot outline over a moving board. The opaque material beneath
+/// the controls occludes page surfaces while the flares meet the frame.
+pub fn board_foot(slot: Slot, cx: &App) -> impl IntoElement {
+    let (fill, edge, radius) = (cx.theme().sidebar, cx.theme().sidebar_border, cx.theme().radius_lg);
+    canvas(|_, _, _| {}, move |bounds, _, window, _| {
+        if let Some(field) = slot.get() {
+            let bump = Bump::new(Base::Foot(bounds.bottom()), field.left(), field.right(), bounds.bottom() - field.top(), radius);
+            bump.fill(fill.into(), window);
+            if let Some(line) = bump.edge() { window.paint_path(line, edge); }
+        }
+    }).absolute().top_0().left_0().size_full()
+}

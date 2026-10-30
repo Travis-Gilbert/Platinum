@@ -1,5 +1,39 @@
 # Experimental MSE integration
 
+## Spatial workspace companions
+
+`theorem-model-routing.patch` applies to Theorem
+`08495b15879a7bc2449d43c49530f549268d05fc` through `script/bootstrap`.
+It carries the shared model-role contract, HTTP client/authority routing and
+receipts, compatible specialist bindings, and the `typed_decision` graph tool.
+The authority catalog owns model endpoints and credential references; clients
+send only provider/model identities. A small baseline repair preserves the
+existing search `media` option when constructing `SearchOpts`.
+
+Typed decisions reuse `zephium-decision` (MPL-2.0), pinned to Zephium
+`96257cd3f67dd639eb5decb85b135f2674444603`. Jev uses the fixed TypeSafe endpoint
+and exact `jev-1.13.0` contract. The authority resolves `JEV_API_KEY`; builds
+with the existing `agent/keychain` feature first try the `theorem-cli` Keychain
+service, account `typesafe`. Settings can explicitly require Keychain or
+environment resolution instead of the authority default. Never put keys in profile JSON or model arguments.
+Compatible chat emulation and its fallback must name an authority catalog row.
+The graph tool requires an authenticated principal, `models:invoke`, graph
+read/write access and an existing observation node. Stable operation keys prevent
+repeated paid calls; an interrupted pending receipt remains unresolved instead
+of being retried. Returned answers grant no operation authority. The small
+transport adapter is needed because Jev's wire protocol differs from chat;
+question validation and observation binding come from Zephium's library.
+
+`servo-native-dictation.patch` applies to the Servo revision below through
+`script/bootstrap-media`. It exposes Servo's existing DOM Range and IME
+composition owner to native dictation in rich editors. Non-editable islands,
+changed selection/focus, and oversized buffers are refused. This is an API
+bridge, not DOM rewriting from JavaScript. Original MPL-2.0 headers remain.
+
+Both bootstrap paths preserve shared or dirty dependencies. Validation and
+remaining live acceptance checks are recorded in
+`docs/plans/zephium-spatial-workspace.md`. These local companions are not deployed.
+
 `script/bootstrap-media` checks out Servo commit
 `efdf7370da024f467f7526798fe5c6e50e784b52` from `Travis-Gilbert/servo`
 (branch `main`)

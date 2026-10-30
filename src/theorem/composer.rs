@@ -264,6 +264,10 @@ impl Workbench {
             .children(queue)
             .children(context)
             .children(reason)
+            .child(Button::new("theorem-model-settings").ghost().xsmall()
+                .label(super::models::routing_label(cx))
+                .tooltip("Choose workflow role and models")
+                .on_click(cx.listener(|_, _, window, cx| super::models::open(window, cx))))
             .child(
                 h_flex()
                     .items_end()
@@ -278,6 +282,20 @@ impl Workbench {
                             .disabled(!composer.allows_attachments())
                             .on_click(cx.listener(|this, _, _, cx| {
                                 this.composer_intent(ComposerIntent::PickAttachment, cx)
+                            })),
+                    )
+                    .child(
+                        Button::new("theorem-workspace-context")
+                            .ghost()
+                            .small()
+                            .icon(Lucide::Layers)
+                            .accessibility_label("Attach selected workspace sources")
+                            .tooltip("Attach selected page links and notes")
+                            .disabled(!composer.allows_attachments())
+                            .on_click(cx.listener(|this, _, _, cx| {
+                                this.driver().update(cx, |_, cx| {
+                                    cx.emit(super::driver::DriverEvent::AttachWorkspace)
+                                })
                             })),
                     )
                     .child(Separator::vertical().h_4().mb_1())

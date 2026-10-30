@@ -44,6 +44,10 @@ const UNCLOSED_RUN_NOTICE: &str = "Theorem never closed this conversation's last
 /// Browser operations the composition root fulfills outside this entity.
 pub enum DriverEvent {
     OpenUrl(Url),
+    Dictate,
+    AttachWorkspace,
+    Voice(theorem_surface_contracts::intent::VoiceAction),
+    ReadAloud(String),
 }
 
 /// One window's chat authority and its cached presentation.
@@ -347,7 +351,7 @@ impl TheoremDriver {
         self.answer_workspace_requests(cx);
     }
 
-    fn report_notice(&mut self, message: impl Into<String>, cx: &mut Context<Self>) {
+    pub(crate) fn report_notice(&mut self, message: impl Into<String>, cx: &mut Context<Self>) {
         self.controller.report_notice(message);
         self.publish(cx);
     }
@@ -446,15 +450,9 @@ impl TheoremDriver {
                     cx,
                 );
             }
-            ChatHostEffect::Dictate => {
-                self.report_notice("Dictation isn't available in Platinum yet.", cx)
-            }
-            ChatHostEffect::Voice(_) => {
-                self.report_notice("Voice isn't available in Platinum yet.", cx)
-            }
-            ChatHostEffect::ReadAloud(_) => {
-                self.report_notice("Read aloud isn't available in Platinum yet.", cx)
-            }
+            ChatHostEffect::Dictate => cx.emit(DriverEvent::Dictate),
+            ChatHostEffect::Voice(action) => cx.emit(DriverEvent::Voice(action)),
+            ChatHostEffect::ReadAloud(text) => cx.emit(DriverEvent::ReadAloud(text)),
             ChatHostEffect::Capability {
                 capability,
                 selected,
@@ -698,7 +696,13 @@ impl TheoremDriver {
         self.settling = Some(self.generation.get());
     }
 
-    fn submit(&mut self, turn: SubmitTurn, cx: &mut Context<Self>) {
+    fn submit(&mut self, mut turn: SubmitTurn, cx: &mut Context<Self>) {
+        let routing = super::saved::routing(cx);
+        // Preserve compatibility with authorities predating role routing when
+        // everything is Automatic. Explicit choices are never prompt text.
+        if routing != Default::default() {
+            turn.model_routing = Some(routing);
+        }
         self.send_turn(turn, true, cx);
     }
 
@@ -1411,17 +1415,27 @@ mod tests {
     }
 
     #[gpui_kit::test]
-    fn unsupported_effect_publishes_a_notice(cx: &mut TestAppContext) {
+    fn dictation_reaches_browser_and_unsafe_sources_still_publish_a_notice(
+        cx: &mut TestAppContext,
+    ) {
         let driver = demo(Rc::new(DeterministicDemoAuthority::new()), cx);
+        let initial_notice = cx.update(|cx| driver.read(cx).projection().notice.clone());
+        let dictated = Rc::new(Cell::new(false));
+        let observed = dictated.clone();
+        let _subscription = cx.update(|cx| {
+            cx.subscribe(&driver, move |_, event, _| {
+                if matches!(event, DriverEvent::Dictate) {
+                    observed.set(true);
+                }
+            })
+        });
         driver.update(cx, |this, cx| {
             this.composer_intent(ComposerIntent::Dictate, cx)
         });
         cx.run_until_parked();
         cx.update(|cx| {
-            assert_eq!(
-                driver.read(cx).projection().notice.as_deref(),
-                Some("Dictation isn't available in Platinum yet.")
-            );
+            assert!(dictated.get());
+            assert_eq!(driver.read(cx).projection().notice, initial_notice);
         });
         driver.update(cx, |this, cx| {
             this.fulfill(
@@ -1605,6 +1619,7 @@ mod tests {
     /// later turn there is refused as a conflict.
     #[derive(Default)]
     struct StrictAuthority {
+        routes: RefCell<Vec<Option<theorem_surface_contracts::model_routing::ModelRoutingRequest>>>,
         inner: DeterministicDemoAuthority,
         csrf_token: RefCell<String>,
         kept: Cell<u64>,
@@ -1691,6 +1706,7 @@ mod tests {
             follower: Rc<dyn TurnFollower>,
         ) -> TransportFuture<'_, ThreadSnapshot> {
             Box::pin(async move {
+                self.routes.borrow_mut().push(turn.model_routing.clone());
                 if turn.csrf_token != *self.csrf_token.borrow() {
                     return Err(ClientError::from_runtime(
                         "The chat CSRF token is invalid or expired",
@@ -1866,6 +1882,23 @@ mod tests {
         });
         cx.run_until_parked();
         driver
+    }
+
+    #[gpui_kit::test]
+    fn saved_role_choices_reach_transport_without_polluting_prompt(cx: &mut TestAppContext) {
+        use theorem_surface_contracts::model_routing::{ModelReference, ModelRole, ModelRoutingRequest};
+        cx.update(|cx| super::super::saved::init(None, cx));
+        let authority = Rc::new(StrictAuthority::default());
+        let driver = strict(authority.clone(), cx);
+        send(&driver, "Automatic first", cx);
+        assert!(authority.routes.borrow().last().unwrap().is_none());
+        let mut routing = ModelRoutingRequest { role: ModelRole::Review, ..Default::default() };
+        routing.assignments.overrides.insert(ModelRole::Review, ModelReference::parse("provider/reviewer").unwrap());
+        routing.assignments.overrides.insert(ModelRole::Decisions, ModelReference::parse("typesafe/jev-1.13.0").unwrap());
+        cx.update(|cx| super::super::saved::set_routing(routing.clone(), cx));
+        send(&driver, "Review this", cx);
+        assert_eq!(authority.routes.borrow().last().unwrap().as_ref(), Some(&routing));
+        cx.update(|cx| assert!(has_reply(driver.read(cx).projection(), "Review this")));
     }
 
     #[gpui_kit::test]

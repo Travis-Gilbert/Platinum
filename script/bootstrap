@@ -47,6 +47,18 @@ if [[ "$actual" != "$theorem_rev" ]]; then
   exit 1
 fi
 
+# Companion client/authority changes stay reviewable in Platinum until their
+# upstream revision is published. Never modify a shared or dirty dependency.
+patch="$root/patches/theorem-model-routing.patch"
+if ! git -C "$checkout" apply --reverse --check "$patch" >/dev/null 2>&1; then
+  if [[ -L "$checkout" || -n "$(git -C "$checkout" status --porcelain)" ]]; then
+    echo "Theorem routing patch needs a clean, isolated dependency checkout; preserving $checkout" >&2
+    exit 1
+  fi
+  git -C "$checkout" apply --check "$patch"
+  git -C "$checkout" apply "$patch"
+fi
+
 if [[ -n "${FRAME_TARGET_DIR:-}" ]]; then
   mkdir -p "$root/.cargo"
   cat > "$root/.cargo/config.toml" <<EOF

@@ -29,6 +29,9 @@ def checkout(name, url, revision, patch=None, sparse=False):
     patch = str(ROOT / "patches" / patch)
     if subprocess.run(["git", "apply", "--reverse", "--check", patch], cwd=path,
                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0:
+        if name == "servo-consolidated" and (path.is_symlink() or subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=path, text=True).strip()):
+            raise RuntimeError(f"Native dictation patch needs a clean isolated Servo checkout; preserving {path}")
         run("git", "apply", "--check", patch, cwd=path)
         run("git", "apply", patch, cwd=path)
     return path
@@ -37,7 +40,7 @@ def checkout(name, url, revision, patch=None, sparse=False):
 def main():
     (ROOT / "deps").mkdir(exist_ok=True)
     checkout("servo-consolidated", "https://github.com/Travis-Gilbert/servo.git",
-             "efdf7370da024f467f7526798fe5c6e50e784b52")
+             "efdf7370da024f467f7526798fe5c6e50e784b52", "servo-native-dictation.patch")
     source = checkout("gstreamer-mse", "https://github.com/GStreamer/gstreamer.git",
                       "1b2a95a1b72787cda146b46df9605b168e5b683b", "gstreamer-mse.patch", sparse=True)
     build = ROOT / "deps/gstreamer-mse-build"

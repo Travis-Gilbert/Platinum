@@ -66,6 +66,7 @@ pub struct Workbench {
     /// Where the places bump's way out goes, as the browser last said.
     pub(super) exit: Exit,
     shown: Shown,
+    board: Option<bump::Slot>,
     _subscriptions: [Subscription; 4],
 }
 
@@ -121,10 +122,35 @@ impl Workbench {
             role: Role::default(),
             exit: Exit::Tabs,
             shown: Shown::default(),
+            board: None,
             _subscriptions: subscriptions,
         };
         this.sync(window, cx);
         this
+    }
+
+    pub fn set_board(&mut self, board: bool, cx: &mut Context<Self>) {
+        if board != self.board.is_some() {
+            self.board = board.then(bump::Slot::default);
+            cx.notify();
+        }
+    }
+    pub fn board_slot(&self) -> Option<bump::Slot> {
+        self.board.clone()
+    }
+    pub fn attach_workspace(&mut self, text: String, cx: &mut Context<Self>) {
+        let id = format!("workspace-{}", frame_profile::now());
+        self.driver.update(cx, |driver, cx| {
+            driver.composer_intent(
+                ComposerIntent::AddPastedFile {
+                    attachment_id: id,
+                    name: "Selected workspace sources.md".into(),
+                    media_type: "text/markdown".into(),
+                    text,
+                },
+                cx,
+            )
+        });
     }
 
     pub fn driver(&self) -> &Entity<TheoremDriver> {
@@ -379,6 +405,41 @@ impl Render for ResizeNavigator {
 
 impl Render for Workbench {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if let Some(slot) = self.board.clone() {
+            use gpui_kit::component::{
+                Sizable as _,
+                button::{Button, ButtonVariants as _},
+                v_flex,
+            };
+            return v_flex()
+                .key_context(CONTEXT)
+                .track_focus(&self.focus_handle)
+                .on_action(cx.listener(Self::on_stop))
+                .child(if self.body(cx).has_composer() {
+                    self.render_composer(slot, window, cx)
+                } else {
+                    div()
+                        .relative()
+                        .p_3()
+                        .child(slot.recorder())
+                        .child(
+                            Button::new("board-open-agent")
+                                .small()
+                                .ghost()
+                                .label("Connect Theorem to ask about this workspace")
+                                .on_click(|_, window, cx| {
+                                    window.dispatch_action(
+                                        Box::new(crate::actions::OpenPlace {
+                                            place: Place::Agent,
+                                        }),
+                                        cx,
+                                    )
+                                }),
+                        )
+                        .into_any_element()
+                })
+                .into_any_element();
+        }
         h_flex()
             .id("theorem-workbench")
             .key_context(CONTEXT)
@@ -418,5 +479,6 @@ impl Render for Workbench {
                             .fill(bump::leading_fill(cx)),
                     ),
             )
+            .into_any_element()
     }
 }

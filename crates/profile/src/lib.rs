@@ -56,6 +56,20 @@ pub struct LibraryEntry {
     pub folder: String,
 }
 
+/// One navigation, even when its URL repeats. Previews own their encoded
+/// pixels; they never refer to a recyclable engine surface. Records are
+/// durable user history and are paged, not silently cache-evicted.
+#[derive(Clone, Debug)]
+pub struct Visit {
+    pub id: i64,
+    pub tab: String,
+    pub predecessor: Option<i64>,
+    pub url: String,
+    pub title: String,
+    pub visited: i64,
+    pub preview: Option<Vec<u8>>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SessionTab {
     pub url: Option<String>,
@@ -198,6 +212,8 @@ impl ProfileStore {
         db.execute_batch("PRAGMA journal_mode=WAL;
             CREATE TABLE IF NOT EXISTS bookmarks(url TEXT NOT NULL,title TEXT NOT NULL,folder TEXT NOT NULL,PRIMARY KEY(url,folder));
             CREATE TABLE IF NOT EXISTS history(url TEXT PRIMARY KEY,title TEXT NOT NULL,visited INTEGER NOT NULL,visits INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS visits(id INTEGER PRIMARY KEY,tab TEXT NOT NULL,predecessor INTEGER,url TEXT NOT NULL,title TEXT NOT NULL,visited INTEGER NOT NULL,preview BLOB);
+            CREATE INDEX IF NOT EXISTS visits_tab ON visits(tab,id);
             CREATE TABLE IF NOT EXISTS credentials(origin TEXT NOT NULL,username TEXT NOT NULL,PRIMARY KEY(origin,username));
             CREATE TABLE IF NOT EXISTS extensions(id TEXT PRIMARY KEY,name TEXT NOT NULL,version TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS imports(id INTEGER PRIMARY KEY,source TEXT NOT NULL,category TEXT NOT NULL,completed INTEGER NOT NULL,imported INTEGER NOT NULL,skipped INTEGER NOT NULL);
@@ -223,6 +239,54 @@ impl ProfileStore {
             ON CONFLICT(url) DO UPDATE SET title=excluded.title,visited=excluded.visited,visits=history.visits+1",
             params![url.as_str(),title,now()])?;
         Ok(())
+    }
+
+    pub fn record_visit(
+        &self,
+        tab: &str,
+        url: &str,
+        title: &str,
+        preview: Option<&[u8]>,
+    ) -> Result<i64> {
+        self.record_visit_at(tab, url, title, preview, now())
+    }
+
+    /// `visited` is captured when navigation finishes, before thumbnail encoding
+    /// or storage queues can delay the write.
+    pub fn record_visit_at(
+        &self,
+        tab: &str,
+        url: &str,
+        title: &str,
+        preview: Option<&[u8]>,
+        visited: i64,
+    ) -> Result<i64> {
+        let url = web_url(url).context("Only web addresses can enter a trail")?;
+        ensure!(
+            preview.is_none_or(|p| p.len() <= 512 * 1024),
+            "visit preview exceeds 512 KiB"
+        );
+        let mut db = self.connect()?;
+        let tx = db.transaction()?;
+        let predecessor: Option<i64> =
+            tx.query_row("SELECT MAX(id) FROM visits WHERE tab=?1", [tab], |r| {
+                r.get(0)
+            })?;
+        tx.execute("INSERT INTO visits(tab,predecessor,url,title,visited,preview) VALUES(?1,?2,?3,?4,?5,?6)", params![tab,predecessor,url.as_str(),title,visited,preview])?;
+        let id = tx.last_insert_rowid();
+        tx.execute("INSERT INTO history VALUES(?1,?2,?3,1) ON CONFLICT(url) DO UPDATE SET title=excluded.title,visited=excluded.visited,visits=history.visits+1", params![url.as_str(),title,visited])?;
+        tx.commit()?;
+        Ok(id)
+    }
+
+    /// Keyset pagination leaves repeated URLs and their chronological ordering
+    /// intact, and bounds memory independently of total profile history.
+    pub fn visits(&self, before: Option<i64>, limit: usize) -> Result<Vec<Visit>> {
+        let db = self.connect()?;
+        Ok(db.prepare("SELECT id,tab,predecessor,url,title,visited,preview FROM visits WHERE id<?1 ORDER BY id DESC LIMIT ?2")?
+            .query_map(params![before.unwrap_or(i64::MAX), limit.min(100) as i64], |r| Ok(Visit {
+                id: r.get(0)?, tab: r.get(1)?, predecessor: r.get(2)?, url: r.get(3)?, title: r.get(4)?, visited: r.get(5)?, preview: r.get(6)?,
+            }))?.collect::<rusqlite::Result<_>>()?)
     }
 
     pub fn suggestions(

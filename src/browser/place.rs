@@ -21,17 +21,81 @@ use crate::places::{Exit, Place, PlaceView, PlacesBump};
 use crate::theorem::{DriverEvent, Workbench};
 
 impl Browser {
+    pub(super) fn ensure_notes(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.notebook.is_some() {
+            return;
+        }
+        let Some(profile) = cx.try_global::<crate::profile_ui::ActiveProfile>() else {
+            return;
+        };
+        let root = profile.0.directory();
+        let restored = self
+            .board_state
+            .notes
+            .iter()
+            .map(|n| n.path.clone())
+            .collect();
+        let notebook = cx.new(|cx| crate::notes::Notebook::new(root, restored, window, cx));
+        self.notes_events = Some(cx.subscribe_in(
+            &notebook,
+            window,
+            |browser, _, event, window, cx| match event {
+                crate::notes::NotesEvent::Expand => browser.open_place(Place::Notes, window, cx),
+                crate::notes::NotesEvent::Restored(note) => {
+                    if let Some(board) = browser.canvas.clone() {
+                        let saved = browser
+                            .board_state
+                            .notes
+                            .iter()
+                            .find(|n| n.path == note.read(cx).path)
+                            .cloned();
+                        board.update(cx, |b, cx| b.add_note(note.clone(), saved, cx));
+                    }
+                }
+                crate::notes::NotesEvent::Promote(note) => {
+                    browser.notes_sidebar = false;
+                    browser.place = None;
+                    if !browser.canvas_shown {
+                        browser.toggle_canvas(window, cx);
+                    }
+                    if let Some(board) = browser.canvas.clone() {
+                        let saved = browser
+                            .board_state
+                            .notes
+                            .iter()
+                            .find(|n| n.path == note.read(cx).path)
+                            .cloned();
+                        board.update(cx, |board, cx| {
+                            board.add_note(note.clone(), saved, cx);
+                            board.overview(cx);
+                        });
+                    }
+                    cx.notify();
+                }
+            },
+        ));
+        self.notebook = Some(notebook);
+    }
+
     /// Show a place over the tabs or the workspace.
     pub(super) fn open_place(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
+        if place == Place::Notes {
+            self.ensure_notes(window, cx);
+            self.notes_sidebar = false;
+        }
         if place == Place::Agent && self.theorem.is_none() {
             self.open_theorem(window, cx);
         }
         let exit = self.exit();
         if let Some((workbench, _)) = &self.theorem {
-            workbench.update(cx, |workbench, cx| workbench.set_exit(exit, cx));
+            workbench.update(cx, |workbench, cx| {
+                workbench.set_exit(exit, cx);
+                workbench.set_board(false, cx);
+            });
         }
         self.close_navigator(window, cx);
         self.place = Some(place);
+        self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_place(place, window, cx);
     }
@@ -52,6 +116,10 @@ impl Browser {
         if self.place.take().is_none() {
             return false;
         }
+        if let Some((workbench, _)) = &self.theorem {
+            workbench.update(cx, |w, cx| w.set_board(self.canvas_shown, cx));
+        }
+        self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         true
     }
@@ -97,15 +165,18 @@ impl Browser {
     /// Make Theorem's workbench, which connects to the configured authority.
     /// The pages it asks for, a sign-in page or a cited source, open in a
     /// tab.
-    fn open_theorem(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn open_theorem(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let workbench = cx.new(|cx| Workbench::new(window, cx));
         let driver = workbench.read(cx).driver().clone();
         let events = cx.subscribe_in(
             &driver,
             window,
-            |browser, _, event: &DriverEvent, window, cx| {
-                let DriverEvent::OpenUrl(url) = event;
-                browser.theorem_open(url.clone(), window, cx);
+            |browser, _, event: &DriverEvent, window, cx| match event {
+                DriverEvent::OpenUrl(url) => browser.theorem_open(url.clone(), window, cx),
+                DriverEvent::AttachWorkspace => browser.attach_workspace(cx),
+                DriverEvent::Dictate => browser.toggle_dictation(window, cx),
+                DriverEvent::ReadAloud(text) => browser.speak(text, window, cx),
+                DriverEvent::Voice(action) => browser.voice_action(*action, window, cx),
             },
         );
         self.theorem = Some((workbench, events));
@@ -139,7 +210,14 @@ impl Browser {
                     .mb(px(FRAME))
                     .text_color(cx.theme().foreground)
                     .child(bump::card(Some(slot.clone()), None, cx))
-                    .child(PlaceView::new(place))
+                    .child(if place == Place::Notes {
+                        self.notebook
+                            .clone()
+                            .map(|n| div().pl(px(48.)).size_full().child(n).into_any_element())
+                            .unwrap_or_else(|| PlaceView::new(place).into_any_element())
+                    } else {
+                        PlaceView::new(place).into_any_element()
+                    })
                     .child(
                         div()
                             .absolute()
@@ -162,7 +240,7 @@ impl Browser {
         if !self.places_pinned || self.place.is_some() || self.compact {
             return None;
         }
-        let fill = if self.underlay.shown && self.canvas.is_none() {
+        let fill = if self.underlay.shown && !self.canvas_shown {
             bump::leading_fill(cx)
         } else {
             cx.theme().sidebar_border.into()
@@ -178,5 +256,50 @@ impl Browser {
                 .child(PlacesBump::new(None).fill(fill))
                 .into_any_element(),
         )
+    }
+}
+
+impl Browser {
+    fn attach_workspace(&mut self, cx: &mut Context<Self>) {
+        let selected = self
+            .canvas
+            .as_ref()
+            .filter(|_| self.canvas_shown)
+            .map(|b| b.read(cx).selected_cards())
+            .unwrap_or_default();
+        let mut text = String::from(
+            "# Selected workspace sources\n\nThese are user-selected references. Page links are not captured page contents.\n\n",
+        );
+        for tab in &self.tabs {
+            if (selected.is_empty() && tab.id == self.tabs[self.active].id)
+                || selected.contains(&tab.id)
+            {
+                if let Some(url) = tab.url(cx) {
+                    text.push_str(&format!(
+                        "## {}\nTab: {}\nURL: {}\n\n",
+                        tab.title(cx),
+                        tab.id,
+                        url
+                    ));
+                }
+            }
+        }
+        if let Some(board) = &self.canvas {
+            text.push_str(&board.read(cx).selected_note_text(cx));
+        }
+        if text.len() > 65_536 {
+            if let Some((w, _)) = &self.theorem {
+                w.read(cx).driver().clone().update(cx, |d, cx| {
+                    d.report_notice(
+                        "Select fewer sources; workspace context exceeds 64 KiB.",
+                        cx,
+                    )
+                });
+            }
+            return;
+        }
+        if let Some((w, _)) = &self.theorem {
+            w.update(cx, |w, cx| w.attach_workspace(text, cx));
+        }
     }
 }

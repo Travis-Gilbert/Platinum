@@ -148,6 +148,7 @@ pub struct Page {
     /// was placed at.
     pub(crate) bounds: Option<Bounds<Pixels>>,
     pub(crate) scale: f32,
+    pub(crate) frame_navigation: Option<u64>,
     pub(crate) canvas_zoom: f32,
     pub(crate) canvas_cached: bool,
     pub(crate) canvas_world: Option<gpui_kit::Size<Pixels>>,
@@ -239,12 +240,23 @@ impl Page {
                     page.webview.set_focused(true)
                 }),
                 cx.on_blur(&focus_handle, window, |page, window, cx| {
-                    let popup_focused = page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
+                    let popup_focused =
+                        page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
                     let panel_open = page.controls.owns_native_panel();
-                    crate::controls::control_trace(if popup_focused { "Page blur -> owned popup retains Servo focus" } else if panel_open { "Page blur -> owned panel retains Servo focus" } else { "Page blur -> Servo false" });
+                    crate::controls::control_trace(if popup_focused {
+                        "Page blur -> owned popup retains Servo focus"
+                    } else if panel_open {
+                        "Page blur -> owned panel retains Servo focus"
+                    } else {
+                        "Page blur -> Servo false"
+                    });
                     page.release_buttons();
-                    if let Some(input) = &page.canvas_input { input.borrow_mut().cancel_space(); }
-                    if !popup_focused && !panel_open { page.webview.set_focused(false); }
+                    if let Some(input) = &page.canvas_input {
+                        input.borrow_mut().cancel_space();
+                    }
+                    if !popup_focused && !panel_open {
+                        page.webview.set_focused(false);
+                    }
                 }),
                 cx.observe_global::<ChromeTheme>(|page, cx| {
                     page.webview.notify_theme_change(servo_theme(cx));
@@ -255,6 +267,7 @@ impl Page {
             Self {
                 focus_handle,
                 scale: window.scale_factor(),
+                frame_navigation: None,
                 canvas_zoom: 1.,
                 canvas_cached: false,
                 canvas_world: None,
@@ -397,6 +410,7 @@ impl Page {
         for event in self.delegate.take_events() {
             match event {
                 ServoEvent::Frame => {
+                    self.frame_navigation = Some(self.delegate.navigation_starts.get());
                     self.schedule_tint(cx);
                     cx.notify();
                 }
@@ -678,10 +692,21 @@ impl Page {
         if !self.focus_handle.is_focused(window) {
             return false;
         }
-        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().space_pending) {
-            self.canvas_input.as_ref().unwrap().borrow_mut().pending_events.push(gpui_kit::PlatformInput::KeyDown(gpui_kit::KeyDownEvent {
-                keystroke: keystroke.clone(), is_held: false, prefer_character_input: false,
-            }));
+        if self
+            .canvas_input
+            .as_ref()
+            .is_some_and(|input| input.borrow().space_pending)
+        {
+            self.canvas_input
+                .as_ref()
+                .unwrap()
+                .borrow_mut()
+                .pending_events
+                .push(gpui_kit::PlatformInput::KeyDown(gpui_kit::KeyDownEvent {
+                    keystroke: keystroke.clone(),
+                    is_held: false,
+                    prefer_character_input: false,
+                }));
             return true;
         }
         if keystroke.key == "space" && self.canvas_input.is_some() {
@@ -704,26 +729,40 @@ impl Page {
     fn canvas_space(&mut self, key: &Keystroke, window: &Window, cx: &mut Context<Self>) {
         let input = self.canvas_input.as_ref().unwrap().clone();
         if input.borrow().space_editable {
-            self.send(InputEvent::Keyboard(keys::keyboard_event(key, KeyState::Down, true)));
+            self.send(InputEvent::Keyboard(keys::keyboard_event(
+                key,
+                KeyState::Down,
+                true,
+            )));
             return;
         }
-        if input.borrow().space.is_some() { return; }
+        if input.borrow().space.is_some() {
+            return;
+        }
         input.borrow_mut().hold_space(key);
         input.borrow_mut().space_pending = true;
         let generation = input.borrow().space_generation;
         let (send, receive) = futures::channel::oneshot::channel();
-        self.webview.evaluate_javascript(r#"(() => {
+        self.webview.evaluate_javascript(
+            r#"(() => {
             if (document.designMode === 'on') return true;
             let e = document.activeElement;
             while (e?.shadowRoot?.activeElement) e = e.shadowRoot.activeElement;
             return !!e && (e.isContentEditable || e.tagName === 'IFRAME' ||
                 (e.matches('input,textarea,select') && !e.disabled && !e.readOnly));
-        })()"#, move |result| { let _ = send.send(result); });
+        })()"#,
+            move |result| {
+                let _ = send.send(result);
+            },
+        );
         let owner = window.window_handle();
         cx.spawn(async move |page, cx| {
             use futures::FutureExt as _;
             let response = receive.fuse();
-            let timeout = cx.background_executor().timer(std::time::Duration::from_secs(1)).fuse();
+            let timeout = cx
+                .background_executor()
+                .timer(std::time::Duration::from_secs(1))
+                .fuse();
             futures::pin_mut!(response, timeout);
             let editable = futures::select! {
                 result = response => !matches!(result, Ok(Ok(JSValue::Boolean(false)))),
@@ -731,30 +770,48 @@ impl Page {
             };
             let queued = page.update(cx, |page, _| {
                 let mut state = input.borrow_mut();
-                if state.space_generation != generation || !state.space_pending { return Vec::new(); }
+                if state.space_generation != generation || !state.space_pending {
+                    return Vec::new();
+                }
                 state.space_pending = false;
                 state.space_editable = editable;
                 if editable {
                     if let Some(key) = state.space.take() {
-                        page.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Down, false)));
+                        page.send(InputEvent::Keyboard(keys::keyboard_event(
+                            &key,
+                            KeyState::Down,
+                            false,
+                        )));
                     }
                 }
                 std::mem::take(&mut state.pending_events)
             });
             if let Ok(queued) = queued {
                 let _ = owner.update(cx, |_, window, cx| {
-                    for event in queued { window.dispatch_event(event, cx); }
+                    for event in queued {
+                        window.dispatch_event(event, cx);
+                    }
                 });
             }
-        }).detach();
+        })
+        .detach();
     }
 
     fn key_up(&mut self, event: &KeyUpEvent, window: &mut Window, cx: &mut Context<Self>) {
         if !self.focus_handle.is_focused(window) {
             return;
         }
-        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().space_pending) {
-            self.canvas_input.as_ref().unwrap().borrow_mut().pending_events.push(gpui_kit::PlatformInput::KeyUp(event.clone()));
+        if self
+            .canvas_input
+            .as_ref()
+            .is_some_and(|input| input.borrow().space_pending)
+        {
+            self.canvas_input
+                .as_ref()
+                .unwrap()
+                .borrow_mut()
+                .pending_events
+                .push(gpui_kit::PlatformInput::KeyUp(event.clone()));
             cx.stop_propagation();
             return;
         }
@@ -762,13 +819,29 @@ impl Page {
             if let Some(input) = &self.canvas_input {
                 let mut state = input.borrow_mut();
                 if std::mem::take(&mut state.space_editable) {
-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&event.keystroke, KeyState::Up, false)));
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(
+                        &event.keystroke,
+                        KeyState::Up,
+                        false,
+                    )));
                 } else if self.input_method.is_some() && state.space.is_none() {
                     self.held.remove(&event.keystroke.key);
-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&event.keystroke, KeyState::Up, false)));
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(
+                        &event.keystroke,
+                        KeyState::Up,
+                        false,
+                    )));
                 } else if let Some(key) = state.release_space() {
-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Down, false)));
-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Up, false)));
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(
+                        &key,
+                        KeyState::Down,
+                        false,
+                    )));
+                    self.send(InputEvent::Keyboard(keys::keyboard_event(
+                        &key,
+                        KeyState::Up,
+                        false,
+                    )));
                 }
                 cx.stop_propagation();
                 return;
@@ -854,7 +927,9 @@ impl Page {
 
     pub(crate) fn transform(&self) -> Option<crate::canvas::surface::SurfaceTransform> {
         Some(crate::canvas::surface::SurfaceTransform {
-            bounds: self.bounds?, zoom: self.canvas_zoom, raster_scale: self.scale,
+            bounds: self.bounds?,
+            zoom: self.canvas_zoom,
+            raster_scale: self.scale,
         })
     }
 
@@ -863,7 +938,9 @@ impl Page {
     }
 
     pub(crate) fn window_point(&self, x: i32, y: i32) -> Point<Pixels> {
-        self.transform().map_or(point(px(0.), px(0.)), |t| t.window_point(x as f32, y as f32))
+        self.transform().map_or(point(px(0.), px(0.)), |t| {
+            t.window_point(x as f32, y as f32)
+        })
     }
 
     fn mouse_down(&mut self, event: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
@@ -916,8 +993,16 @@ impl Page {
     }
 
     fn mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
-        if self.canvas_cached { return; }
-        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().board_drag || input.borrow().space_pending) { return; }
+        if self.canvas_cached {
+            return;
+        }
+        if self
+            .canvas_input
+            .as_ref()
+            .is_some_and(|input| input.borrow().board_drag || input.borrow().space_pending)
+        {
+            return;
+        }
         if let Some(point) = self.device_point(event.position) {
             self.last_pointer = Some(event.position);
             self.send(InputEvent::MouseMove(ServoMouseMove::new(point.into())));
@@ -932,8 +1017,12 @@ impl Page {
     }
 
     fn scroll(&mut self, event: &ScrollWheelEvent, _: &mut Window, cx: &mut Context<Self>) {
-        if self.canvas_cached { return; }
-        if self.canvas_input.is_some() && event.modifiers.platform { return; }
+        if self.canvas_cached {
+            return;
+        }
+        if self.canvas_input.is_some() && event.modifiers.platform {
+            return;
+        }
         let Some(point) = self.device_point(event.position) else {
             return;
         };
@@ -968,8 +1057,18 @@ impl Page {
     fn place(&mut self, bounds: Bounds<Pixels>, scale: f32) {
         self.bounds = Some(bounds);
         let (world, scale) = if let Some(world) = self.canvas_world {
-            if !self.canvas_settled { return; }
-            (world, crate::canvas::surface::settled_scale(world, self.canvas_zoom, scale, self.canvas_cap))
+            if !self.canvas_settled {
+                return;
+            }
+            (
+                world,
+                crate::canvas::surface::settled_scale(
+                    world,
+                    self.canvas_zoom,
+                    scale,
+                    self.canvas_cap,
+                ),
+            )
         } else {
             self.canvas_zoom = 1.;
             (bounds.size, scale)
@@ -1138,7 +1237,9 @@ impl Render for Page {
             .on_mouse_exit(cx.listener(Self::mouse_exit))
             .on_hover(cx.listener(|page, hovered: &bool, _, _| {
                 if !hovered {
-                    page.send(InputEvent::MouseLeftViewport(MouseLeftViewportEvent::default()));
+                    page.send(InputEvent::MouseLeftViewport(
+                        MouseLeftViewportEvent::default(),
+                    ));
                 }
             }))
             .on_scroll_wheel(cx.listener(Self::scroll))

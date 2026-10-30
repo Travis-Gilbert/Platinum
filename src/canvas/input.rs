@@ -1,5 +1,5 @@
 //! Host arbitration only; whiteboard owns hit testing and every board gesture.
-use super::{CAPTION, CARD, SpatialCanvas};
+use super::{CAPTION, SpatialCanvas};
 use gpui_kit::{
     Context, Keystroke, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
     ScrollWheelEvent, Window, px,
@@ -52,7 +52,11 @@ impl SpatialCanvas {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.page.read(cx).controls.popup.is_some() {
+        if self
+            .page
+            .as_ref()
+            .is_some_and(|page| page.read(cx).controls.popup.is_some())
+        {
             return;
         }
         if self.input.borrow().space_pending {
@@ -65,14 +69,33 @@ impl SpatialCanvas {
         }
         let at = self.local(ev.position);
         let world = self.camera.to_world(at);
-        let r = self.card();
-        let inside = matches!(self.engine.hit(world), Some(Hit::Card(CARD)));
+        let region = matches!(self.engine.hit(world), Some(Hit::Region(_)));
+        let hit = match self.engine.hit(world) {
+            Some(Hit::Card(id)) => Some(id),
+            _ => None,
+        };
+        if ev.button == MouseButton::Right {
+            self.context_card = hit;
+        }
+        let r = hit.and_then(|id| self.engine.bounds(id)).unwrap_or([0.; 4]);
+        let inside = hit.is_some();
         let caption = inside && world[1] < r[1] + CAPTION as f64;
         let space = self.input.borrow().space.is_some();
-        if inside && !caption && !space && !self.cached {
+        if (hit == Some(self.active_card)
+            || (self.notes_inline
+                && self.camera.zoom >= 0.75
+                && hit.is_some_and(|id| self.notes.iter().any(|(n, _)| *n == id))))
+            && !caption
+            && !space
+            && !self.cached
+        {
             return;
         }
-        let pans = space || (!inside && !ev.modifiers.shift && !self.input.borrow().select_tool);
+        if ev.button == MouseButton::Right {
+            return;
+        }
+        let pans = space
+            || (!inside && !region && !ev.modifiers.shift && !self.input.borrow().select_tool);
         let button = match ev.button {
             MouseButton::Left => Button::Primary,
             MouseButton::Right => Button::Secondary,

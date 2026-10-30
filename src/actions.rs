@@ -33,6 +33,17 @@ actions!(
         LeavePlace,
         PinTab,
         ShowCanvas,
+        ToggleDictation,
+        ReadSelection,
+        StopSpeaking,
+        PauseSpeaking,
+        ResumeSpeaking,
+        VoiceSettings,
+        ToggleNotes,
+        NewCanvasNote,
+        ArrangeCanvas,
+        OverviewCanvas,
+        ShowVisitTrail,
         ToggleAsk,
         ShowDownloads,
         ShowConsole,
@@ -60,4 +71,33 @@ pub struct SetAppearance {
 #[action(namespace = frame, no_json)]
 pub struct OpenPlace {
     pub place: Place,
+}
+
+#[derive(Clone, Debug, PartialEq, Action)]
+#[action(namespace = frame, no_json)]
+pub struct ChooseVoice {
+    pub id: Option<String>,
+}
+#[derive(Clone, Debug, PartialEq, Action)]
+#[action(namespace = frame, no_json)]
+pub struct SpeechRate {
+    pub words_per_minute: u16,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CanvasOperation {
+    Open,
+    Pin,
+    Duplicate,
+    Connect,
+    Provenance,
+    Remove,
+    Group,
+    Paste,
+    ShowAll,
+}
+#[derive(Clone, Debug, PartialEq, Action)]
+#[action(namespace = frame, no_json)]
+pub struct CanvasAction {
+    pub operation: CanvasOperation,
 }

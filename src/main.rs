@@ -23,6 +23,7 @@ mod inspector;
 mod keys;
 mod markup;
 mod navigator;
+mod notes;
 mod page;
 #[cfg(feature = "performance-check")]
 mod performance;
@@ -35,9 +36,12 @@ mod serp;
 mod session;
 mod share;
 mod site;
+mod spoken;
 mod tabtree;
 mod theme;
 mod theorem;
+mod trail;
+mod voice;
 
 use anyhow::Context as _;
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
@@ -59,6 +63,10 @@ use crate::theme::Appearance;
 use crate::theorem::{NewConversation, NextConversation, PreviousConversation, StopRun};
 
 fn main() -> anyhow::Result<()> {
+    #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_SPATIAL_CHECK") {
+        return browser::spatial_check::run(output.into());
+    }
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
         return browser::workspace_check::run(output.into());
@@ -144,6 +152,9 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
         KeyBinding::new("ctrl-cmd-s", ToggleSidebar, None),
         KeyBinding::new("ctrl-cmd-b", crate::actions::ShowCanvas, None),
+        KeyBinding::new("ctrl-alt-space", crate::actions::ReadSelection, None),
+        KeyBinding::new("ctrl-shift-space", crate::actions::ToggleDictation, None),
+        KeyBinding::new("ctrl-cmd-n", crate::actions::ToggleNotes, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
         KeyBinding::new("alt-cmd-j", ShowConsole, None),
         KeyBinding::new("cmd-q", Quit, None),
@@ -166,6 +177,7 @@ fn install_commands(cx: &mut App) {
             None,
         ));
     }
+    zorite_editor::bind_keys(cx);
     cx.bind_keys(bindings);
     install_menus(cx);
 }
@@ -200,12 +212,19 @@ fn install_menus(cx: &mut App) {
             MenuItem::os_action("Select All", SelectAll, OsAction::SelectAll),
             MenuItem::separator(),
             MenuItem::action("Fill Form Information…", FillForm),
+            MenuItem::action("Start / Stop Dictation", crate::actions::ToggleDictation),
+            MenuItem::action("Read Selection Aloud", crate::actions::ReadSelection),
+            MenuItem::action("Stop Speaking", crate::actions::StopSpeaking),
+            MenuItem::action("Voice Settings", crate::actions::VoiceSettings),
         ]),
         Menu::new("View").items([
             MenuItem::action("Reload Page", Reload),
             MenuItem::separator(),
             MenuItem::action("Compact Mode", ToggleCompact),
             MenuItem::action("Sidebar", ToggleSidebar),
+            MenuItem::action("Notes Sidebar", crate::actions::ToggleNotes),
+            MenuItem::action("Page Board", crate::actions::ShowCanvas),
+            MenuItem::action("Visit Trail", crate::actions::ShowVisitTrail),
             MenuItem::action("Always Show Places", TogglePlaces),
             MenuItem::submenu(Menu::new("Appearance").items(appearances)),
             MenuItem::separator(),
