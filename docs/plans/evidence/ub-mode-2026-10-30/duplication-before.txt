@@ -1,0 +1,7 @@
+DUPLICATE score=0.84
+  crates/profile/src/migration.rs:464-491
+  crates/profile/src/migration/firefox.rs:213-241
+
+DUPLICATE score=0.81
+  crates/profile/src/credentials.rs:202-216
+  crates/profile/src/credentials.rs:240-271

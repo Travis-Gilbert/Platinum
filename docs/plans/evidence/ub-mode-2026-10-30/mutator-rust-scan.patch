@@ -1,0 +1,14 @@
+diff --git a/src/mutator/workers.py b/src/mutator/workers.py
+index b1f154c..85c7bfd 100644
+--- a/src/mutator/workers.py
++++ b/src/mutator/workers.py
+@@ -206,6 +206,9 @@ def importers_of(root: Path, relative: str) -> set[str]:
+     Node back to the original tree.
+     """
+
++    # JS importer expansion is irrelevant for Rust and other non-JS sources.
++    if Path(relative).suffix not in _EXTENSIONS:
++        return set()
+     target = (root / relative).resolve()
+     reverse: dict[Path, set[Path]] = {}
+     for source in _source_files(root):

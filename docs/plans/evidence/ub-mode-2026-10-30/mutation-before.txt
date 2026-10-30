@@ -1,0 +1,51 @@
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum) cargo test --locked -p frame-profile
+Traceback (most recent call last):
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/venv/bin/mutator", line 9, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/cli.py", line 591, in main
+    sys.exit(run(argv))
+             ~~~^^^^^^
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/cli.py", line 587, in run
+    return _mutate_files(options, root, files)
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/cli.py", line 537, in _mutate_files
+    result = mutate_file(
+        path,
+    ...<10 lines>...
+        max_workers=options.max_workers,
+    )
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/engine.py", line 299, in mutate_file
+    failure = _apply_selected(
+        path,
+    ...<10 lines>...
+        max_workers,
+    )
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/engine.py", line 232, in _apply_selected
+    run_mutants(
+    ~~~~~~~~~~~^
+        root,
+        ^^^^^
+    ...<9 lines>...
+        outcomes,
+        ^^^^^^^^^
+    )
+    ^
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/workers.py", line 429, in run_mutants
+    directories = create_workers(
+        base, root, relative, original, worker_count(len(sites), max_workers)
+    )
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/workers.py", line 275, in create_workers
+    importers = importers_of(root, relative)
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/workers.py", line 212, in importers_of
+    for imported in _imported_files(source, root):
+                    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Volumes/SSD Samsung/agent-tools/ub-mode/mutator/src/mutator/workers.py", line 185, in _imported_files
+    if local is not None and local.is_file():
+                             ~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_abc.py", line 482, in is_file
+    return S_ISREG(self.stat(follow_symlinks=follow_symlinks).st_mode)
+                   ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pathlib/_local.py", line 515, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 63] File name too long: '/Users/travisgilbert/Tech Dev Local/Creative/Platinum/.delta/worktrees/m6ak2sfd1ndj/Frame/deps/servo-mse/tests/wpt/tests/third_party/test262/test/built-ins/TypedArray/from/.\ninfo: |\n  %TypedArray%.from ( source [ , mapfn [ , thisArg ] ] )\n\n  17 ECMAScript Standard Built-in Objects:\n    Every built-in Function object, including constructors, that is not\n    identified as an anonymous function has a name property whose value\n    is a String.\n\n    Unless otherwise specified, the name property of a built-in Function\n    object, if it exists, has the attributes { [[Writable]]: false,\n    [[Enumerable]]: false, [[Configurable]]: true }.\nincludes: [propertyHelper.js, testTypedArray.js]\nfeatures: [TypedArray]\n---*/\n\nverifyProperty(TypedArray.from, '
