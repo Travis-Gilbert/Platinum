@@ -1,0 +1,6 @@
+{
+  "stack": "gpui-pre",
+  "browser": "safari",
+  "event": "close-attempt",
+  "url": "http://127.0.0.1:8765/?stack=gpui-pre&browser=safari&autoclose=1&attempt=verified"
+}

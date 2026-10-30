@@ -1,0 +1,7 @@
+{
+  "stack": "zed",
+  "browser": "safari",
+  "event": "script-close-refused",
+  "timestamp": "2026-10-27T16:00:46.319Z",
+  "url": "http://127.0.0.1:8765/?stack=zed&browser=safari&autoclose=1&attempt=verified"
+}

@@ -1,0 +1,279 @@
+warning: unused import: `GlobalScope`
+  --> components/script/dom/document/document_event_handler.rs:71:52
+   |
+71 |     CompositionEvent, Element, Event, EventTarget, GlobalScope, HTMLAnchorElement, HTMLElement,
+   |                                                    ^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods`
+  --> components/script/dom/document/documentorshadowroot.rs:17:5
+   |
+17 | use script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused doc comment
+   --> components/script/dom/html/embedded_content/htmlareaelement.rs:378:5
+    |
+378 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-coords>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+    = note: `#[warn(unused_doc_comments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused doc comment
+   --> components/script/dom/html/embedded_content/htmlareaelement.rs:382:5
+    |
+382 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-shape>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+
+warning: unused import: `script_bindings::error::Fallible`
+  --> components/script/dom/html/embedded_content/htmlvideoelement.rs:29:5
+   |
+29 | use script_bindings::error::Fallible;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UpgradeTransactionClearError`, `UpgradeTransactionClear`, and `classify_upgrade_transaction_clear`
+   --> components/script/dom/indexeddb/idbdatabase.rs:530:9
+    |
+530 |         UpgradeTransactionClear, UpgradeTransactionClearError, classify_upgrade_transaction_clear,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Theme`
+  --> components/script/event_loop/script_thread.rs:49:80
+   |
+49 |     JavaScriptEvaluationError, JavaScriptEvaluationId, MediaSessionActionType, Theme,
+   |                                                                                ^^^^^
+
+warning: unreachable pattern
+   --> components/script/dom/canvas/2d/canvas_state.rs:954:17
+    |
+954 |                 _ => return Err(Error::InvalidState(None)),
+    |                 ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> components/script/dom/canvas/2d/canvas_state.rs:954:17
+    |
+857 |                 RenderingContext::Context2d(ref context) => {
+    |                 ---------------------------------------- matches some of the same values
+...
+869 |                 RenderingContext::BitmapRenderer(ref context) => {
+    |                 --------------------------------------------- matches some of the same values
+...
+884 |                 RenderingContext::Placeholder(ref context) => {
+    |                 ------------------------------------------ matches some of the same values
+...
+954 |                 _ => return Err(Error::InvalidState(None)),
+    |                 ^ collectively making this unreachable
+    = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `cx`
+    --> components/script/dom/document/document.rs:2515:41
+     |
+2515 |     fn queue_document_completion(&self, cx: &mut JSContext) {
+     |                                         ^^ help: if this is intentional, prefix it with an underscore: `_cx`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `gamepad_task_source` is never used
+   --> components/script/tasks/task_manager.rs:145:34
+    |
+ 85 | impl TaskManager {
+    | ---------------- method in this implementation
+...
+145 |     task_source_functions!(self, gamepad_task_source, Gamepad);
+    |                                  ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+    = note: this warning originates in the macro `task_source_functions` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: method `context_id` is never used
+  --> components/script/dom/canvas/canvas_context.rs:75:8
+   |
+72 | pub(crate) trait CanvasContext {
+   |                  ------------- method in this trait
+...
+75 |     fn context_id(&self) -> Self::ID;
+   |        ^^^^^^^^^^
+
+warning: method `get_snapshot` is never used
+   --> components/script/dom/canvas/imagedata.rs:192:19
+    |
+ 48 | impl ImageData {
+    | -------------- method in this implementation
+...
+192 |     pub(crate) fn get_snapshot(&self, no_gc: &NoGC) -> Snapshot {
+    |                   ^^^^^^^^^^^^
+
+warning: methods `get_or_init_webgpu_context` and `is_valid` are never used
+   --> components/script/dom/html/embedded_content/htmlcanvaselement.rs:346:8
+    |
+190 | impl HTMLCanvasElement {
+    | ---------------------- methods in this implementation
+...
+346 |     fn get_or_init_webgpu_context(&self) -> Option<DomRoot<GPUCanvasContext>> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+398 |     pub(crate) fn is_valid(&self) -> bool {
+    |                   ^^^^^^^^
+
+warning: method `run_iteration` is never used
+   --> components/script/dom/indexeddb/idbcursor.rs:316:8
+    |
+ 98 | impl IDBCursor {
+    | -------------- method in this implementation
+...
+316 |     fn run_iteration(
+    |        ^^^^^^^^^^^^^
+
+warning: fields `requested` and `last_cleared` are never read
+  --> components/script/dom/indexeddb/idbdatabase.rs:65:9
+   |
+64 |     Missing {
+   |     ------- fields in this variant
+65 |         requested: u64,
+   |         ^^^^^^^^^
+66 |         last_cleared: Option<u64>,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `requested` and `current` are never read
+  --> components/script/dom/indexeddb/idbdatabase.rs:69:9
+   |
+68 |     Mismatch {
+   |     -------- fields in this variant
+69 |         requested: u64,
+   |         ^^^^^^^^^
+70 |         current: u64,
+   |         ^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: method `choose_browsing_context` is never used
+    --> components/script/dom/window/windowproxy.rs:1173:19
+     |
+ 168 | impl WindowProxy {
+     | ---------------- method in this implementation
+...
+1173 |     pub(crate) fn choose_browsing_context(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated function `find_window_proxy_by_name` is never used
+   --> components/script/event_loop/script_thread.rs:762:19
+    |
+532 | impl ScriptThread {
+    | ----------------- associated function in this implementation
+...
+762 |     pub(crate) fn find_window_proxy_by_name(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: this lint expectation is unfulfilled
+   --> components/script/dom/mod.rs:208:10
+    |
+208 | #[expect(unused)]
+    |          ^^^^^^
+    |
+    = note: `#[warn(unfulfilled_lint_expectations)]` on by default
+
+warning: fields `stack_ptrs` and `count` are never read
+  --> components/background_hang_monitor/sampler.rs:27:5
+   |
+25 | pub struct NativeStack {
+   |            ----------- fields in this struct
+26 |     instruction_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+27 |     stack_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+   |     ^^^^^^^^^^
+28 |     count: usize,
+   |     ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `process_register` is never used
+  --> components/background_hang_monitor/sampler.rs:50:12
+   |
+41 | impl NativeStack {
+   | ---------------- method in this implementation
+...
+50 |     pub fn process_register(
+   |            ^^^^^^^^^^^^^^^^
+
+warning: `servo-script` (lib) generated 19 warnings (run `cargo fix --lib -p servo-script` to apply 6 suggestions)
+warning: `servo-background-hang-monitor` (lib) generated 2 warnings
+warning: unused import: `storage_traits::cache_storage::CacheStorageThreadMessage`
+   --> components/constellation/constellation.rs:172:5
+    |
+172 | use storage_traits::cache_storage::CacheStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `storage_traits::client_storage::ClientStorageThreadMessage`
+   --> components/constellation/constellation.rs:173:5
+    |
+173 | use storage_traits::client_storage::ClientStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `IndexedDBThreadMsg` and `SyncOperation`
+   --> components/constellation/constellation.rs:174:33
+    |
+174 | use storage_traits::indexeddb::{IndexedDBThreadMsg, SyncOperation};
+    |                                 ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+warning: unused import: `WebStorageThreadMsg`
+   --> components/constellation/constellation.rs:175:41
+    |
+175 | use storage_traits::webstorage_thread::{WebStorageThreadMsg, WebStorageType};
+    |                                         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `super::Process`
+  --> components/constellation/process_manager.rs:99:9
+   |
+99 |     use super::Process;
+   |         ^^^^^^^^^^^^^^
+
+warning: associated function `sandboxed` is never used
+  --> components/constellation/process_manager.rs:20:19
+   |
+12 | impl Process {
+   | ------------ associated function in this implementation
+...
+20 |     pub(crate) fn sandboxed(pid: u32) -> Self {
+   |                   ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: variant `Sandboxed` is never constructed
+   --> components/constellation/process_manager.rs:123:5
+    |
+121 | enum ProcessKind {
+    |      ----------- variant in this enum
+122 |     Unsandboxed(Child),
+123 |     Sandboxed(u32),
+    |     ^^^^^^^^^
+
+warning: unused import: `WebRenderImageHandlerType`
+  --> components/paint/painter.rs:28:60
+   |
+28 |     SerializableImageData, WebRenderExternalImageHandlers, WebRenderImageHandlerType, WebViewTrait,
+   |                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `servo-constellation` (lib) generated 7 warnings (run `cargo fix --lib -p servo-constellation` to apply 5 suggestions)
+warning: `servo-paint` (lib) generated 1 warning (run `cargo fix --lib -p servo-paint` to apply 1 suggestion)
+warning: linker stderr: ld: __eh_frame section too large (max 16MB) to encode dwarf unwind offsets in compact unwind table, performance of exception handling might be affected
+  |
+  = note: `#[warn(linker_messages)]` on by default
+
+warning: `servo` (test "request_activity") generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 0.71s
+     Running tests/request_activity.rs (/Volumes/SSD Samsung/cargo-targets/servo-r1/debug/deps/request_activity-5c0a23cf9454518f)
+
+running 1 test
+test test_document_redirect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.21s
+

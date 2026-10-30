@@ -1,0 +1,4 @@
+pkg/
+__pycache__/
+# 9.6 MB; run.py fetches it from the URL in assets/provenance.json.
+assets/NotoSansJP.ttf

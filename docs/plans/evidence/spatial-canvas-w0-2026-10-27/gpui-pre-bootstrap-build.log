@@ -1,0 +1,10 @@
+Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk5s1   927Gi   849Gi    78Gi    92%    9.7M  815M    1%   /Volumes/SSD Samsung
+[0.009s, exit 0] df -h '/Volumes/SSD Samsung'
+   Compiling frame-web-viewer-spike v0.1.0 (/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer)
+    Finished `release` profile [optimized] target(s) in 2m 28s
+[148.884s, exit 0] cargo build --offline --locked --release --target wasm32-unknown-unknown --manifest-path '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/Cargo.toml'
+wasm-bindgen 0.2.127
+[0.013s, exit 0] /Users/travisgilbert/.cargo/bin/wasm-bindgen --version
+[1.235s, exit 0] /Users/travisgilbert/.cargo/bin/wasm-bindgen --target web --out-dir '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/pkg' --out-name viewer '/Volumes/SSD Samsung/cargo-targets/frame-canvas/wasm32-unknown-unknown/release/frame_web_viewer_spike.wasm'
+[28.762s, exit 0] /opt/homebrew/bin/wasm-opt -Oz --all-features '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/pkg/viewer_bg.raw.wasm' -o '/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/pkg/viewer_bg.wasm'
