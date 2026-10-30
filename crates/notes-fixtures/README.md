@@ -251,6 +251,39 @@ These still need live acceptance after the recorder changes:
 
 The normalization tests also use representative strings from the supplied real recording. The fake CLI used by the tests is a shell script that answers in the shapes the CLI page shows; whatever the page leaves out, such as the JSON fields, it makes up.
 
+## Comparing DOM structure
+
+`notes_fixtures::compare` (and `notes-fixtures compare-dom --expected <dir> --actual <dir>`) checks what Frame renders for a note against the DOM Obsidian recorded for it (`reference/<vault>/dom/<note>.html`). It compares structure, not text files: both sides are parsed with html5ever, reduced to a tree, and the trees are compared; the first differences are printed with their path from the content root (`div.el-ul[3] > ul.has-list-bullet > li[0]@class`).
+
+```
+cargo run -p notes-fixtures --locked -- compare-dom \
+  --expected crates/notes-fixtures/reference/fixture-vault/dom --actual <dir with Frame's recordings> \
+  --allow-truncated-expected --opaque .math --hollow pdf-embed --ignore button.copy-code-button
+```
+
+The exit status is 1 when a note mismatches or a recording is missing. The Rust API is `compare_dirs(expected, actual, &Options, note_filter)`; `crates/notes/tests/reading_dom.rs` uses it to render every note of the fixture vault with `frame_notes::render_note`.
+
+What is compared is the content root's children (`.markdown-preview-sizer`): tag, class set, attributes and children, with these normalizations. Each is a difference in how the DOM was recorded or serialized, not in what a reader sees.
+
+- **Serialization.** Attribute order and quoting, `<br>` against `<br/>`, entity forms, and the order of class names do not count. Whitespace is collapsed as a browser does and dropped beside and inside block elements, so the exact newlines of Obsidian's markdown renderer are not needed.
+- **`style`** is compared as its sorted declarations (`display:none;` is `display: none;`); an empty `style=""` is no style.
+- **Footnote ids** (`fn-1-<16 hex>`, `fnref-…`) are renumbered by first use; the hex part is a per-note salt.
+- **Resource URLs** compare as vault-relative paths: Obsidian's `app://<hash>/<vault>/<path>?<mtime>` and Frame's `/files/<path>` are the same file.
+- **The recorder's layout numbers** (`__layout__` in an expected value) match any number.
+- **Attributes not compared:** `data-sourcepos` (Frame's annotation for the host), `tabindex`, `contenteditable`, `spellcheck`, `autocapitalize`, `enterkeyhint`, `inputmode`, `placeholder` and `draggable` (the editing affordances of Obsidian's property editor and workspace; the reading view edits through the host), `aria-disabled`, and every `data-frame-*` (what a Frame page script needs to fill an embed). `value` and `checked` on the property editor's inputs are DOM properties in Obsidian and absent from its serialization, so a renderer that shows the value writes them as attributes: they are not compared there.
+- **The class `is-loaded`** is added by Obsidian once an embed's image or a script has finished with it.
+- **Excluded children of the content root:** `.markdown-preview-pusher` (a spacer the virtual scroller inserts) and `.mod-footer` (the embedded-backlinks footer, built from the index).
+- **A hidden `.metadata-error-container`** (the properties' "Invalid properties" box with `display: none`) is compared without its children. Obsidian fills the box the first time a note with invalid properties is shown and keeps the text for every note after it, so the same note records with or without them depending on what was opened first. A visible box is compared with its text.
+
+Options for what scripts in the page produce, which a headless render does not run (all empty by default, so nothing is excluded unless asked):
+
+- `ignore` drops matching elements from both sides (the copy button Prism adds to a code block).
+- `opaque` compares matching elements by tag, classes and `data-*` attributes only (MathJax's output in `.math`, a Mermaid or query fence replaced in the page).
+- `opaque_text` adds the plain text of the subtree (Prism wraps the code's text in token spans).
+- `hollow` names the classes of `span`s whose script-built content is block-level (the PDF viewer, a Bases view). The content is cut from the markup before parsing: a parser ends the paragraph around such a span at the first `div` inside it and moves the rest out, so the recording and a renderer that writes an empty span would never match. The span and its attributes are still compared.
+
+Long notes are recorded as far as Obsidian rendered them (its reading view draws sections as they scroll into view). With `allow_truncated_expected` a note whose recording ends early is compared on the blocks the recording holds and reported as `Prefix { verified, total }`, never as a full match; an actual side shorter than the recording is a mismatch. A note present on one side only is `missing` or `extra`.
+
 ## Tests
 
 ```
@@ -260,5 +293,6 @@ cargo test -p notes-fixtures --locked
 - `tests/generate.rs`: determinism, the pinned digest, the mix, valid extras, no name collisions.
 - `tests/reference.rs`: the harness against the fake CLI. The script is written to a temporary directory and put first on `PATH` for the binary tests; it logs every invocation and replies with the documented shapes. The tests check the call table, the version refusal, `vault=` ordering, the normalized outputs across two mock isolation roots, preview validation, DOM reads until the view stops changing, bounded command-not-found retries and attempt accounting, and that failures are recorded: a non-zero exit, `Error:` text on a clean exit, a call that never answers, and a call (or a DOM read) that stalls once and is run again.
 - `tests/launch.rs` (macOS): the isolated launch against a fake `Obsidian.app`: private home and profile, the sandbox denying stand-ins for the real profile and socket, the seeded `obsidian.json`, flags passed through, every CLI call on the private home and in the copy, the app and the directory gone afterwards, and the same on a wrong version, a vault mismatch, an app that exits or never binds, SIGINT, a missing app, and the `--app`/`--attach` rules.
+- `src/compare.rs` (unit tests): every normalization above, in both directions (what is ignored and what still fails).
 - `tests/vault.rs`: the lints above.
 - `tests/coverage.rs`: `COVERAGE.md` against the matrix in `docs/plans/notes-app.md`.
