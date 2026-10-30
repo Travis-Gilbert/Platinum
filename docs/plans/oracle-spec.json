@@ -5,8 +5,8 @@
   "source_pins": {
     "frame_repo": "Travis-Gilbert/Platinum",
     "theorem_repo": "Travis-Gilbert/Theorem",
-    "theorem_branch": "claude/browser-search-concurrency",
-    "theorem_rev": "8c5d22bd6fea76dde197d0b9e73149d037d374d3",
+    "theorem_branch": "claude/agent-runtime-record-view",
+    "theorem_rev": "08495b15879a7bc2449d43c49530f549268d05fc",
     "servo_repo": "https://github.com/Travis-Gilbert/servo.git",
     "servo_branch": "main",
     "servo_rev": "efdf7370da024f467f7526798fe5c6e50e784b52",

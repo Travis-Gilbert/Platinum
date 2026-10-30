@@ -213,6 +213,9 @@ impl Browser {
                 .field
                 .update(cx, |field, cx| field.focus(window, cx)),
             Route::Results(serp, _) => window.focus(&serp.focus_handle(cx), cx),
+            Route::Place(Place::Agent) if let Some((workbench, _)) = &self.theorem => {
+                workbench.update(cx, |workbench, cx| workbench.focus_composer(window, cx));
+            }
             Route::Place(_) => window.focus(&self.focus_handle, cx),
         }
     }
@@ -321,7 +324,7 @@ impl Browser {
         cx: &mut Context<Self>,
     ) {
         match event {
-            HomeEvent::Place(place) => self.underlay_go(Route::Place(*place), window, cx),
+            HomeEvent::Place(place) => self.open_place(*place, window, cx),
             HomeEvent::Page { url, .. } => self.underlay_open(url.clone(), window, cx),
             HomeEvent::Search {
                 query,
@@ -464,6 +467,11 @@ impl Browser {
                     .into_any_element()
             }
             Route::Results(serp, _) => serp.into_any_element(),
+            // No tab is drawn while the workspace shows, so the workbench is
+            // drawn here alone.
+            Route::Place(Place::Agent) if let Some((workbench, _)) = &self.theorem => {
+                workbench.clone().into_any_element()
+            }
             Route::Place(place) => PlaceView::new(place).into_any_element(),
         };
 

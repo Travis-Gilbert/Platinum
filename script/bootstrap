@@ -3,8 +3,9 @@
 #
 # Platinum's RustyWeb and notes crates are path dependencies under deps/, a
 # read-only checkout of Theorem at a pinned commit of
-# claude/browser-search-concurrency. That branch adds detached browser searches
-# to claude/notes-foundations, which builds on
+# claude/agent-runtime-record-view. That branch puts the chat runtime's
+# record_view module behind a feature, on claude/browser-search-concurrency,
+# which adds detached browser searches to claude/notes-foundations, which builds on
 # claude/rustyweb-synthesis-on-request and codex/rustyweb-programmable-web-2.
 # deps/ and the Cargo target directory can live on another disk: a Servo build
 # needs about 25 GB.
@@ -15,8 +16,8 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="8c5d22bd6fea76dde197d0b9e73149d037d374d3"
-theorem_branch="claude/browser-search-concurrency"
+theorem_rev="08495b15879a7bc2449d43c49530f549268d05fc"
+theorem_branch="claude/agent-runtime-record-view"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"

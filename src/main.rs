@@ -36,6 +36,7 @@ mod share;
 mod site;
 mod tabtree;
 mod theme;
+mod theorem;
 
 use anyhow::Context as _;
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
@@ -54,6 +55,7 @@ use crate::actions::{
 use crate::browser::Browser;
 use crate::engine::Engine;
 use crate::theme::Appearance;
+use crate::theorem::{NewConversation, NextConversation, PreviousConversation, StopRun};
 
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "snapshot")]
@@ -79,8 +81,10 @@ fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
     let _ = dotenvy::from_path(data_dir.join(".env"));
 
+    // The whole Lucide catalog, not just the components' default icons:
+    // Theorem's workbench draws icons the default bundle leaves out.
     gpui_kit::application()
-        .with_assets(gpui_kit::assets::Assets)
+        .with_assets(gpui_kit::assets::AllAssets)
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);
@@ -94,6 +98,7 @@ fn main() -> anyhow::Result<()> {
                 Err(error) => log::error!("http client: {error:#}"),
             }
             recents::init(Some(profile_dir.join("recents.json")), cx);
+            theorem::init(Some(profile_dir.join("theorem.json")), cx);
             search::init(&search_dir, cx);
             session::init(&profile_dir, cx);
             session::open_imported_tabs(&profile, cx);
@@ -143,6 +148,11 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("cmd-c", Copy, Some(page::CONTEXT)),
         KeyBinding::new("cmd-v", Paste, Some(page::CONTEXT)),
         KeyBinding::new("cmd-a", SelectAll, Some(page::CONTEXT)),
+        // Escape stops a run through the composer's own Escape.
+        KeyBinding::new("cmd-n", NewConversation, Some(theorem::CONTEXT)),
+        KeyBinding::new("cmd-.", StopRun, Some(theorem::CONTEXT)),
+        KeyBinding::new("alt-up", PreviousConversation, Some(theorem::CONTEXT)),
+        KeyBinding::new("alt-down", NextConversation, Some(theorem::CONTEXT)),
     ];
     for index in 0..9 {
         bindings.push(KeyBinding::new(

@@ -1,7 +1,8 @@
 //! The places Frame keeps beneath its pages: mail, the library, notes, a
 //! terminal, the agent and App Host apps. Each is a native GPUI Kit surface, never a web
-//! page (`docs/vision/native-workspace.md`). None is built yet, so each route
-//! shows what it will hold, and the way back.
+//! page (`docs/vision/native-workspace.md`). The agent is Theorem's workbench
+//! (`theorem/`); the others are not built yet, so each of their routes shows
+//! what it will hold, and the way back.
 //!
 //! SOURCING: GPUI Kit's `Empty` and `Button`; the icons are `icons.rs`.
 
@@ -70,6 +71,11 @@ impl Place {
             Place::Agent => icons::agent(),
             Place::Apps => icons::apps(),
         }
+    }
+
+    /// Whether the place has its own surface; the others show `PlaceView`.
+    pub fn is_built(self) -> bool {
+        self == Place::Agent
     }
 
     /// What the place will hold, in a sentence.

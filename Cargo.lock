@@ -579,6 +579,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-compat"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c97d7ff3c25d6c10d64170c12acaf5d4245e76dece3779c1d92b153a64f11df"
+dependencies = [
+ "futures-core",
+ "futures-io",
+ "once_cell",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "async-compression"
 version = "0.4.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4083,6 +4096,7 @@ name = "frame"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-compat",
  "chrono",
  "clap",
  "content_disposition",
@@ -4132,6 +4146,8 @@ dependencies = [
  "surfman",
  "tempfile",
  "theorem-browser-substrate",
+ "theorem-surface-contracts",
+ "theoremweb-agent-runtime",
  "tokenizers",
  "tokio",
  "url",
@@ -4671,6 +4687,51 @@ dependencies = [
  "bitflags 1.3.2",
  "ignore",
  "walkdir",
+]
+
+[[package]]
+name = "gloo-net"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c06f627b1a58ca3d42b45d6104bf1e1a03799df472df00988b6ba21accc10580"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "gloo-utils",
+ "http",
+ "js-sys",
+ "pin-project",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "gloo-utils"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b5555354113b18c547c1d3a98fbf7fb32a9ff4f6fa112ce823a21641a0ba3aa"
+dependencies = [
+ "js-sys",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -10447,6 +10508,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulldown-cmark"
+version = "0.13.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "278e9268c93b9e498a2da46c34d90ba93a3255eb99009646398f34bc73ab36eb"
+dependencies = [
+ "bitflags 2.13.2",
+ "memchr",
+ "pulldown-cmark-escape",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-escape"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
+
+[[package]]
 name = "pulp"
 version = "0.22.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15283,7 +15362,7 @@ name = "theorem-doc-session"
 version = "0.0.0"
 dependencies = [
  "loro",
- "pulldown-cmark",
+ "pulldown-cmark 0.12.2",
  "serde",
  "serde_json",
  "theorem-block-registry",
@@ -15381,6 +15460,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "theorem-record-form-core"
+version = "0.1.0"
+dependencies = [
+ "bigdecimal",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "theorem-space"
 version = "0.1.0"
 dependencies = [
@@ -15439,6 +15530,43 @@ dependencies = [
  "thiserror 2.0.21",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "theoremweb-agent-runtime"
+version = "0.1.0"
+dependencies = [
+ "agpui-contract",
+ "base64 0.22.1",
+ "futures-util",
+ "gloo-net",
+ "gloo-timers",
+ "js-sys",
+ "pulldown-cmark 0.13.5",
+ "reqwest 0.12.28",
+ "rustyred-thg-core",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "theorem-record-form-core",
+ "theorem-space",
+ "theorem-surface-contracts",
+ "theoremweb-app",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "theoremweb-app"
+version = "0.1.0"
+dependencies = [
+ "percent-encoding",
+ "serde",
+ "theorem-space",
+ "theorem-surface-contracts",
+ "url",
 ]
 
 [[package]]

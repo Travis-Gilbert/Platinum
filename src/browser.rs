@@ -38,6 +38,9 @@ mod underlay;
 #[cfg(feature = "snapshot")]
 pub mod workspace_check;
 
+/// The frame of chrome around each card, for the places that inset their own.
+pub(crate) use dock::FRAME;
+
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -47,6 +50,10 @@ use std::time::Duration;
 use gpui_kit::base::dock::{DockArea, DockEvent, DragPanel, NodeId, PanelId, TabGroupContext};
 use gpui_kit::component::button::{Button, ButtonCustomVariant, ButtonVariants as _};
 use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
+use gpui_kit::component::empty::{
+    Empty as EmptyState, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia,
+    EmptyMediaVariant, EmptyTitle,
+};
 use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
 use gpui_kit::component::notification::Notification;
 use gpui_kit::component::popover::Popover;
@@ -69,7 +76,7 @@ use gpui_kit::{
 };
 use url::Url;
 
-use self::dock::{DRAG_PREVIEW, FRAME, FrameDock, Group, TabPanel, TabPreview};
+use self::dock::{DRAG_PREVIEW, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
     GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
@@ -94,6 +101,7 @@ use crate::session::{Content, Layout, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
+use crate::theorem::{DriverEvent, Workbench};
 use frame_profile::credentials::{self, Keychain};
 
 use self::underlay::Underlay;
@@ -354,6 +362,10 @@ fn site_summary(url: &Url, title: &str, loading: bool) -> SharedString {
 
 pub struct Browser {
     canvas: Option<Entity<crate::canvas::SpatialCanvas>>,
+    /// Theorem's workbench, made the first time the Agent place opens, and
+    /// the subscription that opens the pages it asks for. It is one view, so
+    /// it draws in one pane at a time (`theorem_pane`).
+    theorem: Option<(Entity<Workbench>, Subscription)>,
     focus_handle: FocusHandle,
     /// In the dock's order: group by group, left to right, top to bottom.
     tabs: Vec<Tab>,
@@ -480,6 +492,7 @@ impl Browser {
         let next_pin = pins.iter().map(|pin| pin.id + 1).max().unwrap_or(0);
         let mut browser = Self {
             canvas: None,
+            theorem: None,
             focus_handle: cx.focus_handle(),
             tabs: restored.tabs,
             active: 0,
@@ -1144,6 +1157,11 @@ impl Browser {
             Showing::Serp if let Some(serp) = &tab.serp => {
                 window.focus(&serp.focus_handle(cx), cx);
             }
+            // Theorem's composer takes the keyboard; Back still reaches the
+            // browser through it.
+            Showing::Place(Place::Agent) if let Some((workbench, _)) = &self.theorem => {
+                workbench.update(cx, |workbench, cx| workbench.focus_composer(window, cx));
+            }
             // The window keeps focus, so that Back reaches the browser.
             Showing::Place(_) => window.focus(&self.focus_handle, cx),
             // With the chrome hidden the address bar is not drawn; the window
@@ -1321,6 +1339,9 @@ impl Browser {
     /// A place, in the workspace, in this tab if it shows Home or a place,
     /// or else in a new one.
     fn open_place(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
+        if place == Place::Agent && self.theorem.is_none() {
+            self.open_theorem(window, cx);
+        }
         if self.underlay.shown {
             self.underlay_go(underlay::Route::Place(place), window, cx);
             return;
@@ -1331,6 +1352,54 @@ impl Browser {
         };
         self.tabs[index].showing = Showing::Place(place);
         self.activate(index, window, cx);
+    }
+
+    /// Make Theorem's workbench, which connects to the configured authority.
+    /// The pages it asks for, a sign-in page or a cited source, open in a
+    /// tab beside it.
+    fn open_theorem(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let workbench = cx.new(|cx| Workbench::new(window, cx));
+        let driver = workbench.read(cx).driver().clone();
+        let events = cx.subscribe_in(
+            &driver,
+            window,
+            |browser, _, event: &DriverEvent, window, cx| {
+                let DriverEvent::OpenUrl(url) = event;
+                browser.theorem_open(url.clone(), window, cx);
+            },
+        );
+        self.theorem = Some((workbench, events));
+    }
+
+    fn theorem_open(&mut self, url: Url, window: &mut Window, cx: &mut Context<Self>) {
+        // From the workspace, the Agent place becomes a tab first, so the
+        // page opens beside it rather than in its place.
+        if self.underlay.shown
+            && matches!(self.underlay.route, underlay::Route::Place(Place::Agent))
+        {
+            self.reveal_tab(window, cx);
+            self.go(url, None, true, window, cx);
+            return;
+        }
+        let opener = self
+            .tabs
+            .iter()
+            .find(|tab| tab.showing == Showing::Place(Place::Agent))
+            .map_or(Origin::Root, |tab| Origin::From(tab.id));
+        self.go(url, Some(opener), true, window, cx);
+    }
+
+    /// The tab whose pane draws Theorem's workbench: the active tab when it
+    /// shows the Agent place, else the first pane that does. Any other pane
+    /// showing it says where it is.
+    fn theorem_pane(&self) -> Option<usize> {
+        let displayed = self
+            .displayed
+            .iter()
+            .filter_map(|panel| self.panel_index(*panel));
+        crate::theorem::mounted_in(self.active, displayed, |index| {
+            self.tabs[index].showing == Showing::Place(Place::Agent)
+        })
     }
 
     /// Home: the workspace's, or this tab's if it shows a place, or a new
@@ -3177,10 +3246,55 @@ impl Browser {
                 page.clone().into_any_element()
             }
             Showing::Serp if let Some(serp) = &tab.serp => serp.clone().into_any_element(),
+            Showing::Place(Place::Agent) => match &self.theorem {
+                Some((workbench, _)) if self.theorem_pane() == Some(index) => {
+                    workbench.clone().into_any_element()
+                }
+                _ => self.theorem_elsewhere(tab.id, cx),
+            },
             Showing::Place(place) => PlaceView::new(place).into_any_element(),
             _ if tab.asleep.is_some() => self.asleep_surface(index, cx),
             _ => self.start_surface(tab.id, cx),
         }
+    }
+
+    /// A pane showing the Agent place while another draws the workbench.
+    fn theorem_elsewhere(&self, id: u64, cx: &mut Context<Self>) -> AnyElement {
+        div()
+            .size_full()
+            .flex()
+            .items_center()
+            .justify_center()
+            .p_6()
+            .child(
+                EmptyState::new()
+                    .max_w_96()
+                    .header(
+                        EmptyHeader::new()
+                            .media(
+                                EmptyMedia::new()
+                                    .with_variant(EmptyMediaVariant::Icon)
+                                    .child(Place::Agent.icon()),
+                            )
+                            .title(EmptyTitle::new().child("Theorem is open in another pane"))
+                            .description(
+                                EmptyDescription::new()
+                                    .child("A window shows Theorem in one pane at a time."),
+                            ),
+                    )
+                    .content(
+                        EmptyContent::new().child(
+                            Button::new(("theorem-show-here", id))
+                                .debug_selector(|| "theorem-show-here".into())
+                                .outline()
+                                .label("Show here")
+                                .on_click(cx.listener(move |browser, _, window, cx| {
+                                    browser.activate_id(id, window, cx)
+                                })),
+                        ),
+                    ),
+            )
+            .into_any_element()
     }
 
     /// A tab whose page is not loaded, shown beside the active one in a

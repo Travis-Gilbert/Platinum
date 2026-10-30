@@ -118,10 +118,15 @@ impl Home {
             .children(Place::ALL.map(|place| {
                 let handler = self.on_event.clone();
                 Button::new(SharedString::from(format!("home-place-{}", place.key())))
+                    .debug_selector(move || format!("home-place-{}", place.key()))
                     .ghost()
                     .w(rems(5.5))
                     .h(rems(5.75))
-                    .accessibility_label(format!("{}, not built yet", place.label()))
+                    .accessibility_label(if place.is_built() {
+                        SharedString::from(place.label())
+                    } else {
+                        format!("{}, not built yet", place.label()).into()
+                    })
                     .tooltip(place.summary())
                     .child(
                         v_flex()

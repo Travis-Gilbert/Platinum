@@ -35,6 +35,15 @@ net_traits = { package = "servo-net-traits", path = "deps/servo-consolidated/com
 theorem-browser-substrate = { path = "deps/theorem-search/apps/browser-substrate" }
 # The search sessions' query and provider types, from the same branch.
 rustyred-web = { path = "deps/theorem-search/rustyredcore_THG/crates/rustyred-web" }
+# Theorem's renderer-neutral chat host and its HTTP transport, from the same
+# checkout; the Agent place drives it (`src/theorem/driver.rs`). Without its
+# `record-view` feature, which brings Polars, Wasmtime and Burn.
+theoremweb-agent-runtime = { path = "deps/theorem-search/apps/theoremweb/crates/agent-runtime", default-features = false }
+# The documents that host projects and the intents the workbench hands it.
+theorem-surface-contracts = { path = "deps/theorem-search/rustyredcore_THG/crates/theorem-surface-contracts" }
+# The runtime's reqwest client needs Tokio's reactor wherever its futures are
+# polled, and GPUI polls them on the main thread.
+async-compat = "0.2.5"
 # reqwest-based search providers need a Tokio runtime; `search.rs` keeps one
 # for every search, off GPUI's executor, and a semaphore bounds how many run.
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "time", "net", "sync"] }

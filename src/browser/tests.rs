@@ -2,7 +2,7 @@
 //! and results need the network, so these cover what is Platinum's own: the
 //! right-click search, the palette, tab shortcuts, dragging tabs, the Ask
 //! button, the appearance button, the downloads list, compact mode, the
-//! sidebar's tree, pinned sites and restoring the session.
+//! sidebar's tree, pinned sites, restoring the session and the Agent place.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -1500,6 +1500,89 @@ fn places_open_from_the_palette_and_back_returns(cx: &mut TestAppContext) {
     assert_eq!(tabs(&browser, cx), (1, 0), "in the same tab");
     keys(cx, "cmd-[");
     assert!(showing(&browser, cx) == Showing::Start);
+}
+
+/// Open the Agent place from the palette.
+fn open_agent(cx: &mut VisualTestContext) {
+    keys(cx, "cmd-k");
+    cx.simulate_input("agent");
+    cx.run_until_parked();
+    keys(cx, "enter");
+}
+
+#[gpui_kit::test]
+fn the_agent_place_is_theorem_with_the_keyboard_in_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    open_agent(cx);
+    assert_eq!(route(&browser, cx), "Agent");
+    assert!(
+        drawn(cx, "theorem-navigator".into()),
+        "the workspace draws the workbench"
+    );
+    assert!(drawn(cx, "theorem-card".into()));
+    let in_theorem = |cx: &mut VisualTestContext| {
+        cx.update(|window, cx| {
+            let (workbench, _) = browser
+                .read(cx)
+                .theorem
+                .as_ref()
+                .expect("made as it opened");
+            workbench.focus_handle(cx).contains_focused(window, cx)
+        })
+    };
+    assert!(in_theorem(cx), "the keyboard goes to Theorem");
+
+    // Back reaches the browser from inside the workbench.
+    keys(cx, "cmd-[");
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(!drawn(cx, "theorem-navigator".into()));
+    keys(cx, "cmd-]");
+    assert_eq!(route(&browser, cx), "Agent");
+    assert!(in_theorem(cx));
+}
+
+#[gpui_kit::test]
+fn theorem_draws_in_one_pane_and_moves_where_it_is_asked(cx: &mut TestAppContext) {
+    let dir = data_dir("theorem-panes");
+    std::fs::write(
+        dir.join("session.json"),
+        r#"{
+            "version": 1,
+            "active": 2,
+            "tabs": [{ "id": 1 }, { "id": 2 }],
+            "dock": {
+                "split": "horizontal",
+                "sizes": [500, 500],
+                "children": [
+                    { "tabs": [1], "shown": 0 },
+                    { "tabs": [2], "shown": 0 }
+                ]
+            }
+        }"#,
+    )
+    .unwrap();
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    open_agent(cx);
+    assert_eq!(active_id(&browser, cx), 2);
+    // The other pane's Home opens it there too; the palette would switch
+    // to the tab already showing it instead.
+    let tile = center_of(cx, "home-place-agent".into());
+    click(cx, tile);
+    assert_eq!(active_id(&browser, cx), 1);
+    assert!(showing(&browser, cx) == Showing::Place(NativePlace::Agent));
+
+    // One view draws in one place: the active pane has it, the other says
+    // where it is.
+    let middle = px(500.);
+    assert!(bounds_of(cx, "theorem-navigator".into()).left() < middle);
+    let here = center_of(cx, "theorem-show-here".into());
+    assert!(here.x > middle);
+    click(cx, here);
+    assert_eq!(active_id(&browser, cx), 2);
+    assert!(bounds_of(cx, "theorem-navigator".into()).left() > middle);
+    assert!(center_of(cx, "theorem-show-here".into()).x < middle);
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[gpui_kit::test]
