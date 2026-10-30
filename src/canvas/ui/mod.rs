@@ -9,7 +9,7 @@
 //! retained piece is the omnibar's text, which GPUI Kit keeps in an
 //! `InputState` the owner holds (`Omnibar::input` makes it).
 //!
-//! The board is the window's clear glass, as the frame around the cards is in
+//! The board shares the window's glass and inactive solid frame, as in
 //! Tabs mode, and cards stay opaque. The floating pieces share one surface,
 //! `bar`: GPUI Kit's popover shape and shadow over `field`, the theme's color
 //! nearly opaque over the glass, so what people read never sits on the glass

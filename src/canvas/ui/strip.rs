@@ -67,7 +67,7 @@ fn ask_or_related(
     on_find_related: Option<Command>,
 ) -> Button {
     if ai_enabled {
-        press(command("canvas-strip-ask", icons::ask(), "Ask"), on_ask)
+        press(command("canvas-strip-ask", icons::agent(), "Ask"), on_ask)
     } else {
         press(
             command(

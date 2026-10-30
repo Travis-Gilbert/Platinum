@@ -392,16 +392,16 @@ impl Gallery {
 }
 
 impl Render for Gallery {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let sheet = match self.sheet {
             Sheet::Toolbar => self.toolbar_sheet(cx),
             Sheet::Omnibar => self.omnibar_sheet(cx),
             Sheet::Board => self.board_sheet(cx),
         };
-        // The board is the window's clear glass.
+        // The board shares the window's glass and inactive solid frame.
         div()
             .size_full()
-            .bg(ui::frame(cx))
+            .bg(ui::frame(window, cx))
             .px_8()
             .pt_12()
             .pb_8()
