@@ -1,0 +1,59 @@
+name: macOS portable app
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platinum-macos-package-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: macos-26
+    timeout-minutes: 360
+    env:
+      CARGO_INCREMENTAL: '0'
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require private substrate access
+        env:
+          THEOREM_TOKEN: ${{ secrets.THEOREM_READONLY_TOKEN }}
+        run: test -n "$THEOREM_TOKEN" || { echo 'Set THEOREM_READONLY_TOKEN before running this workflow.'; exit 1; }
+      - name: Check out pinned substrate
+        uses: actions/checkout@v4
+        with:
+          repository: Travis-Gilbert/Theorem
+          ref: 8c5d22bd6fea76dde197d0b9e73149d037d374d3
+          token: ${{ secrets.THEOREM_READONLY_TOKEN }}
+          path: deps/theorem-search
+      - name: Install build tools
+        run: |
+          brew install gstreamer libnice-gstreamer glib-networking meson ninja dylibbundler
+          python3 -m venv .packaging-venv
+          .packaging-venv/bin/pip install -r packaging/macos/requirements.txt
+      - name: Bootstrap pinned native dependencies
+        run: |
+          script/bootstrap
+          script/bootstrap-media
+          python3 script/check-pins.py --require-deps
+      - name: Test packaging boundaries
+        run: .packaging-venv/bin/python -m unittest discover -s tests/packaging -v
+      - name: Build and verify app
+        run: |
+          .packaging-venv/bin/python script/package-macos build --output dist/Platinum.app
+          .packaging-venv/bin/python script/package-macos verify dist/Platinum.app
+          .packaging-venv/bin/python script/package-macos archive dist/Platinum.app --output dist/Platinum-arm64-adhoc.zip
+      - name: Retain local-test artifact and receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: Platinum-arm64-adhoc
+          path: |
+            dist/*.zip
+            dist/*-receipt.json
+            dist/*-relocation.log
+          if-no-files-found: error
