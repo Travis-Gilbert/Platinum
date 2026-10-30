@@ -1,12 +1,13 @@
 //! Bumps: pieces of the window's frame that reach into a card, as the places
 //! do at a card's leading edge and Theorem's composer at its foot, or that
 //! stand alone on the window's edge. One outline serves a bump three ways:
-//! the card runs around it, its body fills it and its hairline traces it, so
-//! the three cannot part. Its base flares into the edge it stands on along an
-//! eased fillet, the way a continuous corner meets a straight edge, rather
+//! the card runs around it, its body fills it and the card's edge traces it,
+//! so the three cannot part. Its base flares into the edge it stands on along
+//! an eased fillet, the way a continuous corner meets a straight edge, rather
 //! than a circular arc's sudden turn. Its body fills from clear at its base
-//! to the bump's own color, and its hairline fades toward the base the same
-//! way, so the bump rises out of the frame rather than sitting on it.
+//! to the bump's own color, so the bump rises out of the frame rather than
+//! sitting on it, while the edge is one stroke of one weight around the card
+//! and its bumps together, so no line ends beside another.
 //!
 //! SOURCING: GPUI's `canvas`, `PathBuilder` and `linear_gradient`; the dot
 //! grid is gpui-whiteboard's `paint_board`, the one Platinum's canvas draws;
@@ -26,8 +27,6 @@ use gpui_whiteboard::{Camera, paint_board};
 
 /// How far into its body a bump's color reaches full strength, from its base.
 const FADE: f32 = 0.45;
-/// A bump's hairline at its base, against its strength at the tip.
-const EDGE_BASE: f32 = 0.12;
 /// The radius of a card's corners and of a bump's tip, against the theme's
 /// large radius.
 const ROUND: f32 = 1.5;
@@ -72,18 +71,10 @@ fn fade(angle: f32, color: Hsla) -> Background {
     )
 }
 
-fn hairline(angle: f32, color: Hsla) -> Background {
-    linear_gradient(
-        angle,
-        linear_color_stop(color.opacity(EDGE_BASE), 0.),
-        linear_color_stop(color, 0.75),
-    )
-}
-
 /// A card: the theme's raised surface under a dot grid, edged, its outline
 /// running around the bumps recorded in `leading` (on its leading edge) and
-/// `bottom` (on its foot), whose bodies and hairlines it draws. Put it first
-/// in a `relative` card, which it fills.
+/// `bottom` (on its foot), whose bodies it fills. Put it first in a
+/// `relative` card, which it fills.
 pub fn card(leading: Option<Slot>, bottom: Option<Slot>, cx: &App) -> impl IntoElement {
     let theme = cx.theme();
     let (surface, dots, edge, radius) = (
@@ -101,7 +92,7 @@ pub fn card(leading: Option<Slot>, bottom: Option<Slot>, cx: &App) -> impl IntoE
                 leading.as_ref().and_then(Slot::get),
                 bottom.as_ref().and_then(Slot::get),
             );
-            if let Ok(path) = notches.outline(PathBuilder::fill(), true).build() {
+            if let Ok(path) = notches.outline(PathBuilder::fill()).build() {
                 window.paint_path(path, surface);
             }
             for band in notches.dotted() {
@@ -113,11 +104,12 @@ pub fn card(leading: Option<Slot>, bottom: Option<Slot>, cx: &App) -> impl IntoE
                 paint_board(band, camera, transparent_black(), dots, window);
             }
             for bump in notches.bumps() {
-                bump.paint(fade(bump.angle(), edge), edge, window);
+                bump.fill(fade(bump.angle(), edge), window);
             }
-            // The card's own edge, which leaves each notch to its bump's
-            // hairline.
-            if let Ok(path) = notches.outline(PathBuilder::stroke(px(1.)), false).build() {
+            // One stroke for the whole edge, the notches with it, so the
+            // line keeps its weight from the card's sides into each flare
+            // and no segment ends beside another.
+            if let Ok(path) = notches.outline(PathBuilder::stroke(px(1.))).build() {
                 window.paint_path(path, edge);
             }
         },
@@ -129,22 +121,25 @@ pub fn card(leading: Option<Slot>, bottom: Option<Slot>, cx: &App) -> impl IntoE
 }
 
 /// A bump standing alone on the window's leading edge, as the places do
-/// beside a navigator or over the tabs: its body filled with `fill`, its
-/// hairline fading into the edge. Put it first in the `relative` bump, which
-/// it fills.
+/// beside a navigator or over the tabs: its body filled with `fill` and
+/// edged as a card is, the line running into the window's edge. Put it
+/// first in the `relative` bump, which it fills.
 pub fn standing(fill: Background, cx: &App) -> impl IntoElement {
     let (edge, radius) = (cx.theme().sidebar_border, cx.theme().radius_lg);
     canvas(
         |_, _, _| {},
         move |bounds, _, window, _| {
-            Bump::new(
+            let bump = Bump::new(
                 Base::Leading(bounds.left()),
                 bounds.top(),
                 bounds.bottom(),
                 bounds.size.width,
                 radius,
-            )
-            .paint(fill, edge, window);
+            );
+            bump.fill(fill, window);
+            if let Some(line) = bump.edge() {
+                window.paint_path(line, edge);
+            }
         },
     )
     .absolute()
@@ -248,12 +243,9 @@ impl Bump {
         path.build().ok()
     }
 
-    fn paint(&self, fill: Background, edge: Hsla, window: &mut Window) {
+    fn fill(&self, fill: Background, window: &mut Window) {
         if let Some(body) = self.body() {
             window.paint_path(body, fill);
-        }
-        if let Some(line) = self.edge() {
-            window.paint_path(line, hairline(self.angle(), edge));
         }
     }
 
@@ -335,18 +327,13 @@ impl Notches {
     }
 
     /// The card's outline, clockwise from its top-left corner, running in
-    /// around each bump; `traced` false leaves the notches open, for the
-    /// card's own edge.
-    fn outline(&self, mut path: PathBuilder, traced: bool) -> PathBuilder {
+    /// around each bump.
+    fn outline(&self, mut path: PathBuilder) -> PathBuilder {
         let (card, r) = (self.card, self.corner);
         let (left, top, right, foot) = (card.left(), card.top(), card.right(), card.bottom());
         let around = |path: &mut PathBuilder, bump: &Bump| {
             path.line_to(bump.start());
-            if traced {
-                bump.trace(path);
-            } else {
-                path.move_to(bump.end());
-            }
+            bump.trace(path);
         };
         path.move_to(point(left + r, top));
         path.line_to(point(right - r, top));
@@ -363,9 +350,7 @@ impl Notches {
         }
         path.line_to(point(left, top + r));
         arc(&mut path, r, true, point(left + r, top));
-        if traced || self.bumps().next().is_none() {
-            path.close();
-        }
+        path.close();
         path
     }
 

@@ -138,10 +138,11 @@ A bump and the notch it makes share one outline (`bump.rs`, after Zephium's
 cannot drift apart: an eased fillet twice the corner radius where it leaves
 its base, tip corners and the card's own corners at 1.5 times `radius_lg`.
 A bump is one color, the theme's `sidebar_border`, clear at its base and
-full by 45% of its reach, so the window's material carries on into it. Its
-edge is a hairline that fades in the same way, from 12% at its base to full
-by 75%; the card's own edge stops at each notch, so no straight line runs
-across where the card's edge would have been. The card's dot grid is
+full by 45% of its reach, so the window's material carries on into it. The
+edge is one stroke of one weight drawn with the card's: from the card's
+sides through each flare, round the bump and back out, so no line ends
+beside another and none runs across where the card's edge would have been.
+The card's dot grid is
 gpui-whiteboard's own (`paint_board`), aligned across the card, kept off the
 bumps and their flares.
 
@@ -186,8 +187,9 @@ Density, denser than Linear and about Devin's:
   row; in use (focused, written in, or carrying an edit, a quote or
   attachments) it widens to the column's 44rem and names what the send will
   use: the project, an edit's references, the attachments. The widths follow
-  Zephium's work bar (620 and 700 points). The width changes at once, not
-  animated: layout does not animate. An edit, a quote, queued sends and the
+  Zephium's work bar (620 and 700 points). The width changes at once for
+  now. Zephium eases it, and GPUI can too; that waits until the edge is
+  settled. An edit, a quote, queued sends and the
   reason a send is refused sit above the row.
 - Transcript scrolled under the card header fades out beneath it.
 - Empty conversation: "What should we get done?", role tabs (Developer,
