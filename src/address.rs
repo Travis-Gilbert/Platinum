@@ -118,3 +118,95 @@ mod tests {
         assert_eq!(classify("   "), None);
     }
 }
+
+/// The result's action is explicit; Ask never participates in suggestions.
+#[derive(Clone, Debug, PartialEq)]
+pub enum SuggestionAction {
+    Visit(Url),
+    Search(String),
+    SwitchTab(u64),
+}
+#[derive(Clone, Debug)]
+pub struct Suggestion {
+    pub title: String,
+    pub detail: String,
+    pub action: SuggestionAction,
+}
+impl Suggestion {
+    pub fn primary(text: &str) -> Option<Self> {
+        match classify(text)? {
+            Target::Go(url) => Some(Self {
+                title: format!("Visit {}", url),
+                detail: url.to_string(),
+                action: SuggestionAction::Visit(url),
+            }),
+            Target::Search(query) => Some(Self {
+                title: format!("Search the web for {query}"),
+                detail: "RustyWeb".into(),
+                action: SuggestionAction::Search(query),
+            }),
+        }
+    }
+    pub fn library(entry: frame_profile::LibraryEntry) -> Option<Self> {
+        let url = Url::parse(&entry.url).ok()?;
+        let kind = if entry.folder.is_empty() {
+            "History"
+        } else {
+            "Bookmark"
+        };
+        let title = if entry.title.is_empty() {
+            entry.url.clone()
+        } else {
+            entry.title
+        };
+        Some(Self {
+            title: format!("Visit · {kind} · {title}"),
+            detail: entry.url,
+            action: SuggestionAction::Visit(url),
+        })
+    }
+}
+
+/// Primary navigation/search stays first; a known tab wins over another visit
+/// to the same address. Preserve distinct tabs even when their URLs match.
+pub fn append_library(
+    results: &mut Vec<Suggestion>,
+    entries: impl IntoIterator<Item = frame_profile::LibraryEntry>,
+) {
+    for entry in entries {
+        if results.iter().any(|s| s.detail == entry.url) {
+            continue;
+        }
+        if let Some(suggestion) = Suggestion::library(entry) {
+            results.push(suggestion);
+        }
+        if results.len() >= 10 {
+            break;
+        }
+    }
+}
+
+#[cfg(test)]
+mod suggestion_tests {
+    use super::*;
+    #[test]
+    fn exact_address_stays_first_and_visits_are_deduplicated() {
+        let mut entries = vec![Suggestion::primary("servo.org").unwrap()];
+        append_library(
+            &mut entries,
+            [frame_profile::LibraryEntry {
+                url: "https://servo.org/".into(),
+                title: "Servo".into(),
+                folder: "Bookmarks".into(),
+            }],
+        );
+        assert_eq!(entries.len(), 1);
+        assert!(
+            matches!(&entries[0].action,SuggestionAction::Visit(url) if url.as_str()=="https://servo.org/")
+        );
+        assert!(matches!(
+            Suggestion::primary("?servo.org").unwrap().action,
+            SuggestionAction::Search(_)
+        ));
+    }
+}

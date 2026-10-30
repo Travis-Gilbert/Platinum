@@ -15,6 +15,13 @@ pub struct SessionWriter {
 
 impl SessionWriter {
     pub fn new(store: ProfileStore, cx: &mut App) -> Self {
+        Self::with_writer(move |session| store.save_session(session), cx)
+    }
+
+    fn with_writer(
+        write: impl Fn(&Session) -> anyhow::Result<()> + Send + 'static,
+        cx: &mut App,
+    ) -> Self {
         let (sender, mut receiver) = watch::channel::<Option<Session>>(None);
         let (finished, done) = oneshot::channel();
         cx.background_spawn(async move {
@@ -25,7 +32,7 @@ impl SessionWriter {
                     continue;
                 }
                 if let Some(session) = latest {
-                    match store.save_session(&session) {
+                    match write(&session) {
                         Ok(()) => saved = Some(session),
                         Err(error) => {
                             log::warn!("Could not preserve the browser session: {error:#}")
@@ -74,9 +81,21 @@ mod tests {
     async fn failed_write_can_retry_identical_snapshot(cx: &mut TestAppContext) {
         let temp = tempfile::tempdir().unwrap();
         let store = ProfileStore::open(temp.path()).unwrap();
-        let connection = store.connect().unwrap();
-        connection.execute_batch("CREATE TRIGGER refuse_session BEFORE INSERT ON session BEGIN SELECT RAISE(FAIL, 'fixture write refusal'); END;").unwrap();
-        let writer = cx.update(|cx| SessionWriter::new(store.clone(), cx));
+        let refuse = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        let writer = cx.update(|cx| {
+            let store = store.clone();
+            let refuse = refuse.clone();
+            SessionWriter::with_writer(
+                move |session| {
+                    anyhow::ensure!(
+                        !refuse.load(std::sync::atomic::Ordering::SeqCst),
+                        "fixture write refusal"
+                    );
+                    store.save_session(session)
+                },
+                cx,
+            )
+        });
         let session = Session {
             active: 7,
             ..Session::default()
@@ -84,9 +103,7 @@ mod tests {
         writer.save(session.clone());
         cx.run_until_parked();
         assert_eq!(store.session().unwrap().active, 0);
-        connection
-            .execute_batch("DROP TRIGGER refuse_session;")
-            .unwrap();
+        refuse.store(false, std::sync::atomic::Ordering::SeqCst);
         writer.save(session);
         writer.finish().await;
         assert_eq!(store.session().unwrap().active, 7);

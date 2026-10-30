@@ -91,14 +91,7 @@ impl ProfilePanel {
     fn refresh(&mut self, cx: &mut Context<Self>) {
         self.profiles = self.store.profiles().unwrap_or_default();
         if self.section == Section::Extensions {
-            self.extensions = (|| -> anyhow::Result<Vec<(String, String)>> {
-                let db = self.store.connect()?;
-                Ok(db
-                    .prepare("SELECT name,version FROM extensions ORDER BY name")?
-                    .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
-                    .collect::<Result<_, _>>()?)
-            })()
-            .unwrap_or_default();
+            self.extensions = self.store.extensions().unwrap_or_default();
         }
         if matches!(self.section, Section::Bookmarks | Section::History) {
             match self.store.suggestions(
@@ -386,6 +379,28 @@ impl Render for ProfilePanel {
             }
             Section::Bookmarks | Section::History => {
                 content = content.child(Input::new(&self.filter));
+                if self.section == Section::History {
+                    content = content.child(Button::new("clear-history")
+                        .label("Clear browsing history")
+                        .disabled(self.busy)
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.busy = true;
+                            let store = this.store.clone();
+                            let task = cx.background_spawn(async move { store.clear_history() });
+                            cx.spawn(async move |this, cx| {
+                                let result = task.await;
+                                let _ = this.update(cx, |this, cx| {
+                                    this.busy = false;
+                                    this.message = match result {
+                                        Ok(()) => "Browsing history cleared. Bookmarks and open tabs are kept.".into(),
+                                        Err(_) => "Could not fully clear browsing history. Please retry.".into(),
+                                    };
+                                    this.refresh(cx);
+                                });
+                            }).detach();
+                            cx.notify();
+                        })));
+                }
                 if self.entries.is_empty() {
                     content = content.child(
                         "No matching entries. Import browser data or visit a page to get started.",

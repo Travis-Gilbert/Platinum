@@ -57,6 +57,10 @@ impl Engine {
         let preferences = Preferences {
             layout_css_has_selector_enabled: true,
             dom_media_source_enabled: true,
+            network_http_disk_cache: profile_dir
+                .join("http-cache.sqlite3")
+                .to_string_lossy()
+                .into_owned(),
             ..Preferences::default()
         };
         let servo = ServoBuilder::default()

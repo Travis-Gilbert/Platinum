@@ -9,7 +9,7 @@ use super::{
     now, web_url,
 };
 use anyhow::{Context, Result, ensure};
-use rusqlite::{Connection, OpenFlags, params};
+use rusqlite::{Connection, OpenFlags};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -211,8 +211,13 @@ pub fn import(
         // Report persistence failure as part of the report, never panic or discard
         // results from the other categories.
         let saved = (|| -> Result<()> {
-            store.connect()?.execute("INSERT INTO imports(source,category,completed,imported,skipped) VALUES(?1,?2,?3,?4,?5)",
-                params![source.identity(),category,if entry.error.is_none(){now()}else{0},entry.counts.imported as i64,entry.counts.skipped as i64])?;
+            store.log_import(
+                &source.identity(),
+                category,
+                if entry.error.is_none() { now() } else { 0 },
+                entry.counts.imported,
+                entry.counts.skipped,
+            )?;
             Ok(())
         })();
         report.categories.push(entry);
@@ -227,13 +232,15 @@ pub fn import(
     report
 }
 
-fn bookmark_node(db: &Connection, node: &Value, folder: &str, counts: &mut Counts) -> Result<()> {
+fn bookmark_node(
+    db: &mut crate::ImportBatch<'_>,
+    node: &Value,
+    folder: &str,
+    counts: &mut Counts,
+) -> Result<()> {
     if node["type"] == "url" {
         if let Some(url) = node["url"].as_str().and_then(web_url) {
-            let changed = db.execute(
-                "INSERT OR IGNORE INTO bookmarks VALUES(?1,?2,?3)",
-                params![url.as_str(), node["name"].as_str().unwrap_or(""), folder],
-            )?;
+            let changed = db.bookmark(url.as_str(), node["name"].as_str().unwrap_or(""), folder)?;
             counts.imported += changed;
             counts.skipped += usize::from(changed == 0);
         } else {
@@ -254,8 +261,7 @@ fn bookmark_node(db: &Connection, node: &Value, folder: &str, counts: &mut Count
 }
 
 fn bookmarks(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     let mut found = false;
     for name in ["Bookmarks", "AccountBookmarks"] {
@@ -269,7 +275,7 @@ fn bookmarks(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
             .as_object()
             .context("Invalid bookmarks file")?;
         for node in roots.values() {
-            bookmark_node(&tx, node, "", &mut counts)?;
+            bookmark_node(&mut tx, node, "", &mut counts)?;
         }
     }
     ensure!(found, "No bookmarks file found");
@@ -279,8 +285,7 @@ fn bookmarks(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
 
 fn history(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
     let src = snapshot(&source.directory.join("History"))?;
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     let mut stmt =
         src.prepare("SELECT url,title,last_visit_time,visit_count FROM urls WHERE hidden=0")?;
@@ -300,9 +305,7 @@ fn history(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
         };
         // Chrome microseconds since 1601 -> Unix microseconds.
         let visited = time.saturating_sub(11_644_473_600_000_000).max(0);
-        let n=tx.execute("INSERT INTO history VALUES(?1,?2,?3,?4)
-            ON CONFLICT(url) DO UPDATE SET title=excluded.title,visited=max(history.visited,excluded.visited),visits=max(history.visits,excluded.visits)
-            WHERE excluded.visited>history.visited OR excluded.visits>history.visits",params![url.as_str(),title,visited,visits.max(1)])?;
+        let n = tx.history(url.as_str(), &title, visited, visits.max(1))?;
         counts.imported += n;
         counts.skipped += usize::from(n == 0);
     }
@@ -426,8 +429,7 @@ pub fn password_csv(store: &ProfileStore, path: &Path, vault: &impl Vault) -> Re
 }
 
 fn extensions(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     for file in ["Preferences", "Secure Preferences"] {
         let path = source.directory.join(file);
@@ -450,10 +452,7 @@ fn extensions(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
                 .pointer("/manifest/version")
                 .and_then(Value::as_str)
                 .unwrap_or("");
-            let n = tx.execute(
-                "INSERT OR IGNORE INTO extensions VALUES(?1,?2,?3)",
-                params![id, name, version],
-            )?;
+            let n = tx.extension(id, name, version)?;
             counts.imported += n;
             counts.skipped += usize::from(n == 0);
         }
@@ -464,31 +463,25 @@ fn extensions(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
 
 fn form_information(store: &ProfileStore, source: &SourceProfile) -> Result<Counts> {
     let src = snapshot(&source.directory.join("Web Data"))?;
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
-    tx.execute_batch("CREATE TABLE IF NOT EXISTS form_information(name TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(name,value));")?;
+    import_forms(store, form_rows(&src, "SELECT name,value FROM autofill")?)
+}
+
+fn form_rows(src: &Connection, sql: &str) -> Result<Vec<(String, String)>> {
+    Ok(src
+        .prepare(sql)?
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<rusqlite::Result<_>>()?)
+}
+
+fn import_forms(store: &ProfileStore, rows: Vec<(String, String)>) -> Result<Counts> {
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
-    // Only an explicit allowlist of non-payment, non-password fields.
-    let mut stmt = src.prepare("SELECT name,value FROM autofill")?;
-    for row in stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))? {
-        let (name, value) = row?;
-        if ![
-            "email",
-            "name",
-            "first_name",
-            "last_name",
-            "city",
-            "country",
-        ]
-        .contains(&name.to_ascii_lowercase().as_str())
-        {
+    for (name, value) in rows {
+        if !credentials::form_field_allowed(&name) {
             counts.skipped += 1;
             continue;
         }
-        let n = tx.execute(
-            "INSERT OR IGNORE INTO form_information VALUES(?1,?2)",
-            params![name, value],
-        )?;
+        let n = tx.form(&name, &value)?;
         counts.imported += n;
         counts.skipped += usize::from(n == 0);
     }
@@ -499,8 +492,7 @@ fn form_information(store: &ProfileStore, source: &SourceProfile) -> Result<Coun
 pub fn bookmarks_html(store: &ProfileStore, path: &Path) -> Result<Counts> {
     let document = scraper::Html::parse_document(&std::fs::read_to_string(path)?);
     let selector = scraper::Selector::parse("a[href]").expect("static selector");
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     for a in document.select(&selector) {
         let Some(url) = a.value().attr("href").and_then(web_url) else {
@@ -534,10 +526,7 @@ pub fn bookmarks_html(store: &ProfileStore, path: &Path) -> Result<Counts> {
         } else {
             folders.join("/")
         };
-        let n = tx.execute(
-            "INSERT OR IGNORE INTO bookmarks VALUES(?1,?2,?3)",
-            params![url.as_str(), title, folder],
-        )?;
+        let n = tx.bookmark(url.as_str(), &title, &folder)?;
         counts.imported += n;
         counts.skipped += usize::from(n == 0);
     }

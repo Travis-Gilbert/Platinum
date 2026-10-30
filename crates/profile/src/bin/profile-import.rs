@@ -66,10 +66,6 @@ fn main() -> Result<()> {
                 &vault,
             )
         };
-        let db = target.connect()?;
-        let count = |table: &str| -> Result<i64> {
-            Ok(db.query_row(&format!("SELECT count(*) FROM {table}"), [], |r| r.get(0))?)
-        };
         let (verified, inaccessible) = if args.without_passwords {
             (0, 0)
         } else {
@@ -83,8 +79,8 @@ fn main() -> Result<()> {
                     "category": r.category, "imported": r.counts.imported,
                     "skipped": r.counts.skipped, "error": r.error,
                 })).collect::<Vec<_>>(),
-                "totals": { "bookmarks": count("bookmarks")?, "history": count("history")?,
-                    "passwords": count("credentials")?, "extensions": count("extensions")?,
+                "totals": { "bookmarks": target.suggestions("", true, usize::MAX)?.len(), "history": target.suggestions("", false, usize::MAX)?.len(),
+                    "passwords": target.credential_labels()?.len(), "extensions": target.extensions()?.len(),
                     "forms": target.form_values()?.len(), "tabs": target.session()?.tabs.len() },
                 "passwords_verified": verified, "passwords_inaccessible": inaccessible,
                 "active_profile_unchanged": true,

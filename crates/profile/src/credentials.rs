@@ -3,7 +3,6 @@
 use super::{ProfileStore, web_url};
 use aes::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
 use anyhow::{Context, Result, ensure};
-use rusqlite::params;
 use sha2::{Digest, Sha256};
 use zeroize::Zeroizing;
 
@@ -89,30 +88,25 @@ pub fn save(
     // Vault first: an interrupted import cannot leave a usable-looking row
     // without a secret. Retrying repairs either side without duplicates.
     vault.put(&account(&origin, username), password.as_bytes())?;
-    store.connect()?.execute(
-        "INSERT OR IGNORE INTO credentials VALUES(?1,?2)",
-        params![origin, username],
-    )?;
+    store.save_credential_label(&origin, username)?;
     Ok(())
 }
 
 pub fn delete(store: &ProfileStore, vault: &impl Vault, url: &str, username: &str) -> Result<()> {
     let origin = origin(url)?;
     vault.remove(&account(&origin, username))?;
-    store.connect()?.execute(
-        "DELETE FROM credentials WHERE origin=?1 AND username=?2",
-        params![origin, username],
-    )?;
+    store.delete_credential_label(&origin, username)?;
     Ok(())
 }
 
 pub fn accounts(store: &ProfileStore, url: &str) -> Result<Vec<String>> {
     let origin = origin(url)?;
-    let db = store.connect()?;
-    Ok(db
-        .prepare("SELECT username FROM credentials WHERE origin=?1 ORDER BY username")?
-        .query_map([origin], |r| r.get(0))?
-        .collect::<rusqlite::Result<_>>()?)
+    Ok(store
+        .credential_labels()?
+        .into_iter()
+        .filter(|(o, _)| o == &origin)
+        .map(|(_, u)| u)
+        .collect())
 }
 
 pub fn password(vault: &impl Vault, url: &str, username: &str) -> Result<Zeroizing<String>> {
@@ -163,14 +157,9 @@ pub fn decrypt_chrome(key: &[u8; 16], encrypted: &[u8]) -> Result<Zeroizing<Stri
 /// Verify vault storage without exposing credentials or invoking form filling.
 /// Returns (readable, unavailable); HTTP logins remain ineligible for filling.
 pub fn verify_saved(store: &ProfileStore, vault: &impl Vault) -> Result<(usize, usize)> {
-    let db = store.connect()?;
     let mut readable = 0;
     let mut unavailable = 0;
-    for row in db
-        .prepare("SELECT origin,username FROM credentials")?
-        .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
-    {
-        let (origin, username) = row?;
+    for (origin, username) in store.credential_labels()? {
         match vault.get(&account(&origin, &username)) {
             Ok(secret) if !secret.is_empty() && std::str::from_utf8(&secret).is_ok() => {
                 readable += 1
@@ -246,6 +235,19 @@ mod tests {
     }
 }
 
+/// The same non-secret fields are eligible for import and explicit filling.
+pub(crate) fn form_field_allowed(name: &str) -> bool {
+    [
+        "email",
+        "name",
+        "first_name",
+        "last_name",
+        "city",
+        "country",
+    ]
+    .contains(&name.to_ascii_lowercase().as_str())
+}
+
 /// An explicit user choice fills one visible field; payment and secret fields
 /// never participate in this basic form-information importer.
 pub fn form_script(url: &str, name: &str, value: &str) -> Result<String> {
@@ -253,18 +255,7 @@ pub fn form_script(url: &str, name: &str, value: &str) -> Result<String> {
         fill_allowed(url),
         "Form filling requires HTTPS or localhost"
     );
-    ensure!(
-        [
-            "email",
-            "name",
-            "first_name",
-            "last_name",
-            "city",
-            "country"
-        ]
-        .contains(&name.to_ascii_lowercase().as_str()),
-        "Unsupported form field"
-    );
+    ensure!(form_field_allowed(name), "Unsupported form field");
     let origin = serde_json::to_string(&origin(url)?)?;
     let name = serde_json::to_string(name)?;
     let value = serde_json::to_string(value)?;

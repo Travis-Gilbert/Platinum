@@ -1,0 +1,52 @@
+diff --git a/components/net/http_cache.rs b/components/net/http_cache.rs
+index 9782d51eb77..59af4ea1e0d 100644
+--- a/components/net/http_cache.rs
++++ b/components/net/http_cache.rs
+@@ -1072,6 +1072,32 @@ impl HttpCache {
+             .collect()
+     }
+
++    /// Preserve completed memory entries before acknowledging orderly shutdown.
++    /// Eviction writes alone lose the hot working set on a browser restart.
++    pub(crate) async fn flush_to_disk(&self) {
++        let Some(disk_cache) = &self.disk_cache else {
++            return;
++        };
++        for (key, entry) in self.entries.iter() {
++            // A request still holding this entry must not block shutdown.
++            let snapshot = {
++                let Ok(resources) = entry.try_read() else {
++                    continue;
++                };
++                let completed = resources
++                    .iter()
++                    .filter(|resource| resource.is_done())
++                    .cloned()
++                    .collect::<Vec<_>>();
++                if completed.is_empty() {
++                    continue;
++                }
++                StdArc::new(TokioRwLock::new(completed))
++            };
++            disk_cache.store(key, snapshot).await;
++        }
++    }
++
+     /// Clear the contents of this cache.
+     pub(crate) fn clear(&self) {
+         self.entries.clear();
+diff --git a/components/net/resource_thread.rs b/components/net/resource_thread.rs
+index e821d0cd0f3..f631d20ecce 100644
+--- a/components/net/resource_thread.rs
++++ b/components/net/resource_thread.rs
+@@ -663,6 +663,10 @@ impl ResourceChannelManager {
+                 sender.send_or_ignore(total);
+             },
+             CoreResourceMsg::Exit(sender) => {
++                // The resource thread is synchronous and the network runtime
++                // remains alive until this acknowledgement. Drain completed
++                // public cache entries before the embedder shuts that runtime down.
++                crate::async_runtime::spawn_blocking_task(http_state.http_cache.flush_to_disk());
+                 if let Some(ref config_dir) = self.config_dir {
+                     let auth_cache = http_state.auth_cache.read();
+                     servo_base::write_json_to_file(&*auth_cache, config_dir, "auth_cache.json");

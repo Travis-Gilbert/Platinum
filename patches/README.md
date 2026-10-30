@@ -74,3 +74,20 @@ the videoparsers plugin, and setup-media refreshes recognized development
 symlinks to use it while refusing to replace real files or arbitrary symlinks.
 The upstream GstCheck regression and native playback/smoothness evidence are in
 `docs/plans/evidence/browser-mp4-resize-2026-10-27/report.md`.
+
+## HTTP cache persistence at shutdown
+
+`servo-disk-cache-shutdown.patch` applies to Servo
+`5c8325a389555f3b1adc476106d8529791afe13e` via `script/bootstrap-media`.
+The upstream cache writes evicted entries to disk but otherwise loses its hot
+memory entries on restart. The resource thread now flushes completed public
+entries with the existing disk-cache serializer before acknowledging shutdown.
+Busy/incomplete resources are skipped, private browsing has no disk cache, and
+normal no-store/authentication/cacheability rules still own admission. Platinum
+sets a separate cache filename for each profile. This adapter changes shutdown
+wiring only; it does not replace Servo's cache or website-storage engines.
+
+The synthetic native acceptance command is
+`script/media-env python3 tests/storage/check_native.py <storage_check binary>`.
+It checks cookies, localStorage, IndexedDB, cache reuse in a fresh process and
+absence of the same data in another profile.

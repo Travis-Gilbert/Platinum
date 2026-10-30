@@ -14,10 +14,12 @@ exclude = ["deps"]
 
 [features]
 # Opt-in native performance harness; absent from ordinary builds.
-performance-check = []
+performance-check = ["dep:gpui-pre", "dep:gpui-pre-macos"]
 
 [dependencies]
 gpui-kit = "=0.8.0"
+# Native harness capture support; excluded from ordinary application builds.
+gpui-pre = { version = "=0.3.9", features = ["test-support"], optional = true }
 # Servo 0.7 fork, branch Travis-Gilbert/youtube-mse; script/bootstrap-media pins the commit.
 servo = { path = "deps/servo-mse/components/servo", features = ["webcrypto", "webgl", "brotli-compression-stream", "media-gstreamer"] }
 # RustyWeb search sessions over the local browser substrate, from Theorem
@@ -72,6 +74,7 @@ gpui-pre = { version = "=0.3.9", features = ["test-support"] }
 gpui-pre-macos = { version = "=0.3.9", features = ["test-support"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+gpui-pre-macos = { version = "=0.3.9", features = ["test-support"], optional = true }
 objc2 = "0.6"
 # AppKit's shared color panel for `<input type=color>`; GPUI Kit already
 # builds this crate with its default features.
