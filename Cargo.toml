@@ -87,6 +87,10 @@ zeroize = "1"
 frame-profile = { path = "crates/profile" }
 # The notes app's vault, index and reading-view renderer; src/notes hosts them.
 frame-notes = { path = "crates/notes" }
+# The notes editor tab: the zorite editor in hosted mode, so the vault owns its history.
+zorite-editor = { path = "vendor/zorite-editor" }
+# Three-way merge and line diffs, to rebase unsent keystrokes onto a head that moved.
+diffy = "0.5"
 # `frame-notes:` responses set a Content-Type; Servo's protocol handlers speak http's types.
 http = "1"
 # The reading page's content digest: an unchanged render is not sent twice.
