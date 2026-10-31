@@ -20,6 +20,8 @@ use gpui_kit::{
 };
 
 use super::Notes;
+use super::host::ops;
+use super::host::service::Service;
 use super::panel::{ReadingEvent, ReadingPanel};
 use crate::glass;
 
@@ -162,8 +164,36 @@ impl Render for NotesWindow {
 }
 
 /// Opens the notes window on `launch`'s vault. `notes::start` has run.
+///
+/// The window is opened on a note, not before one: Servo drops a page asked
+/// for before its web view's first page is up, so the note to show is named
+/// first. A launch that names none opens on the vault's first note, which the
+/// vault's worker answers, so the window opens a moment after this returns.
 pub fn open_window(launch: Launch, cx: &mut App) -> anyhow::Result<()> {
     let Launch { vault, note } = launch;
+    let service = cx.global::<Notes>().open(&vault);
+    if note.is_some() {
+        return open(service, note, cx);
+    }
+    cx.spawn(async move |cx| {
+        // An answer that is an error is shown as one by the window, which asks
+        // the vault again for the reason.
+        let first = service
+            .read(|vault| Ok(ops::first_note(vault)))
+            .await
+            .ok()
+            .flatten();
+        let opened = cx.update(|cx| open(service, first, cx));
+        if let Err(error) = opened {
+            log::error!("{error:#}");
+            cx.update(|cx| cx.quit());
+        }
+    })
+    .detach();
+    Ok(())
+}
+
+fn open(service: Service, first: Option<String>, cx: &mut App) -> anyhow::Result<()> {
     let mut options = WindowOptions {
         window_bounds: Some(WindowBounds::centered(size(px(1100.), px(780.)), cx)),
         window_min_size: Some(size(px(480.), px(320.))),
@@ -174,13 +204,12 @@ pub fn open_window(launch: Launch, cx: &mut App) -> anyhow::Result<()> {
     }
     cx.open_window(options, |window, cx| {
         glass::install(window, cx);
-        let (service, vaults) = {
-            let notes = cx.global::<Notes>();
-            (notes.open(&vault), notes.vaults().clone())
-        };
-        let reading = ReadingPanel::new(&vaults, service, window, cx);
-        if let Ok(panel) = &reading {
-            panel.update(cx, |panel, cx| panel.show(note, None, cx));
+        let vaults = cx.global::<Notes>().vaults().clone();
+        let reading = ReadingPanel::new(&vaults, service, first.as_deref(), window, cx);
+        if let (Ok(panel), None) = (&reading, &first) {
+            // No note to open: the session says why (an empty vault, or one
+            // that could not be read).
+            panel.update(cx, |panel, cx| panel.show(None, None, cx));
         }
         let view = cx.new(|cx| NotesWindow::new(reading, window, cx));
         cx.new(|cx| Root::new(view, window, cx).bg(transparent_black()))

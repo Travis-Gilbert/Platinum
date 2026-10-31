@@ -217,6 +217,8 @@ pub struct Wiring {
     gate: Rc<RefCell<Gate>>,
     inbox: Rc<Inbox>,
     wakes: UnboundedReceiver<()>,
+    /// The note the web view is built on, once `first_page` has named it.
+    first: Option<String>,
 }
 
 impl Wiring {
@@ -242,11 +244,29 @@ impl Wiring {
             gate,
             inbox,
             wakes,
+            first: None,
         }
     }
 
     pub fn delegate(&self) -> Rc<NotesDelegate> {
         self.delegate.clone()
+    }
+
+    /// The address to build the web view on, for the note at `path`; the
+    /// session then starts on that page. A page asked for after `build()` can
+    /// be lost: until the web view's first page is up, Servo has no browsing
+    /// context to load into and drops the request, so the first note is the
+    /// builder's (`WebViewBuilder::url`), and every later one the session's.
+    pub fn first_page(&mut self, path: &str) -> anyhow::Result<Url> {
+        let token = new_token().ok_or_else(|| anyhow::anyhow!("no token could be made for the page"))?;
+        let url = route::note_url(&self.gate.borrow().host, path, &token, None);
+        {
+            let mut gate = self.gate.borrow_mut();
+            gate.token = token;
+            gate.page = Some(url.clone());
+        }
+        self.first = Some(path.to_owned());
+        Ok(url)
     }
 }
 
@@ -305,6 +325,7 @@ impl Session {
             gate,
             inbox,
             mut wakes,
+            first,
             ..
         } = wiring;
         cx.new(|cx: &mut Context<Self>| {
@@ -328,9 +349,16 @@ impl Session {
                 webview,
                 gate,
                 inbox,
-                current: None,
+                status: if first.is_some() {
+                    Status::Showing
+                } else {
+                    Status::Opening
+                },
+                current: first.map(|path| Current {
+                    path,
+                    tracker: Tracker::new(Folds::default()),
+                }),
                 folds: HashMap::new(),
-                status: Status::Opening,
                 notice: None,
                 chrome: None,
                 _tasks: [inbox_task, changes_task],
@@ -773,6 +801,34 @@ mod tests {
         // Nothing remembered and no theme: nothing to say.
         assert!(loaded_scripts(&Folds::default(), None).is_empty());
         assert_eq!(loaded_scripts(&Folds::default(), Some(&chrome)).len(), 1);
+    }
+
+    struct Nobody;
+    impl WebViewDelegate for Nobody {}
+
+    #[test]
+    fn the_first_page_is_named_before_the_web_view_exists_and_is_the_one_the_gate_expects() {
+        let mut wiring = Wiring::new("abc", Rc::new(Nobody));
+        let url = wiring.first_page("folder/Note.md").unwrap();
+        assert_eq!(url.scheme(), SCHEME);
+        assert_eq!(url.host_str(), Some("abc"));
+        let token = url
+            .query_pairs()
+            .find_map(|(key, value)| (key == "k").then(|| value.into_owned()))
+            .expect("the page's address carries its token");
+        {
+            let gate = wiring.gate.borrow();
+            assert_eq!(gate.token, token);
+            assert_eq!(gate.page.as_ref(), Some(&url));
+        }
+        assert_eq!(wiring.first.as_deref(), Some("folder/Note.md"));
+        // A page's own jump within it is not a navigation away, as on any page.
+        let mut jump = url.clone();
+        jump.set_fragment(Some("Heading"));
+        assert!(matches!(
+            classify(&jump, true, NavigationType::LinkActivated, &wiring.gate.borrow()),
+            Disposition::SameDocument
+        ));
     }
 
     #[test]

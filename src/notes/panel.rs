@@ -60,18 +60,23 @@ impl EventEmitter<ReadingEvent> for ReadingPanel {}
 impl EventEmitter<PanelEvent> for ReadingPanel {}
 
 impl ReadingPanel {
-    /// A panel on `vault`, showing nothing until `show`. `vaults` is the
-    /// registry `vault` came from: the pages it serves take the app's theme
-    /// from it.
+    /// A panel on `vault`, showing `first`, a note's path in the vault. With
+    /// none it shows nothing until `show` names one. `vaults` is the registry
+    /// `vault` came from: the pages it serves take the app's theme from it.
+    ///
+    /// The first note is a construction argument because Servo drops a page
+    /// asked for before its web view's first page is up (see
+    /// `Wiring::first_page`); `show` is for every note after it.
     pub fn new(
         vaults: &Vaults,
         vault: Service,
+        first: Option<&str>,
         window: &mut Window,
         cx: &mut App,
     ) -> anyhow::Result<Entity<Self>> {
         // Before the first page is served, so it carries the theme.
         vaults.set_chrome(Chrome::from_theme(cx.theme()));
-        let (page, session) = Self::web_view(vault, window, cx)?;
+        let (page, session) = Self::web_view(vault, first, window, cx)?;
         let vaults = vaults.clone();
         Ok(cx.new(|cx: &mut Context<Self>| {
             let focus_handle = cx.focus_handle();
@@ -105,6 +110,7 @@ impl ReadingPanel {
     /// delegate, which answers the page's messages and passes the rest on.
     fn web_view(
         vault: Service,
+        first: Option<&str>,
         window: &mut Window,
         cx: &mut App,
     ) -> anyhow::Result<(Entity<Page>, Entity<Session>)> {
@@ -122,11 +128,14 @@ impl ReadingPanel {
             .make_current()
             .map_err(|error| anyhow!("rendering context: {error:?}"))?;
         let delegate = Delegate::new();
-        let wiring = Wiring::new(vault.host(), delegate.clone());
-        let webview = WebViewBuilder::new(&Engine::servo(cx), context.clone())
+        let mut wiring = Wiring::new(vault.host(), delegate.clone());
+        let mut builder = WebViewBuilder::new(&Engine::servo(cx), context.clone())
             .hidpi_scale_factor(Scale::new(scale))
-            .delegate(wiring.delegate())
-            .build();
+            .delegate(wiring.delegate());
+        if let Some(first) = first {
+            builder = builder.url(wiring.first_page(first)?);
+        }
+        let webview = builder.build();
         let page = Page::adopt(
             NewWebView {
                 webview: webview.clone(),
@@ -141,7 +150,8 @@ impl ReadingPanel {
         Ok((page, session))
     }
 
-    /// Opens `path`, or the vault's first note when none is named.
+    /// Opens `path`, or the vault's first note when none is named. Not for
+    /// the panel's first note, which `new` takes.
     pub fn show(&self, path: Option<String>, fragment: Option<String>, cx: &mut Context<Self>) {
         self.session
             .update(cx, |session, cx| session.show(path, fragment, cx));
