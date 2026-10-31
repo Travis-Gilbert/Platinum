@@ -40,6 +40,7 @@ use super::ops::{self, Opened, Rendered, Toggled};
 use super::patch::{Decision, Folds, Tracker};
 use super::route::{self, Act, SCHEME};
 use super::service::{Error, Service};
+use super::shell::Chrome;
 
 /// What the current page load accepts.
 pub struct Gate {
@@ -79,7 +80,9 @@ pub fn classify(url: &Url, main_frame: bool, kind: NavigationType, gate: &Gate) 
         }
         return match Act::parse(url, &gate.host, &gate.token) {
             Ok(act) => Disposition::Act(act),
-            Err(error) => Disposition::Refuse(format!("not a message of this page load: {error:?}")),
+            Err(error) => {
+                Disposition::Refuse(format!("not a message of this page load: {error:?}"))
+            }
         };
     }
     match &gate.page {
@@ -92,7 +95,10 @@ pub fn classify(url: &Url, main_frame: bool, kind: NavigationType, gate: &Gate) 
 enum Inbound {
     Act(Act),
     /// The page answered a patch.
-    Applied { ticket: u64, applied: bool },
+    Applied {
+        ticket: u64,
+        applied: bool,
+    },
 }
 
 /// The queue between Servo's turn of the loop and the session. Both ends are
@@ -126,7 +132,12 @@ impl WebViewDelegate for NotesDelegate {
         self.inner.notify_cursor_changed(webview, cursor);
     }
 
-    fn notify_input_event_handled(&self, webview: WebView, id: InputEventId, result: InputEventResult) {
+    fn notify_input_event_handled(
+        &self,
+        webview: WebView,
+        id: InputEventId,
+        result: InputEventResult,
+    ) {
         self.inner.notify_input_event_handled(webview, id, result);
     }
 
@@ -273,6 +284,9 @@ pub struct Session {
     folds: HashMap<String, Folds>,
     status: Status,
     notice: Option<String>,
+    /// The app's theme as the page was last told it, told again to every page
+    /// load: a page served before a theme change may not have its script yet.
+    chrome: Option<Chrome>,
     _tasks: [Task<()>; 2],
 }
 
@@ -318,6 +332,7 @@ impl Session {
                 folds: HashMap::new(),
                 status: Status::Opening,
                 notice: None,
+                chrome: None,
                 _tasks: [inbox_task, changes_task],
             }
         })
@@ -404,12 +419,7 @@ impl Session {
                 });
             }
         }
-        let url = route::note_url(
-            &self.gate.borrow().host,
-            &path,
-            &token,
-            fragment.as_deref(),
-        );
+        let url = route::note_url(&self.gate.borrow().host, &path, &token, fragment.as_deref());
         {
             let mut gate = self.gate.borrow_mut();
             gate.token = token;
@@ -451,7 +461,8 @@ impl Session {
                 // load of this page no longer holds.
                 current.tracker.reset();
                 current.tracker.ready(revision, digest);
-                if let Some(script) = current.tracker.folds().restore_script() {
+                let scripts = loaded_scripts(current.tracker.folds(), self.chrome.as_ref());
+                for script in scripts {
                     self.run(script);
                 }
                 self.refresh(cx);
@@ -495,7 +506,9 @@ impl Session {
                     let allowed = vault.write(|vault| ops::allow_mermaid(vault)).await;
                     let _ = this.update(cx, |session, cx| match allowed {
                         Ok(()) => session.run("frameNotes.allowMermaid()".into()),
-                        Err(error) => session.tell(format!("Diagrams were not allowed: {error}"), cx),
+                        Err(error) => {
+                            session.tell(format!("Diagrams were not allowed: {error}"), cx)
+                        }
                     });
                 })
                 .detach();
@@ -506,7 +519,12 @@ impl Session {
     /// A followed link was resolved. An answer for a page that has been
     /// replaced since is dropped.
     fn opened(&mut self, opened: Result<Opened, Error>, epoch: u64, cx: &mut Context<Self>) {
-        if self.current.as_ref().map(|current| current.tracker.ticket()) != Some(epoch) {
+        if self
+            .current
+            .as_ref()
+            .map(|current| current.tracker.ticket())
+            != Some(epoch)
+        {
             return;
         }
         match opened {
@@ -541,6 +559,15 @@ impl Session {
             self.tell(notice, cx);
         }
         self.refresh(cx);
+    }
+
+    /// The app's theme changed: the page on screen is given it, and so is
+    /// every page loaded from now on.
+    pub fn restyle(&mut self, chrome: Chrome) {
+        self.chrome = Some(chrome);
+        if self.current.is_some() {
+            self.run(chrome.script());
+        }
     }
 
     fn tell(&mut self, notice: String, cx: &mut Context<Self>) {
@@ -584,17 +611,28 @@ impl Session {
         match current.tracker.decide(ticket, rendered.as_ref().ok()) {
             Decision::Send(patch) => {
                 let inbox = self.inbox.clone();
-                self.webview.evaluate_javascript(patch.script(), move |result| {
-                    inbox.push(Inbound::Applied {
-                        ticket,
-                        applied: matches!(result, Ok(JSValue::Boolean(true))),
+                self.webview
+                    .evaluate_javascript(patch.script(), move |result| {
+                        inbox.push(Inbound::Applied {
+                            ticket,
+                            applied: matches!(result, Ok(JSValue::Boolean(true))),
+                        });
                     });
-                });
             }
             Decision::Skip { again: true } => self.refresh(cx),
             Decision::Skip { again: false } | Decision::Stale => {}
         }
     }
+}
+
+/// What a page that has just loaded is told, in order: the folds the person
+/// chose in this note, then the app's theme.
+fn loaded_scripts(folds: &Folds, chrome: Option<&Chrome>) -> Vec<String> {
+    folds
+        .restore_script()
+        .into_iter()
+        .chain(chrome.map(Chrome::script))
+        .collect()
 }
 
 /// A page load's token: unguessable by the notes that page shows.
@@ -642,7 +680,10 @@ mod tests {
             "frame-notes://abc/act/open?t=&link=x",
         ] {
             assert!(
-                matches!(classified(url, true, NavigationType::Other), Disposition::Refuse(_)),
+                matches!(
+                    classified(url, true, NavigationType::Other),
+                    Disposition::Refuse(_)
+                ),
                 "{url}"
             );
         }
@@ -657,7 +698,10 @@ mod tests {
             NavigationType::FormSubmitted,
             NavigationType::Reload,
         ] {
-            assert!(matches!(classified(link, true, kind), Disposition::Refuse(_)), "{kind:?}");
+            assert!(
+                matches!(classified(link, true, kind), Disposition::Refuse(_)),
+                "{kind:?}"
+            );
         }
         // Nor can a frame inside the page.
         assert!(matches!(
@@ -677,7 +721,10 @@ mod tests {
             "javascript:alert(1)",
         ] {
             assert!(
-                matches!(classified(url, true, NavigationType::Other), Disposition::Refuse(_)),
+                matches!(
+                    classified(url, true, NavigationType::Other),
+                    Disposition::Refuse(_)
+                ),
                 "{url}"
             );
         }
@@ -694,7 +741,11 @@ mod tests {
             Disposition::SameDocument
         );
         assert_eq!(
-            classified("frame-notes://abc/note/A.md?k=tok", true, NavigationType::Reload),
+            classified(
+                "frame-notes://abc/note/A.md?k=tok",
+                true,
+                NavigationType::Reload
+            ),
             Disposition::SameDocument
         );
     }
@@ -708,6 +759,20 @@ mod tests {
             classify(&url, true, NavigationType::Other, &gate),
             Disposition::Refuse(_)
         ));
+    }
+
+    #[test]
+    fn a_loaded_page_is_given_its_folds_then_the_apps_theme() {
+        let mut folds = Folds::default();
+        folds.record("k".into(), true, 2);
+        let chrome = Chrome::sample(true);
+        let scripts = loaded_scripts(&folds, Some(&chrome));
+        assert_eq!(scripts.len(), 2);
+        assert!(scripts[0].starts_with("frameNotes.restore("));
+        assert!(scripts[1].starts_with("frameNotes.chrome("));
+        // Nothing remembered and no theme: nothing to say.
+        assert!(loaded_scripts(&Folds::default(), None).is_empty());
+        assert_eq!(loaded_scripts(&Folds::default(), Some(&chrome)).len(), 1);
     }
 
     #[test]

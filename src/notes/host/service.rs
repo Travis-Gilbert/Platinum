@@ -19,9 +19,9 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 #[cfg(test)]
 use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError, sync_channel};
 use std::sync::{Arc, PoisonError, RwLock, Weak};
 
@@ -30,6 +30,8 @@ use frame_notes::{Vault, is_hidden};
 use futures::channel::oneshot;
 use notify::{EventKind, RecursiveMode, Watcher as _};
 use tokio::sync::watch;
+
+use super::shell::Chrome;
 
 /// How many requests may wait for the vault.
 const QUEUE: usize = 32;
@@ -158,7 +160,9 @@ impl Service {
         &self,
         work: impl FnOnce(&mut Vault) -> Result<T> + Send + 'static,
     ) -> Result<T, Error> {
-        self.enqueue(work, false)?.await.map_err(|_| Error::Closed)?
+        self.enqueue(work, false)?
+            .await
+            .map_err(|_| Error::Closed)?
     }
 
     /// Runs `work` on the vault's thread; the vault may change, so listeners
@@ -198,16 +202,20 @@ impl Service {
     }
 }
 
-/// The vaults that are open, by the host of their `frame-notes:` addresses.
-/// Vaults open while the app runs and the protocol handler is registered once,
-/// so both share this; a lookup takes the lock only to clone a handle.
+/// The vaults that are open, by the host of their `frame-notes:` addresses,
+/// and the app's theme their pages take. Vaults open while the app runs and
+/// the protocol handler is registered once, so both share this; a lookup takes
+/// the lock only to clone a handle.
 #[derive(Clone, Default)]
-pub struct Vaults(Arc<RwLock<HashMap<String, Service>>>);
+pub struct Vaults {
+    services: Arc<RwLock<HashMap<String, Service>>>,
+    chrome: Arc<RwLock<Option<Chrome>>>,
+}
 
 impl Vaults {
     /// The vault at `root`, opened if it is not open already.
     pub fn open(&self, root: &Path, data: &Path) -> Service {
-        self.0
+        self.services
             .write()
             .unwrap_or_else(PoisonError::into_inner)
             .entry(host_of(root))
@@ -216,11 +224,20 @@ impl Vaults {
     }
 
     pub fn get(&self, host: &str) -> Option<Service> {
-        self.0
+        self.services
             .read()
             .unwrap_or_else(PoisonError::into_inner)
             .get(host)
             .cloned()
+    }
+
+    /// The app's theme, which the pages served from now on take.
+    pub fn set_chrome(&self, chrome: Chrome) {
+        *self.chrome.write().unwrap_or_else(PoisonError::into_inner) = Some(chrome);
+    }
+
+    pub fn chrome(&self) -> Option<Chrome> {
+        *self.chrome.read().unwrap_or_else(PoisonError::into_inner)
     }
 }
 
@@ -229,32 +246,33 @@ impl Vaults {
 /// to be refreshed by writes only.
 fn watch_root(root: &Path, inner: Weak<Inner>) -> Option<notify::RecommendedWatcher> {
     let base = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
-    let mut watcher = match notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
-        let Ok(event) = event else { return };
-        if matches!(event.kind, EventKind::Access(_)) {
-            return;
-        }
-        let visible = event.paths.iter().any(|path| {
-            path.strip_prefix(&base)
-                .ok()
-                .and_then(Path::to_str)
-                .is_some_and(|relative| !is_hidden(relative))
-        });
-        let Some(inner) = inner.upgrade().filter(|_| visible) else {
-            return;
+    let mut watcher =
+        match notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
+            let Ok(event) = event else { return };
+            if matches!(event.kind, EventKind::Access(_)) {
+                return;
+            }
+            let visible = event.paths.iter().any(|path| {
+                path.strip_prefix(&base)
+                    .ok()
+                    .and_then(Path::to_str)
+                    .is_some_and(|relative| !is_hidden(relative))
+            });
+            let Some(inner) = inner.upgrade().filter(|_| visible) else {
+                return;
+            };
+            if !inner.refresh_queued.swap(true, Ordering::AcqRel)
+                && inner.jobs.try_send(Job::Refresh).is_err()
+            {
+                inner.refresh_queued.store(false, Ordering::Release);
+            }
+        }) {
+            Ok(watcher) => watcher,
+            Err(error) => {
+                log::warn!("notes: not watching {}: {error}", root.display());
+                return None;
+            }
         };
-        if !inner.refresh_queued.swap(true, Ordering::AcqRel)
-            && inner.jobs.try_send(Job::Refresh).is_err()
-        {
-            inner.refresh_queued.store(false, Ordering::Release);
-        }
-    }) {
-        Ok(watcher) => watcher,
-        Err(error) => {
-            log::warn!("notes: not watching {}: {error}", root.display());
-            return None;
-        }
-    };
     if let Err(error) = watcher.watch(root, RecursiveMode::Recursive) {
         log::warn!("notes: not watching {}: {error}", root.display());
         return None;
@@ -320,16 +338,20 @@ mod tests {
     #[test]
     fn requests_run_on_the_vaults_thread_and_return_owned_answers() {
         let (_root, _data, service) = vault(&[("Home.md", "hi")]);
-        let name = block_on(service.read(|_| Ok(std::thread::current().name().map(str::to_owned)))).unwrap();
+        let name = block_on(service.read(|_| Ok(std::thread::current().name().map(str::to_owned))))
+            .unwrap();
         assert_eq!(name.as_deref(), Some("notes-vault"));
-        let text = block_on(service.read(|vault| Ok(vault.open_document("Home.md")?.text))).unwrap();
+        let text =
+            block_on(service.read(|vault| Ok(vault.open_document("Home.md")?.text))).unwrap();
         assert_eq!(text, "hi");
     }
 
     #[test]
     fn a_failed_request_is_an_answer_not_a_dead_thread() {
         let (_root, _data, service) = vault(&[]);
-        let error = block_on(service.read(|vault| vault.open_document("Missing.md").map(|d| d.text))).unwrap_err();
+        let error =
+            block_on(service.read(|vault| vault.open_document("Missing.md").map(|d| d.text)))
+                .unwrap_err();
         assert!(matches!(error, Error::Failed(_)), "{error:?}");
         assert!(block_on(service.read(|_| Ok(1))).is_ok());
     }
@@ -398,6 +420,10 @@ mod tests {
         let b = tempfile::tempdir().unwrap();
         assert_eq!(host_of(a.path()), host_of(a.path()));
         assert_ne!(host_of(a.path()), host_of(b.path()));
-        assert!(host_of(a.path()).bytes().all(|byte| byte.is_ascii_hexdigit()));
+        assert!(
+            host_of(a.path())
+                .bytes()
+                .all(|byte| byte.is_ascii_hexdigit())
+        );
     }
 }

@@ -25,10 +25,11 @@ use servo::protocol_handler::{
 };
 use url::Url;
 
+use super::assets;
 use super::ops::{self, FileError};
 use super::route::{Refusal, Route};
 use super::service::{Error, Service, Vaults};
-use super::{assets, shell};
+use super::shell::{self, Chrome};
 use crate::engine::notes_request_allowed;
 
 /// What a note's page may load: the notes scheme and nothing else. Inline
@@ -141,9 +142,7 @@ impl Reply {
     fn respond(self, address: servo::ServoUrl, timing: ResourceFetchTiming) -> Response {
         let mut response = Response::new(address, timing);
         let header = |name: HeaderName, value: &str| {
-            HeaderValue::from_str(value)
-                .ok()
-                .map(|value| (name, value))
+            HeaderValue::from_str(value).ok().map(|value| (name, value))
         };
         let fixed = |name: HeaderName, value: &'static str| (name, HeaderValue::from_static(value));
         let mut headers = vec![
@@ -175,16 +174,18 @@ pub async fn serve(vaults: &Vaults, url: &Url) -> Reply {
         return Reply::refused(404, "No such vault.");
     };
     match Route::parse(url) {
-        Ok(route) => dispatch(&service, route).await,
+        Ok(route) => dispatch(&service, route, vaults.chrome()).await,
         Err(Refusal::Unknown) => Reply::refused(404, "No such address."),
         Err(Refusal::Invalid) => Reply::refused(400, "That is not a path in a vault."),
     }
 }
 
-async fn dispatch(service: &Service, route: Route) -> Reply {
+async fn dispatch(service: &Service, route: Route, chrome: Option<Chrome>) -> Reply {
     match route {
         Route::App(path) => match assets::get(&path) {
-            Some(asset) => Reply::found(Kind::Bundled, asset.content_type, asset.bytes.into_owned()),
+            Some(asset) => {
+                Reply::found(Kind::Bundled, asset.content_type, asset.bytes.into_owned())
+            }
             None => Reply::refused(404, "No such file."),
         },
         Route::Note { path, token } => {
@@ -193,7 +194,7 @@ async fn dispatch(service: &Service, route: Route) -> Reply {
                 Ok(page) => Reply::found(
                     Kind::Document,
                     "text/html; charset=utf-8",
-                    shell::render(&shown, &token, &page).into_bytes(),
+                    shell::render(&shown, &token, &page, chrome.as_ref()).into_bytes(),
                 ),
                 Err(error) => unavailable(&shown, error),
             }
@@ -210,7 +211,10 @@ async fn dispatch(service: &Service, route: Route) -> Reply {
             Err(error) => unavailable("", error),
         },
         Route::Preview { from, link } => {
-            match service.read(move |vault| Ok(ops::preview(vault, &from, &link))).await {
+            match service
+                .read(move |vault| Ok(ops::preview(vault, &from, &link)))
+                .await
+            {
                 Ok(Some(html)) => {
                     Reply::found(Kind::Vault, "text/html; charset=utf-8", html.into_bytes())
                 }
@@ -227,7 +231,9 @@ fn unavailable(path: &str, error: Error) -> Reply {
         Error::Busy => Reply::refused(503, "The vault is busy. Try again."),
         Error::Closed | Error::Unavailable(_) => Reply::refused(503, &error.to_string()),
         Error::Failed(reason) if path.is_empty() => Reply::refused(404, &reason),
-        Error::Failed(reason) => Reply::refused(404, &format!("{path} could not be opened: {reason}")),
+        Error::Failed(reason) => {
+            Reply::refused(404, &format!("{path} could not be opened: {reason}"))
+        }
     }
 }
 
@@ -326,6 +332,20 @@ mod tests {
     }
 
     #[test]
+    fn a_page_takes_the_app_theme_set_after_the_vault_opened() {
+        let vault = vault(&[("Home.md", "hi")]);
+        let before = String::from_utf8(get(&vault, "/note/Home.md?k=t").bytes).unwrap();
+        assert!(!before.contains("--frame-background-primary"));
+        vault.vaults.set_chrome(Chrome::sample(true));
+        let after = String::from_utf8(get(&vault, "/note/Home.md?k=t").bytes).unwrap();
+        assert!(
+            after.contains("--frame-background-primary:hsla(180.0,25.0%,50.0%,1.000)"),
+            "{after}"
+        );
+        assert!(after.contains("<body class=\"theme-dark\">"));
+    }
+
+    #[test]
     fn a_note_is_a_document_with_a_policy_and_no_sniffing() {
         let vault = vault(&[("Home.md", "# Home\n\nhello")]);
         let reply = get(&vault, "/note/Home.md?k=tok");
@@ -333,20 +353,22 @@ mod tests {
         assert_eq!(reply.content_type, "text/html; charset=utf-8");
         assert_eq!(reply.kind, Kind::Document);
         let page = String::from_utf8(reply.bytes).unwrap();
-        assert!(page.contains("\"token\":\"tok\"") && page.contains("hello"), "{page}");
+        assert!(
+            page.contains("\"token\":\"tok\"") && page.contains("hello"),
+            "{page}"
+        );
         let response = Reply {
             status: 200,
             content_type: "text/html; charset=utf-8".into(),
             bytes: Vec::new(),
             kind: Kind::Document,
         }
-        .respond(
-            "frame-notes://x/note/a?k=t".parse().unwrap(),
-            timing(),
-        );
+        .respond("frame-notes://x/note/a?k=t".parse().unwrap(), timing());
         assert_eq!(response.headers[X_CONTENT_TYPE_OPTIONS], "nosniff");
         let policy = response.headers[CONTENT_SECURITY_POLICY].to_str().unwrap();
-        assert!(policy.contains("default-src 'none'") && policy.contains("script-src frame-notes:"));
+        assert!(
+            policy.contains("default-src 'none'") && policy.contains("script-src frame-notes:")
+        );
         assert!(!policy.contains("unsafe-eval") && !policy.contains("http"));
     }
 
@@ -354,10 +376,16 @@ mod tests {
     fn the_bundle_is_served_with_the_types_a_page_needs() {
         let vault = vault(&[]);
         let script = get(&vault, "/app/reading.js");
-        assert_eq!((script.status, script.content_type.as_str()), (200, "text/javascript; charset=utf-8"));
+        assert_eq!(
+            (script.status, script.content_type.as_str()),
+            (200, "text/javascript; charset=utf-8")
+        );
         let style = get(&vault, "/app/reading.css");
         assert_eq!(style.content_type, "text/css; charset=utf-8");
-        assert_eq!(get(&vault, "/app/vendor/mathjax/LICENSE").content_type, "text/plain; charset=utf-8");
+        assert_eq!(
+            get(&vault, "/app/vendor/mathjax/LICENSE").content_type,
+            "text/plain; charset=utf-8"
+        );
         assert_eq!(get(&vault, "/app/nothing.js").status, 404);
         assert_eq!(get(&vault, "/app/Cargo.toml").status, 404);
     }
@@ -391,7 +419,11 @@ mod tests {
             );
             assert_eq!(reply.kind, Kind::Document, "{path}");
         }
-        assert_eq!(get(&vault, "/note/Home.md").status, 400, "a page needs its token");
+        assert_eq!(
+            get(&vault, "/note/Home.md").status,
+            400,
+            "a page needs its token"
+        );
     }
 
     #[test]
@@ -408,32 +440,52 @@ mod tests {
     fn a_vaults_files_are_served_as_what_cannot_run() {
         let vault = vault(&[
             ("attachments/pic.png", "png"),
-            ("attachments/vector.svg", "<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>"),
+            (
+                "attachments/vector.svg",
+                "<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>",
+            ),
             ("attachments/page.html", "<script>alert(1)</script>"),
         ]);
         let png = get(&vault, "/files/attachments/pic.png");
-        assert_eq!((png.status, png.content_type.as_str(), png.kind), (200, "image/png", Kind::Attachment));
-        assert_eq!(get(&vault, "/files/attachments/page.html").content_type, "text/plain; charset=utf-8");
+        assert_eq!(
+            (png.status, png.content_type.as_str(), png.kind),
+            (200, "image/png", Kind::Attachment)
+        );
+        assert_eq!(
+            get(&vault, "/files/attachments/page.html").content_type,
+            "text/plain; charset=utf-8"
+        );
         assert_eq!(get(&vault, "/files/attachments/missing.png").status, 404);
         // A file the index does not list, such as one in a hidden folder, is not served.
         assert_eq!(get(&vault, "/files/attachments").status, 404);
-        let svg = Reply { kind: Kind::Attachment, ..get(&vault, "/files/attachments/vector.svg") };
-        let response = svg.respond(
-            "frame-notes://x/files/a".parse().unwrap(),
-            timing(),
+        let svg = Reply {
+            kind: Kind::Attachment,
+            ..get(&vault, "/files/attachments/vector.svg")
+        };
+        let response = svg.respond("frame-notes://x/files/a".parse().unwrap(), timing());
+        assert!(
+            response.headers[CONTENT_SECURITY_POLICY]
+                .to_str()
+                .unwrap()
+                .starts_with("sandbox")
         );
-        assert!(response.headers[CONTENT_SECURITY_POLICY].to_str().unwrap().starts_with("sandbox"));
     }
 
     #[test]
     fn only_enabled_snippets_are_served() {
         let vault = vault(&[
-            (".obsidian/appearance.json", r#"{"enabledCssSnippets":["on"]}"#),
+            (
+                ".obsidian/appearance.json",
+                r#"{"enabledCssSnippets":["on"]}"#,
+            ),
             (".obsidian/snippets/on.css", ".callout{color:red}"),
             (".obsidian/snippets/off.css", ".callout{color:blue}"),
         ]);
         let css = get(&vault, "/snippet/on.css");
-        assert_eq!((css.status, css.content_type.as_str()), (200, "text/css; charset=utf-8"));
+        assert_eq!(
+            (css.status, css.content_type.as_str()),
+            (200, "text/css; charset=utf-8")
+        );
         assert_eq!(css.bytes, b".callout{color:red}");
         assert_eq!(get(&vault, "/snippet/off.css").status, 404);
         assert_eq!(get(&vault, "/snippet/appearance.json").status, 404);
@@ -444,10 +496,18 @@ mod tests {
         let data = tempfile::tempdir().unwrap();
         let vaults = Vaults::default();
         let service = vaults.open(Path::new("/definitely/not/a/vault"), data.path());
-        let url = Url::parse(&format!("frame-notes://{}/note/Home.md?k=t", service.host())).unwrap();
+        let url = Url::parse(&format!(
+            "frame-notes://{}/note/Home.md?k=t",
+            service.host()
+        ))
+        .unwrap();
         let reply = block_on(serve(&vaults, &url));
         assert_eq!(reply.status, 503);
-        assert!(String::from_utf8(reply.bytes).unwrap().contains("could not be opened"));
+        assert!(
+            String::from_utf8(reply.bytes)
+                .unwrap()
+                .contains("could not be opened")
+        );
     }
 
     #[test]
