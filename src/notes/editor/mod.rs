@@ -25,6 +25,8 @@
 mod design;
 mod rebase;
 
+#[cfg(test)]
+mod tests;
 
 use std::borrow::Cow;
 use std::collections::VecDeque;
