@@ -22,6 +22,7 @@ mod inspector;
 mod keys;
 mod markup;
 mod navigator;
+mod notes;
 mod page;
 #[cfg(feature = "performance-check")]
 mod performance;

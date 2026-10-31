@@ -4095,6 +4095,7 @@ name = "frame"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "blake3",
  "chrono",
  "clap",
  "content_disposition",
@@ -4103,8 +4104,10 @@ dependencies = [
  "dpi",
  "env_logger 0.11.11",
  "euclid",
+ "frame-notes",
  "frame-profile",
  "futures",
+ "getrandom 0.3.4",
  "gleam",
  "glow",
  "gpui-kit",
@@ -4121,6 +4124,7 @@ dependencies = [
  "log",
  "markup5ever_rcdom",
  "mime_guess",
+ "notify",
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
  "objc2-core-foundation",

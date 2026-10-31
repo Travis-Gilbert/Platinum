@@ -85,6 +85,19 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 zeroize = "1"
 frame-profile = { path = "crates/profile" }
+# The notes app's vault, index and reading-view renderer; src/notes hosts them.
+frame-notes = { path = "crates/notes" }
+# `frame-notes:` responses set a Content-Type; Servo's protocol handlers speak http's types.
+http = "1"
+# The reading page's content digest: an unchanged render is not sent twice.
+blake3 = "1"
+# The per-panel token that tells the reading page's own messages from a note's content.
+getrandom = "0.3"
+# A vault's folder is watched for edits made outside the app; the pin is the
+# one Theorem's VFS already builds.
+notify = "=8.2.0"
+# Launch arguments (`--notes-vault`); the acceptance examples use the same parser.
+clap = { version = "4", features = ["derive"] }
 url = { version = "2", features = ["serde"] }
 kmeans_colors = { version = "0.7.1", default-features = false, features = ["palette_color"] }
 palette = { version = "0.7", default-features = false, features = ["std"] }
@@ -104,10 +117,6 @@ snapshot = [
 
 [dev-dependencies]
 tempfile = "3"
-# The graph probe's `frame-notes:` file handler sets a Content-Type header.
-http = "1"
-# Native media acceptance examples use the same CLI parser already in Servo.
-clap = { version = "4", features = ["derive"] }
 # Headless UI integration tests of the chrome (`src/browser/tests.rs`).
 # GPUI's own test support: gpui-kit's `test-support` feature names
 # `gpui-fast?/...`, which Cargo still resolves, and gpui-fast's wasm crate
