@@ -294,10 +294,6 @@ mod tests {
         // Every route that reads files refuses what could leave the vault or
         // reach its hidden folders, spelled any way a URL allows.
         for bad in [
-            "/files/../secret",
-            "/files/%2e%2e/secret",
-            "/files/%2E%2E/secret",
-            "/files/a/%2e%2e/b",
             "/files/a%2Fb",
             "/files/a%5Cb",
             "/files/a%2f..%2fb",
@@ -309,8 +305,6 @@ mod tests {
             "/files/a%00b",
             "/files/a%0Ab",
             "/files/%FF",
-            "/app/../Cargo.toml",
-            "/app/%2e%2e/Cargo.toml",
             "/snippet/..%2fapp.json",
             "/snippet/a/b.css",
             "/note/.obsidian/app.json?k=x",
@@ -321,6 +315,24 @@ mod tests {
             route(&format!("/files/{}", "a/".repeat(600))),
             Err(Refusal::Invalid)
         );
+    }
+
+    #[test]
+    fn dot_segments_are_resolved_by_the_url_before_a_route_sees_them() {
+        // The URL parser removes `..` however it is spelled (`%2e%2e` too), so
+        // the router never sees one: what would climb out of a folder lands
+        // on a path that names no route, and what stays inside lands on a
+        // plain name of the folder it was in.
+        for climbing in [
+            "/files/../secret",
+            "/files/%2e%2e/secret",
+            "/files/%2E%2E/secret",
+            "/app/../Cargo.toml",
+            "/app/%2e%2e/Cargo.toml",
+        ] {
+            assert_eq!(route(climbing), Err(Refusal::Unknown), "{climbing}");
+        }
+        assert_eq!(route("/files/a/%2e%2e/b"), Ok(Route::File("b".into())));
     }
 
     #[test]
