@@ -44,6 +44,7 @@ use host::session::{Session, Wiring};
 const READ: &str = r#"JSON.stringify({
   path: JSON.parse(document.getElementById("frame-notes-config").textContent).path,
   idle: window.frameNotes?.idle?.() === true,
+  rendered: (document.querySelector(".markdown-preview-sizer")?.childElementCount ?? 0) > 0,
   html: document.querySelector(".markdown-reading-view")?.outerHTML ?? null,
 })"#;
 
@@ -75,6 +76,7 @@ struct Args {
 struct Reading {
     path: String,
     idle: bool,
+    rendered: bool,
     html: Option<String>,
 }
 
@@ -179,10 +181,11 @@ async fn settle(view: &WebView, note: &str, executor: &BackgroundExecutor) -> Ou
     let (mut last, mut agreeing): (Option<String>, u32) = (None, 0);
     while Instant::now() < deadline {
         executor.timer(INTERVAL).await;
-        // A page that is not this note's, or not done, agrees with nothing.
+        // A page that is not this note's, has not put it on screen, or is not
+        // done, agrees with nothing.
         let html = read(view)
             .await
-            .filter(|reading| reading.path == note && reading.idle)
+            .filter(|reading| reading.path == note && reading.rendered && reading.idle)
             .and_then(|reading| reading.html);
         match html {
             Some(html) if last.as_ref() == Some(&html) => agreeing += 1,
