@@ -214,6 +214,9 @@ fn open(service: Service, first: Option<String>, cx: &mut App) -> anyhow::Result
         let view = cx.new(|cx| NotesWindow::new(reading, window, cx));
         cx.new(|cx| Root::new(view, window, cx).bg(transparent_black()))
     })?;
+    // Launched from a shell, the app is not the active one, and a window
+    // that is not in front is not drawn once something covers it.
+    cx.activate(true);
     Ok(())
 }
 
