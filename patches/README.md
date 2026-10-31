@@ -20,7 +20,9 @@ Compatible chat emulation and its fallback must name an authority catalog row.
 The graph tool requires an authenticated principal, `models:invoke`, graph
 read/write access and an existing observation node. Stable operation keys prevent
 repeated paid calls; an interrupted pending receipt remains unresolved instead
-of being retried. Returned answers grant no operation authority. The small
+of being retried. Fallback is permitted only for proven pre-dispatch failures.
+Each attempt and fallback reason is persisted before dispatch. Returned answers
+grant no operation authority. The small
 transport adapter is needed because Jev's wire protocol differs from chat;
 question validation and observation binding come from Zephium's library.
 

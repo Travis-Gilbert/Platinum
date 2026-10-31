@@ -22,28 +22,47 @@ use zorite_editor::EditorState;
 struct Store {
     vault: Vault,
     written: HashMap<String, u64>,
-    heads: HashMap<String, u64>,
+    heads: HashMap<String, Document>,
+    submitted: HashMap<String, (u64, String)>,
 }
 impl Store {
-    fn save(&mut self, path: &str, generation: u64, text: &str) -> anyhow::Result<String> {
+    fn save(
+        &mut self,
+        path: &str,
+        generation: u64,
+        base: &Document,
+        text: &str,
+    ) -> anyhow::Result<Document> {
+        let head = self
+            .heads
+            .get(path)
+            .ok_or_else(|| anyhow::anyhow!("Note was not opened"))?
+            .clone();
         if generation == 0 || self.written.get(path).is_some_and(|g| *g > generation) {
-            return Ok(text.to_owned());
+            return Ok(head);
         }
         if self.written.get(path).copied() != Some(generation) {
-            let revision = *self
-                .heads
+            // The queued edit names what the editor actually saw. During quit,
+            // a prior save may have finished before its UI completion ran.
+            let ancestor = self
+                .submitted
                 .get(path)
-                .ok_or_else(|| anyhow::anyhow!("Note was not opened"))?;
-            // Commit against the revision the editor actually opened, before
-            // reconciling disk. The authority retains these edits even when
-            // export detects an external change. Never adopt an unseen head.
+                .filter(|(revision, _)| *revision == base.revision)
+                .map_or(base.text.as_str(), |(_, text)| text.as_str());
+            let merged = if base.revision == head.revision {
+                text.to_owned()
+            } else {
+                merge_typing(ancestor, text, &head.text)?
+            };
             let doc = self.vault.edit(
                 path,
-                revision,
-                &format!("platinum:{path}:{revision}:{generation}"),
-                text,
+                head.revision,
+                &format!("platinum:{path}:{}:{generation}", head.revision),
+                &merged,
             )?;
-            self.heads.insert(path.into(), doc.revision);
+            self.heads.insert(path.into(), doc);
+            self.submitted
+                .insert(path.into(), (base.revision, text.to_owned()));
             self.written.insert(path.into(), generation);
         }
         if matches!(
@@ -52,11 +71,18 @@ impl Store {
         ) {
             anyhow::bail!("The note changed on disk while saving; both versions are preserved.");
         }
-        self.written.insert(path.into(), generation);
         let saved = self.vault.open_document(path)?;
-        self.heads.insert(path.into(), saved.revision);
-        Ok(saved.text)
+        self.heads.insert(path.into(), saved.clone());
+        Ok(saved)
     }
+}
+
+fn merge_typing(base: &str, typing: &str, saved: &str) -> anyhow::Result<String> {
+    diffy::merge(base, typing, saved).map_err(|_| {
+        anyhow::anyhow!(
+            "Typing overlaps external changes; the editor and saved version are preserved."
+        )
+    })
 }
 
 pub struct Note {
@@ -65,6 +91,8 @@ pub struct Note {
     pub editor: Entity<EditorState>,
     store: Arc<Mutex<Store>>,
     generation: u64,
+    base: Document,
+    saving: bool,
     status: String,
     observed_text: String,
     save: Option<Task<()>>,
@@ -98,7 +126,7 @@ impl Note {
         let observed_text = doc.text.clone();
         let editor = cx.new(|cx| {
             EditorState::new(window, cx)
-                .with_text(doc.text)
+                .with_text(doc.text.clone())
                 .with_placeholder("Write a note…")
         });
         let edits = cx.observe(&editor, |this, editor, cx| {
@@ -113,11 +141,13 @@ impl Note {
         let quit = cx.on_app_quit(|this, cx| this.flush(cx));
         cx.on_release(|this, cx| this.flush(cx).detach()).detach();
         Self {
-            id: doc.document_id,
+            id: doc.document_id.clone(),
             path,
             editor,
             store,
             generation: 0,
+            base: doc,
+            saving: false,
             status: "Saved locally".into(),
             observed_text,
             save: None,
@@ -126,10 +156,18 @@ impl Note {
         }
     }
     fn queue_save(&mut self, cx: &mut Context<Self>) {
+        // Never cancel the completion of an in-flight write. Later edits are
+        // rebased onto its result before the next save is queued.
+        if self.saving {
+            return;
+        }
+        self.saving = true;
         let store = self.store.clone();
         let path = self.path.clone();
         let generation = self.generation;
         let text = self.editor.read(cx).text().to_owned();
+        let submitted = text.clone();
+        let base = self.base.clone();
         self.save = Some(cx.spawn(async move |this, cx| {
             cx.background_executor()
                 .timer(std::time::Duration::from_millis(300))
@@ -140,27 +178,36 @@ impl Note {
                     store
                         .lock()
                         .map_err(|_| anyhow::anyhow!("Notes store unavailable"))?
-                        .save(&path, generation, &text)
+                        .save(&path, generation, &base, &text)
                 })
                 .await;
             let _ = this.update(cx, |this, cx| {
-                if this.generation == generation {
-                    this.status = match result {
-                        Ok(saved) => {
-                            if this.editor.read(cx).text() != saved {
-                                this.editor.update(cx, |editor, cx| {
-                                    let length = editor.text().len();
-                                    editor.replace_range(0..length, &saved, cx);
-                                });
-                                "Merged external changes".into()
-                            } else {
-                                "Saved locally".into()
-                            }
+                this.saving = false;
+                this.status = match result.and_then(|saved| {
+                    let merged =
+                        merge_typing(&submitted, this.editor.read(cx).text(), &saved.text)?;
+                    Ok((saved, merged))
+                }) {
+                    Ok((saved, merged)) => {
+                        let more_typing = merged != saved.text;
+                        this.base = saved;
+                        if this.editor.read(cx).text() != merged {
+                            this.observed_text = merged.clone();
+                            this.editor.update(cx, |editor, cx| {
+                                let length = editor.text().len();
+                                editor.replace_range(0..length, &merged, cx);
+                            });
                         }
-                        Err(e) => format!("Not saved: {e}"),
-                    };
-                    cx.notify();
-                }
+                        if more_typing {
+                            this.queue_save(cx);
+                            "Saving…".into()
+                        } else {
+                            "Saved locally".into()
+                        }
+                    }
+                    Err(e) => format!("Not saved: {e}"),
+                };
+                cx.notify();
             });
         }));
         cx.notify();
@@ -170,9 +217,10 @@ impl Note {
         let path = self.path.clone();
         let generation = self.generation;
         let text = self.editor.read(cx).text().to_owned();
+        let base = self.base.clone();
         cx.background_executor().spawn(async move {
             if let Ok(mut store) = store.lock() {
-                if let Err(e) = store.save(&path, generation, &text) {
+                if let Err(e) = store.save(&path, generation, &base, &text) {
                     log::error!("could not flush note: {e}");
                 }
             }
@@ -262,7 +310,7 @@ impl Notebook {
                     }
                     let heads = restored
                         .iter()
-                        .map(|(path, doc)| (path.clone(), doc.revision))
+                        .map(|(path, doc)| (path.clone(), doc.clone()))
                         .collect();
                     let paths = vault
                         .index()
@@ -275,6 +323,7 @@ impl Notebook {
                         Arc::new(Mutex::new(Store {
                             vault,
                             written: HashMap::new(),
+                            submitted: HashMap::new(),
                             heads,
                         })),
                         paths,
@@ -377,7 +426,7 @@ impl Notebook {
                         Some(text) => store.vault.create_note(&key, &text),
                         None => store.vault.open_document(&key),
                     }?;
-                    store.heads.insert(key, doc.revision);
+                    store.heads.insert(key, doc.clone());
                     Ok::<_, anyhow::Error>(doc)
                 })
                 .await;
@@ -475,6 +524,46 @@ impl Render for Notebook {
 mod tests {
     use super::*;
     #[test]
+    fn typing_during_a_disk_merge_survives_completion_and_shutdown() {
+        let root = tempfile::tempdir().unwrap();
+        let folder = root.path().join("notes");
+        std::fs::create_dir(&folder).unwrap();
+        let mut vault = Vault::open(&folder, root.path().join("data")).unwrap();
+        let doc = vault
+            .create_note("Note.md", "Title\n\nLocal\n\nDisk\n")
+            .unwrap();
+        let mut store = Store {
+            vault,
+            written: HashMap::new(),
+            submitted: HashMap::new(),
+            heads: HashMap::from([("Note.md".into(), doc.clone())]),
+        };
+        std::fs::write(folder.join("Note.md"), "Title\n\nLocal\n\nExternal\n").unwrap();
+        let submitted = "Title\n\nFirst typing\n\nDisk\n";
+        let later = "Title\n\nLater typing\n\nDisk\n";
+        let saved = store.save("Note.md", 1, &doc, submitted).unwrap();
+        let expected = "Title\n\nLater typing\n\nExternal\n";
+        assert_eq!(
+            merge_typing(submitted, later, &saved.text).unwrap(),
+            expected
+        );
+        // Shutdown can flush before the first save's UI completion is observed.
+        let flushed = store.save("Note.md", 2, &doc, later).unwrap();
+        assert_eq!(flushed.text, expected);
+        assert_eq!(
+            std::fs::read_to_string(folder.join("Note.md")).unwrap(),
+            expected
+        );
+        // A late older request must not remove either edit.
+        store.save("Note.md", 1, &doc, submitted).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(folder.join("Note.md")).unwrap(),
+            expected
+        );
+        assert!(merge_typing("line\n", "typing\n", "external\n").is_err());
+    }
+
+    #[test]
     fn note_edits_survive_conflict_and_old_saves_cannot_replace_newer_edits() {
         let root = tempfile::tempdir().unwrap();
         let folder = root.path().join("notes");
@@ -484,17 +573,18 @@ mod tests {
         let mut store = Store {
             vault,
             written: HashMap::new(),
-            heads: HashMap::from([("Note.md".into(), doc.revision)]),
+            heads: HashMap::from([("Note.md".into(), doc.clone())]),
+            submitted: HashMap::new(),
         };
-        store.save("Note.md", 1, "first\n").unwrap();
-        store.save("Note.md", 3, "third\n").unwrap();
-        store.save("Note.md", 2, "second\n").unwrap();
+        let first = store.save("Note.md", 1, &doc, "first\n").unwrap();
+        let third = store.save("Note.md", 3, &first, "third\n").unwrap();
+        store.save("Note.md", 2, &first, "second\n").unwrap();
         assert_eq!(
             std::fs::read_to_string(folder.join("Note.md")).unwrap(),
             "third\n"
         );
         std::fs::write(folder.join("Note.md"), "external\n").unwrap();
-        assert!(store.save("Note.md", 4, "local fourth\n").is_err());
+        assert!(store.save("Note.md", 4, &third, "local fourth\n").is_err());
         assert_eq!(
             std::fs::read_to_string(folder.join("Note.md")).unwrap(),
             "external\n"

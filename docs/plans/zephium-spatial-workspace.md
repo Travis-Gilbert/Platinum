@@ -19,7 +19,7 @@ model overrides in Theorem.
   predecessor and owned PNG previews. The native Trail view pages through
   history and reopens visits. Repeated URLs remain separate visits. Capture
   copies pixels while locked and compresses off the UI thread; it never retains
-  recyclable Servo surfaces. Queues, source pixels and encoded images are bounded.
+  recyclable Servo surfaces. Preview slots, source pixels and encoded images are bounded.
 - One Vault-authoritative note and one editor entity are shared by the sidebar,
   canvas card and expanded Notes place. Selection survives promotion. Debounced
   saves reject stale generations, preserve disk conflicts and observe Undo.
@@ -171,3 +171,53 @@ Two isolated shared clones remain as this worktree's build dependencies:
 refused the dependency source outside the chat workspace, so clones were used.
 They retain only this task's companion changes, also preserved in repository
 patch files. They are required while this worktree's dependency links point to them.
+
+
+## PR #17 review repairs
+
+All six supplied findings were valid. The repairs retain the same branch and
+existing ownership boundaries:
+
+1. Note saves carry the editor's base document/revision. An in-flight save's
+   completion is never canceled by later typing. `diffy` three-way merges that
+   typing onto the returned document before advancing the editor base. The
+   store also rebases a shutdown flush that reaches it before UI completion.
+   Overlapping edits fail closed and leave the editor and authority versions
+   intact. The existing Vault still owns revision admission and disk conflicts.
+2. Tab activation leaves a place through `leave_place`, restoring the compact
+   board composer. A headless rendered regression checks the board composer
+   returns and the full Theorem card is absent.
+3. Sessions persist `next_tab_id`, including the closed-tab allocation watermark.
+   Imported tabs honor it too. Legacy sessions without this field start a new
+   visit namespace once: their historical visits remain available, but new tabs
+   cannot accidentally attach to a closed legacy tab's trail.
+4. Small visit records retain FIFO order independently of the four-image budget.
+   Preview saturation or encoding failure omits only the optional image; URL,
+   title, visit timestamp, predecessor and aggregate history still get written.
+   The writer drains queued records on normal shutdown. A deliberately stalled
+   consumer regression verifies all twelve arrivals with only four previews.
+5. Typed decision failures distinguish proven pre-dispatch failure, unknown
+   outcome and a received invalid/refused response. Only proven pre-dispatch
+   failures permit the configured fallback. Send/read failures remain pending
+   and are replayed without another provider call. Socket fixtures drop and
+   truncate real HTTP replies to test that classification.
+6. The primary attempt is in the initial pending receipt. A fallback attempt and
+   its reason are persisted before calling the second provider; a failed write
+   prevents dispatch. An interruption test inspects the saved receipt inside the
+   provider callback and verifies replay does not call either provider again.
+
+`diffy` 0.4.2 supplies the three-way text merge rather than a custom diff/merge
+algorithm. Its installed Rust source/docs were inspected; Context7 returned a
+Ruby project with the same name, so that unrelated documentation was not used.
+
+### How the five spatial criteria are implemented
+
+| Criterion | Implementation and user behavior |
+| --- | --- |
+| Keep page cards alive across tab changes | `Browser.canvas` retains one `SpatialCanvas`; `close_stale_canvas` synchronizes browser-owned tab/page references instead of replacing it. `BoardState` saves card IDs, geometry, camera, groups and connections. Inactive loaded pages use cached presentation; sleeping pages wake when opened. |
+| Animate between browsing and board | `toggle_canvas`, `focus_current`, `overview` and `animate_to` move the camera using GPUI springs. A card opens framed at 0.75 zoom; Focus page animates to 1.0 before returning to ordinary browsing. Camera scale is distinct from the page's layout viewport, and reduced motion bypasses movement. |
+| Show opener provenance | Each `BoardPage` receives `TabTree.opener`. The canvas places a newly opened child beside that source and draws the connector. Reparenting the tab changes organization while preserving the original opener. |
+| Stable previews and expandable history | The visit writer copies owned pixels from the live surface, encodes bounded PNG thumbnails off the UI thread and writes individual SQLite visits. Visit trail opens a separate paged history view (50 entries per page), with timestamps, previews and reopening; repeated URLs stay separate visits. Optional previews may be absent, and rapid-navigation frame attribution remains the previously documented limitation. |
+| Sidebar note becomes the same board document | `NotesEvent::Promote` passes the existing `Entity<Note>` to `SpatialCanvas::add_note`. Sidebar, card and expanded Notes place share its Vault document identity and editor entity. Promotion saves a path/placement reference, not another document; overview shows a compact preview. |
+
+Review verification results are recorded in the accompanying evidence check summary.

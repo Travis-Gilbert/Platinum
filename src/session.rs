@@ -283,6 +283,7 @@ mod tests {
     fn session(sidebar_width: f32) -> Session {
         Session {
             visit_session: 0,
+            next_tab_id: None,
             voice: Default::default(),
             board: format::BoardState::default(),
             sidebar: false,

@@ -1,11 +1,12 @@
-//! Bounded, serial history writer. Rendering owns the copy; SQLite owns the
+//! Serial history writer with bounded optional previews. Rendering owns the copy; SQLite owns the
 //! encoded visit. Capture never extends the lifetime of a Servo frame.
 use frame_profile::ProfileStore;
 use gpui_kit::{App, Task};
 use std::{sync::mpsc, time::Duration};
 
 pub struct Writer {
-    send: Option<mpsc::SyncSender<Capture>>,
+    send: Option<mpsc::Sender<Capture>>,
+    previews: mpsc::SyncSender<()>,
     worker: Option<std::thread::JoinHandle<()>>,
     _reports: Task<()>,
 }
@@ -22,33 +23,21 @@ impl Writer {
         window: gpui_kit::AnyWindowHandle,
         cx: &mut App,
     ) -> anyhow::Result<Self> {
-        // At most four owned frames (135 MiB maximum), compressed off the UI thread.
-        let (send, receive) = mpsc::sync_channel::<Capture>(4);
+        // At most four retained frames (135 MiB maximum), compressed off the UI thread.
+        // Small visit records queue independently of the four-frame budget.
+        // Preview pressure must never drop history.
+        let (send, receive) = mpsc::channel::<Capture>();
+        let (previews, slots) = mpsc::sync_channel::<()>(4);
         let (errors, reports) = mpsc::sync_channel(8);
         let worker = std::thread::Builder::new()
             .name("platinum-visits".into())
             .spawn(move || {
                 while let Ok(capture) = receive.recv() {
-                    let result = (|| -> anyhow::Result<()> {
-                        let preview = capture
-                            .pixels
-                            .map(|pixels| {
-                                let mut bytes = std::io::Cursor::new(Vec::new());
-                                image::DynamicImage::ImageRgba8(pixels)
-                                    .thumbnail(480, 300)
-                                    .write_to(&mut bytes, image::ImageFormat::Png)?;
-                                Ok::<_, image::ImageError>(bytes.into_inner())
-                            })
-                            .transpose()?;
-                        store.record_visit_at(
-                            &capture.tab,
-                            &capture.url,
-                            &capture.title,
-                            preview.as_deref(),
-                            capture.visited,
-                        )?;
-                        Ok(())
-                    })();
+                    let had_preview = capture.pixels.is_some();
+                    let result = persist(&store, capture);
+                    if had_preview {
+                        let _ = slots.recv();
+                    }
                     if let Err(error) = result {
                         let _ = errors.try_send(error.to_string());
                     }
@@ -76,6 +65,7 @@ impl Writer {
         });
         Ok(Self {
             send: Some(send),
+            previews,
             worker: Some(worker),
             _reports: task,
         })
@@ -113,17 +103,19 @@ impl Writer {
                     .flatten()
             })
             .flatten();
-        self.send
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("Visit writer has closed"))?
-            .try_send(Capture {
+        enqueue(
+            self.send
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Visit writer has closed"))?,
+            &self.previews,
+            Capture {
                 visited,
                 tab,
                 url: url.into(),
                 title: page.title().to_string(),
                 pixels,
-            })
-            .map_err(|_| anyhow::anyhow!("History storage is busy; this visit could not be saved"))
+            },
+        )
     }
 }
 
@@ -132,5 +124,89 @@ impl Drop for Writer {
         if let Some(worker) = self.drain() {
             let _ = worker.join();
         }
+    }
+}
+
+// Only images consume scarce preview slots. Lightweight records preserve FIFO
+// predecessor ordering even when every preview slot is occupied.
+fn enqueue(
+    send: &mpsc::Sender<Capture>,
+    previews: &mpsc::SyncSender<()>,
+    mut capture: Capture,
+) -> anyhow::Result<()> {
+    if capture.pixels.is_some() && previews.try_send(()).is_err() {
+        capture.pixels = None;
+    }
+    send.send(capture)
+        .map_err(|_| anyhow::anyhow!("Visit writer has closed"))
+}
+
+fn persist(store: &ProfileStore, capture: Capture) -> anyhow::Result<()> {
+    let preview = capture.pixels.and_then(|pixels| {
+        let mut bytes = std::io::Cursor::new(Vec::new());
+        match image::DynamicImage::ImageRgba8(pixels)
+            .thumbnail(480, 300)
+            .write_to(&mut bytes, image::ImageFormat::Png)
+        {
+            Ok(()) if bytes.get_ref().len() <= 512 * 1024 => Some(bytes.into_inner()),
+            _ => {
+                log::warn!("Visit preview could not be encoded; saving history without it");
+                None
+            }
+        }
+    });
+    store.record_visit_at(
+        &capture.tab,
+        &capture.url,
+        &capture.title,
+        preview.as_deref(),
+        capture.visited,
+    )?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn full_preview_queue_retains_every_visit_and_history_update() {
+        let folder = tempfile::tempdir().unwrap();
+        let store = ProfileStore::open(folder.path()).unwrap();
+        let (send, receive) = mpsc::channel();
+        let (previews, slots) = mpsc::sync_channel(4);
+        // Deliberately stall the consumer until all arrivals are queued.
+        for visited in 0..12 {
+            enqueue(
+                &send,
+                &previews,
+                Capture {
+                    visited,
+                    tab: "tab-1".into(),
+                    url: "https://example.org/".into(),
+                    title: format!("Visit {visited}"),
+                    pixels: Some(image::RgbaImage::new(2, 2)),
+                },
+            )
+            .unwrap();
+        }
+        drop(send);
+        for (index, capture) in receive.into_iter().enumerate() {
+            assert_eq!(capture.pixels.is_some(), index < 4);
+            persist(&store, capture).unwrap();
+            if index < 4 {
+                slots.recv().unwrap();
+            }
+        }
+        let visits = store.visits(None, 100).unwrap();
+        assert_eq!(visits.len(), 12);
+        assert_eq!(visits.iter().filter(|v| v.preview.is_some()).count(), 4);
+        for pair in visits.windows(2) {
+            assert_eq!(pair[0].predecessor, Some(pair[1].id));
+        }
+        assert!(visits.last().unwrap().predecessor.is_none());
+        assert_eq!(
+            store.suggestions("", false, 10).unwrap()[0].title,
+            "Visit 11"
+        );
     }
 }

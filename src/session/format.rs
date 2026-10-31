@@ -60,6 +60,8 @@ pub struct SavedTab {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Session {
     pub visit_session: i64,
+    /// Allocation watermark survives closing tabs. None identifies legacy sessions.
+    pub next_tab_id: Option<u64>,
     pub voice: crate::spoken::Preferences,
     /// Spatial presentation, independent of the live tab and dock lifetimes.
     pub board: BoardState,
@@ -129,7 +131,16 @@ impl Session {
     /// Add a tab for each of `contents` after the others, at the top of the
     /// tree, leaving out what a tab shows already.
     pub fn add_tabs(&mut self, contents: impl IntoIterator<Item = Content>) {
-        let mut id = self.tabs.iter().map(|tab| tab.id + 1).max().unwrap_or(0);
+        if self.next_tab_id.is_none() {
+            self.visit_session = 0;
+        }
+        let mut id = self
+            .tabs
+            .iter()
+            .map(|tab| tab.id + 1)
+            .max()
+            .unwrap_or(0)
+            .max(self.next_tab_id.unwrap_or(0));
         for content in contents {
             let shown = self.tabs.iter().any(|tab| match content.url() {
                 Some(url) => tab.content.url() == Some(url),
@@ -149,6 +160,7 @@ impl Session {
             });
             id += 1;
         }
+        self.next_tab_id = Some(id);
     }
 }
 
@@ -301,6 +313,7 @@ pub fn session_to_json(session: &Session) -> Value {
         "sidebar_width": session.sidebar_width,
         "places_pinned": session.places_pinned,
         "visit_session": session.visit_session,
+        "next_tab_id": session.next_tab_id,
         "board": session.board,
         "voice": session.voice,
         "active": session.active,
@@ -405,6 +418,7 @@ pub fn session_from_json(value: &Value) -> Option<Session> {
         .and_then(layout_from_json)
         .unwrap_or_default();
     Some(Session {
+        next_tab_id: value.get("next_tab_id").and_then(Value::as_u64),
         visit_session: value
             .get("visit_session")
             .and_then(Value::as_i64)
@@ -512,6 +526,7 @@ mod tests {
     fn sessions_round_trip() {
         let session = Session {
             visit_session: 0,
+            next_tab_id: None,
             voice: Default::default(),
             board: BoardState::default(),
             sidebar: true,
@@ -696,6 +711,19 @@ mod tests {
 #[cfg(test)]
 mod spatial_tests {
     use super::*;
+    #[test]
+    fn imported_tabs_respect_the_closed_tab_watermark() {
+        let mut session = Session {
+            next_tab_id: Some(12),
+            visit_session: 42,
+            ..Default::default()
+        };
+        session.add_tabs([Content::Start]);
+        assert_eq!(session.tabs[0].id, 12);
+        assert_eq!(session.next_tab_id, Some(13));
+        assert_eq!(session_from_json(&session_to_json(&session)).unwrap(), session);
+    }
+
     #[test]
     fn board_round_trip_preserves_identity_geometry_camera_and_visit_namespace() {
         let session = Session {

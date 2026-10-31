@@ -56,6 +56,8 @@ tokenizers = { version = "0.23", default-features = false, features = ["onig"] }
 hf-hub = { version = "0.4.3", default-features = false, features = ["ureq"] }
 
 anyhow = "1"
+# Three-way reconciliation of typing that continued during a note save.
+diffy = "0.4.2"
 # Result dates, as words in the local time zone. Already in Servo's graph.
 chrono = "0.4"
 # Search snippets arrive as HTML fragments; these parse them to text and

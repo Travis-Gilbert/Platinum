@@ -53,3 +53,37 @@ Inspect both report JSON files and `native-focus.json`; an inactive native windo
 explicitly records that native insertion was not exercised. A public-site text
 change can fail its expectation independently of application behavior. Stop the
 fixture server after the run. Do not reuse a personal browsing profile.
+
+## PR #17 repair verification
+
+The six review findings are repaired on `claude/platinum-theorem-interface-990ec3`.
+This run uses the same Rust/media environment with SSD-backed Cargo targets,
+four build jobs and incremental compilation disabled. Cargo's automatic cache
+GC is disabled with `--config 'cache.auto-clean-frequency="never"'`; the first
+attempt was interrupted while Cargo was doing unrelated global cache cleanup.
+
+| Check | Repair result |
+| --- | --- |
+| `script/media-env cargo test --locked -p frame --bin frame -- --test-threads=1` | 248 passed, 2 ignored |
+| `script/media-env cargo build --locked --features snapshot --bin frame` | Passed |
+| Native board, notes, public browsing and supplied-transcript insertion | Passed; `review-report.json` |
+| Fresh-process board/note restore | Passed; `review-restore-report.json` |
+| Native dictation window active | Confirmed; `review-native-focus.json` |
+| `cargo test --locked --manifest-path rustyredcore_THG/Cargo.toml -p agent --no-default-features --lib provider::decision` | 4 passed, including dropped/truncated HTTP replies |
+| `cargo test --locked --manifest-path rustyredcore_THG/Cargo.toml -p rustyred-thg-server --lib typed_decisions::tests` | 2 passed: unknown outcome/replay and interrupted fallback receipts |
+| Theorem patch clean-index forward/reverse checks and bootstrap | Passed |
+| Source whitespace check | Passed, excluding unified patch context lines |
+| `cargo fmt -p frame -- --check` | Existing broad formatting differences remain; no unrelated reformat applied |
+
+The five new Platinum regressions cover typing during a disk merge (including
+shutdown before UI completion), board composer restoration through tab shortcuts,
+closed-tab identity across restart, imported-tab allocation, and twelve queued
+visits with only four preview slots. The separate backend checks below exercise
+the receipt/effect boundary and actual dropped/truncated loopback HTTP replies.
+No live paid provider call is used by these regression checks.
+
+The server test build encountered an internal-volume space error before test
+execution. Retrying with the log and temporary/build files on the external SSD
+completed successfully (two build jobs for the final retry). Both receipt tests
+then executed and passed; they use the real graph receipt path with an injected
+provider effect, not a live paid provider or a deployed server.

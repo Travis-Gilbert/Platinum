@@ -471,6 +471,7 @@ impl Browser {
         let session = store.as_ref().and_then(Store::load_session);
         let visit_session = session
             .as_ref()
+            .filter(|s| s.next_tab_id.is_some())
             .map(|s| s.visit_session)
             .filter(|s| *s > 0)
             .unwrap_or_else(frame_profile::now);
@@ -485,6 +486,7 @@ impl Browser {
         let workspace = session
             .as_ref()
             .is_none_or(|session| session.tabs.is_empty());
+        let saved_next_id = session.as_ref().and_then(|s| s.next_tab_id).unwrap_or(0);
         let restored = Self::restore(session.unwrap_or_default(), &pins, &dock, window, cx);
         let dock_events = cx.subscribe_in(&dock, window, Self::dock_event);
         let downloads = cx.new(|_| Downloads::new(Downloads::default_folder()));
@@ -532,7 +534,8 @@ impl Browser {
             .iter()
             .map(|tab| tab.id + 1)
             .max()
-            .unwrap_or(0);
+            .unwrap_or(0)
+            .max(saved_next_id);
         let next_pin = pins.iter().map(|pin| pin.id + 1).max().unwrap_or(0);
         let speech = cx.new(|cx| {
             gpui_kit::component::speech::SpeechState::new(cx)
@@ -1040,7 +1043,7 @@ impl Browser {
             return;
         };
         let (id, panel) = (tab.id, tab.panel_id());
-        self.place = None;
+        self.leave_place(window, cx);
         self.close_navigator(window, cx);
         self.dock
             .update(cx, |dock, cx| dock.select_panel(panel, window, cx));
@@ -2154,6 +2157,7 @@ impl Browser {
             .collect();
         let session = Session {
             visit_session: self.visit_session,
+            next_tab_id: Some(self.next_id),
             voice: self.speaker.preferences.clone(),
             board: self.saved_board(cx),
             sidebar: self.sidebar,

@@ -246,37 +246,83 @@ index c8ee19882..e78129995 100644
          // Product front-door verbs (MCP-pinned set minus the bound memory verbs).
          tool("status", HARNESS, "Read harness status: runs, rooms, cost window, receipts. Scopes: all, run, room.", obj()),
 diff --git a/rustyredcore_THG/crates/agent/src/provider/client.rs b/rustyredcore_THG/crates/agent/src/provider/client.rs
-index fbc4f4385..746963a5e 100644
+index fbc4f4385..299aebadf 100644
 --- a/rustyredcore_THG/crates/agent/src/provider/client.rs
 +++ b/rustyredcore_THG/crates/agent/src/provider/client.rs
-@@ -198,6 +198,32 @@ pub fn resolve_api_key(config: &ModelConfig) -> (Option<String>, ApiKeySource) {
+@@ -198,6 +198,78 @@ pub fn resolve_api_key(config: &ModelConfig) -> (Option<String>, ApiKeySource) {
  }
  
  impl HttpProviderClient {
 +    /// A bounded structured-answer call through the existing provider owner.
 +    /// The caller supplies the contract schema and validates the returned JSON.
-+    pub fn typed_json(&self, instruction: &str, state: &Value, schema: Value)
-+        -> Result<(Vec<u8>, zephium_decision::DecisionUsage), &'static str> {
++    pub fn typed_json(
++        &self,
++        instruction: &str,
++        state: &Value,
++        schema: Value,
++    ) -> Result<(Vec<u8>, zephium_decision::DecisionUsage), super::decision::CallError> {
++        use super::decision::CallError;
 +        use std::io::Read;
 +        let body = json!({"model": self.config.model, "stream": false,
 +            "messages": [{"role":"system","content":instruction},{"role":"user","content":state.to_string()}],
 +            "max_tokens": self.config.max_tokens,
 +            "response_format":{"type":"json_schema","json_schema":{"name":"typed_decision","strict":true,"schema":schema}}});
-+        let mut request = self.http.post(chat_completions_url(&self.endpoint())).json(&body);
-+        if let Some(key) = &self.api_key { request = request.bearer_auth(key); }
++        let mut request = self
++            .http
++            .post(chat_completions_url(&self.endpoint()))
++            .json(&body);
++        if let Some(key) = &self.api_key {
++            request = request.bearer_auth(key);
++        }
 +        // No automatic retry: a paid call with an unknown outcome is receipted.
-+        let response = request.send().map_err(|_| "decision_unavailable")?;
-+        if !response.status().is_success() { return Err("decision_provider_refused"); }
++        let response = request
++            .send()
++            .map_err(|_| CallError::UnknownOutcome("decision_unavailable"))?;
++        if !response.status().is_success() {
++            return Err(if response.status().is_client_error() {
++                CallError::Rejected("decision_provider_refused")
++            } else {
++                CallError::UnknownOutcome("decision_provider_unavailable")
++            });
++        }
 +        let mut bytes = Vec::new();
-+        response.take(zephium_decision::MAX_RESPONSE_BYTES as u64 + 1).read_to_end(&mut bytes).map_err(|_| "decision_unavailable")?;
-+        if bytes.len() > zephium_decision::MAX_RESPONSE_BYTES { return Err("decision_response_too_large"); }
-+        let value: Value = serde_json::from_slice(&bytes).map_err(|_| "decision_invalid_answer")?;
-+        let choices = value["choices"].as_array().filter(|choices| choices.len() == 1).ok_or("decision_invalid_answer")?;
++        response
++            .take(zephium_decision::MAX_RESPONSE_BYTES as u64 + 1)
++            .read_to_end(&mut bytes)
++            .map_err(|_| CallError::UnknownOutcome("decision_unavailable"))?;
++        if bytes.len() > zephium_decision::MAX_RESPONSE_BYTES {
++            return Err(CallError::Rejected("decision_response_too_large"));
++        }
++        let value: Value = serde_json::from_slice(&bytes)
++            .map_err(|_| CallError::Rejected("decision_invalid_answer"))?;
++        let choices = value["choices"]
++            .as_array()
++            .filter(|choices| choices.len() == 1)
++            .ok_or(CallError::Rejected("decision_invalid_answer"))?;
 +        let choice = &choices[0];
-+        if choice["finish_reason"] != "stop" || choice["message"].get("tool_calls").is_some_and(|v| !v.is_null()) { return Err("decision_invalid_answer"); }
-+        let content = choice["message"]["content"].as_str().ok_or("decision_invalid_answer")?;
-+        let count = |key: &str| value["usage"][key].as_u64().and_then(|n| u32::try_from(n).ok()).ok_or("decision_usage_missing");
-+        Ok((content.as_bytes().to_vec(), zephium_decision::DecisionUsage { input_tokens: count("prompt_tokens")?, output_tokens: count("completion_tokens")? }))
++        if choice["finish_reason"] != "stop"
++            || choice["message"]
++                .get("tool_calls")
++                .is_some_and(|v| !v.is_null())
++        {
++            return Err(CallError::Rejected("decision_invalid_answer"));
++        }
++        let content = choice["message"]["content"]
++            .as_str()
++            .ok_or(CallError::Rejected("decision_invalid_answer"))?;
++        let count = |key: &str| {
++            value["usage"][key]
++                .as_u64()
++                .and_then(|n| u32::try_from(n).ok())
++                .ok_or(CallError::Rejected("decision_usage_missing"))
++        };
++        Ok((
++            content.as_bytes().to_vec(),
++            zephium_decision::DecisionUsage {
++                input_tokens: count("prompt_tokens")?,
++                output_tokens: count("completion_tokens")?,
++            },
++        ))
 +    }
 +
      pub fn new(config: ModelConfig) -> AgentdResult<Self> {
@@ -284,10 +330,10 @@ index fbc4f4385..746963a5e 100644
          let http = reqwest::blocking::Client::builder()
 diff --git a/rustyredcore_THG/crates/agent/src/provider/decision.rs b/rustyredcore_THG/crates/agent/src/provider/decision.rs
 new file mode 100644
-index 000000000..271758fe8
+index 000000000..e93816bcb
 --- /dev/null
 +++ b/rustyredcore_THG/crates/agent/src/provider/decision.rs
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,303 @@
 +//! Typed decisions use Zephium's bounded, observation-bound contract. This
 +//! adapter owns only Theorem transport/credential integration, not a second
 +//! planner, question validator, or execution authority.
@@ -302,6 +348,28 @@ index 000000000..271758fe8
 +};
 +
 +pub use zephium_decision;
++
++/// Dispatch certainty is explicit: only a proven pre-dispatch failure can
++/// select another paid provider. A received invalid answer is terminal too.
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub enum CallError {
++    NotDispatched(&'static str),
++    UnknownOutcome(&'static str),
++    Rejected(&'static str),
++}
++impl CallError {
++    pub fn code(self) -> &'static str {
++        match self {
++            Self::NotDispatched(code) | Self::UnknownOutcome(code) | Self::Rejected(code) => code,
++        }
++    }
++    pub fn can_fallback(self) -> bool {
++        matches!(self, Self::NotDispatched(_))
++    }
++    pub fn is_unknown(self) -> bool {
++        matches!(self, Self::UnknownOutcome(_))
++    }
++}
 +
 +#[derive(Deserialize)]
 +#[serde(deny_unknown_fields)]
@@ -370,62 +438,68 @@ index 000000000..271758fe8
 +pub fn jev_call(
 +    request: &DecisionRequest,
 +    policy: DecisionCredential,
-+) -> Result<DecisionResponse, &'static str> {
++) -> Result<DecisionResponse, CallError> {
 +    let credential = ModelConfig {
 +        api_key_env: (policy != DecisionCredential::Keychain).then(|| "JEV_API_KEY".into()),
 +        keychain_provider: (policy != DecisionCredential::Environment).then(|| "typesafe".into()),
 +        ..ModelConfig::rule_default()
 +    };
 +    let (key, _) = resolve_api_key(&credential);
-+    let key = key.ok_or("decision_credential_missing")?;
++    let key = key.ok_or(CallError::NotDispatched("decision_credential_missing"))?;
 +    theorem_tls::install_ring_provider();
 +    let client = reqwest::blocking::Client::builder()
 +        .timeout(Duration::from_secs(15))
 +        .redirect(reqwest::redirect::Policy::none())
 +        .build()
-+        .map_err(|_| "decision_unavailable")?;
++        .map_err(|_| CallError::NotDispatched("decision_unavailable"))?;
 +    let mut authorization = reqwest::header::HeaderValue::from_str(&format!("Bearer {key}"))
-+        .map_err(|_| "decision_credential_invalid")?;
++        .map_err(|_| CallError::NotDispatched("decision_credential_invalid"))?;
 +    authorization.set_sensitive(true);
 +    let response = client
 +        .post("https://api.typesafe.ai/v1/systemone")
 +        .header(reqwest::header::AUTHORIZATION, authorization)
 +        .header(reqwest::header::CONTENT_TYPE, "application/json")
-+        .body(request.encode().map_err(|_| "invalid_decision_questions")?)
++        .body(
++            request
++                .encode()
++                .map_err(|_| CallError::NotDispatched("invalid_decision_questions"))?,
++        )
 +        .send()
-+        .map_err(|_| "decision_unavailable")?;
++        .map_err(|_| CallError::UnknownOutcome("decision_unavailable"))?;
 +    if !response.status().is_success() {
-+        return Err(if response.status().as_u16() == 401 {
-+            "decision_credential_rejected"
++        return Err(if response.status().is_client_error() {
++            CallError::Rejected("decision_provider_refused")
 +        } else {
-+            "decision_provider_refused"
++            CallError::UnknownOutcome("decision_provider_unavailable")
 +        });
 +    }
 +    let mut bytes = Vec::new();
 +    response
 +        .take(MAX_RESPONSE_BYTES as u64 + 1)
 +        .read_to_end(&mut bytes)
-+        .map_err(|_| "decision_unavailable")?;
++        .map_err(|_| CallError::UnknownOutcome("decision_unavailable"))?;
 +    request
 +        .decode(&bytes)
-+        .map_err(|_| "decision_invalid_answer")
++        .map_err(|_| CallError::Rejected("decision_invalid_answer"))
 +}
 +
 +pub fn emulation_call(
 +    request: &DecisionRequest,
 +    mut config: ModelConfig,
-+) -> Result<DecisionResponse, &'static str> {
++) -> Result<DecisionResponse, CallError> {
 +    config.request_timeout_secs = 15;
 +    config.max_tokens = 16_384;
-+    let client = HttpProviderClient::new(config).map_err(|_| "decision_unavailable")?;
++    let client = HttpProviderClient::new(config)
++        .map_err(|_| CallError::NotDispatched("decision_unavailable"))?;
 +    let (bytes, usage) = client.typed_json(
 +        INSTRUCTION,
-+        &serde_json::to_value(request).map_err(|_| "invalid_decision_questions")?,
++        &serde_json::to_value(request)
++            .map_err(|_| CallError::NotDispatched("invalid_decision_questions"))?,
 +        request.answer_schema(),
 +    )?;
 +    request
 +        .decode_emulation(&bytes, usage)
-+        .map_err(|_| "decision_invalid_answer")
++        .map_err(|_| CallError::Rejected("decision_invalid_answer"))
 +}
 +
 +/// Only validated, bound answers leave this boundary. A malformed answer rejects
@@ -466,6 +540,45 @@ index 000000000..271758fe8
 +#[cfg(test)]
 +mod tests {
 +    use super::*;
++    #[test]
++    fn dropped_and_truncated_http_replies_are_unknown_outcomes() {
++        use std::io::{Read, Write};
++        use std::net::TcpListener;
++        for response in [
++            "",
++            "HTTP/1.1 200 OK\r\nContent-Length: 9999\r\nConnection: close\r\n\r\n{}",
++        ] {
++            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
++            let address = listener.local_addr().unwrap();
++            let server = std::thread::spawn(move || {
++                let (mut stream, _) = listener.accept().unwrap();
++                stream
++                    .set_read_timeout(Some(Duration::from_secs(3)))
++                    .unwrap();
++                let mut bytes = [0; 8192];
++                assert!(
++                    stream.read(&mut bytes).unwrap() > 0,
++                    "request was dispatched"
++                );
++                stream.write_all(response.as_bytes()).unwrap();
++            });
++            let client = HttpProviderClient::new(ModelConfig {
++                provider: crate::config::ModelProvider::OpenAiCompatible,
++                base_url: format!("http://{address}/v1"),
++                model: "fixture".into(),
++                request_timeout_secs: 3,
++                ..ModelConfig::rule_default()
++            })
++            .unwrap();
++            let error = client
++                .typed_json("test", &json!({}), json!({"type":"object"}))
++                .unwrap_err();
++            assert!(error.is_unknown(), "{error:?}");
++            assert!(!error.can_fallback());
++            server.join().unwrap();
++        }
++    }
++
 +    #[test]
 +    fn choice_tools_use_the_contracts_reserved_abstention() {
 +        let mut value = json!({"operation_key":"choose", "observation_ref":"capture:1",
@@ -939,15 +1052,15 @@ index 34020e524..aaf0175a9 100644
          let error = execution_binding(
 diff --git a/rustyredcore_THG/crates/rustyred-thg-server/src/typed_decisions.rs b/rustyredcore_THG/crates/rustyred-thg-server/src/typed_decisions.rs
 new file mode 100644
-index 000000000..e1e970843
+index 000000000..1ab07ea8f
 --- /dev/null
 +++ b/rustyredcore_THG/crates/rustyred-thg-server/src/typed_decisions.rs
-@@ -0,0 +1,159 @@
+@@ -0,0 +1,297 @@
 +//! Authenticated typed-decision execution and durable graph receipts. Inserting
 +//! the pending node atomically precedes disclosure/spend; an unknown outcome is
 +//! never retried automatically, including after a server restart.
 +use agent::config::{ModelConfig, ModelProvider};
-+use agent::provider::decision::{self, Command};
++use agent::provider::decision::{self, CallError, Command};
 +use rustyred_thg_core::NodeRecord;
 +use rustyred_thg_mcp::{McpError, McpGraphBackend, ResolvedIdentity};
 +use serde_json::{json, Value};
@@ -962,6 +1075,35 @@ index 000000000..e1e970843
 +    backend: &mut impl McpGraphBackend,
 +    identity: &ResolvedIdentity,
 +    value: Value,
++) -> Result<Value, McpError> {
++    execute_with(
++        backend,
++        identity,
++        value,
++        model_config,
++        |_, request, credential, config| {
++            match config {
++                None => decision::jev_call(request, credential),
++                Some(config) => decision::emulation_call(request, config),
++            }
++            .and_then(|response| decision::answers(request, response).map_err(CallError::Rejected))
++        },
++    )
++}
++
++// Inject transport at the effect boundary so interruption tests exercise the
++// real graph writes and replay logic without a paid external request.
++fn execute_with<B: McpGraphBackend>(
++    backend: &mut B,
++    identity: &ResolvedIdentity,
++    value: Value,
++    resolve: impl Fn(&ModelReference) -> Result<Option<ModelConfig>, McpError>,
++    mut invoke: impl FnMut(
++        &mut B,
++        &decision::zephium_decision::DecisionRequest,
++        theorem_surface_contracts::model_routing::DecisionCredential,
++        Option<ModelConfig>,
++    ) -> Result<Value, CallError>,
 +) -> Result<Value, McpError> {
 +    let command: Command = serde_json::from_value(value)
 +        .map_err(|_| McpError::invalid_params("invalid typed-decision command"))?;
@@ -1019,12 +1161,13 @@ index 000000000..e1e970843
 +        return Ok(receipt);
 +    }
 +    // Resolve both routes before a paid call. Catalog owns endpoint/key refs.
-+    let primary = model_config(&command.model)?;
-+    let fallback = command.fallback.as_ref().map(model_config).transpose()?;
++    let primary = resolve(&command.model)?;
++    let fallback = command.fallback.as_ref().map(resolve).transpose()?;
 +    let mut receipt = json!({"schema":"theorem.typed-decision.v1", "id":id, "state":"pending", "fingerprint":fingerprint,
 +        "observation_ref":command.observation_ref, "observation_version":source.version,
 +        "request":request, "requested":command.model, "fallback":command.fallback, "credential_policy":command.credential,
 +        "principal":identity.principal.as_ref().map(|p| &p.principal_id),
++        "attempted":[command.model],
 +        "authority":"validated evidence only; apply operations through normal admission"});
 +    let created = backend
 +        .insert_node_if_never_existed(NodeRecord::new(&id, ["TypedDecision"], receipt.clone()))
@@ -1034,24 +1177,23 @@ index 000000000..e1e970843
 +            "decision already pending; read its receipt before retrying",
 +        ));
 +    }
-+    let invoke = |config: Option<ModelConfig>| {
-+        match config {
-+            None => decision::jev_call(&request, command.credential),
-+            Some(config) => decision::emulation_call(&request, config),
-+        }
-+        .and_then(|response| decision::answers(&request, response))
-+    };
 +    let mut actual = command.model.clone();
-+    receipt["attempted"] = json!([command.model]);
-+    let result = match invoke(primary) {
-+        Err(reason) if command.fallback.is_some() => {
-+            receipt["fallback_reason"] = json!(reason);
++    let result = match invoke(backend, &request, command.credential, primary) {
++        Err(reason) if reason.can_fallback() && command.fallback.is_some() => {
++            receipt["fallback_reason"] = json!(reason.code());
 +            actual = command.fallback.clone().unwrap();
 +            receipt["attempted"]
 +                .as_array_mut()
 +                .unwrap()
 +                .push(json!(&actual));
-+            invoke(fallback.flatten())
++            // Persist the second attempt and why it was selected before any
++            // external call. Persistence failure must prevent dispatch.
++            backend
++                .upsert_node(NodeRecord::new(&id, ["TypedDecision"], receipt.clone()))
++                .map_err(|_| {
++                    McpError::internal("cannot persist fallback attempt; not dispatched")
++                })?;
++            invoke(backend, &request, command.credential, fallback.flatten())
 +        }
 +        result => result,
 +    };
@@ -1062,8 +1204,12 @@ index 000000000..e1e970843
 +            receipt["result"] = result;
 +        }
 +        Err(reason) => {
-+            receipt["state"] = json!("failed");
-+            receipt["error"] = json!(reason);
++            receipt["state"] = json!(if reason.is_unknown() {
++                "pending"
++            } else {
++                "failed"
++            });
++            receipt["error"] = json!(reason.code());
 +        }
 +    }
 +    backend
@@ -1101,6 +1247,111 @@ index 000000000..e1e970843
 +        base_url: binding.base_url.unwrap_or_default(),
 +        ..ModelConfig::rule_default()
 +    }))
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use rustyred_thg_core::InMemoryGraphStore;
++
++    fn fixture() -> (InMemoryGraphStore, ResolvedIdentity, Value, String) {
++        let mut store = InMemoryGraphStore::new();
++        McpGraphBackend::upsert_node(
++            &mut store,
++            NodeRecord::new("source", ["Observation"], json!({"text":"observed"})),
++        )
++        .unwrap();
++        let identity = ResolvedIdentity {
++            deployment_id: "test".into(),
++            tenant: "tenant".into(),
++            actor: None,
++            project_id: None,
++            project_slug: None,
++            resolution_path: "test".into(),
++            principal: None,
++            warnings: vec![],
++        };
++        let command = json!({"operation_key":"once", "observation_ref":"source", "state":{},
++            "questions":{"ok":{"type":"noul","instructions":"Is it present?"}},
++            "fallback":{"provider":"test","model":"fallback"}});
++        let id = format!(
++            "typed-decision:{}",
++            hash(&serde_json::to_vec(&json!(["tenant", null, "once"])).unwrap())
++        );
++        (store, identity, command, id)
++    }
++
++    #[test]
++    fn lost_reply_stays_pending_without_fallback_or_replay_dispatch() {
++        let (mut store, identity, command, id) = fixture();
++        let mut calls = 0;
++        let receipt = execute_with(
++            &mut store,
++            &identity,
++            command.clone(),
++            |_| Ok(None),
++            |store, _, _, _| {
++                calls += 1;
++                let pending = McpGraphBackend::get_node(store, &id).unwrap().unwrap();
++                assert_eq!(pending.properties["state"], "pending");
++                assert_eq!(pending.properties["attempted"].as_array().unwrap().len(), 1);
++                Err(CallError::UnknownOutcome("decision_unavailable"))
++            },
++        )
++        .unwrap();
++        assert_eq!(calls, 1);
++        assert_eq!(receipt["state"], "pending");
++        assert!(receipt.get("actual").is_none());
++        let replay = execute_with(
++            &mut store,
++            &identity,
++            command,
++            |_| panic!("must not resolve again"),
++            |_, _, _, _| panic!("must not dispatch again"),
++        )
++        .unwrap();
++        assert_eq!(receipt, replay);
++    }
++
++    #[test]
++    fn interrupted_fallback_keeps_its_attempt_and_reason() {
++        let (mut store, identity, command, id) = fixture();
++        let mut calls = 0;
++        let interrupted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
++            execute_with(
++                &mut store,
++                &identity,
++                command.clone(),
++                |_| Ok(None),
++                |store, _, _, _| {
++                    calls += 1;
++                    if calls == 1 {
++                        return Err(CallError::NotDispatched("decision_credential_missing"));
++                    }
++                    let pending = McpGraphBackend::get_node(store, &id).unwrap().unwrap();
++                    assert_eq!(pending.properties["attempted"].as_array().unwrap().len(), 2);
++                    assert_eq!(
++                        pending.properties["fallback_reason"],
++                        "decision_credential_missing"
++                    );
++                    panic!("simulated interruption after dispatch");
++                },
++            )
++        }));
++        assert!(interrupted.is_err());
++        assert_eq!(calls, 2);
++        let replay = execute_with(
++            &mut store,
++            &identity,
++            command,
++            |_| panic!("must not resolve again"),
++            |_, _, _, _| panic!("must not dispatch again"),
++        )
++        .unwrap();
++        assert_eq!(replay["state"], "pending");
++        assert_eq!(replay["attempted"].as_array().unwrap().len(), 2);
++        assert_eq!(replay["fallback_reason"], "decision_credential_missing");
++    }
 +}
 diff --git a/rustyredcore_THG/crates/theorem-harness-core/src/organization.rs b/rustyredcore_THG/crates/theorem-harness-core/src/organization.rs
 index b25968b79..2313879b6 100644

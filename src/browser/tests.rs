@@ -1756,3 +1756,68 @@ fn workspace_results_keep_the_query_in_the_saved_session(cx: &mut TestAppContext
     );
     assert_eq!(saved.active, Some(saved.tabs[0].id));
 }
+
+#[gpui_kit::test]
+fn tab_shortcut_leaves_place_and_restores_board_composer(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-t");
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            b.toggle_canvas(window, cx);
+            b.open_place(NativePlace::Agent, window, cx);
+            assert!(b.canvas_shown);
+            assert!(
+                b.theorem
+                    .as_ref()
+                    .unwrap()
+                    .0
+                    .read(cx)
+                    .board_slot()
+                    .is_none()
+            );
+        })
+    });
+    keys(cx, "cmd-1");
+    cx.update(|_, cx| {
+        let b = browser.read(cx);
+        assert!(b.place.is_none());
+        assert!(b.canvas_shown);
+        assert!(
+            b.theorem
+                .as_ref()
+                .unwrap()
+                .0
+                .read(cx)
+                .board_slot()
+                .is_some()
+        );
+    });
+    assert!(!drawn(cx, "theorem-card".into()));
+    assert!(drawn(cx, "theorem-board-composer".into()));
+}
+
+#[gpui_kit::test]
+fn closed_tab_ids_are_not_reused_after_restart(cx: &mut TestAppContext) {
+    let root = tempfile::tempdir().unwrap();
+    cx.update(|cx| session::init(root.path(), cx));
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-t");
+    let closed = *ids(&browser, cx).last().unwrap();
+    keys(cx, "cmd-w");
+    let saved = cx.update(|_, cx| {
+        browser.update(cx, |b, cx| {
+            b.save(cx);
+            b.written.clone().unwrap().0
+        })
+    });
+    assert!(saved.next_tab_id.unwrap() > closed);
+    // Load the actual persisted allocator in a fresh browser entity.
+    let replacement = cx.update(|window, cx| cx.new(|cx| Browser::new(window, cx)));
+    cx.update(|window, cx| {
+        replacement.update(cx, |b, cx| {
+            assert_eq!(b.visit_session, saved.visit_session);
+            b.new_tab_beside(b.active, window, cx);
+            assert!(b.tabs[b.active].id > closed);
+        })
+    });
+}

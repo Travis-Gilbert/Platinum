@@ -412,6 +412,8 @@ impl Render for Workbench {
                 v_flex,
             };
             return v_flex()
+                .id("theorem-board-composer")
+                .debug_selector(|| "theorem-board-composer".into())
                 .key_context(CONTEXT)
                 .track_focus(&self.focus_handle)
                 .on_action(cx.listener(Self::on_stop))
