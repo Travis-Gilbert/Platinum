@@ -1,10 +1,10 @@
 //! Every measure and colour of the editor tab, in one place.
 //!
 //! The values re-express the relationships of the Zephium notes app, from
-//! `zephium-ref/DESIGN-BRIEF.md` sections 3 to 5 (Zephium is MPL-2.0; nothing
-//! here is taken from its code). The app keeps its own background: only the
-//! relations are borrowed, so surfaces step by a few percent of white (ink in
-//! light) and state is luminance, not a hue.
+//! `docs/plans/evidence/notes-zephium-design-2026-10-31.md` sections 3 to 5
+//! (Zephium is MPL-2.0; nothing here is taken from its code). The app keeps its
+//! own background: only the relations are borrowed, so surfaces step by a few
+//! percent of white (ink in light) and state is luminance, not a hue.
 
 use gpui_kit::{Font, Hsla, Pixels, font, px, rgb};
 use zorite_editor::SyntaxStyle;
