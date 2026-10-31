@@ -258,7 +258,8 @@ impl Wiring {
     /// context to load into and drops the request, so the first note is the
     /// builder's (`WebViewBuilder::url`), and every later one the session's.
     pub fn first_page(&mut self, path: &str) -> anyhow::Result<Url> {
-        let token = new_token().ok_or_else(|| anyhow::anyhow!("no token could be made for the page"))?;
+        let token =
+            new_token().ok_or_else(|| anyhow::anyhow!("no token could be made for the page"))?;
         let url = route::note_url(&self.gate.borrow().host, path, &token, None);
         {
             let mut gate = self.gate.borrow_mut();
@@ -826,7 +827,12 @@ mod tests {
         let mut jump = url.clone();
         jump.set_fragment(Some("Heading"));
         assert!(matches!(
-            classify(&jump, true, NavigationType::LinkActivated, &wiring.gate.borrow()),
+            classify(
+                &jump,
+                true,
+                NavigationType::LinkActivated,
+                &wiring.gate.borrow()
+            ),
             Disposition::SameDocument
         ));
     }

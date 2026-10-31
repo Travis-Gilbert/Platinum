@@ -32,9 +32,7 @@ use anyhow::Context as _;
 use clap::Parser;
 use futures::channel::oneshot;
 use serde::Deserialize;
-use servo::{
-    ConsoleLogLevel, JSValue, WebView, WebViewBuilder, WebViewDelegate,
-};
+use servo::{ConsoleLogLevel, JSValue, WebView, WebViewBuilder, WebViewDelegate};
 
 use gpui_kit::BackgroundExecutor;
 use host::service::Vaults;
@@ -157,7 +155,10 @@ fn notes_of(root: &Path, directory: &Path, found: &mut Vec<String>) -> std::io::
 /// The path as a shell would take it.
 fn quoted(path: &Path) -> String {
     let text = path.to_string_lossy();
-    if text.chars().all(|c| c.is_ascii_alphanumeric() || "/._-+=:@".contains(c)) {
+    if text
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || "/._-+=:@".contains(c))
+    {
         text.into_owned()
     } else {
         format!("'{}'", text.replace('\'', "'\\''"))
@@ -204,15 +205,26 @@ async fn settle(view: &WebView, note: &str, executor: &BackgroundExecutor) -> Ou
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let source = args.vault.canonicalize().with_context(|| args.vault.display().to_string())?;
+    let source = args
+        .vault
+        .canonicalize()
+        .with_context(|| args.vault.display().to_string())?;
     let out = std::path::absolute(&args.out)?;
     let profile = std::env::temp_dir().join(format!("frame-notes-check-{}", std::process::id()));
     let root = profile.join("vault");
     copy_tree(&source, &root)?;
     let mut notes = Vec::new();
     notes_of(&root, &root, &mut notes)?;
-    notes.retain(|note| args.note.as_ref().is_none_or(|filter| note.contains(filter.as_str())));
-    anyhow::ensure!(!notes.is_empty(), "no notes to check in {}", source.display());
+    notes.retain(|note| {
+        args.note
+            .as_ref()
+            .is_none_or(|filter| note.contains(filter.as_str()))
+    });
+    anyhow::ensure!(
+        !notes.is_empty(),
+        "no notes to check in {}",
+        source.display()
+    );
     let _ = rustls::crypto::ring::default_provider().install_default();
     let app_profile = profile.clone();
     gpui_kit::application().run(move |cx| {
