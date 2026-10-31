@@ -18,7 +18,7 @@
 
 use std::collections::HashMap;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 #[cfg(test)]
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -85,7 +85,6 @@ struct Inner {
     /// Counts the changes the vault has made or seen.
     changes: watch::Receiver<u64>,
     host: String,
-    root: PathBuf,
     /// How many requests have been made of the vault, for tests of what never
     /// reaches it.
     #[cfg(test)]
@@ -118,7 +117,6 @@ impl Service {
             refresh_queued: AtomicBool::new(false),
             changes,
             host: host_of(root),
-            root: root.to_path_buf(),
             #[cfg(test)]
             submitted: AtomicUsize::new(0),
         });
@@ -137,10 +135,6 @@ impl Service {
     /// The host of this vault's `frame-notes:` addresses.
     pub fn host(&self) -> &str {
         &self.inner.host
-    }
-
-    pub fn root(&self) -> &Path {
-        &self.inner.root
     }
 
     /// How many requests have been made of the vault.

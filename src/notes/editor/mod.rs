@@ -259,11 +259,13 @@ impl NoteEditor {
     }
 
     /// The revision of the vault's head, once the note is open.
+    #[cfg(test)]
     pub fn revision(&self) -> Option<u64> {
         self.head.as_ref().map(|head| head.revision)
     }
 
     /// The text on screen.
+    #[cfg(test)]
     pub fn text<'a>(&self, cx: &'a App) -> &'a str {
         self.editor.read(cx).text()
     }

@@ -160,6 +160,7 @@ impl Tracker {
         self.shown = Some(Shown { revision, digest });
     }
 
+    #[cfg(test)]
     pub fn shows(&self) -> Option<u64> {
         self.shown.as_ref().map(|shown| shown.revision)
     }

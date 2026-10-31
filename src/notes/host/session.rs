@@ -367,10 +367,6 @@ impl Session {
         })
     }
 
-    pub fn webview(&self) -> &WebView {
-        &self.webview
-    }
-
     pub fn status(&self) -> &Status {
         &self.status
     }
