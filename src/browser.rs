@@ -149,10 +149,10 @@ enum Showing {
 
 /// The page commands may use, or none when the tab is not showing a webpage.
 fn displayed_page_id(showing: Showing, page_id: Option<String>) -> Option<String> {
-    match showing {
-        Showing::Page => page_id,
-        Showing::Start | Showing::Serp | Showing::Place(_) => None,
+    if showing == Showing::Page {
+        return page_id;
     }
+    None
 }
 
 struct Tab {
@@ -799,9 +799,7 @@ impl Browser {
     }
 
     fn new_id(&mut self) -> u64 {
-        let id = self.next_id;
-        self.next_id += 1;
-        id
+        crate::sequence::take_next(&mut self.next_id)
     }
 
     fn tab_index(&self, id: u64) -> Option<usize> {
