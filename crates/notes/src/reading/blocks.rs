@@ -320,78 +320,45 @@ impl<'d> Walk<'d> {
         node: &'a AstNode<'a>,
         list: &NodeList,
         place: Place,
+        tail: Option<String>,
+    ) -> String {
+        let line = node.data().sourcepos.start.line.saturating_sub(self.origin);
+        let task = task_of(node);
+        let ordered = list.list_type == ListType::Ordered;
+        format!(
+            "<li{}>{}{}</li>",
+            item_attrs(line, task),
+            item_marks(node, ordered, line, task),
+            self.item_body(node, place, tail)
+        )
+    }
+
+    /// A list item's content, one block a line, with the quote Obsidian joins to the last item.
+    fn item_body<'a>(
+        &mut self,
+        node: &'a AstNode<'a>,
+        place: Place,
         mut tail: Option<String>,
     ) -> String {
-        let ordered = list.list_type == ListType::Ordered;
-        let line = node.data().sourcepos.start.line.saturating_sub(self.origin);
-        let (task, plain_symbol) = match task_of(node) {
-            Some(symbol) => (Some(symbol), None),
-            None => (None, odd_symbol(node)),
-        };
-        let nested = node
-            .children()
-            .any(|child| matches!(child.data().value, NodeValue::List(_)));
-        let mut attrs = format!(r#" data-line="{line}""#);
-        if let Some(symbol) = task {
-            let done = if symbol == ' ' { "" } else { " is-checked" };
-            attrs.push_str(&format!(
-                r#" data-task="{}" class="task-list-item{done}""#,
-                html::attr(&if symbol == ' ' {
-                    String::new()
-                } else {
-                    symbol.to_string()
-                })
-            ));
-        }
-        attrs.push_str(r#" dir="auto""#);
-        let mut out = format!("<li{attrs}>");
-        if !ordered {
-            out.push_str(r#"<span class="list-bullet"></span>"#);
-        }
-        if nested {
-            out.push_str(&format!(
-                r#"<span class="list-collapse-indicator collapse-indicator collapse-icon">{}</span>"#,
-                icon("right-triangle")
-            ));
-        }
-        if let Some(symbol) = task {
-            let checked = if symbol == ' ' { "" } else { r#" checked="""# };
-            // An item with nothing after its box has a line break before it.
-            if node.first_child().is_none() {
-                out.push('\n');
-            }
-            out.push_str(&format!(
-                r#"<input data-line="{line}"{checked} type="checkbox" class="task-list-item-checkbox">"#
-            ));
-        }
-        // Obsidian takes only a one-character symbol for a task: `[😀]` is text.
-        if let Some(symbol) = plain_symbol {
-            out.push_str(&html::text(&format!("[{symbol}] ")));
-        }
-        let mut first = true;
+        let mut parts = Vec::new();
         for child in node.children() {
-            let is_paragraph = matches!(child.data().value, NodeValue::Paragraph);
-            if !first {
-                out.push('\n');
-            }
-            first = false;
             // The quote joins the deepest last item: hand it to a list that ends this one.
             if node.last_child().is_some_and(|l| std::ptr::eq(l, child))
                 && matches!(child.data().value, NodeValue::List(_))
             {
                 self.tail = tail.take();
             }
-            if is_paragraph && list_is_tight(node) {
-                out.push_str(&self.inlines(child, true));
+            if matches!(child.data().value, NodeValue::Paragraph) && list_is_tight(node) {
+                parts.push(self.inlines(child, true));
             } else {
-                out.push_str(&self.block(child, place));
+                parts.push(self.block(child, place));
             }
         }
+        let mut out = parts.join("\n");
         if let Some(tail) = tail {
             out.push('\n');
             out.push_str(&tail);
         }
-        out.push_str("</li>");
         out
     }
 
@@ -402,49 +369,42 @@ impl<'d> Walk<'d> {
             CalloutFold::Expanded => ("+", true, false),
             CalloutFold::Collapsed => ("-", true, true),
         };
-        let mut kids = node.children();
-        let titled = node
+        let heading = node
             .first_child()
-            .is_some_and(|f| matches!(f.data().value, NodeValue::CalloutTitle));
-        let custom = if titled {
-            kids.next()
-                .filter(|t| t.first_child().is_some())
-                .map(|t| self.inlines(t, false))
-        } else {
-            None
-        };
-        let title = custom.unwrap_or_else(|| html::text(&c.default_title()));
-        let mut body = Vec::new();
-        for child in kids.filter(|c| !absorbed(c)) {
-            let part = self.block(child, Place::Inner);
-            if !part.is_empty() {
-                body.push(part);
-            }
-        }
-        let class = format!(
-            "callout{}{}",
-            if foldable { " is-collapsible" } else { "" },
-            if collapsed { " is-collapsed" } else { "" }
-        );
-        let fold_icon = if foldable {
-            format!(
-                r#"<div class="callout-fold{}">{}</div>"#,
-                if collapsed { " is-collapsed" } else { "" },
-                icon("lucide-chevron-down")
+            .filter(|f| matches!(f.data().value, NodeValue::CalloutTitle));
+        let title = heading
+            .filter(|t| t.first_child().is_some())
+            .map(|t| self.inlines(t, false))
+            .unwrap_or_else(|| html::text(&c.default_title()));
+        let body: Vec<String> = node
+            .children()
+            .skip(usize::from(heading.is_some()))
+            .filter(|child| !absorbed(child))
+            .map(|child| self.block(child, Place::Inner))
+            .filter(|part| !part.is_empty())
+            .collect();
+        let collapsed_class = if collapsed { " is-collapsed" } else { "" };
+        let (class, fold_icon) = if foldable {
+            (
+                format!("callout is-collapsible{collapsed_class}"),
+                format!(
+                    r#"<div class="callout-fold{collapsed_class}">{}</div>"#,
+                    icon("lucide-chevron-down")
+                ),
             )
         } else {
-            String::new()
+            ("callout".to_owned(), String::new())
         };
         let content = if body.is_empty() {
             String::new()
         } else {
+            let hidden = if collapsed {
+                r#" style="display: none;""#
+            } else {
+                ""
+            };
             format!(
-                r#"<div class="callout-content"{}>{}</div>"#,
-                if collapsed {
-                    r#" style="display: none;""#
-                } else {
-                    ""
-                },
+                r#"<div class="callout-content"{hidden}>{}</div>"#,
                 body.join("\n")
             )
         };
@@ -630,6 +590,62 @@ fn task_of<'a>(item: &'a AstNode<'a>) -> Option<char> {
         },
         _ => None,
     }
+}
+
+/// A list item's attributes: its line, and its status when it is a task.
+fn item_attrs(line: usize, task: Option<char>) -> String {
+    let status = task.map_or(String::new(), |symbol| {
+        let (symbol, done) = match symbol {
+            ' ' => (String::new(), ""),
+            symbol => (symbol.to_string(), " is-checked"),
+        };
+        format!(
+            r#" data-task="{}" class="task-list-item{done}""#,
+            html::attr(&symbol)
+        )
+    });
+    format!(r#" data-line="{line}"{status} dir="auto""#)
+}
+
+/// What comes before a list item's content: its bullet, the fold of a list inside it, and its
+/// task box, or the brackets of a symbol too long to be a task.
+fn item_marks<'a>(node: &'a AstNode<'a>, ordered: bool, line: usize, task: Option<char>) -> String {
+    let mut out = String::new();
+    if !ordered {
+        out.push_str(r#"<span class="list-bullet"></span>"#);
+    }
+    if node
+        .children()
+        .any(|child| matches!(child.data().value, NodeValue::List(_)))
+    {
+        out.push_str(&format!(
+            r#"<span class="list-collapse-indicator collapse-indicator collapse-icon">{}</span>"#,
+            icon("right-triangle")
+        ));
+    }
+    match task {
+        Some(symbol) => out.push_str(&task_box(node, line, symbol)),
+        // Obsidian takes only a one-character symbol for a task: `[😀]` is text.
+        None => {
+            if let Some(symbol) = odd_symbol(node) {
+                out.push_str(&html::text(&format!("[{symbol}] ")));
+            }
+        }
+    }
+    out
+}
+
+/// A task's checkbox. An item with nothing after its box has a line break before it.
+fn task_box<'a>(node: &'a AstNode<'a>, line: usize, symbol: char) -> String {
+    let lead = if node.first_child().is_none() {
+        "\n"
+    } else {
+        ""
+    };
+    let checked = if symbol == ' ' { "" } else { r#" checked="""# };
+    format!(
+        r#"{lead}<input data-line="{line}"{checked} type="checkbox" class="task-list-item-checkbox">"#
+    )
 }
 
 /// The symbol of a bracket pair comrak took for a task that Obsidian leaves as text.
