@@ -356,7 +356,10 @@ pub fn open_link(vault: &mut Vault, from: &str, link: &str) -> Result<Opened> {
         None => (link, None),
     };
     let target = target.trim();
-    ensure!(!target.is_empty(), "a link to the same note needs no navigation");
+    ensure!(
+        !target.is_empty(),
+        "a link to the same note needs no navigation"
+    );
     let decoded = percent_decode_str(target).decode_utf8_lossy().into_owned();
     let names = vault.index().names();
     let resolved = [target, decoded.as_str()].into_iter().find_map(|name| {
@@ -428,10 +431,7 @@ pub fn toggle_task(
     checked: bool,
     revision: u64,
 ) -> Result<Toggled> {
-    ensure!(
-        FileKind::of(path) == FileKind::Note,
-        "{path} is not a note"
-    );
+    ensure!(FileKind::of(path) == FileKind::Note, "{path} is not a note");
     let document = vault.open_document(path)?;
     if document.revision != revision {
         return Ok(Toggled::Stale {
@@ -565,7 +565,11 @@ pub(crate) mod tests {
             "hidden/.secret.png",
             "attachments",
         ] {
-            assert_eq!(file(&f.vault, refused).err(), Some(FileError::NotFound), "{refused}");
+            assert_eq!(
+                file(&f.vault, refused).err(),
+                Some(FileError::NotFound),
+                "{refused}"
+            );
         }
     }
 
@@ -737,7 +741,10 @@ pub(crate) mod tests {
         ));
         assert!(f.root.path().join("new/deep/Note.md").is_file());
         for refused in ["../outside", ".obsidian/x", "a:b", "#"] {
-            assert!(open_link(&mut f.vault, "Home.md", refused).is_err(), "{refused}");
+            assert!(
+                open_link(&mut f.vault, "Home.md", refused).is_err(),
+                "{refused}"
+            );
         }
         assert!(!f.root.path().parent().unwrap().join("outside.md").exists());
     }

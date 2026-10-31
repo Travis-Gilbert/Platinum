@@ -179,7 +179,11 @@ impl Act {
         if url.scheme() != SCHEME || url.host_str() != Some(host) {
             return Err(ActError::NotAnAct);
         }
-        let verb = match url.path_segments().map(|s| s.collect::<Vec<_>>()).as_deref() {
+        let verb = match url
+            .path_segments()
+            .map(|s| s.collect::<Vec<_>>())
+            .as_deref()
+        {
             Some(["act", verb]) => *verb,
             _ => return Err(ActError::NotAnAct),
         };
@@ -218,7 +222,8 @@ impl Act {
                 link: bounded("link", MAX_LINK)?,
             },
             "web" => {
-                let url = Url::parse(&bounded("url", MAX_URL)?).map_err(|_| ActError::Param("url"))?;
+                let url =
+                    Url::parse(&bounded("url", MAX_URL)?).map_err(|_| ActError::Param("url"))?;
                 if !matches!(url.scheme(), "http" | "https" | "mailto") {
                     return Err(ActError::Param("url"));
                 }
@@ -385,7 +390,11 @@ mod tests {
     }
 
     fn act(query: &str) -> Result<Act, ActError> {
-        Act::parse(&url(&format!("frame-notes://abc/act/{query}")), "abc", "tok")
+        Act::parse(
+            &url(&format!("frame-notes://abc/act/{query}")),
+            "abc",
+            "tok",
+        )
     }
 
     #[test]
@@ -437,7 +446,10 @@ mod tests {
     #[test]
     fn an_act_needs_the_pages_own_token_and_host() {
         // A link written in a note can be followed; it cannot know the token.
-        assert_eq!(act("task?line=1&checked=1&revision=1"), Err(ActError::Token));
+        assert_eq!(
+            act("task?line=1&checked=1&revision=1"),
+            Err(ActError::Token)
+        );
         assert_eq!(
             act("task?t=other&line=1&checked=1&revision=1"),
             Err(ActError::Token)
@@ -462,10 +474,19 @@ mod tests {
 
     #[test]
     fn act_parameters_are_typed_and_bounded() {
-        assert_eq!(act("explode?t=tok"), Err(ActError::Unknown("explode".into())));
+        assert_eq!(
+            act("explode?t=tok"),
+            Err(ActError::Unknown("explode".into()))
+        );
         assert_eq!(act("ready?t=tok"), Err(ActError::Param("revision")));
-        assert_eq!(act("ready?t=tok&revision=-1"), Err(ActError::Param("revision")));
-        assert_eq!(act("ready?t=tok&revision=1"), Err(ActError::Param("digest")));
+        assert_eq!(
+            act("ready?t=tok&revision=-1"),
+            Err(ActError::Param("revision"))
+        );
+        assert_eq!(
+            act("ready?t=tok&revision=1"),
+            Err(ActError::Param("digest"))
+        );
         let long = "a".repeat(MAX_DIGEST + 1);
         assert_eq!(
             act(&format!("ready?t=tok&revision=1&digest={long}")),
@@ -480,11 +501,21 @@ mod tests {
             Err(ActError::Param("checked"))
         );
         // The web verb opens http(s) and mail only.
-        for scheme in ["javascript:alert(1)", "file:///etc/passwd", "frame-notes://abc/act/ready"] {
-            let query = format!("web?t=tok&url={}", utf8_percent_encode(scheme, NON_ALPHANUMERIC));
+        for scheme in [
+            "javascript:alert(1)",
+            "file:///etc/passwd",
+            "frame-notes://abc/act/ready",
+        ] {
+            let query = format!(
+                "web?t=tok&url={}",
+                utf8_percent_encode(scheme, NON_ALPHANUMERIC)
+            );
             assert_eq!(act(&query), Err(ActError::Param("url")), "{scheme}");
         }
         let long = "a".repeat(MAX_COPY + 1);
-        assert_eq!(act(&format!("copy?t=tok&text={long}")), Err(ActError::Param("text")));
+        assert_eq!(
+            act(&format!("copy?t=tok&text={long}")),
+            Err(ActError::Param("text"))
+        );
     }
 }

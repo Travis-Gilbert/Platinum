@@ -62,7 +62,11 @@ mod tests {
     fn the_page_script_and_style_are_served_with_their_types() {
         let script = get("reading.js").expect("the page script is bundled");
         assert_eq!(script.content_type, "text/javascript; charset=utf-8");
-        assert!(script.bytes.starts_with(b"/* The reading view's page script"));
+        assert!(
+            script
+                .bytes
+                .starts_with(b"/* The reading view's page script")
+        );
         assert_eq!(
             get("reading.css").unwrap().content_type,
             "text/css; charset=utf-8"

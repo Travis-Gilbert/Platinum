@@ -100,7 +100,9 @@ pub enum Decision {
     Send(Patch),
     /// The page has it, or has something newer. `again` says another refresh
     /// was wanted meanwhile.
-    Skip { again: bool },
+    Skip {
+        again: bool,
+    },
     /// The page load this was rendered for is gone.
     Stale,
 }
@@ -352,7 +354,10 @@ mod tests {
     fn a_failed_render_changes_nothing() {
         let mut tracker = ready(1, "a");
         let ticket = tracker.begin().unwrap();
-        assert_eq!(tracker.decide(ticket, None), Decision::Skip { again: false });
+        assert_eq!(
+            tracker.decide(ticket, None),
+            Decision::Skip { again: false }
+        );
         assert!(tracker.begin().is_some());
     }
 
@@ -397,7 +402,15 @@ mod tests {
         assert!(tracker.fold("k".into(), false, 2));
         tracker.reset();
         assert!(tracker.fold("k".into(), true, 1));
-        assert_eq!(tracker.folds().restore_script().unwrap().matches("\"foldAck\":1").count(), 1);
+        assert_eq!(
+            tracker
+                .folds()
+                .restore_script()
+                .unwrap()
+                .matches("\"foldAck\":1")
+                .count(),
+            1
+        );
     }
 
     #[test]
@@ -409,7 +422,13 @@ mod tests {
         tracker.reset();
         let kept = tracker.swap_folds(other);
         assert!(!kept.is_empty());
-        assert!(tracker.folds().restore_script().unwrap().contains("\"foldAck\":0"));
+        assert!(
+            tracker
+                .folds()
+                .restore_script()
+                .unwrap()
+                .contains("\"foldAck\":0")
+        );
         assert!(tracker.fold("o".into(), false, 1));
     }
 
