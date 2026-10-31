@@ -71,6 +71,9 @@ async fn scenario(
     cx: &mut AsyncApp,
 ) -> anyhow::Result<()> {
     if restore {
+        if output.join("voice-shortcut.json").exists() {
+            anyhow::ensure!(browser.read_with(cx, |b, _| b.speaker.preferences.dictation_hotkey == "ctrl-shift-space"), "edited speech shortcut did not restore");
+        }
         handle.update(cx, |_, window, cx| {
             browser.update(cx, |b, cx| b.toggle_canvas(window, cx))
         })?;
@@ -257,6 +260,7 @@ async fn scenario(
     )
     .await;
     handle.update(cx, |_, window, cx| window.close_sheet(cx))?;
+    voice_shortcut_check(handle, &browser, output, cx).await?;
     handle.update(cx, |_, window, cx| {
         browser.update(cx, |b, cx| b.toggle_canvas(window, cx))
     })?;
@@ -480,5 +484,123 @@ async fn rich_dictation(
         matches!(js(view, "document.querySelector('input').value", cx).await?, servo::JSValue::String(s) if s == "Unchanged"),
         "late dictation moved to a newly focused field"
     );
+    Ok(())
+}
+
+async fn voice_shortcut_check(
+    handle: gpui_kit::AnyWindowHandle,
+    browser: &Entity<Browser>,
+    output: &std::path::Path,
+    cx: &mut AsyncApp,
+) -> anyhow::Result<()> {
+    use gpui_kit::component::speech::SpeechState;
+    use gpui_kit::{InputEvent as _, KeyDownEvent, KeyUpEvent, Keystroke};
+    let input = crate::voice::fixture::Input::default();
+    handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| b.voice_settings(window, cx))
+    })?;
+    capture(
+        handle,
+        Appearance::Light,
+        &output.join("voice-settings.png"),
+        cx,
+    )
+    .await;
+    let original = handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| {
+            b.set_voice_shortcut("ctrl-shift-space", window, cx);
+            b.focus_address_bar(window, cx);
+            b.omnibox
+                .update(cx, |field, cx| field.set_value("", window, cx));
+            window.activate_window();
+            cx.activate(true);
+            let speech = cx.new(|cx| {
+                SpeechState::new(cx)
+                    .recognizer(crate::voice::fixture::Recognizer)
+                    .input(input.clone())
+                    .system_fallback(false)
+            });
+            let subscription = cx.subscribe_in(&speech, window, |b, _, event, window, cx| {
+                b.speech_event(event, window, cx)
+            });
+            (
+                std::mem::replace(&mut b.speech, speech),
+                std::mem::replace(&mut b._speech_events, subscription),
+            )
+        })
+    })?;
+    pause(cx).await;
+    anyhow::ensure!(
+        handle.update(cx, |_, window, _| window.is_window_active())?,
+        "native hotkey test window did not activate"
+    );
+    let key = Keystroke::parse("ctrl-shift-space")?;
+    handle.update(cx, |_, window, cx| {
+        window.dispatch_event(
+            KeyDownEvent {
+                keystroke: key.clone(),
+                is_held: false,
+                prefer_character_input: false,
+            }
+            .to_platform_input(),
+            cx,
+        );
+    })?;
+    pause(cx).await;
+    anyhow::ensure!(
+        input.starts.get() == 1,
+        "held shortcut did not start capture"
+    );
+    handle.update(cx, |_, window, cx| {
+        window.dispatch_event(
+            KeyDownEvent {
+                keystroke: key.clone(),
+                is_held: true,
+                prefer_character_input: false,
+            }
+            .to_platform_input(),
+            cx,
+        );
+    })?;
+    anyhow::ensure!(input.starts.get() == 1, "key repeat restarted capture");
+    capture(
+        handle,
+        Appearance::Light,
+        &output.join("voice-hold.png"),
+        cx,
+    )
+    .await;
+    handle.update(cx, |_, window, cx| {
+        window.dispatch_event(KeyUpEvent { keystroke: key }.to_platform_input(), cx);
+    })?;
+    pause(cx).await;
+    anyhow::ensure!(input.stops.get() == 1, "release did not stop capture");
+    anyhow::ensure!(
+        browser.read_with(cx, |b, cx| b.omnibox.read(cx).value() == "spoken words"),
+        "released shortcut did not commit exactly one transcript"
+    );
+    handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| {
+            b.speech = original.0;
+            b._speech_events = original.1;
+            b.voice_settings(window, cx);
+            b.save(cx);
+        })
+    })?;
+    capture(
+        handle,
+        Appearance::Light,
+        &output.join("voice-settings-edited.png"),
+        cx,
+    )
+    .await;
+    handle.update(cx, |_, window, cx| window.close_sheet(cx))?;
+    std::fs::write(
+        output.join("voice-shortcut.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "passed": true, "starts": input.starts.get(), "stops": input.stops.get(),
+            "hotkey": "ctrl-shift-space", "input": "synthetic capture and transcript through native window key dispatch; no live microphone or physical key injection"
+        }))?,
+    )?;
     Ok(())
 }

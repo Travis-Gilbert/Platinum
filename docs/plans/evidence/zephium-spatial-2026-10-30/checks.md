@@ -87,3 +87,39 @@ execution. Retrying with the log and temporary/build files on the external SSD
 completed successfully (two build jobs for the final retry). Both receipt tests
 then executed and passed; they use the real graph receipt path with an injected
 provider effect, not a live paid provider or a deployed server.
+
+
+## Editable hold-to-talk verification
+
+Default: hold Left Command for 350 ms; release to finish, Escape to cancel.
+Edit > Voice Settings changes and resets the saved shortcut. Existing command
+collisions are rejected, normal Command shortcuts cancel before action dispatch,
+and release during preparation cannot start capture later.
+
+| Check | Result |
+| --- | --- |
+| `script/media-env cargo test --locked -p frame --bin frame -- --test-threads=1` | **255 passed, 2 ignored** |
+| `script/media-env cargo build --locked --features snapshot --bin frame` | **Passed** |
+| Native settings and custom shortcut key-down/repeat/key-up | Passed; [lifecycle report](hold-voice-shortcut.json): one capture, one stop, one final insertion |
+| Native workspace flow | Passed; [report](hold-report.json), [active-window evidence](hold-native-focus.json) |
+| Fresh-process board, note and edited shortcut restoration | Passed; [restore report](hold-restore-report.json) |
+| Source whitespace check | Passed |
+
+Seven new regressions cover side-specific Command/tap behavior, chord matching,
+release, repeat, command-action cancellation, Escape, deactivation, persisted
+preferences and unique installed voice identities. The initial native run
+uncovered duplicate AppKit voice IDs causing an accessibility crash in Voice
+settings; deduplicating those IDs fixed the crash and the subsequent run passed.
+
+Visual evidence: [default settings](hold-voice-settings.png),
+[edited settings](hold-voice-settings-edited.png), and
+[held shortcut](hold-voice-hold.png). The stale-context notification visible in
+these screenshots is expected output from the preceding negative insertion test.
+
+The native shortcut probe uses clearly labeled synthetic audio capture and a
+supplied transcript through the real window dispatch and production destination.
+Left/right Command state is exercised by headless tests with supplied side flags.
+No physical keyboard event injection or live microphone recording was performed;
+these results establish the gesture/lifecycle behavior, not live audio quality.
+The earlier real Parakeet WAV oracle result remains separate and was not rerun.
+The companion backend code is unchanged and its prior checks were not rerun.

@@ -143,6 +143,8 @@ objc2 = "0.6"
 # builds this crate with its default features.
 objc2-app-kit = "0.3.2"
 objc2-core-foundation = "0.3.2"
+# Read left/right Command state without a global keyboard hook.
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGEventSource", "CGEventTypes", "CGRemoteOperation"] }
 # The share sheet's page address, and the window's view to show it from.
 objc2-foundation = "0.3.2"
 raw-window-handle = "0.6"

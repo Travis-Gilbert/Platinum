@@ -221,3 +221,42 @@ Ruby project with the same name, so that unrelated documentation was not used.
 | Sidebar note becomes the same board document | `NotesEvent::Promote` passes the existing `Entity<Note>` to `SpatialCanvas::add_note`. Sidebar, card and expanded Notes place share its Vault document identity and editor entity. Promotion saves a path/placement reference, not another document; overview shows a compact preview. |
 
 Review verification results are recorded in the accompanying evidence check summary.
+
+
+## Editable hold-to-talk shortcut
+
+The default is holding **Left Command** for 350 ms, then releasing it to finish.
+Right Command and quick taps do not start capture. Other keys, extra modifiers,
+Escape, mouse input, navigation and window deactivation cancel the gesture.
+Normal Command shortcuts cancel before GPUI dispatches their actions. Releasing
+during a pending web-target snapshot or model preparation invalidates that
+request, so preparation cannot start a microphone session after release.
+
+**Edit > Voice Settings** edits the shortcut and resets it to Left Command.
+The setting is stored with the session's voice preferences; older sessions get
+the new default. GPUI parses, displays and matches custom key chords (including
+keyboard-layout equivalents), and its keymap rejects conflicts with existing app
+commands. The menu's Start / Stop Dictation command remains available.
+
+GPUI's modifier event combines left and right Command, so the macOS adapter uses
+`objc2-core-graphics` 0.3.2 `CGEventSource::key_state` for the two Command keys.
+This dependency was already present transitively; there is no global event tap,
+OS shortcut registration, copied key parser, or replacement capture engine.
+The small hold-state adapter is necessary to express side-specific modifier
+press/release semantics that GPUI's combined flag does not carry. GPUI Kit still
+owns microphone/session lifecycle and Parakeet still owns local recognition.
+
+Verification includes seven new regressions: modifier-only and custom-chord state
+transitions, left/right and tap behavior, native input commit exactly once on
+release, cancellation before app shortcuts, Escape/focus loss, and an edited
+shortcut surviving session reload. The seventh check covers unique installed
+voice identifiers: this Mac returned duplicate AppKit voice IDs, which caused an
+accessibility crash when opening Voice settings. Rows now deduplicate by the
+existing voice identity, preserving their order. The native snapshot flow renders Voice
+settings and exercises custom key down/repeat/up through the real window event
+dispatch with a labeled synthetic capture/recognizer. These checks do not claim
+a physical keyboard or live microphone/recognition test.
+
+The final build passed, the browser suite passed 255 tests (2 ignored), and both
+the native flow and fresh-process restore passed. The evidence check summary
+links the default/edited settings, held-state screenshot and lifecycle report.

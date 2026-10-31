@@ -1821,3 +1821,170 @@ fn closed_tab_ids_are_not_reused_after_restart(cx: &mut TestAppContext) {
         })
     });
 }
+
+mod dictation_shortcuts {
+    use super::*;
+    use gpui_kit::component::speech::SpeechState;
+    use gpui_kit::{Context, KeyDownEvent, KeyUpEvent, Keystroke};
+
+    use crate::voice::fixture::{Input, Recognizer};
+    fn fixture(b: &mut Browser, window: &mut gpui_kit::Window, cx: &mut Context<Browser>) -> Input {
+        let input = Input::default();
+        b.speech = cx.new(|cx| {
+            SpeechState::new(cx)
+                .recognizer(Recognizer)
+                .input(input.clone())
+                .system_fallback(false)
+        });
+        b._speech_events = cx.subscribe_in(&b.speech, window, |b, _, event, window, cx| {
+            b.speech_event(event, window, cx)
+        });
+        input
+    }
+    fn modifiers(browser: &Entity<Browser>, cx: &mut VisualTestContext, left: bool, right: bool) {
+        cx.update(|window, cx| {
+            browser.update(cx, |b, cx| {
+                b.voice_modifiers(
+                    Modifiers {
+                        platform: left || right,
+                        ..Modifiers::none()
+                    },
+                    left,
+                    right,
+                    window,
+                    cx,
+                )
+            })
+        });
+        cx.run_until_parked();
+    }
+    fn held(cx: &mut VisualTestContext) {
+        cx.executor().advance_clock(Duration::from_millis(400));
+        cx.run_until_parked();
+    }
+
+    #[gpui_kit::test]
+    fn left_command_hold_releases_capture_and_inserts_once(cx: &mut TestAppContext) {
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| browser.update(cx, |b, cx| fixture(b, window, cx)));
+        modifiers(&browser, cx, false, true);
+        held(cx);
+        assert_eq!(input.starts.get(), 0, "right Command must not capture");
+        modifiers(&browser, cx, false, false);
+        modifiers(&browser, cx, true, false);
+        modifiers(&browser, cx, false, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 0, "a quick tap must not start later");
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        modifiers(&browser, cx, false, false);
+        assert_eq!(input.stops.get(), 1);
+        let text = cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string());
+        assert_eq!(text, "spoken words");
+        modifiers(&browser, cx, false, false);
+        assert_eq!(
+            cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+            text
+        );
+        assert_eq!(input.starts.get(), 1);
+    }
+
+    #[gpui_kit::test]
+    fn modifier_release_finishes_through_gpui_dispatch(cx: &mut TestAppContext) {
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| browser.update(cx, |b, cx| fixture(b, window, cx)));
+        // Supply the side information separately: headless events cannot press
+        // a physical macOS key. The release still uses GPUI's real dispatch,
+        // including its synthesized modifier-only keystroke.
+        cx.simulate_event(gpui_kit::ModifiersChangedEvent {
+            modifiers: Modifiers {
+                platform: true,
+                ..Modifiers::none()
+            },
+            ..Default::default()
+        });
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        cx.simulate_event(gpui_kit::ModifiersChangedEvent::default());
+        cx.run_until_parked();
+        assert_eq!(input.stops.get(), 1);
+        assert_eq!(
+            cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+            "spoken words"
+        );
+    }
+
+    #[gpui_kit::test]
+    fn command_shortcuts_and_escape_cancel_hold_without_delayed_restart(cx: &mut TestAppContext) {
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| browser.update(cx, |b, cx| fixture(b, window, cx)));
+        modifiers(&browser, cx, true, false);
+        keys(cx, "cmd-l");
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 0);
+        modifiers(&browser, cx, false, false);
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        keys(cx, "escape");
+        modifiers(&browser, cx, false, false);
+        assert_eq!(input.stops.get(), 1);
+        assert!(cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().is_empty()));
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 2);
+        cx.deactivate_window();
+        cx.run_until_parked();
+        assert_eq!(input.stops.get(), 2, "losing the window must stop capture");
+    }
+
+    #[gpui_kit::test]
+    fn edited_hotkey_holds_through_key_events_and_persists(cx: &mut TestAppContext) {
+        let root = tempfile::tempdir().unwrap();
+        cx.update(|cx| session::init(root.path(), cx));
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| {
+            browser.update(cx, |b, cx| {
+                b.set_voice_shortcut("cmd-l", window, cx);
+                assert_eq!(b.speaker.preferences.dictation_hotkey, "left-cmd");
+                b.set_voice_shortcut("ctrl-shift-space", window, cx);
+                b.save(cx);
+                fixture(b, window, cx)
+            })
+        });
+        let key = Keystroke::parse("ctrl-shift-space").unwrap();
+        cx.simulate_event(KeyDownEvent {
+            keystroke: key.clone(),
+            is_held: false,
+            prefer_character_input: false,
+        });
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        cx.simulate_event(KeyDownEvent {
+            keystroke: key.clone(),
+            is_held: true,
+            prefer_character_input: false,
+        });
+        assert_eq!(input.starts.get(), 1);
+        cx.simulate_event(KeyUpEvent { keystroke: key });
+        cx.run_until_parked();
+        assert_eq!(input.stops.get(), 1);
+        assert_eq!(
+            cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+            "spoken words"
+        );
+        let replacement = cx.update(|window, cx| cx.new(|cx| Browser::new(window, cx)));
+        assert_eq!(
+            cx.update(|_, cx| replacement
+                .read(cx)
+                .speaker
+                .preferences
+                .dictation_hotkey
+                .clone()),
+            "ctrl-shift-space"
+        );
+    }
+}

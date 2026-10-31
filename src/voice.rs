@@ -1,6 +1,9 @@
 //! Local Parakeet recognition plugged into GPUI Kit's microphone/session owner.
 //! One model per process; one bounded PCM queue per recording. No audio leaves
 //! the machine. Focus/selection tokens make delayed results conditional.
+pub mod shortcut;
+#[cfg(any(test, feature = "snapshot"))]
+pub mod fixture;
 use anyhow::{Context as _, anyhow};
 use gpui_kit::component::speech::{RecognitionSession, SpeechError, SpeechRecognizer, SpeechSink};
 use gpui_kit::{App, FocusHandle, Task, Window};

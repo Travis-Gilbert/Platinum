@@ -1,0 +1,6 @@
+{
+  "workspace_passed": true,
+  "restore": true,
+  "error": null,
+  "voice_input": "supplied transcript through production destinations; ASR is a separate audio-fixture check"
+}

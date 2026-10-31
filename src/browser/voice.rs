@@ -1,14 +1,109 @@
 //! Window-owned dictation; input/navigation invalidates its captured target.
 use super::Browser;
+use crate::voice::shortcut::{Effect, Shortcut};
 use gpui_kit::component::{WindowExt as _, notification::Notification, speech::SpeechEvent};
-use gpui_kit::{Context, Focusable as _, Window};
+use gpui_kit::{AppContext as _, Context, Focusable as _, Window};
 
 impl Browser {
-    pub(super) fn toggle_dictation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn set_voice_shortcut(
+        &mut self,
+        value: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        match Shortcut::parse(value) {
+            Ok(shortcut) => {
+                if let Shortcut::Chord(key) = &shortcut
+                    && !cx
+                        .all_bindings_for_input(std::slice::from_ref(key))
+                        .is_empty()
+                {
+                    window.push_notification(Notification::error("That shortcut already belongs to another command. Choose another shortcut."), cx);
+                    return;
+                }
+                self.cancel_dictation(window, cx);
+                self.speaker.preferences.dictation_hotkey = shortcut.setting();
+                self.schedule_save(cx);
+                window.close_sheet(cx);
+            }
+            Err(error) => window.push_notification(Notification::error(error.to_string()), cx),
+        }
+    }
+
+    pub(super) fn voice_shortcut(&self) -> Shortcut {
+        Shortcut::parse(&self.speaker.preferences.dictation_hotkey).unwrap_or(Shortcut::LeftCommand)
+    }
+
+    pub(super) fn voice_modifiers(
+        &mut self,
+        modifiers: gpui_kit::Modifiers,
+        left: bool,
+        right: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let shortcut = self.voice_shortcut();
+        let effect = self.voice_hold.modifiers(&shortcut, modifiers, left, right);
+        self.voice_hold_effect(effect, window, cx);
+    }
+
+    pub(super) fn voice_hold_effect(
+        &mut self,
+        effect: Effect,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        match effect {
+            Effect::Arm => {
+                if !window.is_window_active()
+                    || self.speech.read(cx).status().is_active()
+                    || self.voice_prepare.is_some()
+                    || self.dictation_target.is_some()
+                {
+                    self.voice_hold.cancel();
+                    return;
+                }
+                self.voice_hold_timer = Some(cx.spawn_in(window, async move |this, cx| {
+                    cx.background_executor()
+                        .timer(crate::voice::shortcut::HOLD_DELAY)
+                        .await;
+                    let _ = this.update_in(cx, |this, window, cx| {
+                        if this.voice_hold.active && window.is_window_active() {
+                            this.start_dictation(window, cx);
+                        }
+                    });
+                }));
+            }
+            Effect::Finish => self.finish_dictation(window, cx),
+            Effect::Cancel => self.cancel_dictation(window, cx),
+            Effect::None => {}
+        }
+        cx.notify();
+    }
+
+    fn finish_dictation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.voice_hold.cancel();
+        self.voice_hold_timer = None;
         if self.speech.read(cx).status().is_active() {
             self.speech.update(cx, |speech, cx| speech.stop(cx));
+        } else {
+            // Invalidate a pending web snapshot or model load. A release must
+            // never turn into capture after asynchronous preparation finishes.
+            self.cancel_dictation(window, cx);
+        }
+    }
+
+    pub(super) fn toggle_dictation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.voice_hold.cancel();
+        self.voice_hold_timer = None;
+        if self.speech.read(cx).status().is_active() {
+            self.finish_dictation(window, cx);
             return;
         }
+        self.start_dictation(window, cx);
+    }
+
+    fn start_dictation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.voice_prepare.is_some() {
             return;
         }
@@ -52,9 +147,10 @@ impl Browser {
     }
 
     fn begin_dictation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if crate::voice::ready() {
+        if self.speech.read(cx).is_available(cx) {
             self.speech.update(cx, |speech, cx| speech.start(cx));
         } else {
+            let generation = self.dictation_generation;
             window.push_notification(Notification::info("Preparing local Parakeet dictation. The model is downloaded once; your audio stays on this Mac."), cx);
             self.voice_prepare = Some(cx.spawn_in(window, async move |this, cx| {
                 let result = cx
@@ -64,7 +160,10 @@ impl Browser {
                 let _ = this.update_in(cx, |this, window, cx| {
                     this.voice_prepare = None;
                     match result {
-                        Ok(()) if this.dictation_target.is_some() => {
+                        Ok(())
+                            if this.dictation_generation == generation
+                                && this.dictation_target.is_some() =>
+                        {
                             this.speech.update(cx, |speech, cx| speech.start(cx))
                         }
                         Ok(()) => {}
@@ -86,6 +185,8 @@ impl Browser {
     }
 
     pub(super) fn cancel_dictation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.voice_hold.cancel();
+        self.voice_hold_timer = None;
         self.dictation_generation = self.dictation_generation.wrapping_add(1);
         if let Some(target) = self.dictation_target.take() {
             target.cancel(window, cx);
@@ -232,20 +333,44 @@ impl Browser {
         use gpui_kit::component::{
             Sizable as _, StyledExt as _,
             button::{Button, ButtonVariants as _},
-            h_flex, v_flex,
+            h_flex,
+            input::{Input, InputState},
+            v_flex,
         };
         use gpui_kit::{
             InteractiveElement as _, ParentElement as _, SharedString,
             StatefulInteractiveElement as _, Styled as _, div, px,
         };
         let preferences = self.speaker.preferences.clone();
+        self.cancel_dictation(window, cx);
+        let hotkey = cx.new(|cx| {
+            let mut input = InputState::new(window, cx).placeholder("left-cmd or ctrl-shift-space");
+            input.set_value(preferences.dictation_hotkey.clone(), window, cx);
+            input
+        });
+        let browser = cx.weak_entity();
+        let reset_browser = browser.clone();
         let voices = crate::spoken::Speaker::voices();
         window.open_sheet(cx, move |sheet, _, _| {
+            let hotkey = hotkey.clone();
+            let browser = browser.clone();
+            let reset_browser = reset_browser.clone();
             sheet.title("Voice").size(px(440.)).child(
                 v_flex().gap_3().p_4()
                     .child(div().font_semibold().child("Voice input"))
                     .child("Parakeet · English · on this Mac")
-                    .child("Focus a text field and press Control Shift Space. Press again to finish, or Escape to cancel. Audio stays on this Mac.")
+                    .child("Focus a text field, hold your shortcut to speak, then release to finish. Escape cancels. Audio stays on this Mac.")
+                    .child(div().text_sm().child("Hold-to-talk shortcut"))
+                    .child(Input::new(&hotkey).aria_label("Hold-to-talk shortcut"))
+                    .child("Use left-cmd, a function key, or a shortcut such as ctrl-shift-space. Capture starts after a brief hold. Shortcuts already used by the app cannot be assigned.")
+                    .child(h_flex().gap_2()
+                        .child(Button::new("save-dictation-hotkey").label("Save shortcut").on_click(move |_, window, cx| {
+                            let value = hotkey.read(cx).value().to_string();
+                            let _ = browser.update(cx, |this, cx| this.set_voice_shortcut(&value, window, cx));
+                        }))
+                        .child(Button::new("reset-dictation-hotkey").ghost().label("Reset to Left Command").on_click(move |_, window, cx| {
+                            let _ = reset_browser.update(cx, |this, cx| this.set_voice_shortcut(crate::voice::shortcut::DEFAULT, window, cx));
+                        })))
                     .child(div().text_sm().child(if crate::voice::ready() { "Model ready" } else { "The pinned model downloads when dictation first starts." }))
                     .child(div().font_semibold().child("Spoken output"))
                     .child("Installed macOS voices")

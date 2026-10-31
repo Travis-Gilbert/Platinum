@@ -379,6 +379,10 @@ pub struct Browser {
     dictation_target: Option<crate::voice::Target>,
     dictation_generation: u64,
     voice_prepare: Option<Task<()>>,
+    voice_hold: crate::voice::shortcut::Hold,
+    voice_hold_timer: Option<Task<()>>,
+    _voice_activation: Subscription,
+    _voice_keystrokes: Subscription,
     _speech_events: Subscription,
     /// Theorem's workbench, made the first time the Agent place opens, and
     /// the subscription that opens the pages it asks for.
@@ -547,6 +551,25 @@ impl Browser {
         let speech_events = cx.subscribe_in(&speech, window, |this, _, event, window, cx| {
             this.speech_event(event, window, cx)
         });
+        let voice_activation = cx.observe_window_activation(window, |this, window, cx| {
+            this.cancel_dictation(window, cx);
+            this.voice_hold.focus_changed(crate::voice::shortcut::command_keys().0);
+        });
+        let voice_window = window.window_handle();
+        let voice_browser = cx.weak_entity();
+        let voice_keystrokes = cx.intercept_keystrokes(move |event, window, cx| {
+            if window.window_handle() != voice_window
+                || matches!(event.keystroke.key.as_str(), "platform" | "control" | "shift" | "alt" | "function") {
+                // GPUI synthesizes modifier-only keystrokes on release. Let
+                // the modifier listener finish that gesture, not cancel it.
+                return;
+            }
+            let _ = voice_browser.update(cx, |this, cx| {
+                if !this.voice_shortcut().matches(&event.keystroke) {
+                    this.cancel_dictation(window, cx);
+                }
+            });
+        });
         let mut browser = Self {
             canvas: None,
             canvas_shown: false,
@@ -568,6 +591,10 @@ impl Browser {
             speech,
             dictation_target: None,
             dictation_generation: 0,
+            voice_hold: Default::default(),
+            voice_hold_timer: None,
+            _voice_activation: voice_activation,
+            _voice_keystrokes: voice_keystrokes,
             voice_prepare: None,
             _speech_events: speech_events,
             theorem: None,
@@ -3728,6 +3755,15 @@ impl Render for Browser {
             .capture_any_mouse_down(
                 cx.listener(|this, _, window, cx| this.cancel_dictation(window, cx)),
             )
+            .on_modifiers_changed(cx.listener(|this, event: &gpui_kit::ModifiersChangedEvent, window, cx| {
+                let (left, right) = crate::voice::shortcut::command_keys();
+                this.voice_modifiers(event.modifiers, left, right, window, cx);
+            }))
+            .capture_key_up(cx.listener(|this, event: &gpui_kit::KeyUpEvent, window, cx| {
+                let shortcut = this.voice_shortcut();
+                let effect = this.voice_hold.key_up(&shortcut, &event.keystroke);
+                this.voice_hold_effect(effect, window, cx);
+            }))
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
             .when(
                 self.speech.read(cx).status().is_active() || self.voice_prepare.is_some(),
@@ -3745,9 +3781,13 @@ impl Render for Browser {
                                 .text_color(cx.theme().foreground)
                                 .text_sm()
                                 .child(if self.voice_prepare.is_some() {
-                                    "Preparing local voice…"
+                                    "Preparing local voice…".to_owned()
+                                } else if self.speech.read(cx).status() == gpui_kit::component::speech::SpeechStatus::Stopping {
+                                    "Finishing dictation…".to_owned()
+                                } else if self.voice_hold.active {
+                                    format!("Dictating · Release {} to finish · Esc to cancel", self.voice_shortcut().label())
                                 } else {
-                                    "Dictating · Ctrl Shift Space to finish · Esc to cancel"
+                                    "Dictating · Edit menu to finish · Esc to cancel".to_owned()
                                 })
                                 .child(
                                     div()
@@ -3762,12 +3802,14 @@ impl Render for Browser {
             )
             .capture_key_down(
                 cx.listener(|this, event: &gpui_kit::KeyDownEvent, window, cx| {
-                    if !(event.keystroke.key == "space"
-                        && event.keystroke.modifiers.control
-                        && event.keystroke.modifiers.shift)
-                    {
-                        this.cancel_dictation(window, cx);
+                    let shortcut = this.voice_shortcut();
+                    let (handled, effect) = this.voice_hold.key_down(&shortcut, &event.keystroke, event.is_held);
+                    this.voice_hold_effect(effect, window, cx);
+                    if handled {
+                        cx.stop_propagation();
+                        return;
                     }
+                    this.cancel_dictation(window, cx);
                     if event.keystroke.key == "down"
                         && !this.suggestions.is_empty()
                         && this.omnibox.focus_handle(cx).is_focused(window)

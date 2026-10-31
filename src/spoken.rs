@@ -1,4 +1,4 @@
-//! Spoken output uses macOS's installed voices, independently of Parakeet input.
+//! Session voice preferences and macOS's installed spoken-output voices.
 //! AppKit owns synthesis and playback. No model downloads or shell processes.
 #![allow(deprecated)]
 use serde::{Deserialize, Serialize};
@@ -6,12 +6,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Preferences {
+    pub dictation_hotkey: String,
     pub voice: Option<String>,
     pub words_per_minute: u16,
 }
 impl Default for Preferences {
     fn default() -> Self {
         Self {
+            dictation_hotkey: crate::voice::shortcut::DEFAULT.into(),
             voice: None,
             words_per_minute: 180,
         }
@@ -25,6 +27,10 @@ pub struct Speaker {
 }
 impl Speaker {
     pub fn new(mut preferences: Preferences) -> Self {
+        preferences.dictation_hotkey =
+            crate::voice::shortcut::Shortcut::parse(&preferences.dictation_hotkey)
+                .unwrap_or(crate::voice::shortcut::Shortcut::LeftCommand)
+                .setting();
         preferences.words_per_minute = preferences.words_per_minute.clamp(80, 320);
         Self {
             preferences,
@@ -37,8 +43,12 @@ impl Speaker {
         {
             use objc2_app_kit::{NSSpeechSynthesizer, NSVoiceName};
             use objc2_foundation::NSString;
+            // AppKit can list the same voice identifier more than once. It is
+            // one selectable voice, and must have one accessible row identity.
+            let mut seen = std::collections::HashSet::new();
             NSSpeechSynthesizer::availableVoices()
                 .iter()
+                .filter(|voice| seen.insert(voice.to_string()))
                 .map(|voice| {
                     let attributes = NSSpeechSynthesizer::attributesForVoice(&voice);
                     // SAFETY: the AppKit constant is an immutable NSString key.
@@ -107,5 +117,15 @@ impl Speaker {
 impl Drop for Speaker {
     fn drop(&mut self) {
         self.stop();
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    #[test]
+    fn installed_voice_rows_have_unique_identifiers() {
+        let voices = super::Speaker::voices();
+        let ids: std::collections::HashSet<_> = voices.iter().map(|(id, _)| id).collect();
+        assert_eq!(ids.len(), voices.len());
     }
 }

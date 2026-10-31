@@ -153,7 +153,6 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("ctrl-cmd-s", ToggleSidebar, None),
         KeyBinding::new("ctrl-cmd-b", crate::actions::ShowCanvas, None),
         KeyBinding::new("ctrl-alt-space", crate::actions::ReadSelection, None),
-        KeyBinding::new("ctrl-shift-space", crate::actions::ToggleDictation, None),
         KeyBinding::new("ctrl-cmd-n", crate::actions::ToggleNotes, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
         KeyBinding::new("alt-cmd-j", ShowConsole, None),
