@@ -426,6 +426,24 @@ impl Session {
         .detach();
     }
 
+    /// Follows a link clicked beside the page (in the editor of the note on
+    /// screen) as a click on the page would: a target note through the vault,
+    /// `#heading` or `#^block` within the note.
+    pub fn follow(&mut self, link: String, cx: &mut Context<Self>) {
+        if let Some(fragment) = link.strip_prefix('#') {
+            if let Some(path) = self.path().map(str::to_owned) {
+                self.navigate(path, Some(fragment.to_owned()), cx);
+            }
+        } else if link.starts_with("refs:") {
+            self.tell(
+                "The notes that refer to a block cannot be listed yet.".into(),
+                cx,
+            );
+        } else {
+            self.act(Act::Open { link }, cx);
+        }
+    }
+
     fn navigate(&mut self, path: String, fragment: Option<String>, cx: &mut Context<Self>) {
         let Some(token) = new_token() else {
             self.status = Status::Unavailable("no token could be made for the page".into());

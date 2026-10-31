@@ -1,13 +1,14 @@
 //! The notes app's entry point: the launch arguments that ask for it, and the
-//! window that holds the reading panel.
+//! window that holds the editor and the reading panel.
 //!
 //! `--notes-vault <dir>` opens a notes window on the vault in that folder, in
 //! place of the browser's window; `--notes-note <path>` names the note to
 //! show, as a path from the vault's folder, and defaults to the vault's first
 //! note.
 //!
-//! The window's layout is one view, `NotesWindow`, with the reading panel as
-//! one pane in a row of panes, so another pane can stand beside it.
+//! The window's layout is one view, `NotesWindow`: a row of panes, the editor
+//! of the note on screen beside the reading panel that shows it. Both work on
+//! the vault worker's authority, so a save in one is what the other shows.
 
 use std::path::{Path, PathBuf};
 
@@ -18,10 +19,13 @@ use gpui_kit::{
     ParentElement as _, Render, SharedString, Styled as _, Subscription, Window, WindowBounds,
     WindowOptions, div, point, px, size, transparent_black,
 };
+use url::Url;
 
 use super::Notes;
+use super::editor::{NoteEditor, NoteEditorEvent};
 use super::host::ops;
 use super::host::service::Service;
+use super::host::session::Session;
 use super::panel::{ReadingEvent, ReadingPanel};
 use crate::glass;
 
@@ -71,32 +75,39 @@ impl Args {
 /// The frame between the panes, the same as around a browser tab's card.
 const FRAME: f32 = 6.;
 
-/// The notes window's one view: a row of panes under the title bar.
+/// The notes window's one view: a row of panes under the title bar, the
+/// editor of the note on screen beside its reading view.
 pub struct NotesWindow {
+    service: Service,
+    /// The editing pane, on the note the reading pane shows; `None` while
+    /// that pane has no note.
+    editor: Option<Editing>,
     /// The reading pane, or why there is none.
     reading: Result<Entity<ReadingPanel>, SharedString>,
     _subscriptions: Vec<Subscription>,
 }
 
+/// The editing pane on one note.
+struct Editing {
+    path: String,
+    view: Entity<NoteEditor>,
+    _events: Subscription,
+}
+
 impl NotesWindow {
     fn new(
+        service: Service,
         reading: anyhow::Result<Entity<ReadingPanel>>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let mut subscriptions = Vec::new();
+        let mut session = None;
         let reading = match reading {
             Ok(panel) => {
-                // The window is named for the note on screen.
-                let session = panel.read(cx).session().clone();
-                subscriptions.push(cx.observe_in(&session, window, |_, session, window, cx| {
-                    let session = session.read(cx);
-                    let title = match session.path() {
-                        Some(_) => format!("{} - Notes", session.title()),
-                        None => "Notes".to_owned(),
-                    };
-                    window.set_window_title(&title);
-                }));
+                let watched = panel.read(cx).session().clone();
+                subscriptions.push(cx.observe_in(&watched, window, Self::follow));
+                session = Some(watched);
                 // This window has no browser to open the web in, so a link to
                 // it goes to the system's.
                 subscriptions.push(cx.subscribe(
@@ -113,27 +124,91 @@ impl NotesWindow {
             }
         };
         window.set_window_title("Notes");
-        Self {
+        let mut this = Self {
+            service,
+            editor: None,
             reading,
             _subscriptions: subscriptions,
+        };
+        if let Some(session) = session {
+            this.follow(session, window, cx);
         }
+        this
     }
+
+    /// The reading pane changed: the window is named for the note on screen,
+    /// and the editing pane moves to it. The editor it leaves saves what was
+    /// typed in it as it closes.
+    fn follow(&mut self, session: Entity<Session>, window: &mut Window, cx: &mut Context<Self>) {
+        let (path, title) = {
+            let session = session.read(cx);
+            (session.path().map(str::to_owned), session.title())
+        };
+        window.set_window_title(&match path {
+            Some(_) => format!("{title} - Notes"),
+            None => "Notes".to_owned(),
+        });
+        if self.editor.as_ref().map(|editing| &editing.path) == path.as_ref() {
+            return;
+        }
+        self.editor = path.map(|path| {
+            let service = self.service.clone();
+            let view = cx.new(|cx| NoteEditor::new(service, path.clone(), window, cx));
+            let _events = cx.subscribe(&view, move |_, _, event: &NoteEditorEvent, cx| {
+                follow_link(event, &session, cx);
+            });
+            Editing {
+                path,
+                view,
+                _events,
+            }
+        });
+        cx.notify();
+    }
+}
+
+/// A link clicked in the editor goes where the same link clicked on the page
+/// goes: a web address to the system's browser, anything else through the
+/// reading pane's session, which resolves it in the vault.
+fn follow_link(event: &NoteEditorEvent, session: &Entity<Session>, cx: &mut App) {
+    let link = match event {
+        NoteEditorEvent::OpenLink(link) => {
+            if let Ok(url) = Url::parse(link)
+                && matches!(url.scheme(), "http" | "https" | "mailto")
+            {
+                cx.open_url(url.as_str());
+                return;
+            }
+            link
+        }
+        NoteEditorEvent::OpenWikiLink(link) => link,
+        NoteEditorEvent::Synced { .. } => return,
+    };
+    let link = link.to_string();
+    session.update(cx, |session, cx| session.follow(link, cx));
 }
 
 impl Render for NotesWindow {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme();
-        let pane = div()
-            .id("notes-reading-pane")
-            .flex_1()
-            .min_w_0()
-            .h_full()
-            .rounded(theme.radius_lg)
-            .overflow_hidden()
-            .bg(theme.background);
-        let pane = match &self.reading {
-            Ok(panel) => pane.child(panel.clone()),
-            Err(reason) => pane
+        let card = |id: &'static str| {
+            div()
+                .id(id)
+                .flex_1()
+                .min_w_0()
+                .h_full()
+                .rounded(theme.radius_lg)
+                .overflow_hidden()
+                .bg(theme.background)
+        };
+        let editor = self
+            .editor
+            .as_ref()
+            .map(|editing| card("notes-editor-pane").child(editing.view.clone()));
+        let reading = card("notes-reading-pane");
+        let reading = match &self.reading {
+            Ok(panel) => reading.child(panel.clone()),
+            Err(reason) => reading
                 .flex()
                 .items_center()
                 .justify_center()
@@ -158,7 +233,8 @@ impl Render for NotesWindow {
                     .gap(px(FRAME))
                     .p(px(FRAME))
                     .pt_0()
-                    .child(pane),
+                    .children(editor)
+                    .child(reading),
             )
     }
 }
@@ -205,13 +281,13 @@ fn open(service: Service, first: Option<String>, cx: &mut App) -> anyhow::Result
     cx.open_window(options, |window, cx| {
         glass::install(window, cx);
         let vaults = cx.global::<Notes>().vaults().clone();
-        let reading = ReadingPanel::new(&vaults, service, first.as_deref(), window, cx);
+        let reading = ReadingPanel::new(&vaults, service.clone(), first.as_deref(), window, cx);
         if let (Ok(panel), None) = (&reading, &first) {
             // No note to open: the session says why (an empty vault, or one
             // that could not be read).
             panel.update(cx, |panel, cx| panel.show(None, None, cx));
         }
-        let view = cx.new(|cx| NotesWindow::new(reading, window, cx));
+        let view = cx.new(|cx| NotesWindow::new(service, reading, window, cx));
         cx.new(|cx| Root::new(view, window, cx).bg(transparent_black()))
     })?;
     // Launched from a shell, the app is not the active one, and a window
