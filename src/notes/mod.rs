@@ -12,6 +12,8 @@
 //! vault, and does not touch the reading page.
 
 pub mod host;
+pub mod open;
+pub mod panel;
 
 use std::path::{Path, PathBuf};
 
@@ -38,6 +40,12 @@ impl Notes {
             log::warn!(target: "notes", "{}: {error}", data.display());
         }
         self.vaults.open(root, &data)
+    }
+
+    /// The registry the vaults' pages are served from, which also carries the
+    /// app's theme to them.
+    pub fn vaults(&self) -> &Vaults {
+        &self.vaults
     }
 }
 
