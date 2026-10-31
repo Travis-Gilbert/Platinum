@@ -195,7 +195,9 @@ script/media-env cargo run --locked -- --notes-vault ~/Notes --notes-note "Proje
 `--notes-vault <dir>` opens a notes window on that vault instead of the
 browser's window. `--notes-note <path>` names the note to show, as a path from
 the vault's folder (`Projects/Plan.md`); without it the window shows the
-vault's first note. `--notes-note` needs `--notes-vault`.
+vault's first note, which the window waits for the vault to name, so it opens a
+moment after the app starts. The app comes to the front when the window opens.
+`--notes-note` needs `--notes-vault`.
 
 The note is rendered by the vault's own worker and shown in a Servo web view
 at a `frame-notes:` address. That scheme is registered only when
