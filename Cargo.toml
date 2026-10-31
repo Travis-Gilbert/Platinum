@@ -66,6 +66,10 @@ html5ever = "0.27"
 markup5ever_rcdom = "0.3"
 # Downloads: the server's file name, made safe for the disk.
 content_disposition = "0.4"
+# CRM files: a CSV table, and a SQLite database through the rusqlite the
+# profile crate already links.
+csv = "1"
+flate2 = "1.1.10"
 dirs = "6"
 # Provider keys for RustyWeb live in a gitignored `.env`, never in settings files.
 dotenvy = "0.15"
@@ -91,6 +95,7 @@ gpui-pre-reqwest-client = "=0.3.9"
 rust-embed = { version = "8", features = ["debug-embed"] }
 # Servo's graph links more than one rustls provider; main installs ring.
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rusqlite = "0.38"
 sanitize-filename = "0.6"
 # Home's recent pages and searches, kept as JSON in the app's data folder.
 serde = { version = "1", features = ["derive"] }

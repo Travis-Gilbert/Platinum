@@ -88,6 +88,7 @@ use crate::actions::{
     ToggleSidebar,
 };
 use crate::address::{Target, classify};
+use crate::crm::Crm;
 use crate::delegate::{self, Verdict};
 use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
@@ -387,6 +388,8 @@ pub struct Browser {
     /// Theorem's workbench, made the first time the Agent place opens, and
     /// the subscription that opens the pages it asks for.
     theorem: Option<(Entity<Workbench>, Subscription)>,
+    /// The CRM, made the first time its place opens.
+    crm: Option<Entity<Crm>>,
     /// The place the window shows, over the tabs or the workspace, which it
     /// leaves as they were (`place.rs`).
     place: Option<Place>,
@@ -598,6 +601,7 @@ impl Browser {
             voice_prepare: None,
             _speech_events: speech_events,
             theorem: None,
+            crm: None,
             focus_handle: cx.focus_handle(),
             tabs: restored.tabs,
             active: 0,

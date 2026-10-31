@@ -123,6 +123,11 @@ impl Store {
         cx.try_global::<Self>().cloned()
     }
 
+    /// The directory this profile keeps its files in.
+    pub fn root(&self) -> &Path {
+        &self.dir
+    }
+
     /// The pins kept, or none.
     pub fn load_pins(&self) -> Vec<Pin> {
         self.load(PINS, format::pins_from_json).unwrap_or_default()
