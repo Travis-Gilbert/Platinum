@@ -36,6 +36,7 @@ const MEDIA: &[u8] = include_bytes!("../assets/icons/media.svg");
 const NOTES: &[u8] = include_bytes!("../assets/icons/notes.svg");
 const TERMINAL: &[u8] = include_bytes!("../assets/icons/terminal.svg");
 const AGENT: &[u8] = include_bytes!("../assets/icons/agent.svg");
+const INDEX: &[u8] = include_bytes!("../assets/icons/index.svg");
 const APPS: &[u8] = include_bytes!("../assets/icons/apps.svg");
 const PIN: &[u8] = include_bytes!("../assets/icons/pin.svg");
 const UNPIN: &[u8] = include_bytes!("../assets/icons/pin-off.svg");
@@ -121,6 +122,12 @@ pub fn terminal() -> Icon {
 
 pub fn agent() -> Icon {
     Icon::default().data(AGENT)
+}
+
+/// Index: records that need attention, redrawn from Streamline Ultimate
+/// Light's "Merge data to spreadsheet" so it takes the theme color.
+pub fn index() -> Icon {
+    Icon::default().data(INDEX)
 }
 
 pub fn apps() -> Icon {

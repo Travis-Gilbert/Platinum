@@ -1,8 +1,9 @@
-//! The places Frame keeps beneath its pages: mail, the library, notes, a
-//! terminal, the agent and App Host apps. Each is a native GPUI Kit surface, never a web
-//! page (`docs/vision/native-workspace.md`). The agent is Theorem's workbench
-//! (`theorem/`); the others are not built yet, so each of their routes shows
-//! what it will hold, and the way back.
+//! The places Frame keeps beneath its pages: mail, the CRM, the library,
+//! notes, a terminal, the agent and App Host apps. Each is a native GPUI Kit
+//! surface, never a web page (`docs/vision/native-workspace.md`). The agent is
+//! Theorem's workbench (`theorem/`) and the CRM is its records (`crm/`); the
+//! others are not built yet, so each of their routes shows what it will hold,
+//! and the way back.
 //!
 //!
 //! A place shows over the tabs or the workspace, which stay as they were
@@ -37,16 +38,18 @@ pub enum Place {
     Library,
     Notes,
     Terminal,
+    Crm,
     Agent,
     Apps,
 }
 
 impl Place {
-    pub const ALL: [Place; 6] = [
+    pub const ALL: [Place; 7] = [
         Place::Mail,
         Place::Library,
         Place::Notes,
         Place::Terminal,
+        Place::Crm,
         Place::Agent,
         Place::Apps,
     ];
@@ -57,6 +60,7 @@ impl Place {
             Place::Library => "Library",
             Place::Notes => "Notes",
             Place::Terminal => "Terminal",
+            Place::Crm => "Index",
             Place::Agent => "Agent",
             Place::Apps => "All apps",
         }
@@ -69,6 +73,7 @@ impl Place {
             Place::Library => "library",
             Place::Notes => "notes",
             Place::Terminal => "terminal",
+            Place::Crm => "index",
             Place::Agent => "agent",
             Place::Apps => "apps",
         }
@@ -80,6 +85,7 @@ impl Place {
             Place::Library => icons::media(),
             Place::Notes => icons::notes(),
             Place::Terminal => icons::terminal(),
+            Place::Crm => icons::index(),
             Place::Agent => icons::agent(),
             Place::Apps => icons::apps(),
         }
@@ -87,7 +93,7 @@ impl Place {
 
     /// Whether the place has its own surface; the others show `PlaceView`.
     pub fn is_built(self) -> bool {
-        self == Place::Agent
+        matches!(self, Place::Agent | Place::Crm)
     }
 
     /// What the place will hold, in a sentence.
@@ -103,6 +109,7 @@ impl Place {
                 "Notes you write as you go, kept with the pages and searches they came from."
             }
             Place::Terminal => "A full terminal with your shell, beside your pages.",
+            Place::Crm => "What needs attention, and the records it comes from.",
             Place::Agent => {
                 "Theorem: conversation, ongoing tasks and memory, working with the pages and places beside it."
             }

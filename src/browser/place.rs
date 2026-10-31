@@ -1,17 +1,18 @@
 //! The place the window shows (`Browser::place`), over the tabs or the
 //! workspace, which it leaves as they were. No tab row or sidebar stands
 //! over a place: its card holds it, and the places bump (`PlacesBump`), at
-//! the card's leading edge or, in the Agent place, the window's, moves
-//! between the places and back out to what is beneath. With Always Show
-//! Places on, the bump stands over the tabs and the workspace as well.
+//! the card's leading edge or, in the Agent and CRM places, the window's,
+//! moves between the places and back out to what is beneath. With Always
+//! Show Places on, the bump stands over the tabs and the workspace as well.
 //!
 //! SOURCING: the bump and the card's shape are `bump.rs`; the places,
-//! `places.rs`; the Agent place is Theorem's workbench (`theorem/`).
+//! `places.rs`; the Agent place is Theorem's workbench (`theorem/`); the CRM
+//! is `crm/`.
 
 use gpui_kit::component::{ActiveTheme as _, v_flex};
 use gpui_kit::{
-    AnyElement, AppContext as _, Context, IntoElement, ParentElement as _, Styled as _, Window,
-    div, px,
+    AnyElement, AppContext as _, Context, Focusable as _, IntoElement, ParentElement as _,
+    Styled as _, Window, div, px,
 };
 use url::Url;
 
@@ -86,12 +87,18 @@ impl Browser {
         if place == Place::Agent && self.theorem.is_none() {
             self.open_theorem(window, cx);
         }
+        if place == Place::Crm && self.crm.is_none() {
+            self.crm = Some(cx.new(|cx| crate::crm::Crm::new(window, cx)));
+        }
         let exit = self.exit();
         if let Some((workbench, _)) = &self.theorem {
             workbench.update(cx, |workbench, cx| {
                 workbench.set_exit(exit, cx);
                 workbench.set_board(false, cx);
             });
+        }
+        if let Some(crm) = &self.crm {
+            crm.update(cx, |crm, cx| crm.set_exit(exit, cx));
         }
         self.close_navigator(window, cx);
         self.place = Some(place);
@@ -146,17 +153,25 @@ impl Browser {
         cx.notify();
     }
 
-    /// The Agent's composer, or the window, which holds the other places'
-    /// keyboard.
+    /// The Agent's composer, the CRM, or the window, which holds the other
+    /// places' keyboard.
     pub(super) fn focus_place(
         &mut self,
         place: Place,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        match (place, &self.theorem) {
-            (Place::Agent, Some((workbench, _))) => {
-                workbench.update(cx, |workbench, cx| workbench.focus_composer(window, cx))
+        match place {
+            Place::Agent => {
+                if let Some((workbench, _)) = &self.theorem {
+                    workbench.update(cx, |workbench, cx| workbench.focus_composer(window, cx));
+                }
+            }
+            Place::Crm => {
+                if let Some(crm) = &self.crm {
+                    let handle = crm.focus_handle(cx);
+                    window.focus(&handle, cx);
+                }
             }
             _ => window.focus(&self.focus_handle, cx),
         }
@@ -189,13 +204,18 @@ impl Browser {
         self.go(url, new_tab, true, window, cx);
     }
 
-    /// The place: the Agent's workbench, which draws its own card, or a
-    /// place's card under the window's drag strip.
+    /// The place: the Agent's workbench or the CRM, each of which draws its
+    /// own card, or a place's card under the window's drag strip.
     pub(super) fn render_place(&mut self, place: Place, cx: &mut Context<Self>) -> AnyElement {
         if place == Place::Agent
             && let Some((workbench, _)) = &self.theorem
         {
             return workbench.clone().into_any_element();
+        }
+        if place == Place::Crm
+            && let Some(crm) = &self.crm
+        {
+            return crm.clone().into_any_element();
         }
         let slot = Slot::default();
         v_flex()
