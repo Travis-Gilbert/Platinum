@@ -11,6 +11,7 @@
 //! it shares `host::service::Service`, which is how every view reaches a
 //! vault, and does not touch the reading page.
 
+pub mod editor;
 pub mod host;
 pub mod open;
 pub mod panel;
