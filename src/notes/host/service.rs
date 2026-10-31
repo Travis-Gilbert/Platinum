@@ -320,11 +320,7 @@ mod tests {
     use futures::executor::block_on;
 
     fn vault(files: &[(&str, &str)]) -> (tempfile::TempDir, tempfile::TempDir, Service) {
-        let root = tempfile::tempdir().unwrap();
-        let data = tempfile::tempdir().unwrap();
-        for (path, text) in files {
-            std::fs::write(root.path().join(path), text).unwrap();
-        }
+        let (root, data) = super::super::ops::tests::folders(files);
         let service = Service::start(root.path(), data.path());
         (root, data, service)
     }

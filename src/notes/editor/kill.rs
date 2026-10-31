@@ -23,6 +23,8 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
+use super::tests::copy_tree;
+
 /// Kills made. The request is at least fifty.
 const KILLS: u64 = 50;
 /// Kills in progress at once; each is mostly a vault opening, which is work.
@@ -45,18 +47,6 @@ fn example() -> PathBuf {
         example.display()
     );
     example
-}
-
-fn copy_tree(from: &Path, to: &Path) {
-    fs::create_dir_all(to).unwrap();
-    for entry in fs::read_dir(from).unwrap() {
-        let entry = entry.unwrap();
-        if entry.file_type().unwrap().is_dir() {
-            copy_tree(&entry.path(), &to.join(entry.file_name()));
-        } else {
-            fs::copy(entry.path(), to.join(entry.file_name())).unwrap();
-        }
-    }
 }
 
 /// The line to wait for before the nth kill, and how much longer to wait.

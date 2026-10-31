@@ -487,6 +487,13 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn fixture(files: &[(&str, &str)]) -> Fixture {
+        let (root, data) = folders(files);
+        let vault = Vault::open(root.path(), data.path()).unwrap();
+        Fixture { root, data, vault }
+    }
+
+    /// A temporary vault folder holding the given files, and a data folder.
+    pub(crate) fn folders(files: &[(&str, &str)]) -> (tempfile::TempDir, tempfile::TempDir) {
         let root = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
         for (path, text) in files {
@@ -494,8 +501,7 @@ pub(crate) mod tests {
             std::fs::create_dir_all(file.parent().unwrap()).unwrap();
             std::fs::write(file, text).unwrap();
         }
-        let vault = Vault::open(root.path(), data.path()).unwrap();
-        Fixture { root, data, vault }
+        (root, data)
     }
 
     #[test]

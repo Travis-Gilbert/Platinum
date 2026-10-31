@@ -257,13 +257,7 @@ mod tests {
     }
 
     fn vault(files: &[(&str, &str)]) -> Vault {
-        let root = tempfile::tempdir().unwrap();
-        let data = tempfile::tempdir().unwrap();
-        for (path, text) in files {
-            let file = root.path().join(path);
-            std::fs::create_dir_all(file.parent().unwrap()).unwrap();
-            std::fs::write(file, text).unwrap();
-        }
+        let (root, data) = super::super::ops::tests::folders(files);
         let vaults = Vaults::default();
         let service = vaults.open(root.path(), data.path());
         Vault {
