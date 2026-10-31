@@ -11,6 +11,7 @@ mod browser;
 mod bump;
 mod canvas;
 mod controls;
+mod crm;
 mod delegate;
 mod downloads;
 mod embedder;

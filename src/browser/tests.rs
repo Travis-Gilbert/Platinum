@@ -1639,6 +1639,29 @@ fn the_agent_place_is_theorem_with_the_keyboard_in_it(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
+fn the_crm_place_is_the_record_workspace(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    open_from_palette(cx, "index");
+    assert_eq!(place(&browser, cx), Some(NativePlace::Crm));
+    assert!(drawn(cx, "crm-shell".into()));
+    assert!(drawn(cx, "crm-card".into()));
+    assert!(drawn(cx, "crm-nav".into()));
+    assert!(drawn(cx, "places-bump".into()));
+    assert!(
+        cx.debug_bounds("address-bar").is_none(),
+        "the CRM is the application's, not a page"
+    );
+    let bump = bounds_of(cx, "places-bump".into());
+    let card = bounds_of(cx, "crm-card".into());
+    let navigator = bounds_of(cx, "crm-nav".into());
+    assert!(
+        bump.left() == navigator.left() && bump.right() <= card.left(),
+        "the bump stands on the window's leading edge, clear of the card: \
+         {bump:?} beside {card:?}"
+    );
+}
+
+#[gpui_kit::test]
 fn always_show_places_stands_the_bump_over_home_and_tabs_and_is_saved(cx: &mut TestAppContext) {
     let dir = data_dir("places-pinned");
     cx.update(|cx| session::init(&dir, cx));
