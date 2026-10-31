@@ -563,8 +563,11 @@
 
   // ---- First render ----------------------------------------------------
 
-  // The shell carries the note's rendered HTML; the post-processors take it
-  // from there, as they do after a patch.
+  // The shell carries the note's rendered HTML in its config, not in the
+  // markup; it goes onto the page here, and the post-processors take it from
+  // there, as they do after a patch.
+  sizer.append(parse(PUSHER + config.html));
+  applyClasses(config.cssclasses);
   wrapMermaid(sizer);
   afterRender(sizer);
   if (location.hash) scrollToHash(location.hash);
