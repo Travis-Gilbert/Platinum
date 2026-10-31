@@ -28,8 +28,8 @@ use gpui_kit::base::dock::{Panel, PanelEvent, PanelState};
 use gpui_kit::component::{ActiveTheme as _, Theme};
 use gpui_kit::{
     AnyElement, App, AppContext as _, Context, Corners, Entity, EventEmitter, FocusHandle,
-    Focusable, InteractiveElement as _, IntoElement, ParentElement as _, Render, SharedString,
-    Styled as _, Subscription, Window, div, px,
+    Focusable, InteractiveElement as _, IntoElement, ParentElement as _, Render, Styled as _,
+    Subscription, Window, div,
 };
 use servo::{RenderingContext as _, WebViewBuilder};
 use url::Url;
@@ -159,11 +159,6 @@ impl ReadingPanel {
 
     pub fn session(&self) -> &Entity<Session> {
         &self.session
-    }
-
-    /// The note's name, for a title.
-    pub fn title(&self, cx: &App) -> SharedString {
-        self.session.read(cx).title().into()
     }
 
     /// The app's theme changed: pages served from now on take it, and the
