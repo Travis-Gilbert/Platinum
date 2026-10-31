@@ -226,13 +226,6 @@ fn main() -> anyhow::Result<()> {
             }
         };
         let service = vaults.open(&root, &app_profile.join("data"));
-        let wiring = Wiring::new(service.host(), Rc::new(Frames));
-        let view = WebViewBuilder::new(&engine::Engine::servo(cx), context)
-            .hidpi_scale_factor(euclid::Scale::new(1.0))
-            .delegate(wiring.delegate())
-            .build();
-        view.show();
-        let session = Session::start(wiring, view.clone(), service.clone(), cx);
         let (root, out, profile) = (root.clone(), out.clone(), app_profile.clone());
         cx.spawn(async move |cx| {
             let executor = cx.background_executor().clone();
@@ -257,9 +250,31 @@ fn main() -> anyhow::Result<()> {
                 eprintln!("notes check: the vault's settings were not applied: {error}");
                 finish(&profile, false);
             }
+            // The web view is built on the first note: a page asked for after
+            // it is built can be dropped by Servo (see `Wiring::first_page`).
+            let mut wiring = Wiring::new(service.host(), Rc::new(Frames));
+            let first = match wiring.first_page(&notes[0]) {
+                Ok(first) => first,
+                Err(error) => {
+                    eprintln!("notes check: {error:#}");
+                    finish(&profile, false);
+                }
+            };
+            let (view, session) = cx.update(|cx| {
+                let view = WebViewBuilder::new(&engine::Engine::servo(cx), context)
+                    .hidpi_scale_factor(euclid::Scale::new(1.0))
+                    .delegate(wiring.delegate())
+                    .url(first)
+                    .build();
+                view.show();
+                let session = Session::start(wiring, view.clone(), service.clone(), cx);
+                (view, session)
+            });
             let (mut settled, mut unsettled, mut missing) = (0, 0, Vec::new());
-            for note in &notes {
-                session.update(cx, |session, cx| session.show(Some(note.clone()), None, cx));
+            for (index, note) in notes.iter().enumerate() {
+                if index > 0 {
+                    session.update(cx, |session, cx| session.show(Some(note.clone()), None, cx));
+                }
                 let (html, label) = match settle(&view, note, &executor).await {
                     Outcome::Settled(html) => {
                         settled += 1;
