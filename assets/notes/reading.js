@@ -15,6 +15,9 @@
     // The authority revision of the text the page shows; a patch rendered from
     // an older one is dropped.
     revision: config.revision,
+    // Identifies the html and classes the page shows; the host sends it back
+    // in `ready` so it can tell whether the page already has a rendering.
+    digest: config.digest,
     // Callout folds, as the host last told us, and the ones we toggled that
     // the host has not yet counted (`foldSeq` numbers them).
     folds: new Map(Object.entries(config.folds)),
@@ -30,10 +33,15 @@
   const PUSHER = '<div class="markdown-preview-pusher" style="width: 1px; height: 0.1px; margin-bottom: 0px;"></div>';
   const BASE_CLASSES = [...view.classList];
 
+  // The vault's own scheme wins; otherwise the app's theme (`chrome`, which the
+  // host updates through `frameNotes.chrome`), and only without either the
+  // system's.
   const dark = matchMedia("(prefers-color-scheme: dark)");
+  let chromeScheme = config.chrome;
   const applyTheme = () => {
-    document.body.classList.toggle("theme-dark", dark.matches);
-    document.body.classList.toggle("theme-light", !dark.matches);
+    const scheme = config.theme !== "system" ? config.theme : (chromeScheme ?? (dark.matches ? "dark" : "light"));
+    document.body.classList.toggle("theme-dark", scheme === "dark");
+    document.body.classList.toggle("theme-light", scheme !== "dark");
   };
   applyTheme();
   dark.addEventListener("change", applyTheme);
@@ -323,13 +331,19 @@
     view.className = [...BASE_CLASSES, ...cssclasses].join(" ");
   };
 
-  // Returns whether the patch was applied: one rendered from an older revision
-  // than the page shows is dropped.
-  const patch = ({ revision, html, cssclasses, folds, foldAck }) => {
-    if (revision < state.revision) return false;
-    state.revision = revision;
+  // The host's count of the folds, and the highest fold of ours it has counted.
+  const adoptFolds = (folds, foldAck) => {
     state.folds = new Map(Object.entries(folds));
     for (const [key, { seq }] of state.unacknowledged) if (seq <= foldAck) state.unacknowledged.delete(key);
+  };
+
+  // Returns whether the patch was applied: one rendered from an older revision
+  // than the page shows is dropped.
+  const patch = ({ revision, digest, html, cssclasses, folds, foldAck }) => {
+    if (revision < state.revision) return false;
+    state.revision = revision;
+    state.digest = digest;
+    adoptFolds(folds, foldAck);
     const incoming = parse(PUSHER + html);
     wrapMermaid(incoming);
     reuse(incoming, sizer);
@@ -339,11 +353,19 @@
     return true;
   };
 
+  // How many post-processors are still working, so the host's checks can tell
+  // a page that is done from one that has yet to typeset its formulas.
+  let busy = 0;
+  const track = (work) => {
+    busy++;
+    work.catch((error) => console.error(error?.message ?? error)).finally(() => busy--);
+  };
+
   const afterRender = (container) => {
     applyFolds(container);
-    typesetMath(container);
-    highlightCode(container);
-    renderMermaid(container);
+    track(typesetMath(container));
+    track(highlightCode(container));
+    track(renderMermaid(container));
   };
 
   // ---- Clicks ----------------------------------------------------------
@@ -364,23 +386,30 @@
     return Boolean(target);
   };
 
+  // What a click follows: a link in the text (`a`) or a link in the
+  // properties, which the renderer draws as a `div` carrying `data-href`.
+  const LINK = "a, .metadata-link-inner[data-href]";
+  const INTERNAL_LINK = "a.internal-link, .metadata-link-inner.internal-link";
+
   const followLink = (link) => {
-    const href = link.getAttribute("href") ?? "";
+    const anchor = link.localName === "a";
+    const href = (anchor ? link.getAttribute("href") : link.dataset.href) ?? "";
+    const absolute = anchor ? link.href : href;
     if (link.classList.contains("internal-link")) {
       const target = link.dataset.href ?? href;
       if (target.startsWith("#")) scrollToHash(target);
       else post("open", { link: target, from: config.path, unresolved: link.classList.contains("is-unresolved") ? 1 : 0 });
     } else if (href.startsWith("#")) {
       scrollToHash(href);
-    } else if (/^(https?|mailto):/i.test(link.href)) {
-      post("web", { url: link.href });
+    } else if (/^(https?|mailto):/i.test(absolute)) {
+      post("web", { url: absolute });
     }
   };
 
   document.addEventListener(
     "click",
     (event) => {
-      const link = event.target.closest("a");
+      const link = event.target.closest(LINK);
       if (link) {
         event.preventDefault();
         followLink(link);
@@ -470,14 +499,14 @@
   };
 
   document.addEventListener("mouseover", (event) => {
-    const link = event.target.closest?.("a.internal-link");
+    const link = event.target.closest?.(INTERNAL_LINK);
     if (!link) return;
     clearTimeout(hoverTimer);
     clearTimeout(hideTimer);
     hoverTimer = setTimeout(() => showPreview(link), 350);
   });
   document.addEventListener("mouseout", (event) => {
-    const link = event.target.closest?.("a.internal-link");
+    const link = event.target.closest?.(INTERNAL_LINK);
     if (!link) return;
     clearTimeout(hoverTimer);
     hideTimer = setTimeout(() => {
@@ -506,8 +535,28 @@
       }
       renderMermaid(sizer);
     },
-    // What the page shows now, for the host's checks.
+    // The remembered folds of a note, put on a page that has just loaded.
+    restore({ folds, foldAck }) {
+      adoptFolds(folds, foldAck);
+      applyFolds(sizer);
+    },
+    // The app's theme changed: its colors (the host's `:root` rule, as text)
+    // and whether it is dark.
+    chrome({ css, dark: isDark }) {
+      let style = document.getElementById("frame-notes-chrome");
+      if (!style) {
+        style = document.createElement("style");
+        style.id = "frame-notes-chrome";
+        document.head.append(style);
+      }
+      style.textContent = css;
+      chromeScheme = isDark ? "dark" : "light";
+      applyTheme();
+    },
+    // What the page shows now, for the host's checks, and whether it is done
+    // post-processing it.
     shown: () => state.revision,
+    idle: () => busy === 0,
     // The ids of the formulas, code blocks and diagrams on the page.
     ids: () => sourceElements(sizer).map(([, id]) => id),
   };
@@ -521,7 +570,7 @@
   if (location.hash) scrollToHash(location.hash);
   // The page script is running and shows `state.revision`. Posting during the
   // load could be taken for a navigation away from it, so wait for the load.
-  const ready = () => post("ready", { revision: state.revision });
+  const ready = () => post("ready", { revision: state.revision, digest: state.digest });
   if (document.readyState === "complete") ready();
   else addEventListener("load", ready, { once: true });
 })();
