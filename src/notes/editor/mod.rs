@@ -26,6 +26,8 @@ mod design;
 mod rebase;
 
 #[cfg(test)]
+mod kill;
+#[cfg(test)]
 mod tests;
 
 use std::borrow::Cow;
