@@ -182,6 +182,37 @@ script/media-env cargo build --locked --example profile_check
 script/media-env python3 tests/profiles/check_native.py /path/to/target/debug/examples/profile_check
 ```
 
+## Notes
+
+Platinum can open a folder of Markdown notes (an Obsidian vault) in a reading
+view. Pass the folder at launch:
+
+```sh
+script/media-env cargo run --locked -- --notes-vault ~/Notes
+script/media-env cargo run --locked -- --notes-vault ~/Notes --notes-note "Projects/Plan.md"
+```
+
+`--notes-vault <dir>` opens a notes window on that vault instead of the
+browser's window. `--notes-note <path>` names the note to show, as a path from
+the vault's folder (`Projects/Plan.md`); without it the window shows the
+vault's first note. `--notes-note` needs `--notes-vault`.
+
+The note is rendered by the vault's own worker and shown in a Servo web view
+at a `frame-notes:` address. That scheme is registered only when
+`--notes-vault` is given, and only the notes window may load it: a web page,
+or a page of the browser, cannot. Links in a note open that note, or create it
+if it does not exist yet; a task's checkbox changes the note's text; a callout
+folds and stays folded as the note changes underneath; hovering a link
+previews its note. A link to the web goes to the system's browser (a notes
+window has no Platinum tab to open it in yet). The page takes the colors of
+Platinum's theme; the vault's `.obsidian` appearance settings and enabled CSS
+snippets are applied after them.
+
+`cargo run --locked --example notes_check -- <output-dir>` opens every note of
+`crates/notes-fixtures/vault` in a real Servo web view and writes the reading
+view's DOM, laid out like `crates/notes-fixtures/reference/fixture-vault/dom`,
+for `notes-fixtures compare-dom`.
+
 ## Search providers
 
 Bluesky, which needs no key, is always on, ranked below the other providers.
