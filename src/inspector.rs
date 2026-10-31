@@ -134,9 +134,7 @@ impl Model {
     }
 
     fn alloc_id(&mut self) -> i64 {
-        let id = self.next_id;
-        self.next_id += 1;
-        id
+        crate::sequence::take_next(&mut self.next_id)
     }
 
     fn push(&mut self, level: Level, text: impl Into<String>) {
@@ -160,246 +158,476 @@ pub(crate) struct FollowUp {
 /// Fold one CDP message into the panel. Command replies are applied only
 /// when their id is one this model is still waiting on.
 pub(crate) fn apply(model: &mut Model, message: &Value) -> FollowUp {
-    let mut follow = FollowUp { expand: Vec::new() };
     if let Some(method) = message.get("method").and_then(Value::as_str) {
         apply_event(model, method, message.get("params").unwrap_or(&Value::Null));
-        return follow;
+        return FollowUp { expand: Vec::new() };
     }
-    let id = message.get("id").and_then(Value::as_i64);
-    let Some(id) = id else {
+    apply_reply(model, message)
+}
+
+fn apply_reply(model: &mut Model, message: &Value) -> FollowUp {
+    let mut follow = FollowUp { expand: Vec::new() };
+    let Some(id) = message.get("id").and_then(Value::as_i64) else {
         return follow;
     };
-    let Some(pending) = model.pending.remove(&id) else {
-        return follow;
-    };
-    if let Some(error) = message.get("error") {
-        let text = error
-            .get("message")
-            .and_then(Value::as_str)
-            .unwrap_or("error");
-        model.push(Level::Error, text);
-        return follow;
-    }
-    let result = message.get("result").unwrap_or(&Value::Null);
-    match pending {
-        Pending::Ignore => {}
-        Pending::Eval => {
-            if let Some(details) = result.get("exceptionDetails") {
-                let text = details
-                    .get("text")
-                    .and_then(Value::as_str)
-                    .unwrap_or("exception");
-                model.push(Level::Error, text);
-            } else if result.get("result").is_some() {
-                model.push(Level::Result, describe_remote(&result["result"]));
-            }
-        }
-        Pending::Root => {
-            if let Some(root) = result.get("root").filter(|root| !root.is_null())
-                && let Some(id) = adopt_root(model, root)
-            {
-                follow.expand.push(id);
-            }
-        }
-        Pending::Style(node) => {
-            if model.selected_node == Some(node)
-                && let Some(styles) = result.get("computedStyle").and_then(Value::as_array)
-            {
-                model.styles = styles
-                    .iter()
-                    .filter_map(|style| {
-                        Some((
-                            style.get("name")?.as_str()?.to_owned(),
-                            style.get("value")?.as_str()?.to_owned(),
-                        ))
-                    })
-                    .collect();
-            }
-        }
-        Pending::Body(request) => {
-            if let Some(body) = result.get("body").and_then(Value::as_str)
-                && let Some(row) = model.requests.iter_mut().find(|row| row.id == request)
-            {
-                row.body = body.to_owned();
-            }
-        }
-    }
+    apply_known_reply(model, message, id, &mut follow);
     follow
 }
 
-fn apply_event(model: &mut Model, method: &str, params: &Value) {
-    match method {
-        "Log.entryAdded" => {
-            let entry = &params["entry"];
-            let text = entry.get("text").and_then(Value::as_str).unwrap_or("");
-            if text == "console.clear" {
-                model.lines.clear();
-                return;
-            }
-            let level = match entry.get("level").and_then(Value::as_str).unwrap_or("info") {
-                "error" | "warning" => Level::Error,
-                _ => Level::Log,
-            };
-            model.push(level, text);
-        }
-        "Runtime.executionContextCreated" => {
-            model.context_id = params["context"]["id"].as_i64();
-        }
-        "Runtime.executionContextDestroyed" => {
-            model.context_id = None;
-            model.nodes.clear();
-            model.styles.clear();
-            model.tools.clear();
-            model.selected_node = None;
-            model.pending.clear();
-        }
-        "DOM.setChildNodes" => {
-            let parent = params.get("parentId").and_then(Value::as_i64).unwrap_or(0);
-            let nodes = params
-                .get("nodes")
-                .and_then(Value::as_array)
-                .cloned()
-                .unwrap_or_default();
-            set_children(model, parent, &nodes);
-        }
-        "Network.requestWillBeSent" => {
-            let id = params
-                .get("requestId")
-                .and_then(Value::as_str)
-                .unwrap_or("")
-                .to_owned();
-            if model.requests.iter().any(|row| row.id == id) {
-                return;
-            }
-            let request = &params["request"];
-            model.requests.push(RequestRow {
-                id,
-                method: request
-                    .get("method")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_owned(),
-                url: request
-                    .get("url")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_owned(),
-                status: None,
-                mime: String::new(),
-                failed: false,
-                body: String::new(),
-            });
-            if model.requests.len() > MAX_REQUESTS {
-                let extra = model.requests.len() - MAX_REQUESTS;
-                model.requests.drain(0..extra);
-            }
-        }
-        "Network.responseReceived" => {
-            let id = params
-                .get("requestId")
-                .and_then(Value::as_str)
-                .unwrap_or("");
-            let response = &params["response"];
-            if let Some(row) = model.requests.iter_mut().find(|row| row.id == id) {
-                row.status = response
-                    .get("status")
-                    .and_then(Value::as_u64)
-                    .map(|code| code as u16);
-                row.mime = response
-                    .get("mimeType")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_owned();
-            }
-        }
-        "Network.loadingFailed" => {
-            let id = params
-                .get("requestId")
-                .and_then(Value::as_str)
-                .unwrap_or("");
-            if let Some(row) = model.requests.iter_mut().find(|row| row.id == id) {
-                row.failed = true;
-            } else {
-                model.requests.push(RequestRow {
-                    id: id.to_owned(),
-                    method: String::new(),
-                    url: params
-                        .get("errorText")
-                        .and_then(Value::as_str)
-                        .unwrap_or("failed")
-                        .to_owned(),
-                    status: None,
-                    mime: String::new(),
-                    failed: true,
-                    body: String::new(),
-                });
-            }
-        }
-        "WebMCP.toolsAdded" => {
-            let tools = params
-                .get("tools")
-                .and_then(Value::as_array)
-                .cloned()
-                .unwrap_or_default();
-            for tool in tools {
-                let name = tool
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_owned();
-                model.tools.retain(|row| row.name != name);
-                model.tools.push(ToolRow {
-                    name,
-                    description: tool
-                        .get("description")
-                        .and_then(Value::as_str)
-                        .unwrap_or("")
-                        .to_owned(),
-                    schema: tool
-                        .get("inputSchema")
-                        .map(|schema| schema.to_string())
-                        .unwrap_or_default(),
-                    frame: tool
-                        .get("frameId")
-                        .and_then(Value::as_str)
-                        .unwrap_or("")
-                        .to_owned(),
-                });
-            }
-        }
-        "WebMCP.toolsRemoved" => {
-            let tools = params
-                .get("tools")
-                .and_then(Value::as_array)
-                .cloned()
-                .unwrap_or_default();
-            model.tools.retain(|tool| {
-                !tools
-                    .iter()
-                    .any(|removed| removed.get("name").and_then(Value::as_str) == Some(&tool.name))
-            });
-        }
-        "WebMCP.toolResponded" => {
-            let name = params
-                .get("invocationId")
-                .and_then(Value::as_str)
-                .unwrap_or("tool");
-            let status = params.get("status").and_then(Value::as_str).unwrap_or("");
-            if status == "success" {
-                model.push(
-                    Level::Result,
-                    format!("{name} → {}", params.get("output").unwrap_or(&Value::Null)),
-                );
-            } else {
-                let error = params
-                    .get("errorText")
-                    .and_then(Value::as_str)
-                    .unwrap_or(status);
-                model.push(Level::Error, format!("{name} failed: {error}"));
-            }
-        }
-        _ => {}
+fn apply_known_reply(model: &mut Model, message: &Value, id: i64, follow: &mut FollowUp) {
+    let Some(pending) = model.pending.remove(&id) else {
+        return;
+    };
+    if reply_failed(model, message) {
+        return;
     }
+    apply_pending(
+        model,
+        pending,
+        message.get("result").unwrap_or(&Value::Null),
+        follow,
+    );
+}
+
+fn reply_failed(model: &mut Model, message: &Value) -> bool {
+    let Some(error) = message.get("error") else {
+        return false;
+    };
+    let text = error
+        .get("message")
+        .and_then(Value::as_str)
+        .unwrap_or("error");
+    model.push(Level::Error, text);
+    true
+}
+
+fn apply_pending(model: &mut Model, pending: Pending, result: &Value, follow: &mut FollowUp) {
+    if let Pending::Ignore = pending {
+        return;
+    }
+    apply_eval_pending(model, pending, result, follow);
+}
+
+fn apply_eval_pending(model: &mut Model, pending: Pending, result: &Value, follow: &mut FollowUp) {
+    if let Pending::Eval = pending {
+        apply_eval(model, result);
+        return;
+    }
+    apply_root_pending(model, pending, result, follow);
+}
+
+fn apply_root_pending(model: &mut Model, pending: Pending, result: &Value, follow: &mut FollowUp) {
+    if let Pending::Root = pending {
+        apply_root(model, result, follow);
+        return;
+    }
+    apply_style_pending(model, pending, result, follow);
+}
+
+fn apply_style_pending(model: &mut Model, pending: Pending, result: &Value, follow: &mut FollowUp) {
+    if let Pending::Style(node) = pending {
+        apply_style(model, node, result);
+        return;
+    }
+    apply_body_pending(model, pending, result);
+}
+
+fn apply_body_pending(model: &mut Model, pending: Pending, result: &Value) {
+    if let Pending::Body(request) = pending {
+        apply_response_body(model, &request, result);
+    }
+}
+
+fn note_status(inspector: &mut Inspector, generation: u64, status: String) {
+    if generation == inspector.model.generation {
+        inspector.model.status = status;
+    }
+}
+
+fn note_message(inspector: &mut Inspector, event: Wire) {
+    if let Wire::Message {
+        generation,
+        message,
+    } = event
+    {
+        apply_current(inspector, generation, &message);
+    }
+}
+
+fn apply_current(inspector: &mut Inspector, generation: u64, message: &Value) {
+    if generation != inspector.model.generation {
+        return;
+    }
+    let follow = apply(&mut inspector.model, message);
+    expand_nodes(inspector, follow);
+}
+
+fn expand_nodes(inspector: &mut Inspector, follow: FollowUp) {
+    for node in follow.expand {
+        inspector.command_pending(
+            Pending::Ignore,
+            "DOM.requestChildNodes",
+            json!({ "nodeId": node }),
+        );
+    }
+}
+
+fn apply_eval(model: &mut Model, result: &Value) {
+    if let Some(details) = result.get("exceptionDetails") {
+        let text = details
+            .get("text")
+            .and_then(Value::as_str)
+            .unwrap_or("exception");
+        model.push(Level::Error, text);
+        return;
+    }
+    apply_eval_value(model, result);
+}
+
+fn apply_eval_value(model: &mut Model, result: &Value) {
+    if result.get("result").is_some() {
+        model.push(Level::Result, describe_remote(&result["result"]));
+    }
+}
+
+fn apply_root(model: &mut Model, result: &Value, follow: &mut FollowUp) {
+    if let Some(root) = result.get("root").filter(|root| !root.is_null())
+        && let Some(id) = adopt_root(model, root)
+    {
+        follow.expand.push(id);
+    }
+}
+
+fn apply_style(model: &mut Model, node: i64, result: &Value) {
+    if model.selected_node == Some(node) {
+        fill_styles(model, result);
+    }
+}
+
+fn fill_styles(model: &mut Model, result: &Value) {
+    if let Some(styles) = result.get("computedStyle").and_then(Value::as_array) {
+        model.styles = styles.iter().filter_map(style_pair).collect();
+    }
+}
+
+fn style_pair(style: &Value) -> Option<(String, String)> {
+    let name = style_text(style, "name")?;
+    style_named(style, name)
+}
+
+fn style_named(style: &Value, name: String) -> Option<(String, String)> {
+    let value = style_text(style, "value")?;
+    Some((name, value))
+}
+
+fn style_text(style: &Value, name: &str) -> Option<String> {
+    let field = style.get(name)?;
+    owned_text(field)
+}
+
+fn owned_text(field: &Value) -> Option<String> {
+    Some(field.as_str()?.to_owned())
+}
+
+fn apply_response_body(model: &mut Model, request: &str, result: &Value) {
+    if let Some(body) = result.get("body").and_then(Value::as_str) {
+        store_body(model, request, body);
+    }
+}
+
+fn store_body(model: &mut Model, request: &str, body: &str) {
+    if let Some(row) = model.requests.iter_mut().find(|row| row.id == request) {
+        row.body = body.to_owned();
+    }
+}
+
+fn apply_event(model: &mut Model, method: &str, params: &Value) {
+    if apply_network_event(model, method, params) {
+        return;
+    }
+    apply_after_network(model, method, params);
+}
+
+fn apply_after_network(model: &mut Model, method: &str, params: &Value) {
+    if apply_tool_event(model, method, params) {
+        return;
+    }
+    apply_page_event(model, method, params);
+}
+
+fn apply_network_event(model: &mut Model, method: &str, params: &Value) -> bool {
+    let Some(name) = method.strip_prefix("Network.") else {
+        return false;
+    };
+    route_network(model, name, params);
+    true
+}
+
+fn route_network(model: &mut Model, name: &str, params: &Value) {
+    if name == "requestWillBeSent" {
+        note_request(model, params);
+        return;
+    }
+    route_network_response(model, name, params);
+}
+
+fn route_network_response(model: &mut Model, name: &str, params: &Value) {
+    if name == "responseReceived" {
+        note_response(model, params);
+        return;
+    }
+    route_network_failure(model, name, params);
+}
+
+fn route_network_failure(model: &mut Model, name: &str, params: &Value) {
+    if name == "loadingFailed" {
+        note_failure(model, params);
+    }
+}
+
+fn note_request(model: &mut Model, params: &Value) {
+    let id = text_field(params, "requestId");
+    if model.requests.iter().any(|row| row.id == id) {
+        return;
+    }
+    push_request(model, params, id);
+}
+
+fn push_request(model: &mut Model, params: &Value, id: String) {
+    let request = &params["request"];
+    model.requests.push(RequestRow {
+        id,
+        method: text_field(request, "method"),
+        url: text_field(request, "url"),
+        status: None,
+        mime: String::new(),
+        failed: false,
+        body: String::new(),
+    });
+    trim_requests(model);
+}
+
+fn trim_requests(model: &mut Model) {
+    if model.requests.len() > MAX_REQUESTS {
+        let extra = model.requests.len() - MAX_REQUESTS;
+        model.requests.drain(0..extra);
+    }
+}
+
+fn note_response(model: &mut Model, params: &Value) {
+    let id = params
+        .get("requestId")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    if let Some(row) = model.requests.iter_mut().find(|row| row.id == id) {
+        fill_response(row, &params["response"]);
+    }
+}
+
+fn fill_response(row: &mut RequestRow, response: &Value) {
+    row.status = response
+        .get("status")
+        .and_then(Value::as_u64)
+        .map(|code| code as u16);
+    row.mime = text_field(response, "mimeType");
+}
+
+fn note_failure(model: &mut Model, params: &Value) {
+    let id = params
+        .get("requestId")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    if let Some(row) = model.requests.iter_mut().find(|row| row.id == id) {
+        row.failed = true;
+        return;
+    }
+    push_failure(model, params, id);
+}
+
+fn push_failure(model: &mut Model, params: &Value, id: &str) {
+    model.requests.push(RequestRow {
+        id: id.to_owned(),
+        method: String::new(),
+        url: params
+            .get("errorText")
+            .and_then(Value::as_str)
+            .unwrap_or("failed")
+            .to_owned(),
+        status: None,
+        mime: String::new(),
+        failed: true,
+        body: String::new(),
+    });
+}
+
+fn apply_tool_event(model: &mut Model, method: &str, params: &Value) -> bool {
+    let Some(name) = method.strip_prefix("WebMCP.") else {
+        return false;
+    };
+    route_tool(model, name, params);
+    true
+}
+
+fn route_tool(model: &mut Model, name: &str, params: &Value) {
+    if name == "toolsAdded" {
+        add_tools(model, params);
+        return;
+    }
+    route_tool_removal(model, name, params);
+}
+
+fn route_tool_removal(model: &mut Model, name: &str, params: &Value) {
+    if name == "toolsRemoved" {
+        remove_tools(model, params);
+        return;
+    }
+    route_tool_result(model, name, params);
+}
+
+fn route_tool_result(model: &mut Model, name: &str, params: &Value) {
+    if name == "toolResponded" {
+        note_tool_result(model, params);
+    }
+}
+
+fn add_tools(model: &mut Model, params: &Value) {
+    let Some(tools) = params.get("tools").and_then(Value::as_array) else {
+        return;
+    };
+    for tool in tools {
+        add_tool(model, tool);
+    }
+}
+
+fn add_tool(model: &mut Model, tool: &Value) {
+    let name = text_field(tool, "name");
+    model.tools.retain(|row| row.name != name);
+    model.tools.push(ToolRow {
+        name,
+        description: text_field(tool, "description"),
+        schema: tool
+            .get("inputSchema")
+            .map(|schema| schema.to_string())
+            .unwrap_or_default(),
+        frame: text_field(tool, "frameId"),
+    });
+}
+
+fn remove_tools(model: &mut Model, params: &Value) {
+    let Some(tools) = params.get("tools").and_then(Value::as_array) else {
+        return;
+    };
+    model
+        .tools
+        .retain(|tool| !tools.iter().any(|removed| tool_name(removed) == tool.name));
+}
+
+fn tool_name(tool: &Value) -> &str {
+    tool.get("name").and_then(Value::as_str).unwrap_or("")
+}
+
+fn note_tool_result(model: &mut Model, params: &Value) {
+    let name = params
+        .get("invocationId")
+        .and_then(Value::as_str)
+        .unwrap_or("tool");
+    let status = params.get("status").and_then(Value::as_str).unwrap_or("");
+    if status == "success" {
+        model.push(
+            Level::Result,
+            format!("{name} → {}", params.get("output").unwrap_or(&Value::Null)),
+        );
+        return;
+    }
+    note_tool_failure(model, params, name, status);
+}
+
+fn note_tool_failure(model: &mut Model, params: &Value, name: &str, status: &str) {
+    let error = params
+        .get("errorText")
+        .and_then(Value::as_str)
+        .unwrap_or(status);
+    model.push(Level::Error, format!("{name} failed: {error}"));
+}
+
+fn apply_page_event(model: &mut Model, method: &str, params: &Value) {
+    if method == "Log.entryAdded" {
+        note_log(model, params);
+        return;
+    }
+    apply_context_created(model, method, params);
+}
+
+fn apply_context_created(model: &mut Model, method: &str, params: &Value) {
+    if method == "Runtime.executionContextCreated" {
+        model.context_id = params["context"]["id"].as_i64();
+        return;
+    }
+    apply_context_destroyed(model, method, params);
+}
+
+fn apply_context_destroyed(model: &mut Model, method: &str, params: &Value) {
+    if method == "Runtime.executionContextDestroyed" {
+        drop_page_context(model);
+        return;
+    }
+    apply_child_event(model, method, params);
+}
+
+fn apply_child_event(model: &mut Model, method: &str, params: &Value) {
+    if method == "DOM.setChildNodes" {
+        note_children(model, params);
+    }
+}
+
+fn note_log(model: &mut Model, params: &Value) {
+    let entry = &params["entry"];
+    let text = entry.get("text").and_then(Value::as_str).unwrap_or("");
+    if text == "console.clear" {
+        model.lines.clear();
+        return;
+    }
+    model.push(log_level(entry), text);
+}
+
+fn log_level(entry: &Value) -> Level {
+    let name = entry.get("level").and_then(Value::as_str).unwrap_or("info");
+    if problem_level(name) {
+        Level::Error
+    } else {
+        Level::Log
+    }
+}
+
+fn problem_level(name: &str) -> bool {
+    name == "error" || name == "warning"
+}
+
+fn drop_page_context(model: &mut Model) {
+    model.context_id = None;
+    model.nodes.clear();
+    model.styles.clear();
+    model.tools.clear();
+    model.selected_node = None;
+    model.pending.clear();
+}
+
+fn note_children(model: &mut Model, params: &Value) {
+    let parent = params.get("parentId").and_then(Value::as_i64).unwrap_or(0);
+    let nodes = params
+        .get("nodes")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    set_children(model, parent, &nodes);
+}
+
+fn text_field(value: &Value, name: &str) -> String {
+    value
+        .get(name)
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_owned()
 }
 
 fn adopt_root(model: &mut Model, root: &Value) -> Option<i64> {
@@ -426,36 +654,11 @@ fn adopt_root(model: &mut Model, root: &Value) -> Option<i64> {
 }
 
 fn set_children(model: &mut Model, parent: i64, nodes: &[Value]) {
-    let depth = model
-        .nodes
-        .iter()
-        .find(|node| node.id == parent)
-        .map(|node| node.depth + 1)
-        .unwrap_or(0);
+    let depth = child_depth(model, parent);
     drop_subtree(&mut model.nodes, parent);
     let rows: Vec<NodeRow> = nodes
         .iter()
-        .filter_map(|node| {
-            Some(NodeRow {
-                id: node.get("nodeId")?.as_i64()?,
-                parent,
-                name: node
-                    .get("nodeName")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_owned(),
-                value: node
-                    .get("nodeValue")
-                    .and_then(Value::as_str)
-                    .unwrap_or("")
-                    .to_owned(),
-                depth,
-                children: node
-                    .get("childNodeCount")
-                    .and_then(Value::as_u64)
-                    .unwrap_or(0) as usize,
-            })
-        })
+        .filter_map(|node| node_row(node, parent, depth))
         .collect();
     let at = model
         .nodes
@@ -464,6 +667,42 @@ fn set_children(model: &mut Model, parent: i64, nodes: &[Value]) {
         .map(|index| index + 1)
         .unwrap_or(model.nodes.len());
     model.nodes.splice(at..at, rows);
+}
+
+fn child_depth(model: &Model, parent: i64) -> usize {
+    model
+        .nodes
+        .iter()
+        .find(|node| node.id == parent)
+        .map(|node| node.depth + 1)
+        .unwrap_or(0)
+}
+
+fn node_row(node: &Value, parent: i64, depth: usize) -> Option<NodeRow> {
+    let id = node_id(node)?;
+    Some(NodeRow {
+        id,
+        parent,
+        name: node
+            .get("nodeName")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_owned(),
+        value: node
+            .get("nodeValue")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_owned(),
+        depth,
+        children: node
+            .get("childNodeCount")
+            .and_then(Value::as_u64)
+            .unwrap_or(0) as usize,
+    })
+}
+
+fn node_id(node: &Value) -> Option<i64> {
+    node.get("nodeId")?.as_i64()
 }
 
 fn drop_subtree(nodes: &mut Vec<NodeRow>, parent: i64) {
@@ -479,14 +718,33 @@ fn drop_subtree(nodes: &mut Vec<NodeRow>, parent: i64) {
 }
 
 fn describe_remote(value: &Value) -> String {
-    if let Some(text) = value.get("value") {
-        if let Some(text) = text.as_str() {
-            return text.to_owned();
-        }
-        if !text.is_null() {
-            return text.to_string();
-        }
+    if let Some(text) = rendered_field(value) {
+        return text;
     }
+    remote_label(value)
+}
+
+fn rendered_field(value: &Value) -> Option<String> {
+    let text = value.get("value")?;
+    rendered_value(text)
+}
+
+fn rendered_value(text: &Value) -> Option<String> {
+    if let Some(text) = text.as_str() {
+        return Some(text.to_owned());
+    }
+    json_text(text)
+}
+
+fn json_text(text: &Value) -> Option<String> {
+    if text.is_null() {
+        None
+    } else {
+        Some(text.to_string())
+    }
+}
+
+fn remote_label(value: &Value) -> String {
     value
         .get("description")
         .and_then(Value::as_str)
@@ -504,6 +762,39 @@ enum Command {
 enum Wire {
     Status { generation: u64, status: String },
     Message { generation: u64, message: Value },
+}
+
+async fn deliver_wires(
+    inspector: gpui_kit::WeakEntity<Inspector>,
+    cx: &mut gpui_kit::AsyncApp,
+    mut events_rx: futures_mpsc::UnboundedReceiver<Wire>,
+) {
+    while accept_wire(&inspector, cx, &mut events_rx).await {}
+}
+
+async fn accept_wire(
+    inspector: &gpui_kit::WeakEntity<Inspector>,
+    cx: &mut gpui_kit::AsyncApp,
+    events_rx: &mut futures_mpsc::UnboundedReceiver<Wire>,
+) -> bool {
+    let Some(event) = events_rx.next().await else {
+        return false;
+    };
+    inspector
+        .update(cx, |inspector, cx| inspector.on_wire(event, cx))
+        .is_ok()
+}
+
+fn open_target(target: Option<String>) -> Option<String> {
+    target.filter(|target| !target.is_empty())
+}
+
+fn same_target(model: &Model, target: &str) -> bool {
+    model.attached && model.target == target
+}
+
+fn already_detached(model: &Model) -> bool {
+    !model.attached && model.status == "No page"
 }
 
 pub(crate) struct Inspector {
@@ -530,14 +821,7 @@ impl Inspector {
             .spawn(move || drive(commands_rx, events_tx, client))
             .expect("cdp client");
         let events = cx.spawn(async move |inspector, cx| {
-            while let Some(event) = events_rx.next().await {
-                if inspector
-                    .update(cx, |inspector, cx| inspector.on_wire(event, cx))
-                    .is_err()
-                {
-                    break;
-                }
-            }
+            deliver_wires(inspector, cx, events_rx).await;
         });
         Self {
             model: Model::new(),
@@ -551,11 +835,15 @@ impl Inspector {
     /// Follow the page on screen. `None` detaches, including a Start tab or
     /// search results that still hold an old `Page`.
     pub(crate) fn attach(&mut self, target: Option<String>, cx: &mut Context<Self>) {
-        let Some(target) = target.filter(|target| !target.is_empty()) else {
+        let Some(target) = open_target(target) else {
             self.detach(cx);
             return;
         };
-        if self.model.attached && self.model.target == target {
+        self.attach_target(target, cx);
+    }
+
+    fn attach_target(&mut self, target: String, cx: &mut Context<Self>) {
+        if same_target(&self.model, &target) {
             return;
         }
         self.model.generation += 1;
@@ -569,7 +857,7 @@ impl Inspector {
     }
 
     fn detach(&mut self, cx: &mut Context<Self>) {
-        if !self.model.attached && self.model.status == "No page" {
+        if already_detached(&self.model) {
             return;
         }
         self.model.generation += 1;
@@ -605,28 +893,10 @@ impl Inspector {
     }
 
     fn on_wire(&mut self, event: Wire, cx: &mut Context<Self>) {
-        match event {
-            Wire::Status { generation, status } => {
-                if generation == self.model.generation {
-                    self.model.status = status;
-                }
-            }
-            Wire::Message {
-                generation,
-                message,
-            } => {
-                if generation != self.model.generation {
-                    return;
-                }
-                let follow = apply(&mut self.model, &message);
-                for node in follow.expand {
-                    self.command_pending(
-                        Pending::Ignore,
-                        "DOM.requestChildNodes",
-                        json!({ "nodeId": node }),
-                    );
-                }
-            }
+        if let Wire::Status { generation, status } = event {
+            note_status(self, generation, status);
+        } else {
+            note_message(self, event);
         }
         cx.notify();
     }
@@ -641,25 +911,49 @@ impl Inspector {
         if !matches!(event, InputEvent::PressEnter { .. }) {
             return;
         }
+        self.submit_line(window, cx);
+    }
+
+    fn submit_line(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let text = self.expression.read(cx).value().to_string();
         if text.trim().is_empty() {
             return;
         }
-        self.expression.update(cx, |input, cx| {
-            input.set_value("", window, cx);
-        });
+        self.expression
+            .update(cx, |input, cx| input.set_value("", window, cx));
+        self.run_line(&text, cx);
+    }
+
+    fn run_line(&mut self, text: &str, cx: &mut Context<Self>) {
         if !self.model.attached {
             self.model.push(Level::Error, "No page");
             cx.notify();
             return;
         }
-        match self.model.section {
-            Section::Console => self.evaluate(&text),
-            Section::Elements => self.edit_attribute(&text),
-            Section::Tools => self.invoke_tool(&text),
-            Section::Network => {}
-        }
+        self.run_section(text);
         cx.notify();
+    }
+
+    fn run_section(&mut self, text: &str) {
+        if self.model.section == Section::Console {
+            self.evaluate(text);
+            return;
+        }
+        self.run_elements(text);
+    }
+
+    fn run_elements(&mut self, text: &str) {
+        if self.model.section == Section::Elements {
+            self.edit_attribute(text);
+            return;
+        }
+        self.run_tools(text);
+    }
+
+    fn run_tools(&mut self, text: &str) {
+        if self.model.section == Section::Tools {
+            self.invoke_tool(text);
+        }
     }
 
     fn evaluate(&mut self, expression: &str) {
@@ -757,12 +1051,7 @@ impl Render for Inspector {
         );
         let section = self.model.section;
         let status = SharedString::from(self.model.status.clone());
-        let hint = match section {
-            Section::Console => "Evaluate",
-            Section::Elements => "Attribute as name=value",
-            Section::Network => "Requests",
-            Section::Tools => "Tool name, then JSON arguments",
-        };
+        let hint = section_hint(section);
         v_flex()
             .h(px(240.))
             .w_full()
@@ -808,6 +1097,27 @@ impl Render for Inspector {
     }
 }
 
+fn section_hint(section: Section) -> &'static str {
+    if section == Section::Console {
+        return "Evaluate";
+    }
+    hint_after_console(section)
+}
+
+fn hint_after_console(section: Section) -> &'static str {
+    if section == Section::Elements {
+        return "Attribute as name=value";
+    }
+    hint_after_elements(section)
+}
+
+fn hint_after_elements(section: Section) -> &'static str {
+    if section == Section::Network {
+        return "Requests";
+    }
+    "Tool name, then JSON arguments"
+}
+
 fn section_tab(
     cx: &mut Context<Inspector>,
     section: Section,
@@ -836,103 +1146,170 @@ fn section_tab(
 
 impl Inspector {
     fn body(&self, cx: &mut Context<Self>) -> gpui_kit::AnyElement {
-        match self.model.section {
-            Section::Console => v_flex()
-                .gap_1()
-                .children(self.model.lines.iter().map(|line| {
-                    let color = match line.level {
-                        Level::Error => cx.theme().danger,
-                        Level::Result => cx.theme().foreground,
-                        Level::Log => cx.theme().muted_foreground,
-                    };
-                    div()
-                        .text_xs()
-                        .text_color(color)
-                        .child(line.text.clone())
-                        .into_any_element()
-                }))
-                .into_any_element(),
-            Section::Elements => {
-                let selected = self.model.selected_node;
-                v_flex()
-                    .gap_1()
-                    .children(self.model.nodes.iter().map(|node| {
-                        let id = node.id;
-                        let mark = if selected == Some(id) { "▸ " } else { "  " };
-                        div()
-                            .id(("node", id as u64))
-                            .text_xs()
-                            .cursor_pointer()
-                            .pl(px(12. * node.depth as f32))
-                            .on_click(cx.listener(move |inspector, _, _, cx| {
-                                inspector.select_node(id, cx);
-                            }))
-                            .child(format!(
-                                "{mark}{} {}",
-                                node.name,
-                                node.value.chars().take(40).collect::<String>()
-                            ))
-                            .into_any_element()
-                    }))
-                    .children(self.model.styles.iter().take(24).map(|(name, value)| {
-                        div()
-                            .text_xs()
-                            .text_color(cx.theme().muted_foreground)
-                            .child(format!("{name}: {value}"))
-                            .into_any_element()
-                    }))
-                    .into_any_element()
-            }
-            Section::Network => v_flex()
-                .gap_1()
-                .children(
-                    self.model
-                        .requests
-                        .iter()
-                        .enumerate()
-                        .map(|(index, request)| {
-                            let id = request.id.clone();
-                            let status = if request.failed {
-                                "failed".to_owned()
-                            } else {
-                                request
-                                    .status
-                                    .map(|code| code.to_string())
-                                    .unwrap_or_else(|| "…".to_owned())
-                            };
-                            div()
-                                .id(("request", index as u64))
-                                .text_xs()
-                                .cursor_pointer()
-                                .on_click(cx.listener(move |inspector, _, _, cx| {
-                                    inspector.load_body(&id);
-                                    cx.notify();
-                                }))
-                                .child(format!(
-                                    "{status} {} {} {}",
-                                    request.method, request.mime, request.url
-                                ))
-                                .when(!request.body.is_empty(), |row| {
-                                    row.child(format!(
-                                        "  {}",
-                                        request.body.chars().take(80).collect::<String>()
-                                    ))
-                                })
-                                .into_any_element()
-                        }),
-                )
-                .into_any_element(),
-            Section::Tools => v_flex()
-                .gap_1()
-                .children(self.model.tools.iter().map(|tool| {
-                    div()
-                        .text_xs()
-                        .child(format!("{} — {}", tool.name, tool.description))
-                        .into_any_element()
-                }))
-                .into_any_element(),
+        if self.model.section == Section::Console {
+            return console_lines(&self.model, cx);
         }
+        body_after_console(self, cx)
     }
+}
+
+fn body_after_console(inspector: &Inspector, cx: &mut Context<Inspector>) -> gpui_kit::AnyElement {
+    if inspector.model.section == Section::Elements {
+        return element_rows(inspector, cx);
+    }
+    body_after_elements(inspector, cx)
+}
+
+fn body_after_elements(inspector: &Inspector, cx: &mut Context<Inspector>) -> gpui_kit::AnyElement {
+    if inspector.model.section == Section::Network {
+        return request_rows(inspector, cx);
+    }
+    tool_rows(&inspector.model)
+}
+
+fn console_lines(model: &Model, cx: &mut Context<Inspector>) -> gpui_kit::AnyElement {
+    let danger = cx.theme().danger;
+    let foreground = cx.theme().foreground;
+    let muted = cx.theme().muted_foreground;
+    v_flex()
+        .gap_1()
+        .children(model.lines.iter().map(|line| {
+            div()
+                .text_xs()
+                .text_color(line_color(line.level, danger, foreground, muted))
+                .child(line.text.clone())
+                .into_any_element()
+        }))
+        .into_any_element()
+}
+
+fn line_color(
+    level: Level,
+    danger: gpui_kit::Hsla,
+    foreground: gpui_kit::Hsla,
+    muted: gpui_kit::Hsla,
+) -> gpui_kit::Hsla {
+    if level == Level::Error {
+        return danger;
+    }
+    quiet_color(level, foreground, muted)
+}
+
+fn quiet_color(level: Level, foreground: gpui_kit::Hsla, muted: gpui_kit::Hsla) -> gpui_kit::Hsla {
+    if level == Level::Result {
+        return foreground;
+    }
+    muted
+}
+
+fn element_rows(inspector: &Inspector, cx: &mut Context<Inspector>) -> gpui_kit::AnyElement {
+    let selected = inspector.model.selected_node;
+    let muted = cx.theme().muted_foreground;
+    v_flex()
+        .gap_1()
+        .children(inspector.model.nodes.iter().map(|node| {
+            let id = node.id;
+            div()
+                .id(("node", id as u64))
+                .text_xs()
+                .cursor_pointer()
+                .pl(px(12. * node.depth as f32))
+                .on_click(cx.listener(move |inspector, _, _, cx| {
+                    inspector.select_node(id, cx);
+                }))
+                .child(format!(
+                    "{}{} {}",
+                    node_mark(selected, id),
+                    node.name,
+                    node.value.chars().take(40).collect::<String>()
+                ))
+                .into_any_element()
+        }))
+        .children(inspector.model.styles.iter().take(24).map(|(name, value)| {
+            div()
+                .text_xs()
+                .text_color(muted)
+                .child(format!("{name}: {value}"))
+                .into_any_element()
+        }))
+        .into_any_element()
+}
+
+fn node_mark(selected: Option<i64>, id: i64) -> &'static str {
+    if selected == Some(id) {
+        return "▸ ";
+    }
+    "  "
+}
+
+fn request_rows(inspector: &Inspector, cx: &mut Context<Inspector>) -> gpui_kit::AnyElement {
+    v_flex()
+        .gap_1()
+        .children(
+            inspector
+                .model
+                .requests
+                .iter()
+                .enumerate()
+                .map(|(index, request)| request_row(request, index, cx)),
+        )
+        .into_any_element()
+}
+
+fn request_row(
+    request: &RequestRow,
+    index: usize,
+    cx: &mut Context<Inspector>,
+) -> gpui_kit::AnyElement {
+    let id = request.id.clone();
+    div()
+        .id(("request", index as u64))
+        .text_xs()
+        .cursor_pointer()
+        .on_click(cx.listener(move |inspector, _, _, cx| {
+            inspector.load_body(&id);
+            cx.notify();
+        }))
+        .child(format!(
+            "{} {} {} {}",
+            request_status(request),
+            request.method,
+            request.mime,
+            request.url
+        ))
+        .when(!request.body.is_empty(), |row| {
+            row.child(format!(
+                "  {}",
+                request.body.chars().take(80).collect::<String>()
+            ))
+        })
+        .into_any_element()
+}
+
+fn request_status(request: &RequestRow) -> String {
+    if request.failed {
+        return "failed".to_owned();
+    }
+    request_code(request)
+}
+
+fn request_code(request: &RequestRow) -> String {
+    request
+        .status
+        .map(|code| code.to_string())
+        .unwrap_or_else(|| "…".to_owned())
+}
+
+fn tool_rows(model: &Model) -> gpui_kit::AnyElement {
+    v_flex()
+        .gap_1()
+        .children(model.tools.iter().map(|tool| {
+            div()
+                .text_xs()
+                .child(format!("{} — {}", tool.name, tool.description))
+                .into_any_element()
+        }))
+        .into_any_element()
 }
 
 fn drive(
@@ -942,66 +1319,209 @@ fn drive(
 ) {
     let mut generation = 0u64;
     let mut attached = false;
-    loop {
-        let incoming = if attached {
-            match commands.recv_timeout(Duration::from_millis(30)) {
-                Ok(command) => Some(command),
-                Err(RecvTimeoutError::Timeout) => None,
-                Err(RecvTimeoutError::Disconnected) => break,
-            }
-        } else {
-            match commands.recv() {
-                Ok(command) => Some(command),
-                Err(_) => break,
-            }
-        };
-        if let Some(command) = incoming {
-            match command {
-                Command::Attach {
-                    generation: next,
-                    target,
-                } => {
-                    generation = next;
-                    attached = true;
-                    if let Some(client) = &client {
-                        client.attach(&target);
-                        let _ = events.unbounded_send(Wire::Status {
-                            generation,
-                            status: "Connected".to_owned(),
-                        });
-                    } else {
-                        let _ = events.unbounded_send(Wire::Status {
-                            generation,
-                            status: "Not connected".to_owned(),
-                        });
-                    }
-                }
-                Command::Detach { generation: next } => {
-                    generation = next;
-                    attached = false;
-                    if let Some(client) = &client {
-                        client.detach();
-                    }
-                }
-                Command::Send {
-                    generation: sent,
-                    message,
-                } if sent == generation && attached => {
-                    if let Some(client) = &client {
-                        client.send(&message);
-                    }
-                }
-                Command::Send { .. } => {}
-            }
-        }
-        if let Some(client) = &client {
-            while let Ok(message) = client.try_recv() {
-                let _ = events.unbounded_send(Wire::Message {
-                    generation,
-                    message,
-                });
-            }
-        }
+    while drive_turn(
+        &mut generation,
+        &mut attached,
+        &commands,
+        &events,
+        client.as_ref(),
+    ) {}
+}
+
+fn drive_turn(
+    generation: &mut u64,
+    attached: &mut bool,
+    commands: &Receiver<Command>,
+    events: &futures_mpsc::UnboundedSender<Wire>,
+    client: Option<&servo::BuiltinClient>,
+) -> bool {
+    let incoming = next_command(commands, *attached);
+    if let DrivePoll::Stop = incoming {
+        return false;
+    }
+    take_command(generation, attached, incoming, events, client);
+    publish_events(events, client, *generation);
+    true
+}
+
+enum DrivePoll {
+    Stop,
+    Wait,
+    Command(Command),
+}
+
+fn next_command(commands: &Receiver<Command>, attached: bool) -> DrivePoll {
+    if attached {
+        return poll_attached(commands);
+    }
+    poll_blocking(commands)
+}
+
+fn poll_attached(commands: &Receiver<Command>) -> DrivePoll {
+    command_or_wait(commands.recv_timeout(Duration::from_millis(30)))
+}
+
+fn command_or_wait(received: Result<Command, RecvTimeoutError>) -> DrivePoll {
+    if let Err(error) = received {
+        return timeout_or_stop(error);
+    }
+    ready_command(received)
+}
+
+fn ready_command(received: Result<Command, RecvTimeoutError>) -> DrivePoll {
+    if let Ok(command) = received {
+        return DrivePoll::Command(command);
+    }
+    DrivePoll::Stop
+}
+
+fn timeout_or_stop(error: RecvTimeoutError) -> DrivePoll {
+    if let RecvTimeoutError::Timeout = error {
+        return DrivePoll::Wait;
+    }
+    DrivePoll::Stop
+}
+
+fn poll_blocking(commands: &Receiver<Command>) -> DrivePoll {
+    if let Ok(command) = commands.recv() {
+        return DrivePoll::Command(command);
+    }
+    DrivePoll::Stop
+}
+
+fn take_command(
+    generation: &mut u64,
+    attached: &mut bool,
+    incoming: DrivePoll,
+    events: &futures_mpsc::UnboundedSender<Wire>,
+    client: Option<&servo::BuiltinClient>,
+) {
+    if let DrivePoll::Command(command) = incoming {
+        run_command(generation, attached, command, events, client);
+    }
+}
+
+fn run_command(
+    generation: &mut u64,
+    attached: &mut bool,
+    command: Command,
+    events: &futures_mpsc::UnboundedSender<Wire>,
+    client: Option<&servo::BuiltinClient>,
+) {
+    if let Command::Attach {
+        generation: next,
+        target,
+    } = command
+    {
+        attach_client(generation, attached, next, &target, events, client);
+        return;
+    }
+    run_detach_or_send(generation, attached, command, client);
+}
+
+fn attach_client(
+    generation: &mut u64,
+    attached: &mut bool,
+    next: u64,
+    target: &str,
+    events: &futures_mpsc::UnboundedSender<Wire>,
+    client: Option<&servo::BuiltinClient>,
+) {
+    *generation = next;
+    *attached = true;
+    if let Some(client) = client {
+        client.attach(target);
+        report_status(events, next, "Connected");
+        return;
+    }
+    report_status(events, next, "Not connected");
+}
+
+fn report_status(events: &futures_mpsc::UnboundedSender<Wire>, generation: u64, status: &str) {
+    let _ = events.unbounded_send(Wire::Status {
+        generation,
+        status: status.to_owned(),
+    });
+}
+
+fn run_detach_or_send(
+    generation: &mut u64,
+    attached: &mut bool,
+    command: Command,
+    client: Option<&servo::BuiltinClient>,
+) {
+    if let Command::Detach { generation: next } = command {
+        *generation = next;
+        *attached = false;
+        detach_client(client);
+        return;
+    }
+    send_command(*generation, *attached, command, client);
+}
+
+fn detach_client(client: Option<&servo::BuiltinClient>) {
+    if let Some(client) = client {
+        client.detach();
+    }
+}
+
+fn send_command(
+    generation: u64,
+    attached: bool,
+    command: Command,
+    client: Option<&servo::BuiltinClient>,
+) {
+    if let Command::Send {
+        generation: sent,
+        message,
+    } = command
+    {
+        send_current(generation, attached, sent, &message, client);
+    }
+}
+
+fn send_current(
+    generation: u64,
+    attached: bool,
+    sent: u64,
+    message: &Value,
+    client: Option<&servo::BuiltinClient>,
+) {
+    if for_current_page(sent, generation, attached) {
+        send_attached(client, message);
+    }
+}
+
+fn for_current_page(sent: u64, generation: u64, attached: bool) -> bool {
+    sent == generation && attached
+}
+
+fn send_attached(client: Option<&servo::BuiltinClient>, message: &Value) {
+    if let Some(client) = client {
+        client.send(message);
+    }
+}
+
+fn publish_events(
+    events: &futures_mpsc::UnboundedSender<Wire>,
+    client: Option<&servo::BuiltinClient>,
+    generation: u64,
+) {
+    if let Some(client) = client {
+        forward_events(events, client, generation);
+    }
+}
+
+fn forward_events(
+    events: &futures_mpsc::UnboundedSender<Wire>,
+    client: &servo::BuiltinClient,
+    generation: u64,
+) {
+    while let Ok(message) = client.try_recv() {
+        let _ = events.unbounded_send(Wire::Message {
+            generation,
+            message,
+        });
     }
 }
 
