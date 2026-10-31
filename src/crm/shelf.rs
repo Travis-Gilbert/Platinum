@@ -4,6 +4,7 @@
 //! hold another folder. The tree is saved beside the records, so a created
 //! file and a deleted one are still that way after a relaunch.
 
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -108,20 +109,25 @@ impl Shelf {
     }
 
     pub(crate) fn load(dir: Option<&Path>) -> Self {
-        let Some(text) = dir.and_then(|dir| fs::read_to_string(dir.join("shelf.json")).ok()) else {
-            let mut shelf = Self::new();
-            shelf.extract = dir.map(|dir| dir.join("files"));
-            return shelf;
+        let Some(dir) = dir else {
+            return Self::new();
         };
-        let mut shelf: Self = serde_json::from_str(&text).unwrap_or_else(|_| Self::new());
-        shelf.extract = dir.map(|dir| dir.join("files"));
+        let mut shelf = read_shelf(&dir.join("shelf.json")).unwrap_or_else(Self::new);
+        shelf.extract = Some(dir.join("files"));
         shelf
     }
 
     pub(crate) fn save(&self, dir: &Path) {
-        let _ = fs::create_dir_all(dir);
-        if let Ok(text) = serde_json::to_string(self) {
-            let _ = fs::write(dir.join("shelf.json"), text);
+        let path = dir.join("shelf.json");
+        let Ok(text) = serde_json::to_string(self) else {
+            return;
+        };
+        if fs::create_dir_all(dir).is_err() {
+            return;
+        }
+        let temporary = path.with_extension("json.tmp");
+        if fs::write(&temporary, text).is_ok() {
+            let _ = fs::rename(&temporary, path);
         }
     }
 
@@ -203,7 +209,7 @@ impl Shelf {
             kind: Kind::File {
                 place: None,
                 stored: Some(Stored::Markdown {
-                    path: None,
+                    path: self.write_blank(id),
                     body: String::new(),
                 }),
             },
@@ -294,21 +300,46 @@ impl Shelf {
         }
     }
 
+    fn write_blank(&self, id: u64) -> Option<PathBuf> {
+        let dir = self.extract.as_ref()?;
+        fs::create_dir_all(dir).ok()?;
+        let path = dir.join(format!("{id}-Untitled.md"));
+        fs::write(&path, "").ok()?;
+        Some(path)
+    }
+
     fn node_from_path(&mut self, path: &Path) -> Node {
+        self.import_path(path, &mut HashSet::new(), 0)
+    }
+
+    fn import_path(&mut self, path: &Path, seen: &mut HashSet<PathBuf>, depth: usize) -> Node {
         let name = path
             .file_name()
             .map(|name| name.to_string_lossy().into_owned())
             .unwrap_or_else(|| "Untitled".into());
-        if path.is_dir() {
+        if path.is_dir() && !directory_link(path) && depth < IMPORT_DEPTH {
+            let canonical = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+            if !seen.insert(canonical) {
+                return Node {
+                    id: self.fresh(),
+                    name,
+                    expanded: true,
+                    kind: Kind::Folder { place: None },
+                    children: Vec::new(),
+                };
+            }
             let mut children = Vec::new();
             if let Ok(read) = fs::read_dir(path) {
                 let mut paths: Vec<_> = read
                     .filter_map(|entry| entry.ok())
-                    .map(|e| e.path())
+                    .map(|entry| entry.path())
                     .collect();
                 paths.sort();
                 for child in paths {
-                    children.push(self.node_from_path(&child));
+                    if children.len() >= IMPORT_CAP || directory_link(&child) {
+                        continue;
+                    }
+                    children.push(self.import_path(&child, seen, depth + 1));
                 }
             }
             return Node {
@@ -638,6 +669,28 @@ fn is_zip(path: &Path) -> bool {
     has_extension(path, &["zip"])
 }
 
+const IMPORT_DEPTH: usize = 24;
+const IMPORT_CAP: usize = 2_000;
+const ZIP_ENTRY: usize = 8 * 1024 * 1024;
+
+fn directory_link(path: &Path) -> bool {
+    fs::symlink_metadata(path).is_ok_and(|meta| meta.file_type().is_symlink() && path.is_dir())
+}
+
+fn read_shelf(path: &Path) -> Option<Shelf> {
+    let text = match fs::read_to_string(path) {
+        Ok(text) => text,
+        Err(_) => return None,
+    };
+    match serde_json::from_str(&text) {
+        Ok(shelf) => Some(shelf),
+        Err(_) => {
+            let _ = fs::rename(path, path.with_extension("json.unreadable"));
+            None
+        }
+    }
+}
+
 fn has_extension(path: &Path, extensions: &[&str]) -> bool {
     let Some(extension) = path.extension().and_then(|extension| extension.to_str()) else {
         return false;
@@ -656,12 +709,24 @@ struct ZipEntry {
 /// Files in a zip. Deflated entries are inflated; a zip with no central
 /// directory is read from its local headers when those are stored.
 fn zip_entries(bytes: &[u8]) -> Vec<ZipEntry> {
-    if let Some(entries) = central_directory(bytes)
+    let found = if let Some(entries) = central_directory(bytes)
         && !entries.is_empty()
     {
-        return entries;
+        entries
+    } else {
+        local_entries(bytes)
+    };
+    let mut kept = Vec::new();
+    let mut total = 0usize;
+    for entry in found {
+        let next = total.saturating_add(entry.data.len());
+        if next > ZIP_ENTRY.saturating_mul(4) {
+            break;
+        }
+        total = next;
+        kept.push(entry);
     }
-    local_entries(bytes)
+    kept
 }
 
 fn central_directory(bytes: &[u8]) -> Option<Vec<ZipEntry>> {
@@ -751,15 +816,26 @@ fn inflate_local(bytes: &[u8], local: usize, method: u16, compressed: usize) -> 
     }
     let raw = &bytes[start..end];
     match method {
-        0 => raw.to_vec(),
-        8 => {
-            use std::io::Read;
-            let mut decoder = flate2::read::DeflateDecoder::new(raw);
-            let mut out = Vec::new();
-            let _ = decoder.read_to_end(&mut out);
-            out
-        }
+        0 if raw.len() <= ZIP_ENTRY => raw.to_vec(),
+        8 => inflate_limited(raw),
         _ => Vec::new(),
+    }
+}
+
+fn inflate_limited(raw: &[u8]) -> Vec<u8> {
+    use std::io::Read;
+    let mut decoder = flate2::read::DeflateDecoder::new(raw);
+    let mut out = Vec::new();
+    let mut buf = [0u8; 8192];
+    loop {
+        if out.len() >= ZIP_ENTRY {
+            return Vec::new();
+        }
+        match decoder.read(&mut buf) {
+            Ok(0) => return out,
+            Ok(n) if n <= ZIP_ENTRY - out.len() => out.extend_from_slice(&buf[..n]),
+            _ => return Vec::new(),
+        }
     }
 }
 
@@ -768,10 +844,18 @@ fn local_entries(bytes: &[u8]) -> Vec<ZipEntry> {
     let mut index = 0;
     while local_header_at(bytes, index) {
         match local_step(bytes, index) {
-            None => break,
-            Some((entry, next)) => {
+            LocalStep::Stop(entry) => {
                 if let Some(entry) = entry {
                     entries.push(entry);
+                }
+                break;
+            }
+            LocalStep::Next(entry, next) => {
+                if let Some(entry) = entry {
+                    entries.push(entry);
+                }
+                if next <= index {
+                    break;
                 }
                 index = next;
             }
@@ -781,10 +865,18 @@ fn local_entries(bytes: &[u8]) -> Vec<ZipEntry> {
 }
 
 fn local_header_at(bytes: &[u8], index: usize) -> bool {
-    index + 30 <= bytes.len() && bytes[index..index + 4] == *b"PK\x03\x04"
+    let Some(end) = index.checked_add(30) else {
+        return false;
+    };
+    end <= bytes.len() && bytes[index..index + 4] == *b"PK\x03\x04"
 }
 
-fn local_step(bytes: &[u8], index: usize) -> Option<(Option<ZipEntry>, usize)> {
+enum LocalStep {
+    Next(Option<ZipEntry>, usize),
+    Stop(Option<ZipEntry>),
+}
+
+fn local_step(bytes: &[u8], index: usize) -> LocalStep {
     let flags = u16::from_le_bytes([bytes[index + 6], bytes[index + 7]]);
     let method = u16::from_le_bytes([bytes[index + 8], bytes[index + 9]]);
     let compressed =
@@ -793,17 +885,14 @@ fn local_step(bytes: &[u8], index: usize) -> Option<(Option<ZipEntry>, usize)> {
     let extra_len = u16::from_le_bytes([bytes[index + 28], bytes[index + 29]]) as usize;
     let name_at = index + 30;
     if name_at + name_len > bytes.len() || unreadable_local(flags, method) {
-        return None;
+        return LocalStep::Stop(None);
     }
     let raw_name = String::from_utf8_lossy(&bytes[name_at..name_at + name_len]).into_owned();
     let entry = zip_entry(bytes, &raw_name, index, method, compressed);
-    let next = name_at + name_len + extra_len + compressed;
-    let next = if method != 0 && compressed == 0 {
-        usize::MAX
-    } else {
-        next
-    };
-    Some((entry, next))
+    if method != 0 && compressed == 0 {
+        return LocalStep::Stop(entry);
+    }
+    LocalStep::Next(entry, name_at + name_len + extra_len + compressed)
 }
 
 fn unreadable_local(flags: u16, method: u16) -> bool {
@@ -940,5 +1029,63 @@ mod tests {
             }
         }
         !crc
+    }
+
+    #[test]
+    fn a_folder_link_back_to_itself_is_imported_once() {
+        let dir = std::env::temp_dir().join(format!("index-shelf-link-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let pack = dir.join("pack");
+        fs::create_dir_all(&pack).unwrap();
+        fs::write(pack.join("note.md"), "# Nested\n").unwrap();
+        std::os::unix::fs::symlink(&pack, pack.join("again")).unwrap();
+
+        let mut shelf = Shelf::new();
+        shelf.drop_paths(shelf.root_id(), &[pack]);
+        let rows = shelf.rows();
+        assert_eq!(rows.iter().filter(|row| row.1 == "pack").count(), 1);
+        assert_eq!(rows.iter().filter(|row| row.1 == "again").count(), 0);
+        assert!(rows.iter().any(|row| row.1 == "note.md"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_deflate_header_with_no_size_does_not_panic() {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"PK\x03\x04");
+        bytes.extend_from_slice(&20u16.to_le_bytes());
+        bytes.extend_from_slice(&0u16.to_le_bytes());
+        bytes.extend_from_slice(&8u16.to_le_bytes());
+        bytes.extend_from_slice(&0u16.to_le_bytes());
+        bytes.extend_from_slice(&0u16.to_le_bytes());
+        bytes.extend_from_slice(&0u32.to_le_bytes());
+        bytes.extend_from_slice(&0u32.to_le_bytes());
+        bytes.extend_from_slice(&0u32.to_le_bytes());
+        bytes.extend_from_slice(&4u16.to_le_bytes());
+        bytes.extend_from_slice(&0u16.to_le_bytes());
+        bytes.extend_from_slice(b"note");
+        let entries = zip_entries(&bytes);
+        assert!(entries.len() <= 1);
+    }
+
+    #[test]
+    fn an_unreadable_shelf_is_kept_aside() {
+        let dir = std::env::temp_dir().join(format!("index-shelf-bad-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("shelf.json"), "not json").unwrap();
+        let shelf = Shelf::load(Some(&dir));
+        assert_eq!(shelf.rows()[0].1, "Index");
+        assert_eq!(
+            fs::read_to_string(dir.join("shelf.json.unreadable")).unwrap(),
+            "not json"
+        );
+        shelf.save(&dir);
+        assert!(dir.join("shelf.json").is_file());
+        assert_eq!(
+            fs::read_to_string(dir.join("shelf.json.unreadable")).unwrap(),
+            "not json"
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 }

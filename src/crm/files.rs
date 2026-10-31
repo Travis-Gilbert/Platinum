@@ -17,5 +17,13 @@ pub(crate) fn keep(dir: &Path, id: Id, source: &Path) -> Option<String> {
     let files = dir.join("files");
     fs::create_dir_all(&files).ok()?;
     fs::copy(source, files.join(&name)).ok()?;
+    for suffix in ["-wal", "-shm", "-journal"] {
+        let mut sidecar = source.as_os_str().to_owned();
+        sidecar.push(suffix);
+        let sidecar = std::path::PathBuf::from(sidecar);
+        if sidecar.is_file() {
+            let _ = fs::copy(&sidecar, files.join(format!("{name}{suffix}")));
+        }
+    }
     Some(name)
 }

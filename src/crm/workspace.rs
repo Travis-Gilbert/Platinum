@@ -82,6 +82,19 @@ fn rasterize_pdf(path: &std::path::Path) -> Option<Vec<u8>> {
     std::fs::read(dir.join(format!("{name}.png"))).ok()
 }
 
+fn file_notice(name: &str, detail: &str) -> gpui_kit::AnyElement {
+    v_flex()
+        .id("index-file")
+        .debug_selector(|| "index-file".into())
+        .size_full()
+        .p_4()
+        .gap_2()
+        .items_start()
+        .child(div().text_sm().child(name.to_owned()))
+        .child(div().text_xs().child(detail.to_owned()))
+        .into_any_element()
+}
+
 fn file_add_icon() -> gpui_kit::Img {
     let bytes: &'static [u8] =
         include_bytes!("../../assets/icons/streamline/Common-File-Add--Streamline-Ultimate.png");
@@ -467,8 +480,20 @@ impl Rows {
     }
 
     fn set_rows(&mut self, rows: Vec<Row>, empty: SharedString) {
-        self.unsorted = rows.clone();
-        self.rows = rows;
+        self.unsorted = rows;
+        self.rows = self.unsorted.clone();
+        if let Some((index, descending)) =
+            self.columns
+                .iter()
+                .enumerate()
+                .find_map(|(index, column)| match column.sort {
+                    Some(ColumnSort::Ascending) => Some((index, false)),
+                    Some(ColumnSort::Descending) => Some((index, true)),
+                    _ => None,
+                })
+        {
+            sort_rows(&mut self.rows, index, descending);
+        }
         self.empty = empty;
     }
 
@@ -834,6 +859,9 @@ pub struct Crm {
     shelf: Shelf,
     /// A raster of the PDF currently open, when Quick Look could draw it.
     preview: Option<(PathBuf, std::sync::Arc<gpui_kit::Image>)>,
+    /// The Glim reading for the file currently open. Kept so a redraw does not
+    /// read the file again.
+    glim: Option<(PathBuf, Result<material::Reading, String>)>,
     inbox: Option<InboxPick>,
     screen: Screen,
     selected: Option<Target>,
@@ -940,6 +968,7 @@ impl Crm {
             nav_width,
             shelf,
             preview: None,
+            glim: None,
             inbox: None,
             screen,
             selected: None,
@@ -1028,15 +1057,23 @@ impl Crm {
 
     fn open_shelf_node(&mut self, id: u64, window: &mut Window, cx: &mut Context<Self>) {
         self.preview = None;
+        self.glim = None;
         if let Some(place) = self.shelf.place_of(id).and_then(Destination::parse) {
             self.show_destination(place, window, cx);
             return;
         }
-        if let Some(Page::Pdf { path, .. }) = self.shelf.page(id) {
-            self.preview = rasterize_pdf(&path).map(|bytes| {
-                let image = gpui_kit::Image::from_bytes(gpui_kit::ImageFormat::Png, bytes);
-                (path, std::sync::Arc::new(image))
-            });
+        match self.shelf.page(id) {
+            Some(Page::Pdf { path, .. }) => {
+                let image = rasterize_pdf(&path).map(|bytes| {
+                    let image = gpui_kit::Image::from_bytes(gpui_kit::ImageFormat::Png, bytes);
+                    std::sync::Arc::new(image)
+                });
+                self.preview = image.map(|image| (path, image));
+            }
+            Some(Page::File { path, .. }) => {
+                self.glim = Some((path.clone(), material::open(&path)));
+            }
+            _ => {}
         }
         self.screen = Screen::Reading(id);
         self.select_node(id, cx);
@@ -2396,6 +2433,7 @@ impl Crm {
             .store
             .evidence_at(id)
             .iter()
+            .filter(|item| item.source() == source_id)
             .map(|item| (item.paragraph(), item.themes().to_vec()))
             .collect();
         let selected = self.passage;
@@ -2865,6 +2903,7 @@ impl Crm {
                                 .debug_selector(|| "index-pdf-page".into())
                                 .child(gpui_kit::img(image.clone()).max_w_full())
                         });
+                let drawn = page.is_some();
                 v_flex()
                     .id("index-pdf")
                     .debug_selector(|| "index-pdf".into())
@@ -2887,7 +2926,25 @@ impl Crm {
                                     .child(name),
                             ),
                     )
+                    .child(
+                        Button::new("index-open-pdf")
+                            .label("Open")
+                            .small()
+                            .on_click({
+                                let path = path.clone();
+                                move |_, _, _| {
+                                    let _ = std::process::Command::new("open").arg(&path).spawn();
+                                }
+                            }),
+                    )
                     .children(page)
+                    .when(!drawn, |view| {
+                        view.child(
+                            div()
+                                .text_sm()
+                                .child("Open the file to read the rest of it."),
+                        )
+                    })
                     .into_any_element()
             }
             Some(Page::Folder { name, children }) => v_flex()
@@ -2923,59 +2980,42 @@ impl Crm {
                         .child(name)
                 }))
                 .into_any_element(),
-            Some(Page::File { name, path }) => match material::open(&path) {
-                Ok(reading) => v_flex()
-                    .id("index-glim")
-                    .debug_selector(|| "index-glim".into())
-                    .size_full()
-                    .min_h_0()
-                    .overflow_y_scrollbar()
-                    .p_4()
-                    .gap_2()
-                    .items_start()
-                    .child(
-                        h_flex()
-                            .gap_2()
-                            .items_center()
-                            .child(shelf_icon(NodeShape::Other))
-                            .child(
-                                div()
-                                    .text_sm()
-                                    .font_weight(FontWeight::MEDIUM)
-                                    .text_color(theme.foreground)
-                                    .child(reading.title),
-                            ),
-                    )
-                    .children(reading.rows.into_iter().map(|row| {
-                        div()
-                            .pl(px(12. * row.depth as f32))
-                            .text_sm()
-                            .text_color(theme.foreground)
-                            .child(row.label)
-                    }))
-                    .into_any_element(),
-                Err(_) => v_flex()
-                    .id("index-file")
-                    .debug_selector(|| "index-file".into())
-                    .size_full()
-                    .p_4()
-                    .gap_2()
-                    .items_start()
-                    .child(
-                        h_flex()
-                            .gap_2()
-                            .items_center()
-                            .child(shelf_icon(NodeShape::Other))
-                            .child(div().text_sm().text_color(theme.foreground).child(name)),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(theme.foreground)
-                            .child(path.display().to_string()),
-                    )
-                    .into_any_element(),
-            },
+            Some(Page::File { name, path }) => {
+                match self.glim.as_ref().filter(|(held, _)| held == &path) {
+                    Some((_, Ok(reading))) => v_flex()
+                        .id("index-glim")
+                        .debug_selector(|| "index-glim".into())
+                        .size_full()
+                        .min_h_0()
+                        .overflow_y_scrollbar()
+                        .p_4()
+                        .gap_2()
+                        .items_start()
+                        .child(
+                            h_flex()
+                                .gap_2()
+                                .items_center()
+                                .child(shelf_icon(NodeShape::Other))
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::MEDIUM)
+                                        .text_color(theme.foreground)
+                                        .child(reading.title.clone()),
+                                ),
+                        )
+                        .children(reading.rows.iter().cloned().map(|row| {
+                            div()
+                                .pl(px(12. * row.depth as f32))
+                                .text_sm()
+                                .text_color(theme.foreground)
+                                .child(row.label)
+                        }))
+                        .into_any_element(),
+                    Some((_, Err(error))) => file_notice(&name, error),
+                    None => file_notice(&name, &path.display().to_string()),
+                }
+            }
             None => div().into_any_element(),
         }
     }
@@ -3258,6 +3298,17 @@ impl Render for Crm {
                             .border_1()
                             .border_color(cx.theme().border)
                             .rounded(cx.theme().radius_lg)
+                            .when_some(self.ask_note.clone(), |card, note| {
+                                card.child(
+                                    div()
+                                        .id("index-note")
+                                        .debug_selector(|| "index-note".into())
+                                        .px_3()
+                                        .py_2()
+                                        .text_sm()
+                                        .child(note),
+                                )
+                            })
                             .child(workspace),
                     ),
             )
