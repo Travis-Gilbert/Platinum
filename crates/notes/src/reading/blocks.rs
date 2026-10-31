@@ -683,7 +683,9 @@ fn frontmatter(text: &str) -> String {
     )
 }
 
-fn callout_icon(kind: &str) -> &'static str {
+/// The Lucide icon Obsidian draws for a callout of `kind` when no stylesheet
+/// names another; its stylesheet names the same one for each type.
+pub fn callout_icon(kind: &str) -> &'static str {
     match kind {
         "abstract" | "summary" | "tldr" => "lucide-clipboard-list",
         "info" => "lucide-info",

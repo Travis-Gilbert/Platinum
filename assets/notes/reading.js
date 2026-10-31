@@ -108,7 +108,7 @@
         });
       });
   };
-  let prismReady, mathReady, mermaidReady;
+  let prismReady, mathReady, mermaidReady, lucideReady;
 
   // ---- Ids from source -------------------------------------------------
 
@@ -271,6 +271,39 @@
     }
   };
 
+  // ---- Callout icons ---------------------------------------------------
+
+  // A vault's CSS can give a callout type its own icon, as a Lucide id in
+  // `--callout-icon` (`lucide-flame`), which Obsidian reads from the computed
+  // style. The host cannot see the cascade, so it draws the built-in icon; a
+  // callout whose computed icon is another one gets it here, drawn by the
+  // same Lucide release Obsidian draws.
+  const LUCIDE_PREFIX = "lucide-";
+
+  const drawCalloutIcons = async (container) => {
+    const pending = [];
+    for (const icon of container.querySelectorAll(".callout > .callout-title > .callout-icon")) {
+      const wanted = getComputedStyle(icon.parentElement.parentElement).getPropertyValue("--callout-icon").trim();
+      const drawn = icon.querySelector("svg")?.classList;
+      if (wanted.startsWith(LUCIDE_PREFIX) && !drawn?.contains(wanted)) pending.push([icon, wanted]);
+    }
+    if (!pending.length) return;
+    lucideReady ??= load(`${vendor}/lucide/lucide.min.js`);
+    try {
+      await lucideReady;
+    } catch (error) {
+      console.error(error.message);
+      return;
+    }
+    for (const [icon, id] of pending) {
+      // Lucide names its icons in PascalCase: `check-circle-2` is `CheckCircle2`.
+      const name = id.slice(LUCIDE_PREFIX.length).replace(/(?:^|-)([a-z0-9])/g, (_, first) => first.toUpperCase());
+      const node = lucide.icons[name];
+      if (!node || !icon.isConnected) continue;
+      icon.replaceChildren(lucide.createElement(node, { class: `svg-icon ${id}` }));
+    }
+  };
+
   // ---- Callout folds ---------------------------------------------------
 
   const foldKeys = (container) => {
@@ -366,6 +399,7 @@
     track(typesetMath(container));
     track(highlightCode(container));
     track(renderMermaid(container));
+    track(drawCalloutIcons(container));
   };
 
   // ---- Clicks ----------------------------------------------------------

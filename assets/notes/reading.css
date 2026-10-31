@@ -1009,7 +1009,9 @@ body {
 /* ---- Callouts ------------------------------------------------------------- */
 
 /* One recipe for every callout colour, a vault's custom ones included: a wash
- * and an edge of the colour, and a title inked from the colour and the text. */
+ * and an edge of the colour, and a title inked from the colour and the text.
+ * Each type names its icon as Obsidian's stylesheet does, so the page script
+ * redraws one only where a vault's CSS gives the type another icon. */
 .callout {
   --callout-color: rgb(var(--callout-default));
   --callout-icon: lucide-pencil;
@@ -1022,19 +1024,19 @@ body {
   mix-blend-mode: var(--callout-blend-mode);
 }
 
-.callout[data-callout="note"] { --callout-color: rgb(var(--callout-default)); }
-.callout[data-callout="abstract"], .callout[data-callout="summary"], .callout[data-callout="tldr"] { --callout-color: rgb(var(--callout-summary)); }
-.callout[data-callout="info"] { --callout-color: rgb(var(--callout-info)); }
-.callout[data-callout="todo"] { --callout-color: rgb(var(--callout-todo)); }
-.callout[data-callout="tip"], .callout[data-callout="hint"], .callout[data-callout="important"] { --callout-color: rgb(var(--callout-tip)); }
-.callout[data-callout="success"], .callout[data-callout="check"], .callout[data-callout="done"] { --callout-color: rgb(var(--callout-success)); }
-.callout[data-callout="question"], .callout[data-callout="help"], .callout[data-callout="faq"] { --callout-color: rgb(var(--callout-question)); }
-.callout[data-callout="warning"], .callout[data-callout="caution"], .callout[data-callout="attention"] { --callout-color: rgb(var(--callout-warning)); }
-.callout[data-callout="failure"], .callout[data-callout="fail"], .callout[data-callout="missing"] { --callout-color: rgb(var(--callout-fail)); }
-.callout[data-callout="danger"], .callout[data-callout="error"] { --callout-color: rgb(var(--callout-error)); }
-.callout[data-callout="bug"] { --callout-color: rgb(var(--callout-bug)); }
-.callout[data-callout="example"] { --callout-color: rgb(var(--callout-example)); }
-.callout[data-callout="quote"], .callout[data-callout="cite"] { --callout-color: rgb(var(--callout-quote)); }
+.callout[data-callout="note"] { --callout-color: rgb(var(--callout-default)); --callout-icon: lucide-pencil; }
+.callout[data-callout="abstract"], .callout[data-callout="summary"], .callout[data-callout="tldr"] { --callout-color: rgb(var(--callout-summary)); --callout-icon: lucide-clipboard-list; }
+.callout[data-callout="info"] { --callout-color: rgb(var(--callout-info)); --callout-icon: lucide-info; }
+.callout[data-callout="todo"] { --callout-color: rgb(var(--callout-todo)); --callout-icon: lucide-check-circle-2; }
+.callout[data-callout="tip"], .callout[data-callout="hint"], .callout[data-callout="important"] { --callout-color: rgb(var(--callout-tip)); --callout-icon: lucide-flame; }
+.callout[data-callout="success"], .callout[data-callout="check"], .callout[data-callout="done"] { --callout-color: rgb(var(--callout-success)); --callout-icon: lucide-check; }
+.callout[data-callout="question"], .callout[data-callout="help"], .callout[data-callout="faq"] { --callout-color: rgb(var(--callout-question)); --callout-icon: lucide-help-circle; }
+.callout[data-callout="warning"], .callout[data-callout="caution"], .callout[data-callout="attention"] { --callout-color: rgb(var(--callout-warning)); --callout-icon: lucide-alert-triangle; }
+.callout[data-callout="failure"], .callout[data-callout="fail"], .callout[data-callout="missing"] { --callout-color: rgb(var(--callout-fail)); --callout-icon: lucide-x; }
+.callout[data-callout="danger"], .callout[data-callout="error"] { --callout-color: rgb(var(--callout-error)); --callout-icon: lucide-zap; }
+.callout[data-callout="bug"] { --callout-color: rgb(var(--callout-bug)); --callout-icon: lucide-bug; }
+.callout[data-callout="example"] { --callout-color: rgb(var(--callout-example)); --callout-icon: lucide-list; }
+.callout[data-callout="quote"], .callout[data-callout="cite"] { --callout-color: rgb(var(--callout-quote)); --callout-icon: lucide-quote; }
 
 .callout-title {
   display: flex;

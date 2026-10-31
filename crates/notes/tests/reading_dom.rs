@@ -34,7 +34,8 @@ const KNOWN: &[Known] = &[
         reason: "the icon of a custom callout type is the `--callout-icon` of a CSS rule \
                  (`snippets/callouts.css` gives `custom-purple` lucide-flame); Obsidian reads it \
                  from the computed style, a headless render has no CSS and writes the default \
-                 pencil, which the page's script replaces from the same custom property",
+                 pencil; in the page, reading.js redraws it from the same custom property with \
+                 the vendored Lucide, and `notes_check` in Servo matches Obsidian's recording",
     },
     Known {
         note: "callouts/Nested Callouts.md.html",

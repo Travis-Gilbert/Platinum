@@ -16,6 +16,8 @@ mod html;
 mod icons;
 mod inlines;
 
+pub use blocks::callout_icon;
+
 /// A note rendered for the reading view.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ReadingView {

@@ -69,6 +69,32 @@ mod tests {
         );
     }
 
+    /// The renderer draws each callout type's icon into the page, and the
+    /// stylesheet names it again for the page script, which redraws an icon
+    /// where the cascade names another: the two must agree on every type.
+    #[test]
+    fn the_stylesheet_names_the_icon_the_renderer_draws_for_every_callout_type() {
+        let css = get("reading.css").unwrap();
+        let css = std::str::from_utf8(&css.bytes).unwrap();
+        let mut kinds = 0;
+        for rule in css
+            .lines()
+            .filter(|line| line.starts_with(".callout[data-callout="))
+        {
+            let icon = rule
+                .split_once("--callout-icon:")
+                .and_then(|(_, rest)| rest.split_once(';'))
+                .map(|(icon, _)| icon.trim())
+                .unwrap_or_else(|| panic!("{rule} names no icon"));
+            for kind in rule.split("[data-callout=\"").skip(1) {
+                let kind = kind.split_once('"').unwrap().0;
+                assert_eq!(icon, frame_notes::callout_icon(kind), "{kind}");
+                kinds += 1;
+            }
+        }
+        assert_eq!(kinds, 27, "a rule for each of Obsidian's callout types");
+    }
+
     #[test]
     fn every_vendored_library_is_bundled_with_its_licence() {
         for (library, entry) in [
@@ -77,6 +103,7 @@ mod tests {
             ("prismjs", "plugins/prism-autoloader.min.js"),
             ("mathjax", "tex-chtml.js"),
             ("mermaid", "mermaid.min.js"),
+            ("lucide", "lucide.min.js"),
         ] {
             let script = get(&format!("vendor/{library}/{entry}"))
                 .unwrap_or_else(|| panic!("{library}/{entry} is not bundled"));
