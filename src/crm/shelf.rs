@@ -9,6 +9,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use tempfile::TempPath;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct Shelf {
@@ -250,8 +251,12 @@ impl Shelf {
             self.node(target).is_some(),
             "The destination was removed during import. Drop the files again."
         );
+        let Import { nodes, spilled } = import;
+        for file in spilled {
+            file.keep()?;
+        }
         let mut ids = Vec::new();
-        for mut node in import.0 {
+        for mut node in nodes {
             // Allocate against the current owner, not the worker's snapshot.
             // Concurrent create, delete and reorder operations remain intact.
             self.assign_ids(&mut node);
@@ -312,11 +317,17 @@ impl Shelf {
         Some(path)
     }
 
-    fn node_from_path(&mut self, path: &Path) -> Node {
-        self.import_path(path, &mut HashSet::new(), 0)
+    fn node_from_path(&mut self, path: &Path, spilled: &mut Vec<TempPath>) -> Node {
+        self.import_path(path, &mut HashSet::new(), spilled, 0)
     }
 
-    fn import_path(&mut self, path: &Path, seen: &mut HashSet<PathBuf>, depth: usize) -> Node {
+    fn import_path(
+        &mut self,
+        path: &Path,
+        seen: &mut HashSet<PathBuf>,
+        spilled: &mut Vec<TempPath>,
+        depth: usize,
+    ) -> Node {
         let name = path
             .file_name()
             .map(|name| name.to_string_lossy().into_owned())
@@ -343,7 +354,7 @@ impl Shelf {
                     if children.len() >= IMPORT_CAP || directory_link(&child) {
                         continue;
                     }
-                    children.push(self.import_path(&child, seen, depth + 1));
+                    children.push(self.import_path(&child, seen, spilled, depth + 1));
                 }
             }
             return Node {
@@ -370,10 +381,17 @@ impl Shelf {
                     ),
                 };
             let mut children = Vec::new();
+            let extracted = spilled.len();
             for entry in entries {
-                if let Err(error) =
-                    self.insert_zip(&mut children, &entry.name, entry.folder, entry.data)
-                {
+                if let Err(error) = self.insert_zip(
+                    &mut children,
+                    spilled,
+                    &entry.name,
+                    entry.folder,
+                    entry.data,
+                ) {
+                    // The archive is not imported, so what it already wrote goes.
+                    spilled.truncate(extracted);
                     return self.file(&name, None, Some(Stored::Zip {
                         path: path.to_path_buf(),
                         error: Some(format!("Could not save archive contents: {error}. The original file is unchanged.")),
@@ -408,6 +426,7 @@ impl Shelf {
     fn insert_zip(
         &mut self,
         nodes: &mut Vec<Node>,
+        spilled: &mut Vec<TempPath>,
         name: &str,
         folder: bool,
         data: Vec<u8>,
@@ -416,12 +435,13 @@ impl Shelf {
         if parts.is_empty() {
             return Ok(());
         }
-        self.insert_zip_parts(nodes, &parts, folder, data)
+        self.insert_zip_parts(nodes, spilled, &parts, folder, data)
     }
 
     fn insert_zip_parts(
         &mut self,
         nodes: &mut Vec<Node>,
+        spilled: &mut Vec<TempPath>,
         parts: &[&str],
         folder: bool,
         data: Vec<u8>,
@@ -443,7 +463,7 @@ impl Shelf {
                 }
                 return Ok(());
             }
-            let stored = self.stored_bytes(name, data)?;
+            let stored = self.stored_bytes(name, data, spilled)?;
             nodes.push(self.file(name, None, Some(stored)));
             return Ok(());
         }
@@ -455,7 +475,7 @@ impl Shelf {
                 .iter_mut()
                 .find(|node| node.name == name && node.is_folder())
                 .expect("folder");
-            self.insert_zip_parts(&mut child.children, &parts[1..], folder, data)?;
+            self.insert_zip_parts(&mut child.children, spilled, &parts[1..], folder, data)?;
             return Ok(());
         }
         let mut child = Node {
@@ -465,12 +485,17 @@ impl Shelf {
             kind: Kind::Folder { place: None },
             children: Vec::new(),
         };
-        self.insert_zip_parts(&mut child.children, &parts[1..], folder, data)?;
+        self.insert_zip_parts(&mut child.children, spilled, &parts[1..], folder, data)?;
         nodes.push(child);
         Ok(())
     }
 
-    fn stored_bytes(&self, name: &str, data: Vec<u8>) -> anyhow::Result<Stored> {
+    fn stored_bytes(
+        &self,
+        name: &str,
+        data: Vec<u8>,
+        spilled: &mut Vec<TempPath>,
+    ) -> anyhow::Result<Stored> {
         let lower = name.to_ascii_lowercase();
         if lower.ends_with(".md") || lower.ends_with(".markdown") {
             return Ok(Stored::Markdown {
@@ -478,7 +503,7 @@ impl Shelf {
                 body: String::from_utf8_lossy(&data).into_owned(),
             });
         }
-        let path = self.spill(name, &data)?;
+        let path = self.spill(name, &data, spilled)?;
         if lower.ends_with(".pdf") {
             Ok(Stored::Pdf { path })
         } else {
@@ -486,7 +511,14 @@ impl Shelf {
         }
     }
 
-    fn spill(&self, name: &str, data: &[u8]) -> anyhow::Result<PathBuf> {
+    /// Write `data` to a file of its own. The file is removed again unless
+    /// its import is admitted, which keeps it.
+    fn spill(
+        &self,
+        name: &str,
+        data: &[u8],
+        spilled: &mut Vec<TempPath>,
+    ) -> anyhow::Result<PathBuf> {
         use std::io::Write as _;
         let dir = self.extract.clone().unwrap_or_else(std::env::temp_dir);
         fs::create_dir_all(&dir)?;
@@ -503,7 +535,9 @@ impl Shelf {
             .tempfile_in(dir)?;
         file.write_all(data)?;
         file.as_file().sync_all()?;
-        let (_, path) = file.keep()?;
+        let file = file.into_temp_path();
+        let path = file.to_path_buf();
+        spilled.push(file);
         Ok(path)
     }
 
@@ -536,17 +570,23 @@ impl Shelf {
 }
 
 /// Prepared off the UI thread; IDs are assigned only when admitted by Shelf.
-pub(super) struct Import(Vec<Node>);
+/// Dropped paths read into nodes off the main thread. The files it took out
+/// of archives are removed when it is dropped, unless it was admitted.
+pub(super) struct Import {
+    nodes: Vec<Node>,
+    spilled: Vec<TempPath>,
+}
+
 impl Import {
     pub(super) fn read(paths: &[PathBuf], directory: Option<PathBuf>) -> Self {
         let mut staging = Shelf::new();
         staging.extract = directory;
-        Self(
-            paths
-                .iter()
-                .map(|path| staging.node_from_path(path))
-                .collect(),
-        )
+        let mut spilled = Vec::new();
+        let nodes = paths
+            .iter()
+            .map(|path| staging.node_from_path(path, &mut spilled))
+            .collect();
+        Self { nodes, spilled }
     }
 }
 
@@ -853,6 +893,44 @@ mod tests {
             shelf, before,
             "late completion must validate the destination"
         );
+    }
+
+    #[test]
+    fn a_rejected_import_takes_its_extracted_files_with_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("files.zip");
+        fs::write(&archive, stored_zip("data.txt", b"content")).unwrap();
+        let mut shelf = Shelf::load(Some(dir.path()));
+        let extracted = || fs::read_dir(dir.path().join("files")).unwrap().count();
+
+        let prepared = Import::read(std::slice::from_ref(&archive), shelf.import_directory());
+        assert_eq!(extracted(), 1, "the worker writes the archive's file");
+        assert!(shelf.finish_import(u64::MAX, prepared).is_err());
+        assert_eq!(extracted(), 0, "a rejected import leaves nothing behind");
+
+        drop(Import::read(
+            std::slice::from_ref(&archive),
+            shelf.import_directory(),
+        ));
+        assert_eq!(
+            extracted(),
+            0,
+            "an import never admitted leaves nothing behind"
+        );
+
+        let admitted = Import::read(std::slice::from_ref(&archive), shelf.import_directory());
+        let id = shelf.finish_import(shelf.root_id(), admitted).unwrap()[0];
+        assert_eq!(extracted(), 1, "an admitted import keeps its file");
+        let shown = shelf
+            .rows()
+            .iter()
+            .find_map(|row| match shelf.page(row.0) {
+                Some(Page::File { path, .. }) => Some(path),
+                _ => None,
+            })
+            .expect("the archive's file is in the tree");
+        assert!(shelf.is_folder(id));
+        assert_eq!(fs::read(shown).unwrap(), b"content");
     }
 
     #[test]

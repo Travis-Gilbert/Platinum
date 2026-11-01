@@ -317,6 +317,9 @@ impl Activity {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Proposal {
+    /// The company it was made for. Accepting it changes that one only,
+    /// whichever company is on screen by then.
+    pub(crate) company: Id,
     pub(crate) summary: String,
     pub(crate) stage: Option<Stage>,
     pub(crate) next_interaction: Option<String>,
@@ -818,6 +821,7 @@ impl Store {
         let pilot = blob.to_ascii_lowercase().contains("pilot");
         let company = record.id;
         Proposal {
+            company,
             insight_body: summary.clone(),
             summary,
             stage: proposed_stage(buying, record.stage),
@@ -836,7 +840,8 @@ impl Store {
             .any(|task| task.company == company && task.title == title)
     }
 
-    pub(crate) fn accept(&mut self, company: Id, proposal: &Proposal) {
+    pub(crate) fn accept(&mut self, proposal: &Proposal) {
+        let company = proposal.company;
         if self.company(company).is_none() {
             return;
         }
@@ -1496,7 +1501,7 @@ mod tests {
         let source = store.sources_at(company)[0].id();
         store.tag(source, 1, "Buying signal");
         let proposal = store.propose(company).unwrap();
-        store.accept(company, &proposal);
+        store.accept(&proposal);
         assert_eq!(store.company(company).unwrap().stage(), Stage::Qualified);
         assert_eq!(store.tasks_at(company).len(), 1);
         assert_eq!(
@@ -1607,7 +1612,7 @@ mod tests {
             Some("Send the pilot plan to Ada Chen")
         );
         assert_eq!(proposal.insight_title, "Stakeholder");
-        store.accept(company, &proposal);
+        store.accept(&proposal);
         let again = store.propose(company).unwrap();
         assert!(again.stage.is_none());
         assert!(again.next_interaction.is_none());
@@ -1711,7 +1716,7 @@ mod tests {
         let source = store.sources_at(company)[0].id();
         store.tag(source, 1, "Buying signal");
         let proposal = store.propose(company).unwrap();
-        store.accept(company, &proposal);
+        store.accept(&proposal);
         let dir = std::env::temp_dir().join(format!("frame-crm-accept-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         store.save(&dir);

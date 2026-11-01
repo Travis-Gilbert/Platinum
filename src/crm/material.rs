@@ -440,25 +440,13 @@ fn sqlite_header(path: &Path) -> bool {
 }
 
 fn database(path: &Path, title: String) -> Result<Reading, String> {
-    let scratch = scratch_dir(path);
-    let _ = fs::remove_dir_all(&scratch);
-    if fs::create_dir_all(&scratch).is_err() {
+    // Each read gets a directory of its own, so two reads of databases with
+    // the same name never share a copy. It is removed when dropped.
+    let Ok(scratch) = tempfile::Builder::new().prefix("frame-crm-db-").tempdir() else {
         return Err("This database could not be opened.".into());
-    }
-    let copy = scratch.join("snapshot.sqlite");
-    let read = read_snapshot(path, &copy, &scratch, title);
-    let _ = fs::remove_dir_all(&scratch);
-    read
-}
-
-fn scratch_dir(path: &Path) -> PathBuf {
-    std::env::temp_dir().join(format!(
-        "frame-crm-db-{}-{}",
-        std::process::id(),
-        path.file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or("db")
-    ))
+    };
+    let copy = scratch.path().join("snapshot.sqlite");
+    read_snapshot(path, &copy, scratch.path(), title)
 }
 
 fn read_snapshot(
@@ -731,6 +719,49 @@ mod tests {
         let reading = open(&path).unwrap();
         assert_eq!(reading.kind, MaterialKind::Database);
         assert!(reading.passages.iter().any(|row| row.contains("Ada Chen")));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn databases_with_one_name_read_at_once_keep_their_own_rows() {
+        let dir = scratch("same-name");
+        let paths = ["ada", "grace"].map(|name| {
+            let folder = dir.join(name);
+            fs::create_dir_all(&folder).unwrap();
+            let path = folder.join("customers.db");
+            Connection::open(&path)
+                .unwrap()
+                .execute_batch(&format!(
+                    "create table people(name); insert into people values ('{name}');"
+                ))
+                .unwrap();
+            path
+        });
+        let start = std::sync::Barrier::new(paths.len());
+        let reads = std::thread::scope(|scope| {
+            let readers = paths.each_ref().map(|path| {
+                let start = &start;
+                scope.spawn(move || {
+                    let own = path
+                        .parent()
+                        .unwrap()
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap();
+                    start.wait();
+                    (0..50)
+                        .map(|_| {
+                            open(path).map(|read| read.passages.iter().any(|row| row.contains(own)))
+                        })
+                        .collect::<Vec<_>>()
+                })
+            });
+            readers.map(|reader| reader.join().unwrap())
+        });
+        for read in reads.iter().flatten() {
+            assert_eq!(read, &Ok(true));
+        }
         let _ = fs::remove_dir_all(&dir);
     }
 

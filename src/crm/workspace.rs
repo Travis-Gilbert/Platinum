@@ -1501,10 +1501,11 @@ impl Crm {
         let Some(proposal) = self.proposal.take() else {
             return;
         };
-        let Some(company) = self.ask_company() else {
+        let company = proposal.company;
+        if self.ask_company() != Some(company) {
             return;
-        };
-        self.store.accept(company, &proposal);
+        }
+        self.store.accept(&proposal);
         self.persist();
         self.screen = Screen::Company {
             id: company,
@@ -1600,6 +1601,16 @@ impl Crm {
             cx.notify();
             return;
         };
+        // The attach can finish after another company was opened and asked
+        // about. Its proposal stays with that company, not this one.
+        if self
+            .proposal
+            .as_ref()
+            .is_some_and(|proposal| proposal.company != company)
+        {
+            self.proposal = None;
+            self.asked = None;
+        }
         self.shown_source = Some(source);
         self.open_rows = Some((source, reading.rows));
         self.passage = None;
@@ -3789,6 +3800,80 @@ mod tests {
                 crm.reading.is_none(),
                 "deleted files must not return from a pending read"
             );
+        });
+    }
+
+    /// An attach that finishes after another company was asked about lands on
+    /// its own company without that one's proposal, and a proposal is only
+    /// ever accepted for the company it was made for.
+    #[gpui_kit::test]
+    fn a_late_attach_keeps_another_companys_proposal_off_it(cx: &mut gpui_kit::TestAppContext) {
+        use gpui_kit::component::Root;
+        use gpui_kit::{VisualTestContext, px, size};
+
+        let dir = tempfile::tempdir().unwrap();
+        cx.update(|cx| {
+            gpui_kit::init(cx);
+            crate::theme::init(cx);
+            crate::session::init(dir.path(), cx);
+        });
+        let mut held = None;
+        let window = cx.open_window(size(px(1400.), px(900.)), |window, cx| {
+            let view = cx.new(|cx| Crm::new(window, cx));
+            held = Some(view.clone());
+            Root::new(view, window, cx)
+        });
+        let crm = held.expect("crm");
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        cx.update(|window, cx| {
+            crm.update(cx, |crm, cx| {
+                let (asked, attached) = {
+                    let companies = crm.store.companies(View::All);
+                    (companies[0].id(), companies[1].id())
+                };
+                let records_of = |crm: &Crm| {
+                    [asked, attached].map(|id| {
+                        (
+                            crm.store.company(id).unwrap().stage(),
+                            crm.store.tasks_at(id).len(),
+                            crm.store.insights_at(id).len(),
+                        )
+                    })
+                };
+                let source = crm.store.sources_at(asked)[0].id();
+                crm.store.tag(source, 1, "Buying signal");
+                crm.open_target(Target::Company(asked), window, cx);
+                crm.summarize(window, cx);
+                assert_eq!(crm.proposal.as_ref().map(|it| it.company), Some(asked));
+                let records = records_of(crm);
+
+                crm.finish_attach(
+                    attached,
+                    Ok(files::Attachment {
+                        file: "late.txt".into(),
+                        reading: crate::crm::material::Reading {
+                            kind: crate::crm::model::MaterialKind::Text,
+                            title: "late".into(),
+                            passages: vec!["Ada Chen asked for the pilot plan".into()],
+                            rows: Vec::new(),
+                        },
+                    }),
+                    cx,
+                );
+                assert!(matches!(crm.screen, Screen::Company { id, .. } if id == attached));
+                assert!(
+                    crm.proposal.is_none(),
+                    "the proposal stays with its company"
+                );
+
+                crm.proposal = Some(crm.store.propose(asked).unwrap());
+                crm.accept_proposal(cx);
+                assert_eq!(
+                    records_of(crm),
+                    records,
+                    "nothing is accepted on another company"
+                );
+            })
         });
     }
 
