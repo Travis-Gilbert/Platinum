@@ -100,10 +100,10 @@ use frame_text_check::{CheckRequest, CheckStatus, ProfileStore, Service};
 use gpui_kit::component::command::CommandState;
 use gpui_kit::component::{Theme, ThemeMode};
 use gpui_kit::{
-    AnyWindowHandle, App, AsyncApp, Bounds, Context, Entity, EntityInputHandler as _, IntoElement,
-    Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement as _,
-    PlatformInput, Render, Styled as _, Subscription, Window, WindowBounds, WindowOptions, div,
-    point, px, size,
+    AnyWindowHandle, App, AppContext as _, AsyncApp, Bounds, Context, Entity,
+    EntityInputHandler as _, IntoElement, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, ParentElement as _, PlatformInput, Render, Styled as _, Subscription, Window,
+    WindowBounds, WindowOptions, div, point, px, size,
 };
 use servo::JSValue;
 use url::Url;
