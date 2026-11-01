@@ -6,12 +6,21 @@
 //! ```text
 //! script/media-env cargo build --locked --example text_check_live
 //! text_check_live              # check tests/text-check/index.html
+//! text_check_live --shots dir  # write dir/web-menu.png instead
 //! ```
 //!
 //! Each step right-clicks a field through GPUI's input path, reads the
 //! corrections the page's context menu would show, picks one, and reads the
 //! field's text back from the page. It exits 1 if any step is wrong.
+//!
+//! With `--shots dir` it runs no checks: it right-clicks the misspelled
+//! textarea of the same page, lets the navigator draw the menu over it as the
+//! browser does, and writes GPUI's render of the window, the Servo page and
+//! the "Spelling and Grammar" rows together, to `dir/web-menu.png`.
 extern crate gpui_kit as gpui;
+
+mod shot;
+
 // Session preferences share the production shortcut parser without loading ASR.
 #[allow(dead_code)]
 #[path = "../src/voice/shortcut.rs"]
@@ -28,6 +37,8 @@ mod theme;
 mod icons;
 #[path = "../src/markup.rs"]
 mod markup;
+#[path = "../src/address.rs"]
+mod address;
 #[path = "../src/bump.rs"]
 mod bump;
 #[path = "../src/notes.rs"]
@@ -60,6 +71,9 @@ mod engine;
 #[path = "../src/keys.rs"]
 mod keys;
 #[allow(dead_code)]
+#[path = "../src/navigator.rs"]
+mod navigator;
+#[allow(dead_code)]
 #[path = "../src/page.rs"]
 mod page;
 #[cfg(feature = "performance-check")]
@@ -83,15 +97,18 @@ use std::time::{Duration, Instant};
 
 use clap::Parser;
 use frame_text_check::{CheckRequest, CheckStatus, ProfileStore, Service};
+use gpui_kit::component::command::CommandState;
 use gpui_kit::component::{Theme, ThemeMode};
 use gpui_kit::{
-    AnyWindowHandle, App, AsyncApp, Bounds, Entity, EntityInputHandler as _, Modifiers,
-    MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, PlatformInput, WindowBounds,
-    WindowOptions, point, px, size,
+    AnyWindowHandle, App, AsyncApp, Bounds, Context, Entity, EntityInputHandler as _, IntoElement,
+    Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement as _,
+    PlatformInput, Render, Styled as _, Subscription, Window, WindowBounds, WindowOptions, div,
+    point, px, size,
 };
 use servo::JSValue;
 use url::Url;
 
+use crate::navigator::{BrowserState, Navigator, Placement};
 use crate::page::{Page, PageEvent, PageMenu};
 
 #[derive(Parser)]
@@ -102,6 +119,9 @@ struct Args {
     width: f32,
     #[arg(long, default_value_t = 700.0)]
     height: f32,
+    /// Instead of the checks, write `web-menu.png` to this directory.
+    #[arg(long)]
+    shots: Option<PathBuf>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -125,12 +145,25 @@ fn main() -> anyhow::Result<()> {
                 ))),
                 ..Default::default()
             };
-            let window = cx
-                .open_window(options, |window, cx| {
-                    Page::open(fixture(), window, cx).expect("a page")
-                })
-                .expect("a window");
-            let page = window.entity(cx).expect("the window's page");
+            let (window, page): (AnyWindowHandle, Entity<Page>) = if args.shots.is_some() {
+                // The capture puts the navigator over the page, as the browser does.
+                let window = cx
+                    .open_window(options, |window, cx| {
+                        let page = Page::open(fixture(), window, cx).expect("a page");
+                        cx.new(|cx| Shot::new(page, window, cx))
+                    })
+                    .expect("a window");
+                let page = window.read(cx).expect("the window's shot").page.clone();
+                (window.into(), page)
+            } else {
+                let window = cx
+                    .open_window(options, |window, cx| {
+                        Page::open(fixture(), window, cx).expect("a page")
+                    })
+                    .expect("a window");
+                let page = window.entity(cx).expect("the window's page");
+                (window.into(), page)
+            };
             let loads = Rc::new(Cell::new(0));
             let menus = Rc::new(RefCell::new(Vec::new()));
             let (counted, seen) = (loads.clone(), menus.clone());
@@ -142,13 +175,17 @@ fn main() -> anyhow::Result<()> {
             .detach();
             let live = Live {
                 page,
-                window: window.into(),
+                window,
                 menus,
                 profile_file,
                 last_value: RefCell::new(None),
             };
+            let shots = args.shots;
             cx.spawn(async move |cx| {
-                let passed = run(&live, &loads, cx).await;
+                let passed = match &shots {
+                    Some(dir) => shoot(&live, &loads, dir, cx).await,
+                    None => run(&live, &loads, cx).await,
+                };
                 // AppKit's quit exits with 0; an acceptance check needs its own status.
                 let _ = std::fs::remove_dir_all(&scratch);
                 std::process::exit(if passed { 0 } else { 1 });
@@ -192,9 +229,8 @@ impl Report {
     }
 }
 
-async fn run(live: &Live, loads: &Rc<Cell<u32>>, cx: &mut AsyncApp) -> bool {
-    let started = Instant::now();
-    let mut report = Report::default();
+/// The page has loaded and drawn its first frame, so it is placed in the window.
+async fn ready(live: &Live, loads: &Rc<Cell<u32>>, cx: &mut AsyncApp) -> bool {
     if !until(cx, "the page to load", Duration::from_secs(90), |_| {
         loads.get() > 0
     })
@@ -211,6 +247,99 @@ async fn run(live: &Live, loads: &Rc<Cell<u32>>, cx: &mut AsyncApp) -> bool {
         return false;
     }
     sleep(cx, Duration::from_secs(1)).await;
+    true
+}
+
+/// What the browser draws over a page for a right-click: Platinum's navigator,
+/// whose first group is "Spelling and Grammar". `Browser` owns it in the
+/// product; a capture needs the same `Navigator` over the one page, nothing
+/// else of the browser.
+struct Shot {
+    page: Entity<Page>,
+    navigator: Option<Navigator>,
+    _menu: Subscription,
+}
+
+impl Shot {
+    fn new(page: Entity<Page>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let menu = cx.subscribe_in(
+            &page,
+            window,
+            |this, page, event: &PageEvent, window, cx| {
+                if let PageEvent::ContextMenu(menu) = event {
+                    let state = cx.new(|cx| CommandState::new(window, cx));
+                    state.update(cx, |state, cx| state.focus(window, cx));
+                    this.navigator = Some(Navigator {
+                        state,
+                        placement: Placement::Pointer(menu.position),
+                        page: Some((page.clone(), menu.clone())),
+                        tab: None,
+                        restore_focus: None,
+                    });
+                    cx.notify();
+                }
+            },
+        );
+        Self {
+            page,
+            navigator: None,
+            _menu: menu,
+        }
+    }
+}
+
+impl Render for Shot {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let navigator = self.navigator.as_ref().map(|navigator| {
+            let browser = BrowserState {
+                tabs: &[],
+                compact: false,
+                appearance: theme::appearance(cx),
+                ask: false,
+                shareable: false,
+                sidebar: false,
+                places_pinned: false,
+                pinnable: false,
+            };
+            navigator.render(&browser, |_, _, _| {}, |_, _| {}, cx)
+        });
+        div()
+            .size_full()
+            .relative()
+            .child(self.page.clone())
+            .children(navigator)
+    }
+}
+
+/// Right-click the misspelled textarea and capture the window with the
+/// navigator's menu over the page.
+async fn shoot(live: &Live, loads: &Rc<Cell<u32>>, dir: &Path, cx: &mut AsyncApp) -> bool {
+    if !ready(live, loads, cx).await {
+        return false;
+    }
+    if let Err(error) = std::fs::create_dir_all(dir) {
+        println!("cannot create {}: {error}", dir.display());
+        return false;
+    }
+    let Some(menu) = live.right_click(cx, "spell").await else {
+        println!("the page showed no context menu");
+        return false;
+    };
+    println!("corrections offered: {:?}", menu.corrections);
+    if menu.corrections.is_empty() {
+        return false;
+    }
+    // The navigator is drawn from the menu event; give GPUI the frame.
+    sleep(cx, Duration::from_millis(800)).await;
+    shot::capture(live.window, cx, &dir.join("web-menu.png"))
+}
+
+async fn run(live: &Live, loads: &Rc<Cell<u32>>, cx: &mut AsyncApp) -> bool {
+    let started = Instant::now();
+    let mut report = Report::default();
+    if !ready(live, loads, cx).await {
+        return false;
+    }
 
     println!("dictionary spelling in a textarea, corrected and undone");
     corrects_and_undoes(

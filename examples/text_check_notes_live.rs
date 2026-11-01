@@ -4,36 +4,43 @@
 //!
 //! ```text
 //! script/media-env cargo build --locked --example text_check_notes_live
-//! text_check_notes_live [--shot path.png]
+//! text_check_notes_live [--shots dir]
 //! ```
 //!
 //! Text goes in through the editor's own input handler, the check runs after
 //! the real pause, and a correction is the same `SpanAction` event the editor's
-//! menu emits. It exits 1 if any step is wrong. With `--shot`, GPUI renders the
-//! window to a PNG while the underlines are showing.
+//! menu emits. It exits 1 if any step is wrong. With `--shots dir` it runs no
+//! checks: it writes `notes-underline.png` (the flagged word, underlined) and
+//! `notes-menu.png` (the editor's own menu, opened by a right-click on the
+//! word) from GPUI's own rendering of the window, then exits.
 extern crate gpui_kit as gpui;
 
+mod shot;
+
 use std::ops::Range;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use clap::Parser;
 use frame_text_check::{CheckRequest, CheckStatus, FieldPolicy, ProfileStore, Service};
 use frame_text_check_editor::TextChecking;
-use gpui_kit::component::{Theme, ThemeMode};
+use gpui_kit::component::{ActiveTheme as _, Theme, ThemeMode};
 use gpui_kit::{
-    App, AppContext as _, AsyncApp, Bounds, Entity, EntityInputHandler as _, WindowBounds,
-    WindowHandle, WindowOptions, point, px, size,
+    AnyWindowHandle, App, AppContext as _, AsyncApp, Bounds, Context, Entity,
+    EntityInputHandler as _, IntoElement, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent,
+    ParentElement as _, PlatformInput, Render, Styled as _, Window, WindowBounds, WindowHandle,
+    WindowOptions, div, point, px, size,
 };
 use zorite_editor::{EditorEvent, EditorState, Undo};
 
 #[derive(Parser)]
 #[command(about = "Check spelling and grammar corrections in a native note")]
 struct Args {
-    /// Capture the window to this PNG while the underlines are showing.
+    /// Instead of the checks, write `notes-underline.png` and `notes-menu.png`
+    /// to this directory.
     #[arg(long)]
-    shot: Option<PathBuf>,
+    shots: Option<PathBuf>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -48,9 +55,7 @@ fn main() -> anyhow::Result<()> {
         .with_assets(gpui_kit::assets::Assets)
         .run(move |cx| {
             gpui_kit::init(cx);
-            // The captured frame has no window chrome behind it, so it is black:
-            // the editor draws in the dark theme and its ink shows.
-            Theme::change(ThemeMode::Dark, None, cx);
+            Theme::change(ThemeMode::Light, None, cx);
             let options = WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(Bounds::new(
                     point(px(60.), px(60.)),
@@ -58,6 +63,26 @@ fn main() -> anyhow::Result<()> {
                 ))),
                 ..Default::default()
             };
+            if let Some(dir) = args.shots {
+                // The capture opens the editor on a ground of its own (`Ground`).
+                let window = cx
+                    .open_window(options, |window, cx| {
+                        let editor = cx.new(|cx| EditorState::new(window, cx).with_text(""));
+                        cx.new(|_| Ground { editor })
+                    })
+                    .expect("a window");
+                let editor = window.read(cx).expect("the window's ground").editor.clone();
+                let checking =
+                    TextChecking::attach(&editor, service.clone(), FieldPolicy::default(), cx);
+                cx.spawn(async move |cx| {
+                    let passed = shoot(window.into(), &editor, &dir, cx).await;
+                    drop(checking);
+                    let _ = std::fs::remove_dir_all(&scratch);
+                    std::process::exit(if passed { 0 } else { 1 });
+                })
+                .detach();
+                return;
+            }
             let window = cx
                 .open_window(options, |window, cx| {
                     cx.new(|cx| EditorState::new(window, cx).with_text(""))
@@ -74,7 +99,7 @@ fn main() -> anyhow::Result<()> {
                 profile,
             };
             cx.spawn(async move |cx| {
-                let passed = run(&live, &args, cx).await;
+                let passed = run(&live, cx).await;
                 // AppKit's quit exits with 0; an acceptance check needs its own status.
                 let _ = std::fs::remove_dir_all(&scratch);
                 std::process::exit(if passed { 0 } else { 1 });
@@ -111,7 +136,7 @@ impl Report {
     }
 }
 
-async fn run(live: &Live, args: &Args, cx: &mut AsyncApp) -> bool {
+async fn run(live: &Live, cx: &mut AsyncApp) -> bool {
     let started = Instant::now();
     let mut report = Report::default();
 
@@ -123,7 +148,6 @@ async fn run(live: &Live, args: &Args, cx: &mut AsyncApp) -> bool {
         "Please recieve this letter today.",
         "recieve",
         "receive",
-        args.shot.as_deref(),
     )
     .await;
 
@@ -135,7 +159,6 @@ async fn run(live: &Live, args: &Args, cx: &mut AsyncApp) -> bool {
         "He are late for the meeting.",
         "are",
         "is",
-        None,
     )
     .await;
 
@@ -147,7 +170,6 @@ async fn run(live: &Live, args: &Args, cx: &mut AsyncApp) -> bool {
         "\u{1f600} e\u{301} teh end.",
         "teh",
         "the",
-        None,
     )
     .await;
 
@@ -230,7 +252,6 @@ async fn corrects_and_undoes(
     before: &str,
     word: &str,
     replacement: &str,
-    shot: Option<&std::path::Path>,
 ) {
     let Some(range) = show(live, cx, before).await else {
         report.expect(false, &format!("{before:?} is underlined"), || {
@@ -244,14 +265,6 @@ async fn corrects_and_undoes(
         &format!("{word:?} is the underlined word"),
         || format!("underlined {flagged:?}"),
     );
-    if let Some(path) = shot {
-        let _ = live.window.update(cx, |_, window, cx| {
-            cx.activate(true);
-            window.activate_window();
-        });
-        sleep(cx, Duration::from_millis(1500)).await;
-        capture(live, cx, path);
-    }
     let rows = rows_at(live, cx, range.start + 1);
     let row = rows.iter().position(|label| label == replacement);
     report.expect(
@@ -415,22 +428,103 @@ async fn custom_word(live: &Live, cx: &mut AsyncApp, report: &mut Report) {
     );
 }
 
-/// Render the window to a PNG from GPUI's own frame, which needs no screen
-/// recording permission and sees the underlines the editor painted. A frame
-/// with nothing painted is reported rather than saved as evidence.
-fn capture(live: &Live, cx: &mut AsyncApp, path: &std::path::Path) {
-    let saved = live.window.update(cx, |_, window, _| {
-        let image = window.render_to_image()?;
-        if image.pixels().all(|pixel| pixel.0[..3] == [0, 0, 0]) {
-            anyhow::bail!("the rendered frame is entirely black: nothing was painted");
-        }
-        image.save(path).map_err(anyhow::Error::from)
-    });
-    match saved {
-        Ok(Ok(())) => println!("        screenshot: {}", path.display()),
-        Ok(Err(error)) => println!("        screenshot not taken: {error}"),
-        Err(error) => println!("        screenshot not taken: {error}"),
+/// The editor on the window's own ground. A frame GPUI renders to an image has
+/// no window behind it, and a bare editor inherits black ink, so a capture of
+/// the editor alone is black on black. The notes surface supplies this ground
+/// in the product.
+struct Ground {
+    editor: Entity<EditorState>,
+}
+
+/// The space between the window's edge and the editor.
+const GROUND_PAD: f32 = 16.;
+
+impl Render for Ground {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.theme();
+        div()
+            .size_full()
+            .p(px(GROUND_PAD))
+            .bg(theme.background)
+            .text_color(theme.foreground)
+            .text_size(px(16.))
+            .child(self.editor.clone())
     }
+}
+
+/// The two captures: the underline, then the menu a right-click on the
+/// flagged word opens. Both are GPUI's own render of the window, which needs
+/// no screen recording permission.
+async fn shoot(
+    window: AnyWindowHandle,
+    editor: &Entity<EditorState>,
+    dir: &Path,
+    cx: &mut AsyncApp,
+) -> bool {
+    if let Err(error) = std::fs::create_dir_all(dir) {
+        println!("cannot create {}: {error}", dir.display());
+        return false;
+    }
+    let note = "Please recieve this letter today.";
+    editor.update(cx, |editor, cx| editor.set_text(note, cx));
+    let watched = editor.clone();
+    let shown = until(cx, "the underline", Duration::from_secs(20), move |cx| {
+        let editor = watched.read(cx);
+        editor
+            .diagnostics()
+            .first()
+            .is_some_and(|d| !editor.flagged_rows(d.range.start + 1).1.is_empty())
+    })
+    .await;
+    if !shown {
+        return false;
+    }
+    let word = editor.read_with(cx, |editor, _| editor.diagnostics()[0].range.clone());
+    println!("underlined {:?}", &note[word.clone()]);
+    let _ = window.update(cx, |_, window, cx| {
+        cx.activate(true);
+        window.activate_window();
+    });
+    sleep(cx, Duration::from_millis(1500)).await;
+    if !shot::capture(window, cx, &dir.join("notes-underline.png")) {
+        return false;
+    }
+
+    // Where the word is, in window points: the editor starts at the ground's
+    // padding, and the word's bounds follow from its own layout.
+    let word_at = window.update(cx, |_, window, cx| {
+        let width = window.bounds().size.width - px(2. * GROUND_PAD);
+        let editor_bounds =
+            Bounds::new(point(px(GROUND_PAD), px(GROUND_PAD)), size(width, px(100.)));
+        let utf16 = word.clone();
+        editor.update(cx, |editor, cx| {
+            editor.bounds_for_range(utf16, editor_bounds, window, cx)
+        })
+    });
+    let Ok(Some(word_at)) = word_at else {
+        println!("the flagged word has no bounds");
+        return false;
+    };
+    let position = word_at.center();
+    let _ = window.update(cx, |_, window, cx| {
+        for event in [
+            PlatformInput::MouseMove(MouseMoveEvent {
+                position,
+                pressed_button: None,
+                modifiers: Modifiers::default(),
+            }),
+            PlatformInput::MouseDown(MouseDownEvent {
+                position,
+                button: MouseButton::Right,
+                click_count: 1,
+                ..Default::default()
+            }),
+        ] {
+            window.dispatch_event(event, cx);
+        }
+    });
+    sleep(cx, Duration::from_millis(800)).await;
+    shot::capture(window, cx, &dir.join("notes-menu.png"))
 }
 
 async fn sleep(cx: &mut AsyncApp, time: Duration) {
