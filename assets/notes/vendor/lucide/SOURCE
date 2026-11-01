@@ -1,0 +1,8 @@
+lucide 1.59.0 (ISC)
+Tarball:   https://registry.npmjs.org/lucide/-/lucide-1.59.0.tgz
+Integrity: sha512-0KTOAFYlTuLHdJOqnRCuPhscU29xtx/QnlHyrOfK0FynDhuPm50O3BH/e4wRnOS67ph0z7uovveCVcXUPLTPBw==
+Copied unmodified from the tarball:
+  package/dist/umd/lucide.min.js -> lucide.min.js
+  package/LICENSE                -> LICENSE
+Obsidian 1.14.5, which recorded the fixture vault, draws Lucide 1.59: the
+icons in crates/notes/src/reading/icons.rs match this release's geometry.

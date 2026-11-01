@@ -22,6 +22,7 @@ mod inspector;
 mod keys;
 mod markup;
 mod navigator;
+mod notes;
 mod page;
 #[cfg(feature = "performance-check")]
 mod performance;
@@ -38,6 +39,7 @@ mod tabtree;
 mod theme;
 
 use anyhow::Context as _;
+use clap::Parser as _;
 use gpui_kit::component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
 use gpui_kit::component::{Root, TitleBar};
 use gpui_kit::{
@@ -55,7 +57,16 @@ use crate::browser::Browser;
 use crate::engine::Engine;
 use crate::theme::Appearance;
 
+/// Platinum's launch arguments.
+#[derive(clap::Parser)]
+struct Cli {
+    #[command(flatten)]
+    notes: notes::open::Args,
+}
+
 fn main() -> anyhow::Result<()> {
+    // Before anything starts, so a mistaken argument costs nothing.
+    let notes = Cli::parse().notes.launch()?;
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
         return browser::workspace_check::run(output.into());
@@ -86,7 +97,15 @@ fn main() -> anyhow::Result<()> {
             theme::init(cx);
             brand::install();
             install_commands(cx);
-            Engine::start(&profile_dir, cx);
+            // The `frame-notes:` pages are registered only when the notes app
+            // is asked for. Servo takes its URL schemes when it starts, so
+            // they cannot be added later, and until the browser itself shows
+            // notes, an ordinary launch keeps its engine exactly as it was.
+            if notes.is_some() {
+                notes::start(&profile_dir, cx);
+            } else {
+                Engine::start(&profile_dir, cx);
+            }
             // GPUI's images load from a URL through this, a result's favicon
             // among them: with Servo's user agent, and without cookies.
             match reqwest_client::ReqwestClient::user_agent(&Engine::user_agent()) {
@@ -98,10 +117,17 @@ fn main() -> anyhow::Result<()> {
             session::init(&profile_dir, cx);
             session::open_imported_tabs(&profile, cx);
             cx.set_global(profile_ui::ActiveProfile(profile));
-            if let Err(error) = open_window(cx) {
+            let opened = match notes {
+                Some(launch) => notes::open::open_window(launch, cx),
+                None => open_window(cx),
+            };
+            if let Err(error) = opened {
                 log::error!("{error:#}");
                 cx.quit();
+                return;
             }
+            // One window for now: closing it quits.
+            quit_with_last_window(cx);
         });
     Ok(())
 }
@@ -236,14 +262,16 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
     })?;
     #[cfg(feature = "snapshot")]
     keep_snapshots(_window.into(), cx);
-    // One window for now: closing it quits.
+    Ok(())
+}
+
+fn quit_with_last_window(cx: &mut App) {
     cx.on_window_closed(|cx, _| {
         if cx.windows().is_empty() {
             cx.quit();
         }
     })
     .detach();
-    Ok(())
 }
 
 /// Keep a picture of `window` in the file `FRAME_SNAPSHOT` names, redrawn

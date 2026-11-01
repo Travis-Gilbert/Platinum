@@ -1,0 +1,6 @@
+idiomorph 0.8.0 (0BSD)
+Tarball:   https://registry.npmjs.org/idiomorph/-/idiomorph-0.8.0.tgz
+Integrity: sha512-R47JBL+6jHDQvcnbppIUtXXcxi5h6+wuCEEZXnRhUltsgzPFKzThL5PuHppP9ypJuy+7WawcY1TsSBD/iQbMhw==
+Copied unmodified from the tarball:
+  package/dist/idiomorph.min.js -> idiomorph.min.js
+  package/LICENSE               -> LICENSE

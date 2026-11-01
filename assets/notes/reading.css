@@ -1,0 +1,1229 @@
+/* The reading view's default theme: a well-set article, written with
+ * Obsidian's variable and class names so a vault's snippets and a note's
+ * cssclasses apply to it as they do in Obsidian. Only the variables and
+ * classes the reading view uses are defined.
+ *
+ * The look follows Zephium's notes (MPL-2.0; values re-expressed, no source
+ * copied): a 664px column of 15px text at 1.62, restrained headings with
+ * negative tracking, a tonal palette where state is a white or ink overlay,
+ * and quiet plates for code, quotes and tables. Colours that must match the
+ * chrome come from the host as --frame-* custom properties on :root (see
+ * src/notes/host/shell.rs); the fallbacks are Zephium's own. */
+
+body {
+  --font-text-theme: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "Helvetica Neue", sans-serif;
+  --font-text: var(--font-text-theme);
+  --font-monospace-theme: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-monospace: var(--font-monospace-theme);
+  --font-text-size: 15px;
+  --font-smallest: 0.8em;
+  --font-smaller: 0.875em;
+  --font-small: 0.933em;
+  --font-adaptive-normal: var(--font-text-size);
+  --line-height-normal: 1.62;
+  --line-height-tight: 1.3;
+  --normal-weight: 400;
+  --medium-weight: 500;
+  --semibold-weight: 600;
+  --bold-weight: 650;
+
+  --h1-size: 1.867em;
+  --h2-size: 1.333em;
+  --h3-size: 1.1em;
+  --h4-size: 1em;
+  --h5-size: 1em;
+  --h6-size: 1em;
+  --h1-weight: 700;
+  --h2-weight: 650;
+  --h3-weight: 650;
+  --h4-weight: 650;
+  --h5-weight: 650;
+  --h6-weight: 650;
+  --h1-line-height: 1.2;
+  --h2-line-height: 1.3;
+  --h3-line-height: 1.35;
+  --h4-line-height: var(--line-height-normal);
+  --h5-line-height: var(--line-height-normal);
+  --h6-line-height: var(--line-height-normal);
+  --h1-color: inherit;
+  --h2-color: inherit;
+  --h3-color: inherit;
+  --h4-color: inherit;
+  --h5-color: var(--text-secondary);
+  --h6-color: var(--text-secondary);
+  --h1-variant: normal;
+  --h1-style: normal;
+  --h2-style: normal;
+  --h3-style: normal;
+  --h4-style: normal;
+  --h5-style: normal;
+  --h6-style: normal;
+
+  --size-2-1: 2px;
+  --size-2-2: 4px;
+  --size-2-3: 6px;
+  --size-4-1: 4px;
+  --size-4-2: 8px;
+  --size-4-3: 12px;
+  --size-4-4: 16px;
+  --size-4-5: 20px;
+  --size-4-6: 24px;
+  --size-4-8: 32px;
+  --size-4-12: 48px;
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 10px;
+  --border-width: 1px;
+  --file-line-width: 664px;
+  --file-margins: var(--size-4-12);
+  --file-header-font-size: var(--font-ui-small, 13px);
+  --icon-size: 18px;
+  --icon-stroke: 1.75px;
+
+  /* Motion: only colour, opacity and transform move, briefly. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-hover: 120ms;
+  --duration-press: 200ms;
+
+  --p-spacing: 0.7em;
+  --list-indent: 1.55em;
+  --list-spacing: 0.2em;
+  --list-marker-color: var(--text-muted);
+  --list-bullet-radius: 3px;
+  --list-bullet-size: 6px;
+  --indentation-guide-width: 1px;
+  --indentation-guide-color: rgba(var(--mono-rgb-100), 0.1);
+  --blockquote-border-thickness: 3px;
+  --blockquote-border-color: var(--background-modifier-border-hover);
+  --blockquote-color: var(--text-secondary);
+  --blockquote-style: normal;
+  --blockquote-background-color: transparent;
+  --hr-thickness: 1px;
+  --hr-color: var(--background-modifier-border);
+  /* Links are text, told apart by their underline; the accent marks only
+   * internal links, checks and the selection. */
+  --link-color: var(--text-normal);
+  --link-color-hover: var(--text-normal);
+  --link-decoration: underline;
+  --link-decoration-hover: underline;
+  --link-decoration-color: var(--background-modifier-border-hover);
+  --link-external-color: var(--text-normal);
+  --link-external-color-hover: var(--text-normal);
+  --link-external-decoration: underline;
+  --link-internal-weight: 550;
+  --link-internal-decoration-color: hsla(var(--interactive-accent-hsl), 0.16);
+  --link-unresolved-color: var(--text-muted);
+  --link-unresolved-opacity: 1;
+  --link-unresolved-decoration-style: dashed;
+  --link-unresolved-decoration-color: var(--background-modifier-border-hover);
+  --code-size: 0.85em;
+  --code-background: var(--background-primary-alt);
+  --code-normal: var(--text-secondary);
+  --code-radius: 10px;
+  --code-white-space: pre-wrap;
+  --embed-padding: 0 0 0 var(--size-4-4);
+  --embed-border-left: 3px solid var(--background-modifier-border-hover);
+  --embed-border-right: none;
+  --embed-border-top: none;
+  --embed-border-bottom: none;
+  --embed-background: inherit;
+  --embed-font-style: inherit;
+  --table-border-width: 1px;
+  --table-border-color: var(--background-modifier-border);
+  --table-header-background: transparent;
+  --table-header-weight: var(--semibold-weight);
+  --table-header-size: inherit;
+  --table-header-color: var(--text-secondary);
+  --table-text-size: 0.93em;
+  --table-white-space: normal;
+  --table-row-background-hover: transparent;
+  --table-column-first-border-width: 0;
+  --table-column-last-border-width: 0;
+  --table-row-last-border-width: var(--table-border-width);
+  --table-row-alt-background: transparent;
+  --table-cell-padding: 0.45em 0.7em;
+  --tag-size: 0.9em;
+  --tag-weight: var(--medium-weight);
+  --tag-decoration: none;
+  --tag-decoration-hover: none;
+  --tag-border-width: 0;
+  --tag-padding-x: 0.55em;
+  --tag-padding-y: 0.1em;
+  --tag-radius: 2em;
+  --checkbox-size: 1.05em;
+  --checkbox-radius: 50%;
+  --checkbox-border-width: 1.5px;
+  --checkbox-color: var(--interactive-accent);
+  --checkbox-color-hover: var(--interactive-accent-hover);
+  --checkbox-border-color: var(--background-modifier-border-hover);
+  --checkbox-border-color-hover: var(--text-muted);
+  --checkbox-marker-color: var(--text-on-accent);
+  --checklist-done-decoration: none;
+  --checklist-done-color: var(--text-muted);
+  --metadata-label-font-size: 12px;
+  --metadata-input-font-size: 13px;
+  --metadata-label-text-color: var(--text-muted);
+  --metadata-input-text-color: var(--text-normal);
+  --callout-border-width: 1px;
+  --callout-padding: var(--size-4-3) 14px;
+  --callout-radius: var(--radius-l);
+  --callout-blend-mode: normal;
+  --callout-title-padding: 0;
+  --callout-title-size: inherit;
+  --callout-title-weight: var(--semibold-weight);
+  --callout-content-padding: 0;
+  --callout-content-background: transparent;
+}
+
+/* The two schemes. A callout's wash, edge and ink are its colour mixed at
+ * these strengths, so a vault's custom callout colour gets the same recipe. */
+
+.theme-dark {
+  color-scheme: dark;
+  --mono-rgb-0: 0, 0, 0;
+  --mono-rgb-100: 255, 255, 255;
+  --color-red: #ee9aae;
+  --color-orange: #efaa89;
+  --color-yellow: #e6cb80;
+  --color-green: #88d0b3;
+  --color-cyan: #8db9f2;
+  --color-blue: #8db9f2;
+  --color-purple: #b7a6f0;
+  --color-pink: #ee9aae;
+  --background-primary: var(--frame-background-primary, #1a1a1d);
+  --background-primary-alt: rgba(255, 255, 255, 0.05);
+  --background-secondary: var(--frame-background-secondary, #1f1f22);
+  --background-modifier-border: var(--frame-border, rgba(255, 255, 255, 0.07));
+  --background-modifier-border-hover: rgba(255, 255, 255, 0.13);
+  --background-modifier-hover: rgba(255, 255, 255, 0.08);
+  --background-modifier-box-shadow: rgba(0, 0, 0, 0.34);
+  --text-normal: var(--frame-text-normal, #f4f4f6);
+  --text-secondary: color-mix(in srgb, var(--text-normal) 87%, var(--background-primary));
+  --text-muted: color-mix(in srgb, var(--text-normal) 68%, transparent);
+  --text-faint: color-mix(in srgb, var(--text-normal) 44%, transparent);
+  --text-on-accent: #161619;
+  --text-highlight-bg: rgba(230, 203, 128, 0.22);
+  --text-selection: hsla(var(--interactive-accent-hsl), 0.28);
+  --code-inline-color: #f5e4e6;
+  --tag-color: #b4d0f5;
+  --tag-color-hover: #b4d0f5;
+  --tag-background: #282d37;
+  --tag-background-hover: #2f3644;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+  --callout-wash: 15%;
+  --callout-edge: 26%;
+  --callout-ink: 62%;
+  --callout-default: 141, 185, 242;
+  --callout-info: 141, 185, 242;
+  --callout-todo: 141, 185, 242;
+  --callout-summary: 136, 208, 179;
+  --callout-tip: 136, 208, 179;
+  --callout-important: 136, 208, 179;
+  --callout-success: 136, 208, 179;
+  --callout-question: 239, 170, 137;
+  --callout-warning: 230, 203, 128;
+  --callout-fail: 238, 154, 174;
+  --callout-error: 238, 154, 174;
+  --callout-bug: 238, 154, 174;
+  --callout-example: 183, 166, 240;
+  --callout-quote: 244, 244, 246;
+  --code-comment: var(--text-muted);
+  --code-function: #99c2f6;
+  --code-important: #c8977b;
+  --code-keyword: #f2a6aa;
+  --code-operator: var(--text-muted);
+  --code-property: var(--text-secondary);
+  --code-punctuation: var(--text-muted);
+  --code-string: #9dd2b4;
+  --code-tag: #9b8bbf;
+  --code-value: #ba9e5e;
+}
+
+.theme-light {
+  color-scheme: light;
+  --mono-rgb-0: 255, 255, 255;
+  --mono-rgb-100: 24, 24, 27;
+  --color-red: #d35d7a;
+  --color-orange: #d2703f;
+  --color-yellow: #b88c14;
+  --color-green: #2f9c77;
+  --color-cyan: #4f8fe0;
+  --color-blue: #4f8fe0;
+  --color-purple: #7e67d6;
+  --color-pink: #d35d7a;
+  --background-primary: var(--frame-background-primary, #f1f1f3);
+  --background-primary-alt: rgba(24, 24, 27, 0.05);
+  --background-secondary: var(--frame-background-secondary, #e6e6e9);
+  --background-modifier-border: var(--frame-border, rgba(24, 24, 27, 0.07));
+  --background-modifier-border-hover: rgba(24, 24, 27, 0.13);
+  --background-modifier-hover: rgba(24, 24, 27, 0.075);
+  --background-modifier-box-shadow: rgba(0, 0, 0, 0.12);
+  --text-normal: var(--frame-text-normal, #1c1c1f);
+  --text-secondary: color-mix(in srgb, var(--text-normal) 73%, var(--background-primary));
+  --text-muted: color-mix(in srgb, var(--text-normal) 62%, transparent);
+  /* Placeholders and markers only: too faint for body text. */
+  --text-faint: color-mix(in srgb, var(--text-normal) 42%, transparent);
+  --text-on-accent: #ffffff;
+  --text-highlight-bg: rgba(184, 140, 20, 0.2);
+  --text-selection: hsla(var(--interactive-accent-hsl), 0.22);
+  --code-inline-color: #372629;
+  --tag-color: #4474b1;
+  --tag-color-hover: #4474b1;
+  --tag-background: #dfe6f1;
+  --tag-background-hover: #d4deee;
+  --scrollbar-thumb: rgba(24, 24, 27, 0.2);
+  --scrollbar-thumb-hover: rgba(24, 24, 27, 0.34);
+  --callout-wash: 13%;
+  --callout-edge: 30%;
+  --callout-ink: 78%;
+  --callout-default: 79, 143, 224;
+  --callout-info: 79, 143, 224;
+  --callout-todo: 79, 143, 224;
+  --callout-summary: 47, 156, 119;
+  --callout-tip: 47, 156, 119;
+  --callout-important: 47, 156, 119;
+  --callout-success: 47, 156, 119;
+  --callout-question: 210, 112, 63;
+  --callout-warning: 184, 140, 20;
+  --callout-fail: 211, 93, 122;
+  --callout-error: 211, 93, 122;
+  --callout-bug: 211, 93, 122;
+  --callout-example: 126, 103, 214;
+  --callout-quote: 28, 28, 31;
+  --code-comment: var(--text-muted);
+  --code-function: #366ab6;
+  --code-important: #7a4324;
+  --code-keyword: #a74950;
+  --code-operator: var(--text-muted);
+  --code-property: var(--text-secondary);
+  --code-punctuation: var(--text-muted);
+  --code-string: #2f7251;
+  --code-tag: #605386;
+  --code-value: #614b1c;
+}
+
+/* The accent follows the chrome's (the host's --frame-accent-*); the vault's
+ * own accent setting, written after this sheet, overrides both. */
+body {
+  --accent-h: var(--frame-accent-h, 193);
+  --accent-s: var(--frame-accent-s, 70%);
+  --accent-l: var(--frame-accent-l, 50%);
+  --color-accent-hsl: var(--accent-h), var(--accent-s), var(--accent-l);
+  --color-accent: hsl(var(--color-accent-hsl));
+  --color-accent-1: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 3.8%));
+  --color-accent-2: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 3.8%));
+  --interactive-accent-hsl: var(--color-accent-hsl);
+  --interactive-accent: var(--color-accent-1);
+  --interactive-accent-hover: var(--color-accent-2);
+  --text-accent: var(--color-accent);
+  --text-accent-hover: var(--color-accent-2);
+}
+
+/* ---- Page ---------------------------------------------------------- */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  font-family: var(--font-text);
+  font-size: var(--font-text-size);
+  line-height: var(--line-height-normal);
+  font-weight: var(--normal-weight);
+  font-kerning: normal;
+  font-optical-sizing: auto;
+  font-feature-settings: "kern", "calt";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: var(--text-selection);
+}
+
+.app-container,
+.horizontal-main-container,
+.workspace,
+.workspace-leaf,
+.workspace-leaf-content,
+.view-content {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.markdown-reading-view {
+  width: 100%;
+  height: 100%;
+}
+
+.markdown-preview-view {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--size-4-8) var(--file-margins) 40vh;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.markdown-preview-view:hover {
+  scrollbar-color: var(--scrollbar-thumb-hover) transparent;
+}
+
+.markdown-preview-view .markdown-preview-sizer {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.markdown-preview-view.is-readable-line-width .markdown-preview-sizer {
+  max-width: var(--file-line-width);
+}
+
+.markdown-preview-pusher {
+  display: none;
+}
+
+/* A narrow panel keeps the column and gives up margin first. */
+@media (max-width: 720px) {
+  body {
+    --file-margins: var(--size-4-6);
+  }
+}
+
+/* ---- Header: title and properties ----------------------------------- */
+
+.mod-header {
+  margin-bottom: var(--size-4-4);
+}
+
+.inline-title {
+  font-size: var(--h1-size);
+  line-height: var(--h1-line-height);
+  font-weight: var(--h1-weight);
+  letter-spacing: -0.028em;
+  margin: 0 0 0.35em;
+  outline: none;
+}
+
+.metadata-container {
+  margin-bottom: var(--size-4-4);
+}
+
+.metadata-properties-heading {
+  display: none;
+}
+
+.metadata-properties {
+  display: grid;
+  gap: 0;
+}
+
+.metadata-property {
+  display: grid;
+  grid-template-columns: minmax(120px, 30%) 1fr auto;
+  gap: var(--size-4-2);
+  align-items: center;
+  min-height: 32px;
+  padding: 5px var(--size-4-2);
+  margin-inline: calc(var(--size-4-2) * -1);
+  border-radius: var(--radius-m);
+  box-sizing: border-box;
+  font-size: var(--metadata-input-font-size);
+  transition: background-color var(--duration-hover) var(--ease-out);
+}
+
+.metadata-property:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.metadata-property-key {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  color: var(--metadata-label-text-color);
+  font-size: var(--metadata-label-font-size);
+}
+
+.metadata-property-icon {
+  display: inline-flex;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  color: var(--text-faint);
+}
+
+.metadata-property-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.metadata-property-key-input,
+.metadata-input-longtext,
+.metadata-input,
+.metadata-link-inner {
+  min-width: 0;
+  padding: 0;
+  color: var(--metadata-input-text-color);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  outline: none;
+}
+
+.metadata-property-key-input {
+  flex: 1 1 auto;
+  color: inherit;
+}
+
+.metadata-input {
+  width: 100%;
+}
+
+.metadata-property-value {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  min-width: 0;
+}
+
+.metadata-link {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.metadata-link-inner {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--link-decoration-color);
+  text-underline-offset: 0.18em;
+}
+
+.metadata-link-inner.internal-link {
+  font-weight: var(--link-internal-weight);
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--link-internal-decoration-color);
+  text-underline-offset: 0.2em;
+}
+
+.metadata-link-inner.internal-link.is-unresolved {
+  color: var(--link-unresolved-color);
+  font-weight: 450;
+  text-decoration-style: var(--link-unresolved-decoration-style);
+  text-decoration-color: var(--link-unresolved-decoration-color);
+  text-decoration-thickness: 1px;
+}
+
+/* Editing a property is not available in the reading view, so its edit and
+ * open-daily-note buttons are not drawn. */
+.metadata-link-flair,
+.metadata-property-value > .clickable-icon {
+  display: none;
+}
+
+.metadata-property-warning-icon {
+  display: flex;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  color: var(--color-yellow);
+}
+
+.metadata-property-warning-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.multi-select-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-2-2);
+}
+
+.multi-select-pill {
+  background: var(--tag-background);
+  color: var(--tag-color);
+  border-radius: var(--tag-radius);
+  padding: var(--tag-padding-y) var(--tag-padding-x);
+  font-size: var(--tag-size);
+  font-weight: var(--tag-weight);
+}
+
+.multi-select-pill-remove-button,
+.metadata-add-button,
+.metadata-properties-title {
+  display: none;
+}
+
+/* ---- Text ------------------------------------------------------------ */
+
+.markdown-rendered p {
+  margin-block: var(--p-spacing);
+}
+
+.markdown-rendered h1,
+.markdown-rendered h2,
+.markdown-rendered h3,
+.markdown-rendered h4,
+.markdown-rendered h5,
+.markdown-rendered h6 {
+  margin-block: 1.1em 0.35em;
+  letter-spacing: -0.012em;
+  position: relative;
+}
+
+.markdown-rendered h1,
+.markdown-rendered h2 {
+  margin-block-start: 1.35em;
+}
+
+.markdown-rendered h1 { font-size: var(--h1-size); line-height: var(--h1-line-height); font-weight: var(--h1-weight); color: var(--h1-color); letter-spacing: -0.028em; }
+.markdown-rendered h2 { font-size: var(--h2-size); line-height: var(--h2-line-height); font-weight: var(--h2-weight); color: var(--h2-color); letter-spacing: -0.02em; }
+.markdown-rendered h3 { font-size: var(--h3-size); line-height: var(--h3-line-height); font-weight: var(--h3-weight); color: var(--h3-color); }
+.markdown-rendered h4 { font-size: var(--h4-size); line-height: var(--h4-line-height); font-weight: var(--h4-weight); color: var(--h4-color); }
+.markdown-rendered h5 { font-size: var(--h5-size); line-height: var(--h5-line-height); font-weight: var(--h5-weight); color: var(--h5-color); }
+.markdown-rendered h6 { font-size: var(--h6-size); line-height: var(--h6-line-height); font-weight: var(--h6-weight); color: var(--h6-color); }
+
+.markdown-rendered > .markdown-preview-sizer > div:first-of-type > h1:first-child,
+.markdown-rendered .mod-header + div > :first-child {
+  margin-top: 0;
+}
+
+/* Only callouts fold for now (reading.js), so the heading and list fold
+ * arrows stay in the DOM, as Obsidian's do, but are not drawn. */
+.heading-collapse-indicator,
+.list-collapse-indicator {
+  display: none;
+}
+
+.markdown-rendered strong { font-weight: var(--bold-weight); }
+.markdown-rendered em { font-style: italic; }
+.markdown-rendered :is(del, s) {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.markdown-rendered mark {
+  background-color: var(--text-highlight-bg);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+}
+
+/* Links are text with a quiet rule under them; hovering brings the rule up to
+ * the text colour. */
+.markdown-rendered a {
+  color: var(--link-color);
+  text-decoration-line: var(--link-decoration);
+  text-decoration-color: var(--link-decoration-color);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+  transition: text-decoration-color var(--duration-hover) var(--ease-out),
+    color var(--duration-hover) var(--ease-out);
+}
+
+.markdown-rendered a:hover {
+  color: var(--link-color-hover);
+  text-decoration-color: currentColor;
+}
+
+.markdown-rendered a.external-link {
+  color: var(--link-external-color);
+}
+
+.markdown-rendered a.internal-link {
+  font-weight: var(--link-internal-weight);
+  text-decoration-color: var(--link-internal-decoration-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.markdown-rendered a.internal-link:hover {
+  text-decoration-color: var(--interactive-accent);
+}
+
+.markdown-rendered a.internal-link.is-unresolved {
+  color: var(--link-unresolved-color);
+  font-weight: 450;
+  opacity: var(--link-unresolved-opacity);
+  text-decoration-style: var(--link-unresolved-decoration-style);
+  text-decoration-color: var(--link-unresolved-decoration-color);
+  text-decoration-thickness: 1px;
+}
+
+.markdown-rendered a.tag,
+.markdown-rendered a.tag:hover {
+  background-color: var(--tag-background);
+  color: var(--tag-color);
+  text-decoration: var(--tag-decoration);
+  font-size: var(--tag-size);
+  font-weight: var(--tag-weight);
+  padding: var(--tag-padding-y) var(--tag-padding-x);
+  border-radius: var(--tag-radius);
+  box-decoration-break: clone;
+}
+
+.markdown-rendered a.tag:hover {
+  background-color: var(--tag-background-hover);
+}
+
+.markdown-rendered blockquote {
+  margin-inline: 0;
+  padding: 0 0 0 0.95em;
+  border-inline-start: var(--blockquote-border-thickness) solid var(--blockquote-border-color);
+  background-color: var(--blockquote-background-color);
+  color: var(--blockquote-color);
+  font-style: var(--blockquote-style);
+}
+
+.markdown-rendered hr {
+  border: 0;
+  border-top: var(--hr-thickness) solid var(--hr-color);
+  margin-block: 1.4em;
+}
+
+/* ---- Lists and tasks ---------------------------------------------------- */
+
+.markdown-rendered ul,
+.markdown-rendered ol {
+  margin-block: var(--p-spacing);
+  padding-inline-start: var(--list-indent);
+}
+
+.markdown-rendered ol {
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-rendered ul ul,
+.markdown-rendered ul ol,
+.markdown-rendered ol ul,
+.markdown-rendered ol ol {
+  margin-block: 0;
+}
+
+.markdown-rendered li {
+  padding-block: var(--list-spacing);
+}
+
+.markdown-rendered li > :is(p, pre, blockquote, .callout, table) {
+  margin-block: 0.35em;
+}
+
+.markdown-rendered li::marker {
+  color: var(--list-marker-color);
+}
+
+.markdown-rendered .contains-task-list,
+.markdown-rendered .task-list-item {
+  list-style: none;
+}
+
+.markdown-rendered ul.contains-task-list {
+  padding-inline-start: var(--list-indent);
+}
+
+.markdown-rendered .list-bullet {
+  display: none;
+}
+
+.markdown-rendered .task-list-item {
+  position: relative;
+}
+
+/* Servo draws a checkbox as a styled box with a glyph in ::before (its
+ * user-agent sheet pins the box at 14px and shrinks the font), so checks are
+ * restyled as a box here and the tick drawn with borders; `appearance` covers
+ * other engines. Task checks are round, property checks square. */
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox) {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  min-width: var(--checkbox-size);
+  min-height: var(--checkbox-size);
+  max-width: var(--checkbox-size);
+  max-height: var(--checkbox-size);
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+  border: var(--checkbox-border-width) solid var(--checkbox-border-color);
+  border-radius: var(--radius-s);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--duration-press) var(--ease-out),
+    border-color var(--duration-hover) var(--ease-out),
+    scale var(--duration-press) var(--ease-out);
+}
+
+.markdown-rendered .task-list-item-checkbox {
+  position: absolute;
+  inset-inline-start: calc(var(--checkbox-size) * -1.5);
+  top: calc((1lh - var(--checkbox-size)) / 2 + var(--list-spacing));
+  border-radius: var(--checkbox-radius);
+}
+
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox):hover {
+  border-color: var(--checkbox-border-color-hover);
+}
+
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox):active {
+  scale: 0.88;
+}
+
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox)::before {
+  content: none;
+}
+
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox):checked {
+  background-color: var(--checkbox-color);
+  border-color: var(--checkbox-color);
+}
+
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox):checked:hover {
+  background-color: var(--checkbox-color-hover);
+  border-color: var(--checkbox-color-hover);
+}
+
+.markdown-rendered :is(.task-list-item-checkbox, .metadata-input-checkbox):checked::before {
+  content: "";
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: 26%;
+  height: 48%;
+  border: solid var(--checkbox-marker-color);
+  border-width: 0 0.13em 0.13em 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.markdown-rendered .task-list-item.is-checked {
+  color: var(--checklist-done-color);
+  text-decoration: var(--checklist-done-decoration);
+}
+
+/* ---- Code ----------------------------------------------------------- */
+
+.markdown-rendered code {
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+}
+
+.markdown-rendered :not(pre) > code {
+  color: var(--code-inline-color);
+  font-weight: var(--medium-weight);
+  background-color: var(--background-modifier-hover);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+  border-radius: 0.36em;
+  padding: 0.12em 0.38em 0.1em;
+  box-decoration-break: clone;
+}
+
+.markdown-rendered pre {
+  position: relative;
+  margin-block: var(--p-spacing);
+  padding: 0.95em 1.1em;
+  background-color: var(--code-background);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+  border-radius: var(--code-radius);
+  overflow-x: auto;
+  tab-size: 2;
+  font-size: 0.84em;
+}
+
+.markdown-rendered pre code {
+  display: block;
+  padding: 0;
+  background: none;
+  color: var(--code-normal);
+  font-size: inherit;
+  font-weight: var(--normal-weight);
+  white-space: pre;
+  line-height: 1.6;
+}
+
+.copy-code-button {
+  position: absolute;
+  top: var(--size-2-3);
+  right: var(--size-2-3);
+  display: flex;
+  padding: var(--size-2-3);
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+  color: var(--text-muted);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--duration-hover) var(--ease-out),
+    color var(--duration-hover) var(--ease-out);
+}
+
+.copy-code-button:hover {
+  color: var(--text-normal);
+}
+
+.copy-code-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.markdown-rendered pre:hover .copy-code-button,
+.copy-code-button:focus-visible,
+.copy-code-button.is-copied {
+  opacity: 1;
+}
+
+.copy-code-button.is-copied {
+  color: var(--color-green);
+}
+
+/* Prism's tokens; the colours are set per scheme above. */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--code-comment); }
+.token.punctuation { color: var(--code-punctuation); }
+.token.tag, .token.constant, .token.symbol, .token.deleted, .token.class-name { color: var(--code-tag); }
+.token.boolean, .token.number { color: var(--code-value); }
+.token.selector, .token.string, .token.char, .token.inserted, .token.attr-value { color: var(--code-string); }
+.token.operator, .token.entity, .token.url, .token.variable { color: var(--code-operator); }
+.token.atrule, .token.keyword, .token.builtin { color: var(--code-keyword); }
+.token.function { color: var(--code-function); }
+.token.attr-name, .token.regex, .token.important { color: var(--code-important); }
+.token.property { color: var(--code-property); }
+.token.bold, .token.important { font-weight: var(--bold-weight); }
+.token.italic { font-style: italic; }
+
+/* ---- Tables ----------------------------------------------------------- */
+
+.markdown-rendered table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: var(--p-spacing);
+  font-size: var(--table-text-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-rendered th,
+.markdown-rendered td {
+  padding: var(--table-cell-padding);
+  border: 0;
+  border-bottom: var(--table-border-width) solid var(--table-border-color);
+  vertical-align: top;
+}
+
+.markdown-rendered th {
+  background-color: var(--table-header-background);
+  color: var(--table-header-color);
+  font-size: var(--table-header-size);
+  font-weight: var(--table-header-weight);
+  text-align: start;
+  border-bottom-color: var(--background-modifier-border-hover);
+}
+
+.markdown-rendered tr:last-child > td {
+  border-bottom-width: var(--table-row-last-border-width);
+}
+
+/* ---- Images and embeds ---------------------------------------------- */
+
+.markdown-rendered img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-m);
+}
+
+.markdown-rendered video,
+.markdown-rendered audio {
+  max-width: 100%;
+}
+
+.markdown-rendered .internal-embed.markdown-embed {
+  display: block;
+  padding: var(--embed-padding);
+  border-left: var(--embed-border-left);
+  margin-block: var(--p-spacing);
+}
+
+.markdown-rendered .internal-embed:not(.markdown-embed):is(.base-embed, .canvas-embed) {
+  display: block;
+  min-height: 3em;
+  border: 1px dashed var(--background-modifier-border-hover);
+  border-radius: var(--radius-l);
+}
+
+.markdown-embed-title {
+  font-weight: var(--semibold-weight);
+  letter-spacing: -0.012em;
+}
+
+/* ---- Footnotes ---------------------------------------------------------- */
+
+.markdown-rendered sup.footnote-ref a,
+.markdown-rendered .footnote-link {
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-rendered .footnotes {
+  margin-top: var(--size-4-8);
+  padding-top: var(--size-4-2);
+  border-top: var(--hr-thickness) solid var(--hr-color);
+  font-size: var(--font-smaller);
+  color: var(--text-muted);
+}
+
+.markdown-rendered .footnotes hr {
+  display: none;
+}
+
+.markdown-rendered .footnote-backref {
+  text-decoration: none;
+}
+
+/* ---- Math ------------------------------------------------------------------ */
+
+.math.math-block {
+  display: block;
+  text-align: center;
+  overflow-x: auto;
+  margin-block: var(--p-spacing);
+}
+
+.math mjx-container {
+  color: inherit;
+}
+
+/* ---- Callouts ------------------------------------------------------------- */
+
+/* One recipe for every callout colour, a vault's custom ones included: a wash
+ * and an edge of the colour, and a title inked from the colour and the text.
+ * Each type names its icon as Obsidian's stylesheet does, so the page script
+ * redraws one only where a vault's CSS gives the type another icon. */
+.callout {
+  --callout-color: rgb(var(--callout-default));
+  --callout-icon: lucide-pencil;
+  overflow: hidden;
+  margin-block: var(--p-spacing);
+  padding: var(--callout-padding);
+  border-radius: var(--callout-radius);
+  border: var(--callout-border-width) solid color-mix(in srgb, var(--callout-color) var(--callout-edge), transparent);
+  background-color: color-mix(in srgb, var(--callout-color) var(--callout-wash), transparent);
+  mix-blend-mode: var(--callout-blend-mode);
+}
+
+.callout[data-callout="note"] { --callout-color: rgb(var(--callout-default)); --callout-icon: lucide-pencil; }
+.callout[data-callout="abstract"], .callout[data-callout="summary"], .callout[data-callout="tldr"] { --callout-color: rgb(var(--callout-summary)); --callout-icon: lucide-clipboard-list; }
+.callout[data-callout="info"] { --callout-color: rgb(var(--callout-info)); --callout-icon: lucide-info; }
+.callout[data-callout="todo"] { --callout-color: rgb(var(--callout-todo)); --callout-icon: lucide-check-circle-2; }
+.callout[data-callout="tip"], .callout[data-callout="hint"], .callout[data-callout="important"] { --callout-color: rgb(var(--callout-tip)); --callout-icon: lucide-flame; }
+.callout[data-callout="success"], .callout[data-callout="check"], .callout[data-callout="done"] { --callout-color: rgb(var(--callout-success)); --callout-icon: lucide-check; }
+.callout[data-callout="question"], .callout[data-callout="help"], .callout[data-callout="faq"] { --callout-color: rgb(var(--callout-question)); --callout-icon: lucide-help-circle; }
+.callout[data-callout="warning"], .callout[data-callout="caution"], .callout[data-callout="attention"] { --callout-color: rgb(var(--callout-warning)); --callout-icon: lucide-alert-triangle; }
+.callout[data-callout="failure"], .callout[data-callout="fail"], .callout[data-callout="missing"] { --callout-color: rgb(var(--callout-fail)); --callout-icon: lucide-x; }
+.callout[data-callout="danger"], .callout[data-callout="error"] { --callout-color: rgb(var(--callout-error)); --callout-icon: lucide-zap; }
+.callout[data-callout="bug"] { --callout-color: rgb(var(--callout-bug)); --callout-icon: lucide-bug; }
+.callout[data-callout="example"] { --callout-color: rgb(var(--callout-example)); --callout-icon: lucide-list; }
+.callout[data-callout="quote"], .callout[data-callout="cite"] { --callout-color: rgb(var(--callout-quote)); --callout-icon: lucide-quote; }
+
+.callout-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  padding: var(--callout-title-padding);
+  color: color-mix(in srgb, var(--callout-color) var(--callout-ink), var(--text-normal));
+  font-size: var(--callout-title-size);
+  line-height: var(--line-height-tight);
+}
+
+.callout.is-collapsible > .callout-title {
+  cursor: pointer;
+}
+
+.callout-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-self: center;
+}
+
+.callout-icon svg,
+.callout-fold svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  stroke-width: var(--icon-stroke);
+}
+
+.callout-title-inner {
+  flex: 1 1 auto;
+  font-weight: var(--callout-title-weight);
+  color: inherit;
+}
+
+.callout-fold {
+  display: flex;
+  align-self: center;
+  margin-inline-start: auto;
+  opacity: 0.7;
+  transition: rotate var(--duration-press) var(--ease-out),
+    opacity var(--duration-hover) var(--ease-out);
+}
+
+.callout-title:hover .callout-fold {
+  opacity: 1;
+}
+
+.callout-fold.is-collapsed {
+  rotate: -90deg;
+}
+
+.callout-content {
+  padding: var(--callout-content-padding);
+  background-color: var(--callout-content-background);
+  color: var(--text-normal);
+}
+
+.callout-content > :first-child { margin-top: var(--size-4-2); }
+.callout-content > :last-child { margin-bottom: 0; }
+.callout .callout { margin-block: var(--size-4-2); }
+
+/* ---- Diagrams ------------------------------------------------------------ */
+
+.mermaid-wrapper {
+  margin-block: var(--p-spacing);
+}
+
+.mermaid-wrapper.is-guarded {
+  border-radius: var(--radius-l);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.mermaid-guard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-4);
+  padding: var(--size-4-3) 14px;
+  background-color: var(--background-primary-alt);
+}
+
+.mermaid-guard-title {
+  font-weight: var(--semibold-weight);
+  letter-spacing: -0.012em;
+}
+
+.mermaid-guard-description {
+  color: var(--text-muted);
+  font-size: var(--font-smaller);
+}
+
+.mermaid-guard-actions button {
+  min-height: 28px;
+  padding: 0 var(--size-4-3);
+  border: 0;
+  border-radius: var(--radius-m);
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font: inherit;
+  font-weight: var(--medium-weight);
+  cursor: pointer;
+  transition: background-color var(--duration-hover) var(--ease-out),
+    scale var(--duration-press) var(--ease-out);
+}
+
+.mermaid-guard-actions button:hover {
+  background-color: var(--interactive-accent-hover);
+}
+
+.mermaid-guard-actions button:active {
+  scale: 0.97;
+}
+
+.mermaid-guard-source pre {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-error {
+  color: var(--color-red);
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+}
+
+/* ---- Page previews ----------------------------------------------------- */
+
+.popover.hover-popover {
+  position: fixed;
+  z-index: 10;
+  width: 400px;
+  max-width: calc(100vw - 16px);
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: var(--background-secondary);
+  box-shadow: 0 6px 22px var(--background-modifier-box-shadow),
+    0 0 0 0.5px var(--background-modifier-border-hover);
+}
+
+.popover.hover-popover .markdown-embed-content {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.popover.hover-popover .markdown-preview-view {
+  height: auto;
+  overflow: visible;
+  padding: var(--size-4-3) var(--size-4-4);
+}
+
+.popover.hover-popover .inline-title {
+  font-size: var(--h2-size);
+  letter-spacing: -0.02em;
+}
+
+/* ---- Focus and motion ---------------------------------------------------- */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -25,7 +25,8 @@ rustix = { version = "1", features = ["process"] }
 signal-hook = "0.3"
 # A hung CLI call must not hang the run.
 wait-timeout = "0.2"
-
-[dev-dependencies]
-# Markdown link targets in the fixture lints are percent-encoded.
+# `compare-dom` parses the two DOM recordings with html5ever and compares the trees.
+scraper = "0.24"
+# Markdown link targets in the fixture lints, and resource URLs in `compare-dom`, are percent-encoded.
 percent-encoding = "2"
+
