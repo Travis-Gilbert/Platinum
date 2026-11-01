@@ -56,10 +56,12 @@ fn main() -> anyhow::Result<()> {
         .run(move |cx| {
             gpui_kit::init(cx);
             Theme::change(ThemeMode::Light, None, cx);
+            // A capture needs the room for the whole menu; the checks do not.
+            let height = if args.shots.is_some() { 420. } else { 200. };
             let options = WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(Bounds::new(
                     point(px(60.), px(60.)),
-                    size(px(640.), px(200.)),
+                    size(px(640.), px(height)),
                 ))),
                 ..Default::default()
             };
