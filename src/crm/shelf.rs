@@ -60,6 +60,8 @@ enum Stored {
     },
     Zip {
         path: PathBuf,
+        #[serde(default)]
+        error: Option<String>,
     },
     Other {
         path: PathBuf,
@@ -160,39 +162,18 @@ impl Shelf {
         self.node(id).is_some_and(Node::is_folder)
     }
 
+    pub(super) fn contains(&self, id: u64) -> bool {
+        self.node(id).is_some()
+    }
+
     /// What the main page shows for this node, when it is not a built-in place.
     pub(crate) fn page(&self, id: u64) -> Option<Page> {
-        let node = self.node(id)?;
-        match &node.kind {
-            Kind::Folder { .. } => Some(Page::Folder {
-                name: node.name.clone(),
-                children: node
-                    .children
-                    .iter()
-                    .map(|child| child.name.clone())
-                    .collect(),
-            }),
-            Kind::File { stored, .. } => stored.as_ref().map(|stored| match stored {
-                Stored::Markdown { path, body } => {
-                    let source = path
-                        .as_ref()
-                        .and_then(|path| fs::read_to_string(path).ok())
-                        .unwrap_or_else(|| body.clone());
-                    Page::Markdown {
-                        title: heading(&source).unwrap_or_else(|| node.name.clone()),
-                        source,
-                    }
-                }
-                Stored::Pdf { path } => Page::Pdf {
-                    name: node.name.clone(),
-                    path: path.clone(),
-                },
-                Stored::Zip { path } | Stored::Other { path } => Page::File {
-                    name: node.name.clone(),
-                    path: path.clone(),
-                },
-            }),
-        }
+        self.node(id)?.page()
+    }
+
+    pub(super) fn reader(&self, id: u64) -> Option<impl FnOnce() -> Option<Page> + use<>> {
+        let node = self.node(id)?.clone();
+        Some(move || node.page())
     }
 
     /// A blank markdown file inside `parent`, or inside the root when `parent`
@@ -235,7 +216,11 @@ impl Shelf {
 
     /// Drop `dragged` onto `target`. A file target becomes a folder.
     pub(crate) fn drop_node(&mut self, dragged: u64, target: u64) -> bool {
-        if dragged == target || dragged == self.root.id || contains(&self.root, dragged, target) {
+        if dragged == target
+            || dragged == self.root.id
+            || self.node(target).is_none()
+            || contains(&self.root, dragged, target)
+        {
             return false;
         }
         let Some(node) = take(&mut self.root, dragged) else {
@@ -246,22 +231,41 @@ impl Shelf {
 
     /// Drop real paths onto `target`. A file target becomes a folder that
     /// holds them. A folder target holds them directly.
+    #[cfg(test)]
     pub(crate) fn drop_paths(&mut self, target: u64, paths: &[PathBuf]) -> Vec<u64> {
-        if self.node(target).is_none() {
-            return Vec::new();
-        }
-        if !self.is_folder(target) {
-            self.become_folder(target);
-        }
+        let import = Import::read(paths, self.import_directory());
+        self.finish_import(target, import).unwrap_or_default()
+    }
+
+    pub(super) fn import_directory(&self) -> Option<PathBuf> {
+        self.extract.clone()
+    }
+
+    pub(super) fn finish_import(
+        &mut self,
+        target: u64,
+        import: Import,
+    ) -> anyhow::Result<Vec<u64>> {
+        anyhow::ensure!(
+            self.node(target).is_some(),
+            "The destination was removed during import. Drop the files again."
+        );
         let mut ids = Vec::new();
-        for path in paths {
-            let node = self.node_from_path(path);
-            let id = node.id;
-            if self.nest(target, node) {
-                ids.push(id);
-            }
+        for mut node in import.0 {
+            // Allocate against the current owner, not the worker's snapshot.
+            // Concurrent create, delete and reorder operations remain intact.
+            self.assign_ids(&mut node);
+            ids.push(node.id);
+            self.nest(target, node);
         }
-        ids
+        Ok(ids)
+    }
+
+    fn assign_ids(&mut self, node: &mut Node) {
+        node.id = self.fresh();
+        for child in &mut node.children {
+            self.assign_ids(child);
+        }
     }
 
     fn nest(&mut self, target: u64, node: Node) -> bool {
@@ -351,10 +355,30 @@ impl Shelf {
             };
         }
         if is_zip(path) {
-            let bytes = fs::read(path).unwrap_or_default();
+            let entries =
+                match super::archive::read(path, IMPORT_DEPTH - depth) {
+                    Ok(entries) => entries,
+                    Err(error) => return self.file(
+                        &name,
+                        None,
+                        Some(Stored::Zip {
+                            path: path.to_path_buf(),
+                            error: Some(format!(
+                                "Could not import archive: {error}. The original file is unchanged."
+                            )),
+                        }),
+                    ),
+                };
             let mut children = Vec::new();
-            for entry in zip_entries(&bytes) {
-                self.insert_zip(&mut children, &entry.name, entry.folder, entry.data);
+            for entry in entries {
+                if let Err(error) =
+                    self.insert_zip(&mut children, &entry.name, entry.folder, entry.data)
+                {
+                    return self.file(&name, None, Some(Stored::Zip {
+                        path: path.to_path_buf(),
+                        error: Some(format!("Could not save archive contents: {error}. The original file is unchanged.")),
+                    }));
+                }
             }
             return Node {
                 id: self.fresh(),
@@ -381,12 +405,18 @@ impl Shelf {
         self.file(&name, None, Some(stored))
     }
 
-    fn insert_zip(&mut self, nodes: &mut Vec<Node>, name: &str, folder: bool, data: Vec<u8>) {
+    fn insert_zip(
+        &mut self,
+        nodes: &mut Vec<Node>,
+        name: &str,
+        folder: bool,
+        data: Vec<u8>,
+    ) -> anyhow::Result<()> {
         let parts: Vec<&str> = name.split('/').filter(|part| !part.is_empty()).collect();
         if parts.is_empty() {
-            return;
+            return Ok(());
         }
-        self.insert_zip_parts(nodes, &parts, folder, data);
+        self.insert_zip_parts(nodes, &parts, folder, data)
     }
 
     fn insert_zip_parts(
@@ -395,7 +425,7 @@ impl Shelf {
         parts: &[&str],
         folder: bool,
         data: Vec<u8>,
-    ) {
+    ) -> anyhow::Result<()> {
         let name = parts[0];
         if parts.len() == 1 {
             if folder {
@@ -411,11 +441,11 @@ impl Shelf {
                         children: Vec::new(),
                     });
                 }
-                return;
+                return Ok(());
             }
-            let stored = self.stored_bytes(name, data);
+            let stored = self.stored_bytes(name, data)?;
             nodes.push(self.file(name, None, Some(stored)));
-            return;
+            return Ok(());
         }
         if nodes
             .iter()
@@ -425,8 +455,8 @@ impl Shelf {
                 .iter_mut()
                 .find(|node| node.name == name && node.is_folder())
                 .expect("folder");
-            self.insert_zip_parts(&mut child.children, &parts[1..], folder, data);
-            return;
+            self.insert_zip_parts(&mut child.children, &parts[1..], folder, data)?;
+            return Ok(());
         }
         let mut child = Node {
             id: self.fresh(),
@@ -435,35 +465,46 @@ impl Shelf {
             kind: Kind::Folder { place: None },
             children: Vec::new(),
         };
-        self.insert_zip_parts(&mut child.children, &parts[1..], folder, data);
+        self.insert_zip_parts(&mut child.children, &parts[1..], folder, data)?;
         nodes.push(child);
+        Ok(())
     }
 
-    fn stored_bytes(&self, name: &str, data: Vec<u8>) -> Stored {
+    fn stored_bytes(&self, name: &str, data: Vec<u8>) -> anyhow::Result<Stored> {
         let lower = name.to_ascii_lowercase();
         if lower.ends_with(".md") || lower.ends_with(".markdown") {
-            return Stored::Markdown {
+            return Ok(Stored::Markdown {
                 path: None,
                 body: String::from_utf8_lossy(&data).into_owned(),
-            };
+            });
         }
-        let path = self.spill(name, &data);
+        let path = self.spill(name, &data)?;
         if lower.ends_with(".pdf") {
-            Stored::Pdf { path }
+            Ok(Stored::Pdf { path })
         } else {
-            Stored::Other { path }
+            Ok(Stored::Other { path })
         }
     }
 
-    fn spill(&self, name: &str, data: &[u8]) -> PathBuf {
-        let dir = self.extract.clone().unwrap_or_else(|| {
-            std::env::temp_dir().join(format!("platinum-zip-{}", std::process::id()))
-        });
-        let _ = fs::create_dir_all(&dir);
-        let safe = name.replace('/', "-");
-        let path = dir.join(format!("{}-{safe}", self.next));
-        let _ = fs::write(&path, data);
-        path
+    fn spill(&self, name: &str, data: &[u8]) -> anyhow::Result<PathBuf> {
+        use std::io::Write as _;
+        let dir = self.extract.clone().unwrap_or_else(std::env::temp_dir);
+        fs::create_dir_all(&dir)?;
+        // Unique files prevent concurrent workers or restored IDs from
+        // overwriting earlier imports. Preserve extensions for file readers.
+        let suffix = Path::new(name)
+            .extension()
+            .and_then(|s| s.to_str())
+            .map(|ext| format!(".{ext}"))
+            .unwrap_or_default();
+        let mut file = tempfile::Builder::new()
+            .prefix("import-")
+            .suffix(&suffix)
+            .tempfile_in(dir)?;
+        file.write_all(data)?;
+        file.as_file().sync_all()?;
+        let (_, path) = file.keep()?;
+        Ok(path)
     }
 
     fn file(&mut self, name: &str, place: Option<&str>, stored: Option<Stored>) -> Node {
@@ -494,15 +535,71 @@ impl Shelf {
     }
 }
 
+/// Prepared off the UI thread; IDs are assigned only when admitted by Shelf.
+pub(super) struct Import(Vec<Node>);
+impl Import {
+    pub(super) fn read(paths: &[PathBuf], directory: Option<PathBuf>) -> Self {
+        let mut staging = Shelf::new();
+        staging.extract = directory;
+        Self(
+            paths
+                .iter()
+                .map(|path| staging.node_from_path(path))
+                .collect(),
+        )
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Page {
     Folder { name: String, children: Vec<String> },
     Markdown { title: String, source: String },
     Pdf { name: String, path: PathBuf },
     File { name: String, path: PathBuf },
+    Error { name: String, message: String },
 }
 
 impl Node {
+    fn page(&self) -> Option<Page> {
+        let node = self;
+        match &node.kind {
+            Kind::Folder { .. } => Some(Page::Folder {
+                name: node.name.clone(),
+                children: node
+                    .children
+                    .iter()
+                    .map(|child| child.name.clone())
+                    .collect(),
+            }),
+            Kind::File { stored, .. } => stored.as_ref().map(|stored| match stored {
+                Stored::Markdown { path, body } => {
+                    let source = path
+                        .as_ref()
+                        .and_then(|path| fs::read_to_string(path).ok())
+                        .unwrap_or_else(|| body.clone());
+                    Page::Markdown {
+                        title: heading(&source).unwrap_or_else(|| node.name.clone()),
+                        source,
+                    }
+                }
+                Stored::Pdf { path } => Page::Pdf {
+                    name: node.name.clone(),
+                    path: path.clone(),
+                },
+                Stored::Zip {
+                    error: Some(error), ..
+                } => Page::Error {
+                    name: node.name.clone(),
+                    message: error.clone(),
+                },
+                Stored::Zip { path, .. } | Stored::Other { path } => Page::File {
+                    name: node.name.clone(),
+                    path: path.clone(),
+                },
+            }),
+        }
+    }
+
     fn is_folder(&self) -> bool {
         matches!(self.kind, Kind::Folder { .. })
     }
@@ -671,7 +768,6 @@ fn is_zip(path: &Path) -> bool {
 
 const IMPORT_DEPTH: usize = 24;
 const IMPORT_CAP: usize = 2_000;
-const ZIP_ENTRY: usize = 8 * 1024 * 1024;
 
 fn directory_link(path: &Path) -> bool {
     fs::symlink_metadata(path).is_ok_and(|meta| meta.file_type().is_symlink() && path.is_dir())
@@ -700,208 +796,101 @@ fn has_extension(path: &Path, extensions: &[&str]) -> bool {
         .any(|candidate| candidate.eq_ignore_ascii_case(extension))
 }
 
-struct ZipEntry {
-    name: String,
-    folder: bool,
-    data: Vec<u8>,
-}
-
-/// Files in a zip. Deflated entries are inflated; a zip with no central
-/// directory is read from its local headers when those are stored.
-fn zip_entries(bytes: &[u8]) -> Vec<ZipEntry> {
-    let found = if let Some(entries) = central_directory(bytes)
-        && !entries.is_empty()
-    {
-        entries
-    } else {
-        local_entries(bytes)
-    };
-    let mut kept = Vec::new();
-    let mut total = 0usize;
-    for entry in found {
-        let next = total.saturating_add(entry.data.len());
-        if next > ZIP_ENTRY.saturating_mul(4) {
-            break;
-        }
-        total = next;
-        kept.push(entry);
-    }
-    kept
-}
-
-fn central_directory(bytes: &[u8]) -> Option<Vec<ZipEntry>> {
-    let (count, mut at) = directory_span(bytes)?;
-    let mut entries = Vec::new();
-    for _ in 0..count {
-        let Some((entry, next)) = central_entry(bytes, at) else {
-            break;
-        };
-        if let Some(entry) = entry {
-            entries.push(entry);
-        }
-        at = next;
-    }
-    Some(entries)
-}
-
-fn directory_span(bytes: &[u8]) -> Option<(usize, usize)> {
-    let eocd = find_eocd(bytes)?;
-    if eocd + 22 > bytes.len() {
-        return None;
-    }
-    let count = u16::from_le_bytes([bytes[eocd + 10], bytes[eocd + 11]]) as usize;
-    let offset = u32::from_le_bytes(bytes[eocd + 16..eocd + 20].try_into().ok()?) as usize;
-    Some((count, offset))
-}
-
-fn central_entry(bytes: &[u8], at: usize) -> Option<(Option<ZipEntry>, usize)> {
-    if at + 46 > bytes.len() || bytes[at..at + 4] != *b"PK\x01\x02" {
-        return None;
-    }
-    let method = u16::from_le_bytes([bytes[at + 10], bytes[at + 11]]);
-    let compressed = u32::from_le_bytes(bytes[at + 20..at + 24].try_into().ok()?) as usize;
-    let name_len = u16::from_le_bytes([bytes[at + 28], bytes[at + 29]]) as usize;
-    let extra_len = u16::from_le_bytes([bytes[at + 30], bytes[at + 31]]) as usize;
-    let comment_len = u16::from_le_bytes([bytes[at + 32], bytes[at + 33]]) as usize;
-    let local = u32::from_le_bytes(bytes[at + 42..at + 46].try_into().ok()?) as usize;
-    let name_end = at + 46 + name_len;
-    if name_end > bytes.len() {
-        return None;
-    }
-    let raw_name = String::from_utf8_lossy(&bytes[at + 46..name_end]).into_owned();
-    let next = name_end + extra_len + comment_len;
-    Some((zip_entry(bytes, &raw_name, local, method, compressed), next))
-}
-
-fn zip_entry(
-    bytes: &[u8],
-    raw_name: &str,
-    local: usize,
-    method: u16,
-    compressed: usize,
-) -> Option<ZipEntry> {
-    let folder = raw_name.ends_with('/');
-    let name = raw_name.trim_end_matches('/').to_owned();
-    if name.is_empty() {
-        return None;
-    }
-    let data = if folder {
-        Vec::new()
-    } else {
-        inflate_local(bytes, local, method, compressed)
-    };
-    Some(ZipEntry { name, folder, data })
-}
-
-fn find_eocd(bytes: &[u8]) -> Option<usize> {
-    if bytes.len() < 22 {
-        return None;
-    }
-    let start = bytes.len().saturating_sub(22 + 65535);
-    (start..=bytes.len() - 22)
-        .rev()
-        .find(|&index| bytes[index..index + 4] == *b"PK\x05\x06")
-}
-
-fn inflate_local(bytes: &[u8], local: usize, method: u16, compressed: usize) -> Vec<u8> {
-    if local + 30 > bytes.len() || bytes[local..local + 4] != *b"PK\x03\x04" {
-        return Vec::new();
-    }
-    let name_len = u16::from_le_bytes([bytes[local + 26], bytes[local + 27]]) as usize;
-    let extra_len = u16::from_le_bytes([bytes[local + 28], bytes[local + 29]]) as usize;
-    let start = local + 30 + name_len + extra_len;
-    let end = start.saturating_add(compressed).min(bytes.len());
-    if start > bytes.len() {
-        return Vec::new();
-    }
-    let raw = &bytes[start..end];
-    match method {
-        0 if raw.len() <= ZIP_ENTRY => raw.to_vec(),
-        8 => inflate_limited(raw),
-        _ => Vec::new(),
-    }
-}
-
-fn inflate_limited(raw: &[u8]) -> Vec<u8> {
-    use std::io::Read;
-    let mut decoder = flate2::read::DeflateDecoder::new(raw);
-    let mut out = Vec::new();
-    let mut buf = [0u8; 8192];
-    loop {
-        if out.len() >= ZIP_ENTRY {
-            return Vec::new();
-        }
-        match decoder.read(&mut buf) {
-            Ok(0) => return out,
-            Ok(n) if n <= ZIP_ENTRY - out.len() => out.extend_from_slice(&buf[..n]),
-            _ => return Vec::new(),
-        }
-    }
-}
-
-fn local_entries(bytes: &[u8]) -> Vec<ZipEntry> {
-    let mut entries = Vec::new();
-    let mut index = 0;
-    while local_header_at(bytes, index) {
-        match local_step(bytes, index) {
-            LocalStep::Stop(entry) => {
-                if let Some(entry) = entry {
-                    entries.push(entry);
-                }
-                break;
-            }
-            LocalStep::Next(entry, next) => {
-                if let Some(entry) = entry {
-                    entries.push(entry);
-                }
-                if next <= index {
-                    break;
-                }
-                index = next;
-            }
-        }
-    }
-    entries
-}
-
-fn local_header_at(bytes: &[u8], index: usize) -> bool {
-    let Some(end) = index.checked_add(30) else {
-        return false;
-    };
-    end <= bytes.len() && bytes[index..index + 4] == *b"PK\x03\x04"
-}
-
-enum LocalStep {
-    Next(Option<ZipEntry>, usize),
-    Stop(Option<ZipEntry>),
-}
-
-fn local_step(bytes: &[u8], index: usize) -> LocalStep {
-    let flags = u16::from_le_bytes([bytes[index + 6], bytes[index + 7]]);
-    let method = u16::from_le_bytes([bytes[index + 8], bytes[index + 9]]);
-    let compressed =
-        u32::from_le_bytes(bytes[index + 18..index + 22].try_into().unwrap_or([0; 4])) as usize;
-    let name_len = u16::from_le_bytes([bytes[index + 26], bytes[index + 27]]) as usize;
-    let extra_len = u16::from_le_bytes([bytes[index + 28], bytes[index + 29]]) as usize;
-    let name_at = index + 30;
-    if name_at + name_len > bytes.len() || unreadable_local(flags, method) {
-        return LocalStep::Stop(None);
-    }
-    let raw_name = String::from_utf8_lossy(&bytes[name_at..name_at + name_len]).into_owned();
-    let entry = zip_entry(bytes, &raw_name, index, method, compressed);
-    if method != 0 && compressed == 0 {
-        return LocalStep::Stop(entry);
-    }
-    LocalStep::Next(entry, name_at + name_len + extra_len + compressed)
-}
-
-fn unreadable_local(flags: u16, method: u16) -> bool {
-    flags & 0x8 != 0 || (method != 0 && method != 8)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn stale_drop_target_does_not_remove_the_dragged_file() {
+        let mut shelf = Shelf::new();
+        let dragged = shelf.root.children[0].id;
+        let before = shelf.clone();
+        assert!(!shelf.drop_node(dragged, u64::MAX));
+        assert_eq!(shelf, before, "a rejected move must leave the tree intact");
+    }
+
+    #[test]
+    fn prepared_import_preserves_concurrent_edits_and_uses_unique_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("files.zip");
+        fs::write(&archive, stored_zip("data.txt", b"first")).unwrap();
+        let mut shelf = Shelf::load(Some(dir.path()));
+        let first = Import::read(std::slice::from_ref(&archive), shelf.import_directory());
+        fs::write(&archive, stored_zip("data.txt", b"second")).unwrap();
+        let second = Import::read(std::slice::from_ref(&archive), shelf.import_directory());
+        let created = shelf.create_file(None);
+        shelf.finish_import(shelf.root_id(), first).unwrap();
+        shelf.finish_import(shelf.root_id(), second).unwrap();
+        let rows = shelf.rows();
+        let ids: HashSet<_> = rows.iter().map(|row| row.0).collect();
+        assert_eq!(
+            ids.len(),
+            rows.len(),
+            "workers must not allocate durable IDs"
+        );
+        assert!(
+            ids.contains(&created),
+            "the concurrent file must survive admission"
+        );
+        let paths: Vec<_> = rows
+            .iter()
+            .filter_map(|row| match shelf.page(row.0) {
+                Some(Page::File { path, .. }) => Some(path),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(paths.len(), 2);
+        assert_ne!(
+            paths[0], paths[1],
+            "imports must not overwrite previous extraction paths"
+        );
+        assert_eq!(fs::read(&paths[0]).unwrap(), b"first");
+        assert_eq!(fs::read(&paths[1]).unwrap(), b"second");
+        let prepared = Import::read(std::slice::from_ref(&archive), shelf.import_directory());
+        let before = shelf.clone();
+        assert!(shelf.finish_import(u64::MAX, prepared).is_err());
+        assert_eq!(
+            shelf, before,
+            "late completion must validate the destination"
+        );
+    }
+
+    #[test]
+    fn failed_extraction_does_not_publish_a_missing_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("files.zip");
+        fs::write(&archive, stored_zip("data.txt", b"content")).unwrap();
+        fs::write(dir.path().join("files"), b"blocks the extraction directory").unwrap();
+        let mut shelf = Shelf::load(Some(dir.path()));
+        let id = shelf.drop_paths(shelf.root_id(), &[archive])[0];
+        assert!(
+            matches!(shelf.page(id), Some(Page::Error { .. })),
+            "a failed write must be visible"
+        );
+    }
+
+    #[test]
+    fn invalid_archive_keeps_its_path_and_explains_the_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bad.zip");
+        fs::write(&path, b"not a ZIP").unwrap();
+        let mut shelf = Shelf::load(Some(dir.path()));
+        let id = shelf.drop_paths(shelf.root_id(), &[path.clone()])[0];
+        assert!(
+            !shelf.is_folder(id),
+            "an invalid ZIP must not look like an empty folder"
+        );
+        match shelf.page(id).unwrap() {
+            Page::Error { message, .. } => assert!(message.contains("invalid ZIP directory")),
+            page => panic!("expected visible import error, got {page:?}"),
+        }
+        shelf.save(dir.path());
+        assert!(matches!(
+            Shelf::load(Some(dir.path())).page(id),
+            Some(Page::Error { .. })
+        ));
+        assert_eq!(fs::read(path).unwrap(), b"not a ZIP");
+    }
 
     #[test]
     fn index_is_a_folder_and_inbox_is_its_first_file() {
@@ -1000,35 +989,7 @@ mod tests {
     }
 
     fn stored_zip(name: &str, data: &[u8]) -> Vec<u8> {
-        let name = name.as_bytes();
-        let crc = crc32(data);
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(b"PK\x03\x04");
-        bytes.extend_from_slice(&20u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&crc.to_le_bytes());
-        bytes.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        bytes.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        bytes.extend_from_slice(&(name.len() as u16).to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(name);
-        bytes.extend_from_slice(data);
-        bytes
-    }
-
-    fn crc32(data: &[u8]) -> u32 {
-        let mut crc = 0xffff_ffffu32;
-        for byte in data {
-            crc ^= u32::from(*byte);
-            for _ in 0..8 {
-                let mask = (crc & 1).wrapping_neg();
-                crc = (crc >> 1) ^ (0xedb8_8320 & mask);
-            }
-        }
-        !crc
+        super::super::archive::tests::archive(&[(name, data)], zip::CompressionMethod::Stored)
     }
 
     #[test]
@@ -1047,25 +1008,6 @@ mod tests {
         assert_eq!(rows.iter().filter(|row| row.1 == "again").count(), 0);
         assert!(rows.iter().any(|row| row.1 == "note.md"));
         let _ = fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn a_deflate_header_with_no_size_does_not_panic() {
-        let mut bytes = Vec::new();
-        bytes.extend_from_slice(b"PK\x03\x04");
-        bytes.extend_from_slice(&20u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&8u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(&0u32.to_le_bytes());
-        bytes.extend_from_slice(&0u32.to_le_bytes());
-        bytes.extend_from_slice(&0u32.to_le_bytes());
-        bytes.extend_from_slice(&4u16.to_le_bytes());
-        bytes.extend_from_slice(&0u16.to_le_bytes());
-        bytes.extend_from_slice(b"note");
-        let entries = zip_entries(&bytes);
-        assert!(entries.len() <= 1);
     }
 
     #[test]

@@ -55,7 +55,7 @@ impl Browser {
                 }
                 crate::notes::NotesEvent::Promote(note) => {
                     browser.notes_sidebar = false;
-                    browser.place = None;
+                    browser.leave_place(window, cx);
                     if !browser.canvas_shown {
                         browser.toggle_canvas(window, cx);
                     }

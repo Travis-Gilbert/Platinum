@@ -1733,8 +1733,9 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let source = dir.join("acme.json");
         std::fs::write(&source, "{\"buyer\":\"Ada\"}").unwrap();
-        let name = crate::crm::files::keep(&dir, Id(7), &source).unwrap();
-        assert_eq!(name, "7-acme.json");
+        let attachment = crate::crm::files::prepare(&dir, &source).unwrap();
+        let name = attachment.file;
+        assert!(name.ends_with("/acme.json"));
         assert_eq!(
             std::fs::read_to_string(dir.join("files").join(name)).unwrap(),
             "{\"buyer\":\"Ada\"}"

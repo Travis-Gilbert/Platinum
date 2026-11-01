@@ -1845,6 +1845,75 @@ fn closed_tab_ids_are_not_reused_after_restart(cx: &mut TestAppContext) {
     });
 }
 
+#[gpui_kit::test]
+fn promoting_from_expanded_notes_restores_the_board_composer(cx: &mut TestAppContext) {
+    let root = tempfile::tempdir().unwrap();
+    let profile = frame_profile::ProfileStore::open(root.path()).unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(profile)));
+    let (browser, cx) = open_with_tab(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            b.toggle_canvas(window, cx);
+            b.open_place(NativePlace::Agent, window, cx);
+            b.open_place(NativePlace::Notes, window, cx);
+            b.notebook
+                .as_ref()
+                .unwrap()
+                .update(cx, |notes, cx| notes.create(None, window, cx));
+        })
+    });
+    cx.run_until_parked();
+    let note = cx.update(|_, cx| {
+        browser
+            .read(cx)
+            .notebook
+            .as_ref()
+            .unwrap()
+            .read(cx)
+            .selected()
+            .unwrap()
+    });
+    cx.update(|_, cx| {
+        browser
+            .read(cx)
+            .notebook
+            .as_ref()
+            .unwrap()
+            .clone()
+            .update(cx, |_, cx| {
+                cx.emit(crate::notes::NotesEvent::Promote(note.clone()));
+            });
+    });
+    cx.run_until_parked();
+    cx.update(|_, cx| {
+        let b = browser.read(cx);
+        assert!(b.place.is_none());
+        assert!(b.canvas_shown);
+        assert!(
+            b.theorem
+                .as_ref()
+                .unwrap()
+                .0
+                .read(cx)
+                .board_slot()
+                .is_some()
+        );
+        let placement = &b.canvas.as_ref().unwrap().read(cx).state(cx).notes[0];
+        assert_eq!(
+            b.canvas
+                .as_ref()
+                .unwrap()
+                .read(cx)
+                .note(placement.id)
+                .unwrap()
+                .entity_id(),
+            note.entity_id()
+        );
+    });
+    assert!(!drawn(cx, "theorem-card".into()));
+    assert!(drawn(cx, "theorem-board-composer".into()));
+}
+
 mod dictation_shortcuts {
     use super::*;
     use gpui_kit::component::speech::SpeechState;

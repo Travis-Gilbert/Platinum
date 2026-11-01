@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "starts": 1,
+  "stops": 1,
+  "hotkey": "ctrl-shift-space",
+  "input": "synthetic capture and transcript through native window key dispatch; no live microphone or physical key injection"
+}

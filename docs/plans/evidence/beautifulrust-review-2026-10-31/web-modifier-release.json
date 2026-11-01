@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "starts": 1,
+  "stops": 1,
+  "page_focused_on_release": true,
+  "quick_tap_did_not_start": true,
+  "input": "supplied left-key state and synthetic capture; real Page, modifier-release dispatch and web insertion"
+}

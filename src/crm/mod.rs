@@ -7,6 +7,7 @@
 //! Records are kept in the data directory. An attached file is read the way
 //! Glim reads one: a JSON object, a CSV table, a SQLite database, or text.
 
+mod archive;
 mod files;
 mod material;
 mod model;

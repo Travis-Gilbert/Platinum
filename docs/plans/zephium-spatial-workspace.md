@@ -260,3 +260,21 @@ a physical keyboard or live microphone/recognition test.
 The final build passed, the browser suite passed 255 tests (2 ignored), and both
 the native flow and fresh-process restore passed. The evidence check summary
 links the default/edited settings, held-state screenshot and lifecycle report.
+
+
+## BeautifulRust implementation review — 2026-10-31
+
+The [review report](beautifulrust-review-2026-10-31.md) records ten repaired
+findings, including the latest seven Greptile findings. It covers bounded ZIP
+validation through the `zip` crate, failed/unique extraction handling, stale
+sidebar moves and imports, background file reading, note promotion cleanup,
+website modifier release, native example module wiring, mounted proposal
+controls, attachment snapshot consistency and retained table layout.
+
+The final application suite passed 303 tests (2 ignored). The app and both native
+examples built, scoped Clippy completed with warnings, and the isolated native
+flow and fresh-process restore passed. The native website test verifies a quick
+Command tap stays idle and release stops capture exactly once through a focused
+Page. It supplies the key side and synthetic capture; physical keys and live
+microphone behavior remain unverified. The [evidence record](evidence/beautifulrust-review-2026-10-31/checks.md)
+contains commands, reports and inspected screenshots.

@@ -65,11 +65,13 @@ fn markdown_body(source: &str) -> String {
 }
 
 fn rasterize_pdf(path: &std::path::Path) -> Option<Vec<u8>> {
-    let dir = std::env::temp_dir().join(format!("platinum-pdf-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).ok()?;
+    let dir = tempfile::Builder::new()
+        .prefix("platinum-pdf-")
+        .tempdir()
+        .ok()?;
     let status = std::process::Command::new("/usr/bin/qlmanage")
         .args(["-t", "-s", "1400", "-o"])
-        .arg(&dir)
+        .arg(dir.path())
         .arg(path)
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -79,7 +81,7 @@ fn rasterize_pdf(path: &std::path::Path) -> Option<Vec<u8>> {
         return None;
     }
     let name = path.file_name()?.to_str()?;
-    std::fs::read(dir.join(format!("{name}.png"))).ok()
+    std::fs::read(dir.path().join(format!("{name}.png"))).ok()
 }
 
 fn file_notice(name: &str, detail: &str) -> gpui_kit::AnyElement {
@@ -475,8 +477,7 @@ impl Rows {
             && self
                 .columns
                 .iter()
-                .zip(columns)
-                .all(|(held, next)| held.key == next.key)
+                .all(|held| columns.iter().any(|next| held.key == next.key))
     }
 
     fn set_rows(&mut self, rows: Vec<Row>, empty: SharedString) {
@@ -857,6 +858,9 @@ pub struct Crm {
     /// Sidebar content width, in rems, not counting the places bump.
     nav_width: f32,
     shelf: Shelf,
+    importing: bool,
+    reading: Option<(u64, Page)>,
+    reading_task: Option<gpui_kit::Task<()>>,
     /// A raster of the PDF currently open, when Quick Look could draw it.
     preview: Option<(PathBuf, std::sync::Arc<gpui_kit::Image>)>,
     /// The Glim reading for the file currently open. Kept so a redraw does not
@@ -967,6 +971,9 @@ impl Crm {
             nav,
             nav_width,
             shelf,
+            importing: false,
+            reading: None,
+            reading_task: None,
             preview: None,
             glim: None,
             inbox: None,
@@ -991,6 +998,14 @@ impl Crm {
     }
 
     /// Where the places bump's way out goes: what the place stands over.
+    #[cfg(feature = "snapshot")]
+    pub(crate) fn show_review_fixture(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let company = self.store.companies(View::All)[0].id();
+        self.open_target(Target::Company(company), window, cx);
+        self.accept_suggestion(cx);
+        self.summarize(window, cx);
+    }
+
     pub fn set_exit(&mut self, exit: Exit, cx: &mut Context<Self>) {
         if self.exit != exit {
             self.exit = exit;
@@ -1053,30 +1068,63 @@ impl Crm {
     fn refresh_tree(&mut self, cx: &mut Context<Self>) {
         let items = vec![tree_from(&self.shelf.outline())];
         self.nav.update(cx, |nav, cx| nav.set_items(items, cx));
+        if let Screen::Reading(id) = self.screen
+            && self.shelf.is_folder(id)
+        {
+            self.reading_task = None;
+            self.reading = self.shelf.page(id).map(|page| (id, page));
+        }
     }
 
     fn open_shelf_node(&mut self, id: u64, window: &mut Window, cx: &mut Context<Self>) {
+        self.reading_task = None;
+        self.reading = None;
         self.preview = None;
         self.glim = None;
         if let Some(place) = self.shelf.place_of(id).and_then(Destination::parse) {
             self.show_destination(place, window, cx);
             return;
         }
-        match self.shelf.page(id) {
-            Some(Page::Pdf { path, .. }) => {
-                let image = rasterize_pdf(&path).map(|bytes| {
-                    let image = gpui_kit::Image::from_bytes(gpui_kit::ImageFormat::Png, bytes);
-                    std::sync::Arc::new(image)
-                });
-                self.preview = image.map(|image| (path, image));
-            }
-            Some(Page::File { path, .. }) => {
-                self.glim = Some((path.clone(), material::open(&path)));
-            }
-            _ => {}
-        }
         self.screen = Screen::Reading(id);
         self.select_node(id, cx);
+        if self.shelf.is_folder(id) {
+            self.reading = self.shelf.page(id).map(|page| (id, page));
+            cx.notify();
+            return;
+        }
+        if let Some(read) = self.shelf.reader(id) {
+            self.reading_task = Some(cx.spawn(async move |this, cx| {
+                let loaded = cx
+                    .background_executor()
+                    .spawn(async move {
+                        let page = read();
+                        let preview = match &page {
+                            Some(Page::Pdf { path, .. }) => rasterize_pdf(path),
+                            _ => None,
+                        };
+                        let reading = match &page {
+                            Some(Page::File { path, .. }) => {
+                                Some((path.clone(), material::open(path)))
+                            }
+                            _ => None,
+                        };
+                        (page, preview, reading)
+                    })
+                    .await;
+                let _ = this.update(cx, |this, cx| {
+                    if this.screen != Screen::Reading(id) || !this.shelf.contains(id) {
+                        return;
+                    }
+                    if let (Some(Page::Pdf { path, .. }), Some(bytes)) = (&loaded.0, loaded.1) {
+                        let image = gpui_kit::Image::from_bytes(gpui_kit::ImageFormat::Png, bytes);
+                        this.preview = Some((path.clone(), std::sync::Arc::new(image)));
+                    }
+                    this.reading = loaded.0.map(|page| (id, page));
+                    this.glim = loaded.2;
+                    cx.notify();
+                });
+            }));
+        }
         cx.notify();
     }
 
@@ -1086,10 +1134,46 @@ impl Crm {
             .update(cx, |nav, cx| nav.set_selected_index(ix, cx));
     }
 
-    fn accept_paths(&mut self, target: u64, paths: &[std::path::PathBuf], cx: &mut Context<Self>) {
-        self.shelf.drop_paths(target, paths);
-        self.persist_shelf();
-        self.refresh_tree(cx);
+    fn accept_paths(
+        &mut self,
+        target: u64,
+        paths: &[PathBuf],
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        use gpui_kit::component::{WindowExt as _, notification::Notification};
+        if self.importing {
+            window.push_notification(
+                Notification::info(
+                    "A file import is still running. Drop these files again when it finishes.",
+                ),
+                cx,
+            );
+            return;
+        }
+        self.importing = true;
+        let paths = paths.to_vec();
+        let directory = self.shelf.import_directory();
+        cx.spawn_in(window, async move |this, cx| {
+            let imported = cx
+                .background_executor()
+                .spawn(async move { super::shelf::Import::read(&paths, directory) })
+                .await;
+            let _ = this.update_in(cx, |this, window, cx| {
+                this.importing = false;
+                match this.shelf.finish_import(target, imported) {
+                    Ok(_) => {
+                        this.persist_shelf();
+                        this.refresh_tree(cx);
+                    }
+                    Err(error) => {
+                        window.push_notification(Notification::error(error.to_string()), cx)
+                    }
+                }
+                cx.notify();
+            });
+        })
+        .detach();
         cx.notify();
     }
 
@@ -1104,6 +1188,14 @@ impl Crm {
         self.persist_shelf();
         self.refresh_tree(cx);
         self.select_node(id, cx);
+        self.reading = Some((
+            id,
+            Page::Markdown {
+                title: "Untitled.md".into(),
+                source: String::new(),
+            },
+        ));
+        self.reading_task = None;
         self.screen = Screen::Reading(id);
         cx.notify();
     }
@@ -1112,7 +1204,11 @@ impl Crm {
         if self.shelf.delete(id) {
             self.persist_shelf();
             self.refresh_tree(cx);
-            if self.screen == Screen::Reading(id) {
+            if let Screen::Reading(shown) = self.screen
+                && !self.shelf.contains(shown)
+            {
+                self.reading_task = None;
+                self.reading = None;
                 self.screen = Screen::Inbox;
             }
             cx.notify();
@@ -1205,10 +1301,25 @@ impl Crm {
     }
 
     fn sync_rows(&mut self, cx: &mut Context<Self>) {
-        let (columns, rows, empty) = project(&self.store, self.object, self.view);
+        let (columns, mut rows, empty) = project(&self.store, self.object, self.view);
         self.table.update(cx, |table, cx| {
             let delegate = table.delegate_mut();
             if delegate.same_columns(&columns) {
+                // Projection cells arrive in schema order, while the delegate
+                // owns the user's order, widths and sort state.
+                for row in &mut rows {
+                    row.cells = delegate
+                        .columns
+                        .iter()
+                        .map(|held| {
+                            let index = columns
+                                .iter()
+                                .position(|column| column.key == held.key)
+                                .expect("same column membership");
+                            row.cells[index].clone()
+                        })
+                        .collect();
+                }
                 delegate.set_rows(rows, empty);
             } else {
                 delegate.set_projection(columns, rows, empty);
@@ -1435,6 +1546,11 @@ impl Crm {
         let Screen::Company { id, .. } = self.screen else {
             return;
         };
+        let Some(directory) = self.records.clone() else {
+            self.ask_note = Some("File attachments require a saved workspace.".into());
+            cx.notify();
+            return;
+        };
         let paths = cx.prompt_for_paths(PathPromptOptions {
             files: true,
             directories: false,
@@ -1448,14 +1564,11 @@ impl Crm {
             let Some(path) = paths.into_iter().next() else {
                 return;
             };
-            let reading = cx
+            let attachment = cx
                 .background_executor()
-                .spawn({
-                    let path = path.clone();
-                    async move { material::open(&path) }
-                })
+                .spawn(async move { files::prepare(&directory, &path) })
                 .await;
-            crm.update(cx, |crm, cx| crm.finish_attach(id, &path, reading, cx))
+            crm.update(cx, |crm, cx| crm.finish_attach(id, attachment, cx))
                 .ok();
         })
         .detach();
@@ -1464,31 +1577,29 @@ impl Crm {
     fn finish_attach(
         &mut self,
         company: Id,
-        path: &std::path::Path,
-        reading: Result<material::Reading, String>,
+        attachment: Result<files::Attachment, String>,
         cx: &mut Context<Self>,
     ) {
-        let reading = match reading {
-            Ok(reading) => reading,
+        let files::Attachment { file, reading } = match attachment {
+            Ok(attachment) => attachment,
             Err(error) => {
                 self.ask_note = Some(error);
                 cx.notify();
                 return;
             }
         };
-        let Some(source) =
-            self.store
-                .attach(company, reading.title, reading.kind, reading.passages, None)
-        else {
-            self.ask_note = Some("That file has nothing to highlight.".into());
+        let Some(source) = self.store.attach(
+            company,
+            reading.title,
+            reading.kind,
+            reading.passages,
+            Some(file),
+        ) else {
+            self.ask_note =
+                Some("That company is unavailable or the file has nothing to highlight.".into());
             cx.notify();
             return;
         };
-        if let Some(dir) = &self.records
-            && let Some(name) = files::keep(dir, source, path)
-        {
-            self.store.set_file(source, name);
-        }
         self.shown_source = Some(source);
         self.open_rows = Some((source, reading.rows));
         self.passage = None;
@@ -1576,10 +1687,12 @@ impl Crm {
         v_flex()
             .id("crm-nav")
             .debug_selector(|| "crm-nav".into())
-            .on_drop(cx.listener(|crm, paths: &gpui_kit::ExternalPaths, _, cx| {
-                let root = crm.shelf.root_id();
-                crm.accept_paths(root, paths.paths(), cx);
-            }))
+            .on_drop(
+                cx.listener(|crm, paths: &gpui_kit::ExternalPaths, window, cx| {
+                    let root = crm.shelf.root_id();
+                    crm.accept_paths(root, paths.paths(), window, cx);
+                }),
+            )
             .relative()
             .h_full()
             .flex_shrink_0()
@@ -1679,9 +1792,9 @@ impl Crm {
                                             });
                                         })
                                         .on_drop(
-                                            move |paths: &gpui_kit::ExternalPaths, _, cx| {
+                                            move |paths: &gpui_kit::ExternalPaths, window, cx| {
                                                 let _ = drop_files.update(cx, |crm, cx| {
-                                                    crm.accept_paths(id, paths.paths(), cx);
+                                                    crm.accept_paths(id, paths.paths(), window, cx);
                                                 });
                                             },
                                         )
@@ -2663,7 +2776,11 @@ impl Crm {
                                 .gap_2()
                                 .child(
                                     Button::new(("crm-suggest-accept", paragraph as u64))
-                                        .label("Accept")
+                                        .child(
+                                            div()
+                                                .debug_selector(|| "crm-suggest-accept".into())
+                                                .child("Accept"),
+                                        )
                                         .small()
                                         .outline()
                                         .on_click(cx.listener(|crm, _: &ClickEvent, _, cx| {
@@ -2860,9 +2977,103 @@ impl Crm {
             .into_any_element()
     }
 
+    fn render_ask(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
+        v_flex()
+            .id("crm-ask-panel")
+            .flex_shrink_0()
+            .max_h(px(300.))
+            .overflow_y_scrollbar()
+            .border_t_1()
+            .border_color(cx.theme().border)
+            .p_3()
+            .gap_2()
+            .child(div().text_xs().child("Summary from tagged evidence"))
+            .child(
+                h_flex()
+                    .gap_2()
+                    .child(
+                        div()
+                            .id("crm-ask-input")
+                            .debug_selector(|| "crm-ask-input".into())
+                            .flex_1()
+                            .child(Input::new(&self.ask).small()),
+                    )
+                    .child(
+                        Button::new("crm-summarize")
+                            .child(
+                                div()
+                                    .debug_selector(|| "crm-summarize".into())
+                                    .child("Review summary"),
+                            )
+                            .small()
+                            .outline()
+                            .on_click(cx.listener(|crm, _, window, cx| crm.summarize(window, cx))),
+                    ),
+            )
+            .when_some(self.proposal.clone(), |panel, proposal| {
+                panel.child(
+                    v_flex()
+                        .id("crm-proposal")
+                        .debug_selector(|| "crm-proposal".into())
+                        .gap_2()
+                        .text_sm()
+                        .child(
+                            h_flex()
+                                .gap_2()
+                                .child(
+                                    Button::new("crm-accept-proposal")
+                                        .child(
+                                            div()
+                                                .debug_selector(|| "crm-accept-proposal".into())
+                                                .child("Accept changes"),
+                                        )
+                                        .small()
+                                        .primary()
+                                        .on_click(
+                                            cx.listener(|crm, _, _, cx| crm.accept_proposal(cx)),
+                                        ),
+                                )
+                                .child(
+                                    Button::new("crm-dismiss-proposal")
+                                        .label("Dismiss")
+                                        .small()
+                                        .ghost()
+                                        .on_click(cx.listener(|crm, _, _, cx| {
+                                            crm.proposal = None;
+                                            crm.asked = None;
+                                            cx.notify();
+                                        })),
+                                ),
+                        )
+                        .when_some(self.asked.clone(), |panel, asked| panel.child(asked))
+                        .child(proposal.summary)
+                        .when_some(proposal.stage, |panel, stage| {
+                            panel.child(format!("Stage: {}", stage.label()))
+                        })
+                        .when_some(proposal.next_interaction, |panel, next| {
+                            panel.child(format!("Next interaction: {next}"))
+                        })
+                        .when_some(proposal.task, |panel, task| {
+                            panel.child(format!("Task: {task}"))
+                        })
+                        .child(format!("Insight: {}", proposal.insight_title))
+                        .child(proposal.insight_body)
+                        .child(format!(
+                            "Based on {} tagged passages",
+                            proposal.evidence.len()
+                        )),
+                )
+            })
+    }
+
     fn render_reading(&mut self, id: u64, cx: &mut Context<Self>) -> impl IntoElement + use<> {
         let theme = cx.theme();
-        match self.shelf.page(id) {
+        match self
+            .reading
+            .as_ref()
+            .filter(|(shown, _)| *shown == id)
+            .map(|(_, page)| page.clone())
+        {
             Some(Page::Markdown { title, source }) => v_flex()
                 .id("index-reading")
                 .debug_selector(|| "index-reading".into())
@@ -2980,6 +3191,7 @@ impl Crm {
                         .child(name)
                 }))
                 .into_any_element(),
+            Some(Page::Error { name, message }) => file_notice(&name, &message),
             Some(Page::File { name, path }) => {
                 match self.glim.as_ref().filter(|(held, _)| held == &path) {
                     Some((_, Ok(reading))) => v_flex()
@@ -3016,7 +3228,7 @@ impl Crm {
                     None => file_notice(&name, &path.display().to_string()),
                 }
             }
-            None => div().into_any_element(),
+            None => file_notice("Opening file", "Reading file contents…"),
         }
     }
 
@@ -3309,7 +3521,10 @@ impl Render for Crm {
                                         .child(note),
                                 )
                             })
-                            .child(workspace),
+                            .child(div().flex_1().min_h_0().overflow_hidden().child(workspace))
+                            .when(self.ask_company().is_some(), |card| {
+                                card.child(self.render_ask(cx))
+                            }),
                     ),
             )
             .child(
@@ -3452,6 +3667,131 @@ mod tests {
         assert_eq!(cells[1].text, "a");
     }
 
+    #[gpui_kit::test]
+    fn returning_to_a_list_preserves_column_order_width_and_sort(
+        cx: &mut gpui_kit::TestAppContext,
+    ) {
+        use gpui_kit::component::Root;
+        use gpui_kit::{VisualTestContext, size};
+        cx.update(|cx| {
+            gpui_kit::init(cx);
+            crate::theme::init(cx);
+        });
+        let mut held = None;
+        let window = cx.open_window(size(px(1400.), px(900.)), |window, cx| {
+            let view = cx.new(|cx| Crm::new(window, cx));
+            held = Some(view.clone());
+            Root::new(view, window, cx)
+        });
+        let crm = held.unwrap();
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        cx.update(|window, cx| {
+            crm.update(cx, |crm, cx| {
+                crm.show_object(Object::Companies, window, cx);
+                crm.table.update(cx, |table, cx| {
+                    let rows = table.delegate_mut();
+                    rows.move_column(0, 2, window, cx);
+                    rows.columns[2].width = px(321.);
+                    rows.perform_sort(2, ColumnSort::Descending, window, cx);
+                });
+                let before = crm
+                    .table
+                    .read(cx)
+                    .delegate()
+                    .rows
+                    .iter()
+                    .map(|row| {
+                        row.cells
+                            .iter()
+                            .map(|cell| cell.text.clone())
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
+                let company = crm.store.companies(View::All)[0].id();
+                crm.open_target(Target::Company(company), window, cx);
+                crm.show_object(Object::Companies, window, cx);
+                let rows = crm.table.read(cx).delegate();
+                assert_eq!(rows.columns[2].key.as_ref(), "name");
+                assert_eq!(rows.columns[2].width, px(321.));
+                assert_eq!(rows.columns[2].sort, Some(ColumnSort::Descending));
+                let after = rows
+                    .rows
+                    .iter()
+                    .map(|row| {
+                        row.cells
+                            .iter()
+                            .map(|cell| cell.text.clone())
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    after, before,
+                    "cells must follow the retained column identities"
+                );
+            })
+        });
+    }
+
+    #[gpui_kit::test]
+    fn file_reading_cancels_stale_completion_and_refreshes_on_reopen(
+        cx: &mut gpui_kit::TestAppContext,
+    ) {
+        use gpui_kit::component::Root;
+        use gpui_kit::{VisualTestContext, size};
+        let dir = tempfile::tempdir().unwrap();
+        let first = dir.path().join("first.md");
+        let second = dir.path().join("second.md");
+        std::fs::write(&first, "# First\n").unwrap();
+        std::fs::write(&second, "# Second\n").unwrap();
+        cx.update(|cx| {
+            gpui_kit::init(cx);
+            crate::theme::init(cx);
+            crate::session::init(dir.path(), cx);
+        });
+        let mut held = None;
+        let window = cx.open_window(size(px(1400.), px(900.)), |window, cx| {
+            let view = cx.new(|cx| Crm::new(window, cx));
+            held = Some(view.clone());
+            Root::new(view, window, cx)
+        });
+        let crm = held.unwrap();
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        let ids = cx.update(|window, cx| {
+            crm.update(cx, |crm, cx| {
+                let ids = crm
+                    .shelf
+                    .drop_paths(crm.shelf.root_id(), &[first, second.clone()]);
+                crm.refresh_tree(cx);
+                crm.open_shelf_node(ids[0], window, cx);
+                crm.open_shelf_node(ids[1], window, cx);
+                assert!(crm.reading.is_none(), "reading must leave the UI thread");
+                ids
+            })
+        });
+        cx.run_until_parked();
+        cx.update(|_, cx| {
+            let crm = crm.read(cx);
+            assert!(matches!(&crm.reading, Some((id, Page::Markdown { title, .. })) if *id == ids[1] && title == "Second"));
+        });
+        std::fs::write(&second, "# Changed\n").unwrap();
+        cx.update(|window, cx| crm.update(cx, |crm, cx| crm.open_shelf_node(ids[1], window, cx)));
+        cx.run_until_parked();
+        cx.update(|window, cx| crm.update(cx, |crm, cx| {
+            assert!(matches!(&crm.reading, Some((_, Page::Markdown { title, .. })) if title == "Changed"));
+            crm.open_shelf_node(ids[0], window, cx);
+            crm.delete_node(ids[0], cx);
+        }));
+        cx.run_until_parked();
+        cx.update(|_, cx| {
+            let crm = crm.read(cx);
+            assert!(crm.screen == Screen::Inbox);
+            assert!(
+                crm.reading.is_none(),
+                "deleted files must not return from a pending read"
+            );
+        });
+    }
+
     /// The loop a person takes: open a company, tag the suggested passage,
     /// accept the proposal, and attach a file that comes back from disk.
     #[gpui_kit::test]
@@ -3516,19 +3856,41 @@ mod tests {
             cx.run_until_parked();
         }
 
-        cx.update(|window, cx| {
-            crm.update(cx, |crm, cx| {
-                assert!(crm.suggestion().is_some());
-                crm.accept_suggestion(cx);
-                crm.summarize(window, cx);
-                assert!(crm.proposal.is_some());
-            })
+        let at = cx
+            .debug_bounds("crm-suggest-accept")
+            .expect("suggestion control");
+        cx.simulate_click(at.center(), Modifiers::none());
+        cx.run_until_parked();
+        let at = cx
+            .debug_bounds("crm-ask-input")
+            .expect("ask field is mounted");
+        cx.simulate_click(at.center(), Modifiers::none());
+        cx.simulate_input("Summarize the buying signal");
+        let at = cx.debug_bounds("crm-summarize").expect("summary control");
+        cx.simulate_click(at.center(), Modifiers::none());
+        cx.run_until_parked();
+        assert!(
+            cx.debug_bounds("crm-proposal").is_some(),
+            "proposal is visible"
+        );
+        cx.update(|_, cx| {
+            assert_eq!(
+                crm.read(cx).asked.as_deref(),
+                Some("Summarize the buying signal")
+            );
         });
+        let at = cx
+            .debug_bounds("crm-accept-proposal")
+            .expect("accept control");
+        cx.simulate_click(at.center(), Modifiers::none());
         cx.run_until_parked();
 
         cx.update(|window, cx| {
             crm.update(cx, |crm, cx| {
-                crm.accept_proposal(cx);
+                assert!(
+                    crm.proposal.is_none(),
+                    "the visible accept control must handle the click"
+                );
                 let company = crm.ask_company().unwrap();
                 assert_eq!(
                     crm.store.company(company).unwrap().stage(),
@@ -3614,21 +3976,41 @@ mod tests {
         std::fs::write(&file, "{\"buyer\":\"Ada Chen\"}").unwrap();
         cx.update(|window, cx| {
             crm.update(cx, |crm, cx| {
-                let reading = crate::crm::material::open(&file).unwrap();
-                crm.finish_attach(company, &file, Ok(reading), cx);
+                let prepared = files::prepare(crm.records.as_ref().unwrap(), &file);
+                std::fs::write(&file, "{\"buyer\":\"Changed after snapshot\"}").unwrap();
+                crm.finish_attach(company, prepared, cx);
                 let source = crm.shown_source.expect("attached");
                 crm.load_material(source);
                 assert!(crm.stored_file(source).is_some());
-                crm.finish_attach(company, &file, Err("nope".into()), cx);
+                let reopened = material::open(&crm.stored_file(source).unwrap()).unwrap();
+                assert_eq!(
+                    crm.store.source(source).unwrap().paragraphs(),
+                    reopened.passages
+                );
+                assert!(
+                    reopened
+                        .passages
+                        .iter()
+                        .any(|text| text.contains("Ada Chen"))
+                );
+                assert!(
+                    !reopened
+                        .passages
+                        .iter()
+                        .any(|text| text.contains("Changed after snapshot"))
+                );
+                crm.finish_attach(company, Err("nope".into()), cx);
                 assert_eq!(crm.ask_note.as_deref(), Some("nope"));
                 crm.finish_attach(
                     company,
-                    &file,
-                    Ok(crate::crm::material::Reading {
-                        kind: crate::crm::model::MaterialKind::Text,
-                        title: "empty".into(),
-                        passages: Vec::new(),
-                        rows: Vec::new(),
+                    Ok(files::Attachment {
+                        file: "unused".into(),
+                        reading: crate::crm::material::Reading {
+                            kind: crate::crm::model::MaterialKind::Text,
+                            title: "empty".into(),
+                            passages: Vec::new(),
+                            rows: Vec::new(),
+                        },
                     }),
                     cx,
                 );

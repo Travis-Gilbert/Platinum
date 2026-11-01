@@ -123,3 +123,12 @@ No physical keyboard event injection or live microphone recording was performed;
 these results establish the gesture/lifecycle behavior, not live audio quality.
 The earlier real Parakeet WAV oracle result remains separate and was not rerun.
 The companion backend code is unchanged and its prior checks were not rerun.
+
+
+## Subsequent BeautifulRust review
+
+The [2026-10-31 review evidence](../beautifulrust-review-2026-10-31/checks.md)
+records the subsequent 303-test pass, native app/example build, focused website
+modifier-release regression, Index proposal rendering, expanded-note promotion
+and fresh-process restore. It preserves this document's earlier results as
+historical evidence rather than treating them as executions of the newer source.

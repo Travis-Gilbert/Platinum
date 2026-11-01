@@ -561,14 +561,18 @@ impl Browser {
         let voice_window = window.window_handle();
         let voice_browser = cx.weak_entity();
         let voice_keystrokes = cx.intercept_keystrokes(move |event, window, cx| {
-            if window.window_handle() != voice_window
-                || matches!(event.keystroke.key.as_str(), "platform" | "control" | "shift" | "alt" | "function") {
-                // GPUI synthesizes modifier-only keystrokes on release. Let
-                // the modifier listener finish that gesture, not cancel it.
+            if window.window_handle() != voice_window {
                 return;
             }
             let _ = voice_browser.update(cx, |this, cx| {
-                if !this.voice_shortcut().matches(&event.keystroke) {
+                if matches!(
+                    event.keystroke.key.as_str(),
+                    "platform" | "control" | "shift" | "alt" | "function"
+                ) {
+                    // GPUI emits this before a focused Page can consume the
+                    // modifier-release keystroke and suppress bubble listeners.
+                    this.voice_modifiers(event.keystroke.modifiers, false, false, window, cx);
+                } else if !this.voice_shortcut().matches(&event.keystroke) {
                     this.cancel_dictation(window, cx);
                 }
             });

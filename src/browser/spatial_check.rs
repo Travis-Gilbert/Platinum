@@ -261,6 +261,28 @@ async fn scenario(
     .await;
     handle.update(cx, |_, window, cx| window.close_sheet(cx))?;
     voice_shortcut_check(handle, &browser, output, cx).await?;
+    web_modifier_release_check(handle, &browser, &view, output, cx).await?;
+    handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| {
+            b.open_place(crate::places::Place::Crm, window, cx);
+            b.crm
+                .as_ref()
+                .unwrap()
+                .update(cx, |crm, cx| crm.show_review_fixture(window, cx));
+        })
+    })?;
+    capture(
+        handle,
+        Appearance::Light,
+        &output.join("index-proposal-fixture.png"),
+        cx,
+    )
+    .await;
+    handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| {
+            b.leave_place(window, cx);
+        })
+    })?;
     handle.update(cx, |_, window, cx| {
         browser.update(cx, |b, cx| b.toggle_canvas(window, cx))
     })?;
@@ -349,8 +371,9 @@ async fn scenario(
         cx,
     )
     .await;
-    handle.update(cx, |_, _, cx| {
+    handle.update(cx, |_, window, cx| {
         browser.update(cx, |b, cx| {
+            b.open_place(crate::places::Place::Notes, window, cx);
             b.notebook.as_ref().unwrap().update(cx, |_, cx| {
                 cx.emit(crate::notes::NotesEvent::Promote(note.clone()))
             })
@@ -360,6 +383,14 @@ async fn scenario(
     anyhow::ensure!(
         note.read_with(cx, |n, _| n.editor.entity_id()) == editor.entity_id(),
         "promotion duplicated editor"
+    );
+    anyhow::ensure!(
+        browser.read_with(cx, |b, cx| b.place.is_none()
+            && b.theorem.as_ref().is_some_and(|(workbench, _)| workbench
+                .read(cx)
+                .board_slot()
+                .is_some())),
+        "note promotion did not restore the compact board composer"
     );
     let note_path = note.read_with(cx, |n, _| n.path.clone());
     let profile = cx.update(|cx| cx.global::<ActiveProfile>().0.directory());
@@ -600,6 +631,120 @@ async fn voice_shortcut_check(
         serde_json::to_vec_pretty(&serde_json::json!({
             "passed": true, "starts": input.starts.get(), "stops": input.stops.get(),
             "hotkey": "ctrl-shift-space", "input": "synthetic capture and transcript through native window key dispatch; no live microphone or physical key injection"
+        }))?,
+    )?;
+    Ok(())
+}
+
+/// A real focused Page consumes GPUI's synthetic modifier keystroke. Verify the
+/// release is handled before that consumer, with a labeled synthetic microphone.
+async fn web_modifier_release_check(
+    handle: gpui_kit::AnyWindowHandle,
+    browser: &Entity<Browser>,
+    view: &servo::WebView,
+    output: &std::path::Path,
+    cx: &mut AsyncApp,
+) -> anyhow::Result<()> {
+    use gpui_kit::component::speech::SpeechState;
+    use gpui_kit::{InputEvent as _, ModifiersChangedEvent};
+    let input = crate::voice::fixture::Input::default();
+    let original = handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| {
+            b.set_voice_shortcut("left-cmd", window, cx);
+            let page = b.tabs[b.active].page.as_ref().unwrap();
+            window.focus(&page.focus_handle(cx), cx);
+            let speech = cx.new(|cx| {
+                SpeechState::new(cx)
+                    .recognizer(crate::voice::fixture::Recognizer)
+                    .input(input.clone())
+                    .system_fallback(false)
+            });
+            let subscription = cx.subscribe_in(&speech, window, |b, _, event, window, cx| {
+                b.speech_event(event, window, cx)
+            });
+            (
+                std::mem::replace(&mut b.speech, speech),
+                std::mem::replace(&mut b._speech_events, subscription),
+            )
+        })
+    })?;
+    js(view, "(() => { const e = document.querySelector('textarea'); e.value = ''; e.focus(); e.setSelectionRange(0, 0); return true; })()", cx).await?;
+    for quick in [true, false] {
+        handle.update(cx, |_, window, cx| {
+            let modifiers = gpui_kit::Modifiers {
+                platform: true,
+                ..Default::default()
+            };
+            window.dispatch_event(
+                ModifiersChangedEvent {
+                    modifiers,
+                    ..Default::default()
+                }
+                .to_platform_input(),
+                cx,
+            );
+            // Headless/native synthetic events cannot press a physical left key.
+            // Supply only the side; release goes through unmodified GPUI dispatch.
+            browser.update(cx, |b, cx| {
+                b.voice_modifiers(modifiers, true, false, window, cx)
+            });
+        })?;
+        if !quick {
+            anyhow::ensure!(
+                until_within(Duration::from_secs(5), cx, |_| input.starts.get() == 1).await,
+                "focused website hold did not start"
+            );
+        }
+        handle.update(cx, |_, window, cx| {
+            anyhow::ensure!(
+                browser.read(cx).tabs[browser.read(cx).active]
+                    .page
+                    .as_ref()
+                    .unwrap()
+                    .focus_handle(cx)
+                    .is_focused(window),
+                "release must target the production Page"
+            );
+            window.dispatch_event(ModifiersChangedEvent::default().to_platform_input(), cx);
+            Ok::<_, anyhow::Error>(())
+        })??;
+        pause(cx).await;
+        if quick {
+            anyhow::ensure!(
+                input.starts.get() == 0,
+                "a website Command tap started delayed capture"
+            );
+        }
+    }
+    anyhow::ensure!(
+        input.stops.get() == 1,
+        "website release did not stop exactly once"
+    );
+    anyhow::ensure!(
+        matches!(js(view, "document.querySelector('textarea').value", cx).await?, servo::JSValue::String(s) if s == "spoken words"),
+        "website release did not commit the transcript"
+    );
+    capture(
+        handle,
+        Appearance::Light,
+        &output.join("web-modifier-release.png"),
+        cx,
+    )
+    .await;
+    handle.update(cx, |_, window, cx| {
+        browser.update(cx, |b, cx| {
+            b.speech = original.0;
+            b._speech_events = original.1;
+            b.set_voice_shortcut("ctrl-shift-space", window, cx);
+            b.save(cx);
+        })
+    })?;
+    std::fs::write(
+        output.join("web-modifier-release.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "passed": true, "starts": input.starts.get(), "stops": input.stops.get(),
+            "page_focused_on_release": true, "quick_tap_did_not_start": true,
+            "input": "supplied left-key state and synthetic capture; real Page, modifier-release dispatch and web insertion"
         }))?,
     )?;
     Ok(())

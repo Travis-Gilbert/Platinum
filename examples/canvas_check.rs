@@ -1,5 +1,13 @@
 //! Native M1 probe using the production Page and SpatialCanvas, with an isolated profile.
 extern crate gpui_kit as gpui;
+// Session preferences share the production shortcut parser without loading ASR.
+#[allow(dead_code)]
+#[path = "../src/voice/shortcut.rs"]
+pub(crate) mod voice_shortcut;
+mod voice {
+    pub(crate) use crate::voice_shortcut as shortcut;
+}
+
 #[path = "../src/actions.rs"]
 mod actions;
 #[allow(dead_code)]

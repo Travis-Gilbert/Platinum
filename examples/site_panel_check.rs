@@ -12,6 +12,14 @@
 //! dark one, and `sparse.html`; it exits 1 if a field or a dominant color is
 //! wrong. A URL run exits 1 only if no reading comes back.
 extern crate gpui_kit as gpui;
+// Session preferences share the production shortcut parser without loading ASR.
+#[allow(dead_code)]
+#[path = "../src/voice/shortcut.rs"]
+pub(crate) mod voice_shortcut;
+mod voice {
+    pub(crate) use crate::voice_shortcut as shortcut;
+}
+
 #[path = "../src/actions.rs"]
 mod actions;
 #[path = "../src/theme.rs"]
