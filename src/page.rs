@@ -130,6 +130,9 @@ pub struct PageMenu {
     pub link: Option<Url>,
     /// The image under the pointer, if any.
     pub image: Option<Url>,
+    /// Spelling and grammar corrections for the editable field the menu was
+    /// opened on, worded for a menu. `Pick::Correct(i)` chooses row `i`.
+    pub corrections: Vec<String>,
 }
 
 #[derive(Clone)]
@@ -655,6 +658,11 @@ impl Page {
         .detach();
     }
 
+    /// Whether an input method is composing text in the page.
+    pub(crate) fn composing(&self) -> bool {
+        self.marked.is_some()
+    }
+
     /// The page's context menu, for the browser to show as its search menu.
     pub(crate) fn context_menu_requested(&mut self, menu: PageMenu, cx: &mut Context<Self>) {
         cx.emit(PageEvent::ContextMenu(menu));
@@ -692,6 +700,15 @@ impl Page {
         if !self.focus_handle.is_focused(window) {
             return false;
         }
+        // Cmd-Z right after a spelling correction reverses it; every other key
+        // ends the chance to.
+        let undo = keystroke.key == "z"
+            && keystroke.modifiers.platform
+            && !(keystroke.modifiers.shift || keystroke.modifiers.control || keystroke.modifiers.alt);
+        if undo && self.reverse_correction(cx) {
+            return true;
+        }
+        self.forget_correction();
         if self
             .canvas_input
             .as_ref()
@@ -899,6 +916,7 @@ impl Page {
         if self.replaying.get() {
             return;
         }
+        self.forget_correction();
         self.send(InputEvent::EditingAction(action));
     }
 
@@ -1252,7 +1270,11 @@ impl Render for Page {
             .on_action(cx.listener(|page, _: &Cut, _, _| page.editing(ClipboardAction::Cut)))
             .on_action(cx.listener(|page, _: &Paste, _, _| page.editing(ClipboardAction::Paste)))
             .on_action(cx.listener(|page, _: &SelectAll, _, _| page.shortcut("a", false)))
-            .on_action(cx.listener(|page, _: &Undo, _, _| page.shortcut("z", false)))
+            .on_action(cx.listener(|page, _: &Undo, _, cx| {
+                if !page.reverse_correction(cx) {
+                    page.shortcut("z", false);
+                }
+            }))
             .on_action(cx.listener(|page, _: &Redo, _, _| page.shortcut("z", true)))
             .on_action(cx.listener(Self::pick_option))
             .child(

@@ -2,6 +2,8 @@
 //! document identity. The vault owns durable text; the editor owns selection
 //! and undo. Disk/authority work runs off the UI thread except the final flush.
 use frame_notes::{Document, Vault};
+use frame_text_check::FieldPolicy;
+use frame_text_check_editor::TextChecking;
 use gpui_kit::StatefulInteractiveElement as _;
 use gpui_kit::component::{
     ActiveTheme as _, Sizable as _,
@@ -98,6 +100,10 @@ pub struct Note {
     save: Option<Task<()>>,
     _edits: Subscription,
     _quit: Subscription,
+    /// Spelling and grammar underlines and corrections for `editor`. `None`
+    /// when the text-checking service could not start; the note is then
+    /// written unchecked.
+    _checking: Option<Entity<TextChecking>>,
 }
 impl Note {
     pub fn title(&self, cx: &App) -> String {
@@ -138,6 +144,8 @@ impl Note {
                 this.queue_save(cx);
             }
         });
+        let checking = frame_text_check::shared()
+            .map(|service| TextChecking::attach(&editor, service, FieldPolicy::default(), cx));
         let quit = cx.on_app_quit(|this, cx| this.flush(cx));
         cx.on_release(|this, cx| this.flush(cx).detach()).detach();
         Self {
@@ -153,6 +161,7 @@ impl Note {
             save: None,
             _edits: edits,
             _quit: quit,
+            _checking: checking,
         }
     }
     fn queue_save(&mut self, cx: &mut Context<Self>) {

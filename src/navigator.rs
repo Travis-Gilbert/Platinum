@@ -51,6 +51,8 @@ pub enum Placement {
 #[derive(Clone)]
 pub enum Pick {
     Page(ContextMenuAction),
+    /// Correction `i` of the editable field the page's menu was opened on.
+    Correct(usize),
     SwitchTab(u64),
     /// A Platinum command; its action already ran.
     Command,
@@ -159,6 +161,14 @@ impl Navigator {
         let mut picks = Vec::new();
 
         if let Some((_, menu)) = &self.page {
+            if !menu.corrections.is_empty() {
+                let mut group = CommandGroup::new().label("Spelling and Grammar");
+                for label in &menu.corrections {
+                    group = group.item(CommandItem::new().label(label.clone()));
+                }
+                groups.push(group);
+                picks.push((0..menu.corrections.len()).map(Pick::Correct).collect());
+            }
             let mut group = CommandGroup::new().label("Page");
             let mut group_picks = Vec::new();
             for item in &menu.items {

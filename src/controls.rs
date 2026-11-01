@@ -25,10 +25,11 @@ use gpui_kit::{
     ParentElement as _, PathPromptOptions, Pixels, Point, PromptLevel, Render, Styled as _, Task,
     TitlebarOptions, WeakEntity, Window, WindowBounds, WindowKind, WindowOptions, point, px, size,
 };
+use frame_text_check::web::{Applied, Chosen, PROBE, Probe, Undo, WebField, WebMenu};
 use servo::{
-    ColorPicker, ContextMenu, ContextMenuAction, ContextMenuItem, DeviceIntRect, EmbedderControl,
-    EmbedderControlId, FilePicker, PromptDialog, SelectElement, SelectElementOption,
-    SelectElementOptionOrOptgroup, SimpleDialog,
+    ColorPicker, ContextMenu, ContextMenuAction, ContextMenuElementInformationFlags,
+    ContextMenuItem, DeviceIntRect, EmbedderControl, EmbedderControlId, FilePicker, JSValue,
+    PromptDialog, SelectElement, SelectElementOption, SelectElementOptionOrOptgroup, SimpleDialog,
 };
 
 use crate::page::{Page, PageMenu, PageMenuItem};
@@ -39,6 +40,10 @@ use crate::page::{Page, PageMenu, PageMenuItem};
 pub struct PickOption {
     id: usize,
 }
+
+/// How long a page may take to describe its focused field before its context
+/// menu is shown without corrections.
+const FIELD_PROBE: Duration = Duration::from_millis(300);
 
 /// How often the color panel is checked for having been closed; AppKit has
 /// no close callback for the shared panel short of a delegate class.
@@ -58,6 +63,15 @@ pub struct Controls {
     dialog_open: bool,
     file_open: bool,
     color: Option<ColorSession>,
+    /// The spelling and grammar corrections offered in the context menu now
+    /// showing, for the editable field it was opened on.
+    corrections: Option<WebMenu>,
+    /// The one correction Cmd-Z can reverse. Servo has no undo for a text
+    /// control, so this is Platinum's own guarded inverse; the next key
+    /// pressed in the page forgets it.
+    correction_undo: Option<Undo>,
+    /// Why the last chosen correction changed nothing, if it did not.
+    pub(crate) correction_note: Option<String>,
 }
 
 enum Menu {
@@ -249,13 +263,89 @@ impl Page {
     }
 
     fn show_context_menu(&mut self, menu: ContextMenu, window: &mut Window, cx: &mut Context<Self>) {
+        self.controls.corrections = None;
+        // Servo marks an `<input>` or `<textarea>` as editable text but not a
+        // contenteditable region (its context menu leaves that for later), so
+        // only a link or an image is certain not to be a field. The probe
+        // answers `none` for anything else that is not one.
+        let flags = menu.element_info().flags;
+        let may_be_field = flags.contains(ContextMenuElementInformationFlags::EditableText)
+            || !flags.intersects(
+                ContextMenuElementInformationFlags::Link
+                    | ContextMenuElementInformationFlags::Image,
+            );
+        let Some(service) = may_be_field.then(frame_text_check::shared).flatten() else {
+            self.present_context_menu(menu, None, window, cx);
+            return;
+        };
+        // Servo holds the page's menu open until it is answered. Hold it while
+        // the focused field is read, and show it without corrections if the
+        // page does not answer or the menu was dismissed meanwhile.
+        let id = menu.id();
+        self.controls.menu = Some(Menu::Context(menu));
+        let (send, receive) = futures::channel::oneshot::channel();
+        self.webview.evaluate_javascript(PROBE, move |result| {
+            let _ = send.send(result);
+        });
+        let composing = self.composing();
+        let owner = window.window_handle();
+        cx.spawn(async move |page, cx| {
+            use futures::FutureExt as _;
+            let reply = receive.fuse();
+            let timeout = cx.background_executor().timer(FIELD_PROBE).fuse();
+            futures::pin_mut!(reply, timeout);
+            let probe = futures::select! {
+                result = reply => match result {
+                    Ok(Ok(JSValue::String(json))) => Probe::parse(&json),
+                    _ => Probe::None,
+                },
+                _ = timeout => Probe::None,
+            };
+            let corrections = cx
+                .background_executor()
+                .spawn(async move {
+                    WebField::from_probe(probe)
+                        .and_then(|field| WebMenu::build(&service, field, composing))
+                })
+                .await;
+            let _ = owner.update(cx, |_, window, cx| {
+                let _ = page.update(cx, |page, cx| {
+                    let held = page
+                        .controls
+                        .menu
+                        .take_if(|held| held.id() == id);
+                    if let Some(Menu::Context(menu)) = held {
+                        page.present_context_menu(menu, corrections, window, cx);
+                    }
+                });
+            });
+        })
+        .detach();
+    }
+
+    fn present_context_menu(
+        &mut self,
+        menu: ContextMenu,
+        corrections: Option<WebMenu>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         let rect = menu.position();
         let position = self.window_point(rect.min.x, rect.min.y);
+        let labels = corrections.as_ref().map(WebMenu::labels).unwrap_or_default();
+        self.controls.corrections = corrections;
         if self.canvas_world.is_some() {
             let page = cx.entity().downgrade();
             let focus = self.focus_handle(cx);
             let popup = PopupMenu::build(window, cx, |mut popup, _, _| {
                 popup = popup.action_context(focus);
+                for (index, label) in labels.into_iter().enumerate() {
+                    let page = page.clone();
+                    popup = popup.item(PopupMenuItem::new(label).on_click(move |_, _, cx| {
+                        let _ = page.update(cx, |p, cx| p.choose_correction(index, cx));
+                    }));
+                }
+                popup = popup.separator();
                 for item in menu.items() {
                     if let ContextMenuItem::Item { label, action, enabled } = item {
                         let page = page.clone();
@@ -295,9 +385,108 @@ impl Page {
                 items,
                 link,
                 image,
+                corrections: labels,
             },
             cx,
         );
+    }
+
+    /// The person chose correction `index` from the menu just shown.
+    ///
+    /// Nothing is applied unless the page's field is still exactly what was
+    /// checked: the page script re-reads it in the same turn as the edit.
+    /// A word for the dictionary or a rule to switch off touches no page.
+    pub(crate) fn choose_correction(&mut self, index: usize, cx: &mut Context<Self>) {
+        self.dismiss_context_menu();
+        let Some(menu) = self.controls.corrections.take() else {
+            return;
+        };
+        self.controls.correction_note = None;
+        match menu.choose(index, self.composing()) {
+            Err(refusal) => self.controls.correction_note = Some(refusal.to_string()),
+            Ok(Chosen::Profile(action)) => {
+                let saved = frame_text_check::shared()
+                    .ok_or_else(|| "text checking is unavailable".to_owned())
+                    .and_then(|service| action.run(&service).map_err(|error| error.to_string()));
+                if let Err(note) = saved {
+                    self.controls.correction_note = Some(note);
+                }
+            }
+            Ok(Chosen::Edit { script, undo, after }) => {
+                let reply = self.run_correction_script(script);
+                cx.spawn(async move |page, cx| {
+                    let applied = reply.await;
+                    let _ = page.update(cx, |page, cx| {
+                        if applied.left(&after) {
+                            page.controls.correction_undo = Some(undo);
+                        } else {
+                            let note = if applied.ok {
+                                "The page changed the text further, so the correction cannot be undone."
+                            } else {
+                                applied.reason()
+                            };
+                            page.controls.correction_note = Some(note.into());
+                        }
+                        cx.notify();
+                    });
+                })
+                .detach();
+            }
+        }
+    }
+
+    /// Cmd-Z right after a correction puts the corrected word back. `false`
+    /// when there is no correction to reverse (or an input method is
+    /// composing), so the page gets the key as usual.
+    pub(crate) fn reverse_correction(&mut self, cx: &mut Context<Self>) -> bool {
+        if self.composing() {
+            return false;
+        }
+        let Some(undo) = self.controls.correction_undo.take() else {
+            return false;
+        };
+        let reply = self.run_correction_script(undo.script());
+        cx.spawn(async move |page, cx| {
+            let applied = reply.await;
+            if !applied.ok {
+                let _ = page.update(cx, |page, cx| {
+                    page.controls.correction_note = Some(applied.reason().into());
+                    cx.notify();
+                });
+            }
+        })
+        .detach();
+        true
+    }
+
+    /// Any other edit to the page ends the correction Cmd-Z could reverse.
+    pub(crate) fn forget_correction(&mut self) {
+        self.controls.correction_undo = None;
+    }
+
+    /// Why the last chosen correction changed nothing, if it did not.
+    pub(crate) fn correction_note(&self) -> Option<&str> {
+        self.controls.correction_note.as_deref()
+    }
+
+    fn run_correction_script(
+        &self,
+        script: String,
+    ) -> impl std::future::Future<Output = Applied> + use<> {
+        let (send, receive) = futures::channel::oneshot::channel();
+        self.webview.evaluate_javascript(script, move |result| {
+            let _ = send.send(result);
+        });
+        async move {
+            match receive.await {
+                Ok(Ok(JSValue::String(json))) => Applied::parse(&json),
+                _ => Applied {
+                    ok: false,
+                    why: Some("silent".into()),
+                    after: None,
+                },
+            }
+        }
     }
 
     fn mount_popup(&mut self, popup: Entity<PopupMenu>, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {

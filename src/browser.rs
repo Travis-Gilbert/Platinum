@@ -2382,6 +2382,11 @@ impl Browser {
                     page.update(cx, |page, _| page.select_context_action(action));
                 }
             }
+            Pick::Correct(index) => {
+                if let Some((page, _)) = self.navigator.as_ref().and_then(|(n, _)| n.page.clone()) {
+                    page.update(cx, |page, cx| page.choose_correction(index, cx));
+                }
+            }
             Pick::SwitchTab(id) => {
                 if let Some(index) = self.tab_index(id) {
                     self.activate(index, window, cx);
