@@ -31,3 +31,34 @@ Re-applying on an upstream upgrade: copy this MIT crate, carry the manifest
 changes and any test additions above, and run Frame's focused offline
 build, tests and clippy for all three forks. Compare the workspace GPUI
 versions and features and the lockfile against the pre-upgrade graph.
+
+## Host-performed menu rows for flagged words (text checking)
+
+Why: Platinum's shared text checker (`frame-text-check`) offers corrections
+whose edit range can be narrower than the underlined span, an "Add to
+Dictionary" row, and a per-rule "Turn off" row. The editor's own suggestion
+rows can only replace the whole flagged span with a string, which is unsafe
+for a grammar correction, and cannot express the other two. Nothing the
+editor does today changes.
+
+The changes, all in `src/lib.rs`:
+
+- `on_span_actions(provider)`: the provider is handed a `SpanContext` (the
+  document as it is now, the flagged byte span, whether an input-method
+  composition is active) and returns the rows' labels. When it is installed,
+  it replaces the `on_suggest` rows for a flagged word.
+- `EditorEvent::SpanAction { range, index }`: choosing one of those rows
+  closes the menu and emits this event. The editor changes no text; the host
+  validates and performs the action (a correction is `replace_range`, which
+  is one undo step).
+- `selected_range()`, `marked_range()` and `diagnostics()`: read-only
+  accessors for the selection, the active composition (both in bytes of
+  `text()`) and the underlined spans.
+- `flagged_rows`, `undo` and `redo` made public, so a host can test its rows
+  and the history without a pointer or a key event; and the private
+  `choose_host_row`, extracted from `on_right_mouse_down`.
+- Tests: `span_actions_are_performed_by_the_host` and
+  `a_host_replacement_is_one_undo_step`.
+
+Re-applying on an upgrade: carry the `DiagMenu.host` flag, the
+`span_actions` field, the four public items above and the two helpers.

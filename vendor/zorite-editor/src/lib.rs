@@ -312,6 +312,9 @@ struct DiagMenu {
     scroll: ScrollHandle,
     /// Whether the "Turn into" flyout is open (hover-opened; dies with the menu).
     turn_into: bool,
+    /// THEOREM PATCH: the rows came from [`EditorState::on_span_actions`], so
+    /// choosing one emits [`EditorEvent::SpanAction`] and the host performs it.
+    host: bool,
 }
 
 /// A block kind the right-click "Turn into" menu converts between —
@@ -557,6 +560,11 @@ pub enum EditorEvent {
     /// (`None`). Emitted only on change, so a host can show a preview card
     /// anchored to the link.
     HoverLink(Option<(zorite_markdown::syntax::LinkHit, Bounds<Pixels>)>),
+    /// THEOREM PATCH: a row of the menu built by [`EditorState::on_span_actions`]
+    /// was chosen: the flagged span's byte `range` and the row's `index`. The
+    /// editor changes nothing; the host performs the action, so a correction
+    /// can be refused when the text moved on after the span was flagged.
+    SpanAction { range: Range<usize>, index: usize },
 }
 
 /// A table column's text alignment, for the host-driven alignment toolbar
@@ -571,6 +579,22 @@ pub enum CellAlign {
 /// Provides replacement suggestions for a flagged word (best first); set by the
 /// host via [`EditorState::on_suggest`] and consulted on right-click.
 type SuggestFn = Box<dyn Fn(&str) -> Vec<String>>;
+
+/// THEOREM PATCH: what the span-actions provider is told about the flagged
+/// span the person right-clicked. `text` is the document as it is now, so the
+/// provider needs no handle on the editor (which is borrowed while it runs).
+pub struct SpanContext<'a> {
+    pub text: &'a str,
+    /// The flagged span, in bytes of `text`.
+    pub range: Range<usize>,
+    /// Whether an input-method composition is active.
+    pub composing: bool,
+}
+
+/// THEOREM PATCH: the labels of the menu rows for a flagged span, in order.
+/// Set by the host via [`EditorState::on_span_actions`]; it replaces the
+/// [`SuggestFn`] rows and its rows are performed by the host.
+type SpanActionsFn = Box<dyn Fn(SpanContext<'_>) -> Vec<String>>;
 
 /// Resolves a standalone image line's `src` to a decoded image so the editor can
 /// render it inline (W4). Set by the host via
@@ -886,6 +910,9 @@ pub struct EditorState {
     /// the user right-clicks it. Set by the host via [`Self::on_suggest`];
     /// without it, the right-click menu has nothing to offer.
     suggest: Option<SuggestFn>,
+    /// THEOREM PATCH: host-performed rows for a flagged word; see
+    /// [`Self::on_span_actions`].
+    span_actions: Option<SpanActionsFn>,
     /// Resolves a standalone image line's `src` to a decoded image for inline
     /// rendering (W4); set by the host via [`Self::set_block_image_provider`].
     block_image: Option<BlockImageFn>,
@@ -1116,6 +1143,7 @@ impl EditorState {
             image_menu: None,
             prop_menu: None,
             suggest: None,
+            span_actions: None,
             block_image: None,
             block_chip: None,
             embed_view: None,
@@ -1293,6 +1321,33 @@ impl EditorState {
     /// on right-click, never in the per-edit detection pass.
     pub fn on_suggest(&mut self, provider: impl Fn(&str) -> Vec<String> + 'static) {
         self.suggest = Some(Box::new(provider));
+    }
+
+    /// THEOREM PATCH: install the provider for the right-click menu of a
+    /// flagged span, in place of [`Self::on_suggest`]. It returns the rows'
+    /// labels; choosing row `i` emits [`EditorEvent::SpanAction`] and changes
+    /// no text, so the host decides whether, and how, to act. A host that
+    /// replaces text does it with [`Self::replace_range`], which is one undo
+    /// step.
+    pub fn on_span_actions(&mut self, provider: impl Fn(SpanContext<'_>) -> Vec<String> + 'static) {
+        self.span_actions = Some(Box::new(provider));
+    }
+
+    /// THEOREM PATCH: the selection in bytes of [`Self::text`]; collapsed to
+    /// the caret when nothing is selected.
+    pub fn selected_range(&self) -> Range<usize> {
+        self.selected_range.clone()
+    }
+
+    /// THEOREM PATCH: the flagged spans currently underlined.
+    pub fn diagnostics(&self) -> &[Diagnostic] {
+        &self.diagnostics
+    }
+
+    /// THEOREM PATCH: the input-method composition (marked text) in bytes of
+    /// [`Self::text`], if one is active.
+    pub fn marked_range(&self) -> Option<Range<usize>> {
+        self.marked_range.clone()
     }
 
     /// Install the provider that resolves a standalone image line's `src` to a
@@ -2983,7 +3038,8 @@ impl EditorState {
 
     // --- Undo / redo ---------------------------------------------------------
 
-    fn undo(&mut self, _: &Undo, _: &mut Window, cx: &mut Context<Self>) {
+    /// THEOREM PATCH: public so a host's tests can step the history without a key event.
+    pub fn undo(&mut self, _: &Undo, _: &mut Window, cx: &mut Context<Self>) {
         if let Some(prev) = self.undo_stack.pop() {
             self.redo_stack.push(self.snapshot());
             self.restore(prev);
@@ -2992,7 +3048,8 @@ impl EditorState {
         }
     }
 
-    fn redo(&mut self, _: &Redo, _: &mut Window, cx: &mut Context<Self>) {
+    /// THEOREM PATCH: public so a host's tests can step the history without a key event.
+    pub fn redo(&mut self, _: &Redo, _: &mut Window, cx: &mut Context<Self>) {
         if let Some(next) = self.redo_stack.pop() {
             self.undo_stack.push(self.snapshot());
             self.restore(next);
@@ -3928,6 +3985,7 @@ impl EditorState {
                     suggestions: Vec::new(),
                     scroll: ScrollHandle::new(),
                     turn_into: false,
+                    host: false,
                 });
             } else {
                 self.move_to(offset, cx);
@@ -3950,21 +4008,47 @@ impl EditorState {
         self.focus(window, cx);
         // Suggestions when the click lands on a flagged word; the clipboard
         // verbs (Cut / Copy / Paste) ride along either way.
-        let (range, suggestions) = match self.diagnostic_at(offset).map(|d| d.range.clone()) {
-            Some(range) => {
-                let word = self.content[range.clone()].to_string();
-                let suggestions = self.suggest.as_ref().map(|f| f(&word)).unwrap_or_default();
-                (range, suggestions)
-            }
-            None => (offset..offset, Vec::new()),
-        };
+        let (range, suggestions, host) = self.flagged_rows(offset);
         self.menu = Some(DiagMenu {
             anchor,
             range,
             suggestions: suggestions.into_iter().map(SharedString::from).collect(),
             scroll: ScrollHandle::new(),
             turn_into: false,
+            host,
         });
+        cx.notify();
+    }
+
+    /// The flagged span at `offset` (or `offset..offset` when none), the labels
+    /// of its menu rows, and whether the host performs them
+    /// ([`Self::on_span_actions`]) rather than the editor replacing the span.
+    /// Public so a host can test the rows it supplies without a pointer.
+    pub fn flagged_rows(&self, offset: usize) -> (Range<usize>, Vec<String>, bool) {
+        match self.diagnostic_at(offset).map(|d| d.range.clone()) {
+            Some(range) if self.span_actions.is_some() => {
+                let rows = self.span_actions.as_ref().map_or_else(Vec::new, |rows| {
+                    rows(SpanContext {
+                        text: &self.content,
+                        range: range.clone(),
+                        composing: self.marked_range.is_some(),
+                    })
+                });
+                (range, rows, true)
+            }
+            Some(range) => {
+                let word = self.content[range.clone()].to_string();
+                let suggestions = self.suggest.as_ref().map(|f| f(&word)).unwrap_or_default();
+                (range, suggestions, false)
+            }
+            None => (offset..offset, Vec::new(), false),
+        }
+    }
+
+    /// Close the menu and hand row `index` of the flagged `range` to the host.
+    fn choose_host_row(&mut self, range: Range<usize>, index: usize, cx: &mut Context<Self>) {
+        self.menu = None;
+        cx.emit(EditorEvent::SpanAction { range, index });
         cx.notify();
     }
 
@@ -5388,6 +5472,7 @@ impl Render for EditorState {
                     suggestions,
                     scroll,
                     turn_into: menu_turn_into,
+                    host: host_rows,
                 } = menu;
                 let count = suggestions.len();
                 // Menu chrome from the host's theme (fallbacks match the former
@@ -5427,6 +5512,10 @@ impl Render for EditorState {
                                     // Keep the editor's own mouse-down from clearing
                                     // the menu / moving the caret out from under us.
                                     cx.stop_propagation();
+                                    if host_rows {
+                                        editor.choose_host_row(range.clone(), i, cx);
+                                        return;
+                                    }
                                     editor.apply_suggestion(
                                         range.clone(),
                                         &replacement,
@@ -7052,6 +7141,120 @@ mod tests {
                 e.replace_text_in_range(None, "仮名", window, cx);
                 assert_eq!(e.content, "abc仮名");
                 assert_eq!(e.marked_range, None);
+            })
+            .unwrap();
+    }
+
+    /// THEOREM PATCH: a host that installs `on_span_actions` supplies the rows
+    /// for a flagged word and performs them. The editor tells the provider the
+    /// document, the span and whether a composition is active, and choosing a
+    /// row changes no text.
+    #[gpui::test]
+    fn span_actions_are_performed_by_the_host(cx: &mut gpui::TestAppContext) {
+        use super::{Diagnostic, EditorEvent};
+        use std::{cell::RefCell, rc::Rc};
+
+        let editor = cx.update(|cx| {
+            cx.open_window(Default::default(), |window, cx| {
+                cx.new(|cx| EditorState::new(window, cx).with_text("teh cat"))
+            })
+            .unwrap()
+        });
+        let entity = editor.update(cx, |_, _, cx| cx.entity()).unwrap();
+        let events = Rc::new(RefCell::new(Vec::new()));
+        let sink = events.clone();
+        let _subscription = cx.update(|cx| {
+            cx.subscribe(&entity, move |_, event: &EditorEvent, _| {
+                sink.borrow_mut().push(event.clone());
+            })
+        });
+        let seen = Rc::new(RefCell::new(Vec::new()));
+        let log = seen.clone();
+        editor
+            .update(cx, |e, window, cx| {
+                e.set_diagnostics(vec![Diagnostic { range: 0..3 }], cx);
+                // Without the host's provider the editor's own suggestions apply.
+                e.on_suggest(|word| vec![format!("own:{word}")]);
+                let (range, rows, host) = e.flagged_rows(1);
+                assert_eq!((range, rows, host), (0..3, vec!["own:teh".to_owned()], false));
+
+                e.on_span_actions(move |context| {
+                    log.borrow_mut()
+                        .push((context.text.to_owned(), context.range, context.composing));
+                    vec!["the".to_owned(), "Add to Dictionary".to_owned()]
+                });
+                let (range, rows, host) = e.flagged_rows(1);
+                assert_eq!(range, 0..3);
+                assert_eq!(rows, ["the", "Add to Dictionary"]);
+                assert!(host, "the host performs these rows");
+                // Off a flagged span there is nothing to offer.
+                let (range, rows, host) = e.flagged_rows(5);
+                assert_eq!((range, rows.is_empty(), host), (5..5, true, false));
+
+                // Choosing a row only reports it.
+                e.choose_host_row(0..3, 1, cx);
+                assert_eq!(e.text(), "teh cat");
+                assert!(e.menu.is_none());
+
+                // During a composition the provider is told so.
+                e.selected_range = 7..7;
+                e.replace_and_mark_text_in_range(None, "か", Some(1..1), window, cx);
+                assert_eq!(e.marked_range(), Some(7..10));
+                assert_eq!(e.selected_range(), 10..10);
+                e.flagged_rows(1);
+            })
+            .unwrap();
+        // Starting the composition above changes the text, which also emits
+        // `Changed`; only the span action is the host's business here.
+        let span_actions: Vec<EditorEvent> = events
+            .borrow()
+            .iter()
+            .filter(|event| matches!(event, EditorEvent::SpanAction { .. }))
+            .cloned()
+            .collect();
+        assert_eq!(
+            span_actions,
+            [EditorEvent::SpanAction {
+                range: 0..3,
+                index: 1
+            }]
+        );
+        let seen = seen.borrow();
+        assert_eq!(seen[0], ("teh cat".to_owned(), 0..3, false));
+        assert_eq!(seen.last().unwrap().2, true, "composing is reported");
+    }
+
+    /// THEOREM PATCH: a replacement the host makes with `replace_range` is one
+    /// undo step, and undoing it leaves the earlier typing intact.
+    #[gpui::test]
+    fn a_host_replacement_is_one_undo_step(cx: &mut gpui::TestAppContext) {
+        use super::{Redo, Undo};
+
+        let editor = cx.update(|cx| {
+            cx.open_window(Default::default(), |window, cx| {
+                cx.new(|cx| EditorState::new(window, cx))
+            })
+            .unwrap()
+        });
+        editor
+            .update(cx, |e, window, cx| {
+                for typed in ["t", "e", "h"] {
+                    e.replace_text_in_range(None, typed, window, cx);
+                }
+                assert_eq!(e.text(), "teh");
+                e.replace_range(0..3, "the", cx);
+                assert_eq!(e.text(), "the");
+                e.undo(&Undo, window, cx);
+                assert_eq!(e.text(), "teh", "the correction undoes by itself");
+                e.redo(&Redo, window, cx);
+                assert_eq!(e.text(), "the");
+                e.undo(&Undo, window, cx);
+                assert_eq!(e.text(), "teh");
+                // The typing before it is still undoable, as it was.
+                for _ in 0..3 {
+                    e.undo(&Undo, window, cx);
+                }
+                assert_eq!(e.text(), "");
             })
             .unwrap();
     }
