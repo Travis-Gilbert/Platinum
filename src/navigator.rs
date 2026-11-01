@@ -341,7 +341,7 @@ impl Navigator {
                     "Turn On Ask"
                 }
                 .into(),
-                icons::ask(),
+                icons::agent(),
                 Box::new(ToggleAsk) as Box<dyn Action>,
                 !pointer,
                 false,
@@ -448,7 +448,7 @@ impl Navigator {
             group = group.item(
                 CommandItem::new()
                     .label(format!("Ask “{query}”"))
-                    .icon(icons::ask())
+                    .icon(icons::agent())
                     .keywords([query.to_owned()]),
             );
             group_picks.push(Pick::Ask(query.to_owned()));

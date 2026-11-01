@@ -6,15 +6,21 @@
 //! which take the page's own color; so, nearly, does the address field: text
 //! people read never sits on the glass alone.
 //!
-//! It is AppKit's clear glass, the kind that lets what is behind it through
-//! sharply enough to see; window-sized regular glass frosts it to a flat grey.
-//! Clear glass needs dimming under text, so the glass leans to the theme's
-//! frame color, as its own tint rather than under a layer of paint that would
-//! flatten it, by as much as keeps Home's text readable over a white window
-//! behind Platinum. No tint makes it light over a black one, so the light theme
-//! also lays a coat of the frame's color over it. It takes the chrome's
+//! It is AppKit's regular glass, the kind Apple makes for legibility over any
+//! content. Clear glass lets more of the desktop through but needs dimming
+//! under text, which a window over any desktop cannot promise. The glass
+//! leans to the theme's frame color, as its own tint rather than under a
+//! layer of paint that would flatten it: in the dark theme by as much as
+//! keeps Home's secondary text readable over a white window behind Platinum.
+//! The light theme's text reads on light glass over a black window at any
+//! tint, so there the tint is for the color alone. It takes the chrome's
 //! appearance, not the system's: Platinum in Light on a Dark system gets light
 //! glass.
+//!
+//! AppKit draws an inactive window's glass lighter than any tint holds, and
+//! has no way to keep it drawn as active. So while the window is inactive
+//! the frame takes the theme's solid color over the glass, as AppKit's own
+//! vibrancy turns flat in an inactive window.
 //!
 //! Without the glass (before macOS 26, or with Reduce Transparency or
 //! Increase Contrast on) the window stays opaque and the frame keeps the
@@ -24,21 +30,19 @@
 //! under GPUI's view the way GPUI adds its own blur view
 //! (`set_background_appearance` with `Blurred`, in `gpui-pre-macos`), on a
 //! window GPUI makes `Transparent`. Its tint is its own `tintColor`, its
-//! appearance AppKit's `NSAppearanceCustomization`.
+//! appearance AppKit's `NSAppearanceCustomization`. Whether the window is
+//! active is GPUI's `Window::is_window_active`, and GPUI redraws the window
+//! when that changes.
 
 use gpui_kit::component::{ActiveTheme as _, Theme};
 use gpui_kit::{App, Global, Hsla, Window, WindowBackgroundAppearance};
 
 /// How strongly the dark glass leans to the frame's color: enough that the
-/// theme's text stays readable with a white window behind.
-const DARK_TINT: f32 = 0.65;
-/// The same for light glass, with a black window behind.
+/// theme's secondary text (`muted_foreground`) keeps 3:1 with a white window
+/// behind.
+const DARK_TINT: f32 = 0.85;
+/// The same for light glass, which needs none for its text.
 const LIGHT_TINT: f32 = 0.6;
-/// How much of the frame's color lies over light glass. Clear glass, however
-/// strongly tinted, stays a slate grey over a dark desktop, where the light
-/// theme's text does not read; this much of the frame's own color makes it
-/// light over any desktop and still lets the glass's sheen through.
-const LIGHT_FRAME: f32 = 0.8;
 /// How much of the page's color lies over the frame on Platinum's own surfaces
 /// in a tab's card.
 const PANE: f32 = 0.5;
@@ -66,17 +70,14 @@ pub fn install(window: &mut Window, cx: &mut App) {
     }
 }
 
-/// The color of the window's frame: the theme's title bar, or, over the
-/// glass tinted to it, nothing in the dark theme and a lighter coat of it in
-/// the light one (`LIGHT_FRAME`).
-pub fn frame(cx: &App) -> Hsla {
-    let theme = cx.theme();
-    if !cx.has_global::<Glass>() {
-        theme.title_bar
-    } else if theme.is_dark() {
+/// The color of the window's frame: nothing over the glass, which is tinted
+/// to it, and the theme's title bar without the glass or while the window is
+/// inactive.
+pub fn frame(window: &Window, cx: &App) -> Hsla {
+    if cx.has_global::<Glass>() && window.is_window_active() {
         gpui_kit::transparent_black()
     } else {
-        theme.title_bar.opacity(LIGHT_FRAME)
+        cx.theme().title_bar
     }
 }
 
@@ -89,7 +90,8 @@ pub fn pane(cx: &App) -> Hsla {
 }
 
 /// What a fill over the frame comes to, for the color of text on it. The
-/// glass is tinted to the frame's color enough to stand for it here.
+/// glass is tinted to the frame's color enough to stand for it here, and an
+/// inactive window paints the frame's color itself.
 pub fn seen(fill: Hsla, cx: &App) -> Hsla {
     cx.theme().title_bar.blend(fill)
 }
@@ -146,7 +148,7 @@ mod macos {
         // Only its content view is sure to be inside the glass; GPUI's view
         // stays above it, where AppKit keeps the window's own views.
         glass.setContentView(Some(&NSView::new(mtm)));
-        glass.setStyle(NSGlassEffectViewStyle::Clear);
+        glass.setStyle(NSGlassEffectViewStyle::Regular);
         // The window's own corners round it.
         glass.setCornerRadius(0.);
         content.addSubview_positioned_relativeTo(&glass, NSWindowOrderingMode::Below, Some(view));
