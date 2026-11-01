@@ -73,6 +73,10 @@ fn main() -> anyhow::Result<()> {
         return browser::workspace_check::run(output.into());
     }
     #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_CANVAS_CHECK") {
+        return browser::canvas_check::run(output.into());
+    }
+    #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_THEOREM_LIVE_CHECK") {
         return browser::theorem_live_check::run(output.into());
     }

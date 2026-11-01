@@ -4251,6 +4251,7 @@ dependencies = [
  "surfman",
  "tempfile",
  "theorem-browser-substrate",
+ "theorem-canvas",
  "theorem-surface-contracts",
  "theoremweb-agent-runtime",
  "tokenizers",
@@ -15579,6 +15580,14 @@ dependencies = [
  "theorem-space",
  "tokio",
  "url",
+]
+
+[[package]]
+name = "theorem-canvas"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

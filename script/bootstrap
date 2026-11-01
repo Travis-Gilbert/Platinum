@@ -19,6 +19,9 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 theorem_rev="08495b15879a7bc2449d43c49530f549268d05fc"
 theorem_branch="claude/agent-runtime-record-view"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
+# The shared board's contract crate (theorem-canvas), from the canvas branch.
+canvas_rev="3cfe6ebb9224ebbce27550107b171aaa895ad20e"
+canvas_branch="claude/pm-canvas"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"
 checkout="$deps_dir/theorem-search"
@@ -44,6 +47,23 @@ fi
 actual="$(git -C "$checkout" rev-parse HEAD)"
 if [[ "$actual" != "$theorem_rev" ]]; then
   echo "deps/theorem-search is at $actual, Platinum pins $theorem_rev" >&2
+  exit 1
+fi
+
+canvas="$deps_dir/theorem-canvas"
+if [[ ! -d "$canvas" ]]; then
+  repo="${FRAME_THEOREM_REPO:-$root/../Theorem}"
+  if [[ -d "$repo/.git" ]]; then
+    git -C "$repo" fetch origin "$canvas_branch"
+    git -C "$repo" worktree add --detach "$canvas" "$canvas_rev"
+  else
+    git clone --branch "$canvas_branch" "$theorem_url" "$canvas"
+    git -C "$canvas" checkout --detach "$canvas_rev"
+  fi
+fi
+actual="$(git -C "$canvas" rev-parse HEAD)"
+if [[ "$actual" != "$canvas_rev" ]]; then
+  echo "deps/theorem-canvas is at $actual, Platinum pins $canvas_rev" >&2
   exit 1
 fi
 

@@ -1,11 +1,14 @@
 //! Persistent spatial workspace. The view-less whiteboard Engine is hosted:
 //! it requests camera changes and emits commits; this host owns both values.
+pub(crate) mod authority;
 pub(crate) mod input;
 pub(crate) mod surface;
 
 use crate::page::Page;
 use crate::session::format::{BoardState, CardPlacement, NotePlacement};
-use gpui_kit::component::{ActiveTheme as _, menu::ContextMenuExt as _};
+use gpui_kit::component::{
+    ActiveTheme as _, Sizable as _, button::ButtonVariants as _, menu::ContextMenuExt as _,
+};
 use gpui_kit::{
     App, AppContext as _, Bounds, Context, Entity, FocusHandle, Focusable, InteractiveElement as _,
     IntoElement, ParentElement as _, Pixels, Point, Render, Styled as _, Subscription, Task,
@@ -16,8 +19,10 @@ use gpui_whiteboard::{
     BoardThumbnailView, Camera, Element, ElementKind, EmbedGeom, LocalThumbnailSnapshot, Scene,
     WhiteboardEvent, WhiteboardStyle,
 };
+use authority::PREVIEW_BASE;
 use input::SharedInput;
 use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 const CARD: u64 = 1;
@@ -28,6 +33,8 @@ pub(crate) struct BoardPage {
     pub id: u64,
     pub opener: Option<u64>,
     pub title: String,
+    /// The page's address: its card's content reference on the shared board.
+    pub url: Option<String>,
     pub page: Option<Entity<Page>>,
 }
 
@@ -74,7 +81,22 @@ pub(crate) struct SpatialCanvas {
     springs: Option<[gpui_kit::SpringState; 3]>,
     _page_events: Option<Subscription>,
     _controls: Option<Subscription>,
+    /// The shared board in Theorem, when the native authority is configured.
+    shared: Option<Arc<authority::Client>>,
+    link: authority::Sync,
+    previews: Vec<authority::Preview>,
+    /// Previews the person removed, until the authority answers.
+    removing: Vec<u64>,
+    conflict: Option<String>,
+    /// Nothing is sent before a snapshot names what is already there.
+    ready: bool,
+    pushing: Option<Task<()>>,
+    dirty: bool,
+    _poll: Option<Task<()>>,
 }
+
+/// How often the board takes a fresh snapshot of the shared board.
+const POLL: Duration = Duration::from_secs(2);
 
 impl SpatialCanvas {
     pub fn new(page: Entity<Page>, cx: &mut Context<Self>) -> Self {
@@ -162,6 +184,18 @@ impl SpatialCanvas {
                 }
             })
         });
+        let shared = authority::Client::from_env().map(Arc::new);
+        let poll = shared.clone().map(|client| {
+            cx.spawn(async move |this, cx| {
+                loop {
+                    let board = async_compat::Compat::new(client.board()).await;
+                    if this.update(cx, |this, cx| this.adopted(board, cx)).is_err() {
+                        return;
+                    }
+                    cx.background_executor().timer(POLL).await;
+                }
+            })
+        });
         Self {
             pages: page
                 .as_ref()
@@ -170,6 +204,7 @@ impl SpatialCanvas {
                         id: CARD,
                         opener: None,
                         title: page.read(cx).title().to_string(),
+                        url: page.read(cx).url().map(|url| url.to_string()),
                         page: Some(page.clone()),
                     }]
                 })
@@ -203,7 +238,273 @@ impl SpatialCanvas {
             springs: None,
             _page_events: events,
             _controls: controls,
+            shared,
+            link: authority::Sync::new(&[], authority::run_id()),
+            previews: Vec::new(),
+            removing: Vec::new(),
+            conflict: None,
+            ready: false,
+            pushing: None,
+            dirty: false,
+            _poll: poll,
         }
+    }
+
+    /// Every card, note and preview as the shared board sees it.
+    fn local_objects(&self, cx: &App) -> Vec<authority::LocalObject> {
+        self.scene
+            .elements
+            .iter()
+            .filter_map(|e| {
+                let ElementKind::Embed(g) = &e.kind else {
+                    return None;
+                };
+                let kind = if let Some(page) = self.pages.iter().find(|p| p.id == e.id) {
+                    authority::LocalKind::Page {
+                        url: page.url.clone().unwrap_or_default(),
+                        title: page.title.clone(),
+                    }
+                } else if let Some((_, note)) = self.notes.iter().find(|(id, _)| *id == e.id) {
+                    let note = note.read(cx);
+                    authority::LocalKind::Note {
+                        document_id: note.id.clone(),
+                        title: note.title(cx),
+                    }
+                } else if e.id >= PREVIEW_BASE {
+                    authority::LocalKind::Preview
+                } else {
+                    return None;
+                };
+                Some(authority::LocalObject {
+                    local: e.id,
+                    rect: [g.x as f64, g.y as f64, g.w as f64, g.h as f64],
+                    kind,
+                })
+            })
+            .collect()
+    }
+
+    /// Send what changed on this board to the shared board, one mutation
+    /// at a time; a change made meanwhile is sent when these are answered.
+    fn push(&mut self, cx: &mut Context<Self>) {
+        let Some(client) = self.shared.clone() else {
+            return;
+        };
+        if self.pushing.is_some() || !self.ready {
+            self.dirty = true;
+            return;
+        }
+        let objects = self.local_objects(cx);
+        let removed: Vec<u64> = self.hidden.iter().chain(&self.removing).copied().collect();
+        let requests = self.link.outgoing(&objects, &removed);
+        if requests.is_empty() {
+            return;
+        }
+        self.pushing = Some(cx.spawn(async move |this, cx| {
+            for (local, request) in requests {
+                let operation = request.mutation.operation();
+                let answer = async_compat::Compat::new(client.mutate(&request)).await;
+                if this
+                    .update(cx, |this, cx| this.answered(local, operation, answer, cx))
+                    .is_err()
+                {
+                    return;
+                }
+            }
+            let _ = this.update(cx, |this, cx| {
+                this.pushing = None;
+                if std::mem::take(&mut this.dirty) {
+                    this.push(cx);
+                }
+            });
+        }));
+    }
+
+    fn answered(
+        &mut self,
+        local: u64,
+        operation: theorem_canvas::Operation,
+        answer: Result<authority::Answer, String>,
+        cx: &mut Context<Self>,
+    ) {
+        self.removing.retain(|id| *id != local);
+        match answer {
+            Ok(authority::Answer::Accepted(receipt)) => {
+                self.link.receipt(local, &receipt);
+                if let Some(theorem_canvas::Reconciled::PersonOverAgent { previous_actor, .. }) =
+                    &receipt.reconciled
+                {
+                    let who = match previous_actor {
+                        theorem_canvas::Actor::Agent { id } => format!("agent {id}"),
+                        _ => "Theorem".to_owned(),
+                    };
+                    self.conflict = Some(format!(
+                        "Your change replaced a newer placement by {who}."
+                    ));
+                }
+            }
+            Ok(authority::Answer::Refused(refusal)) => {
+                if let Some(conflict) = self.link.refusal(local, operation, &refusal) {
+                    if let Some(rect) = conflict.rect {
+                        self.place(local, rect);
+                    }
+                    if conflict.hide {
+                        self.withdraw(local);
+                    }
+                    self.conflict = Some(conflict.message);
+                }
+            }
+            Err(message) => {
+                self.link.failed(local);
+                self.conflict = Some(format!("The shared board could not be reached: {message}"));
+            }
+        }
+        self.present();
+        cx.emit(BoardEvent::Changed);
+        cx.notify();
+    }
+
+    /// Take a snapshot of the shared board.
+    fn adopted(
+        &mut self,
+        board: Result<Option<theorem_canvas::CanvasBoard>, String>,
+        cx: &mut Context<Self>,
+    ) {
+        let board = match board {
+            Ok(Some(board)) => board,
+            // The Space has not been saved in Theorem yet: nothing to share.
+            Ok(None) => return,
+            Err(message) => {
+                self.conflict = Some(format!("The shared board could not be reached: {message}"));
+                cx.notify();
+                return;
+            }
+        };
+        let known = self
+            .scene
+            .elements
+            .iter()
+            .map(|e| e.id)
+            .chain(self.hidden.iter().copied())
+            .collect();
+        let Some(adopted) = self.link.adopt(&board, &known) else {
+            return;
+        };
+        let changed = !adopted.moves.is_empty()
+            || !adopted.withdrawn.is_empty()
+            || adopted.previews != self.previews;
+        if changed {
+            self.take(adopted, cx);
+        }
+        // Only now, with every card where the authority holds it, does this
+        // board send what it has that the authority does not.
+        if !self.ready {
+            self.ready = true;
+            self.dirty = false;
+            self.push(cx);
+        }
+    }
+
+    /// Show a snapshot's changes: moves, removals and previews.
+    fn take(&mut self, adopted: authority::Adopted, cx: &mut Context<Self>) {
+        for (local, rect) in adopted.moves {
+            self.place(local, rect);
+        }
+        if !adopted.withdrawn.is_empty() {
+            let count = adopted.withdrawn.len();
+            for local in adopted.withdrawn {
+                self.withdraw(local);
+            }
+            self.conflict = Some(format!(
+                "{count} {} removed from the shared board elsewhere. Show removed pages puts {} back.",
+                if count == 1 { "card was" } else { "cards were" },
+                if count == 1 { "it" } else { "them" },
+            ));
+        }
+        let shown: Vec<u64> = adopted.previews.iter().map(|p| p.local).collect();
+        self.scene.elements.retain(|e| {
+            e.id < PREVIEW_BASE || shown.contains(&e.id) || self.link.is_busy(e.id)
+        });
+        for preview in &adopted.previews {
+            let title = format!("{} \u{b7} {}", preview.kind, preview.title);
+            let [x, y, w, h] = preview.rect.map(|n| n as f32);
+            match self.scene.elements.iter_mut().find(|e| e.id == preview.local) {
+                Some(e) => {
+                    if let ElementKind::Embed(g) = &mut e.kind
+                        && !self.link.is_busy(preview.local)
+                    {
+                        (g.x, g.y, g.w, g.h, g.title) = (x, y, w, h, title);
+                    }
+                }
+                None => self.scene.elements.push(Element {
+                    id: preview.local,
+                    kind: ElementKind::Embed(EmbedGeom {
+                        page_id: 0,
+                        title,
+                        x,
+                        y,
+                        w,
+                        h,
+                    }),
+                    stroke: None,
+                    fill: None,
+                    label: None,
+                    label_color: None,
+                    styles: vec![],
+                    mindmap: None,
+                }),
+            }
+        }
+        self.selection.retain(|id| *id < PREVIEW_BASE || shown.contains(id));
+        self.previews = adopted.previews;
+        self.present();
+        cx.emit(BoardEvent::Changed);
+        cx.notify();
+    }
+
+    /// Move a card to where the shared board holds it.
+    fn place(&mut self, local: u64, rect: [f64; 4]) {
+        if let Some(e) = self.scene.elements.iter_mut().find(|e| e.id == local)
+            && let ElementKind::Embed(g) = &mut e.kind
+        {
+            [g.x, g.y, g.w, g.h] = rect.map(|n| n as f32);
+        }
+    }
+
+    /// Take a card off this board because its object is gone.
+    fn withdraw(&mut self, local: u64) {
+        if local < PREVIEW_BASE && !self.hidden.contains(&local) {
+            self.hidden.push(local);
+        }
+        self.scene.elements.retain(|e| e.id != local);
+        self.selection.retain(|id| *id != local);
+    }
+
+    /// Why the shared board refused or reconciled the last change.
+    pub fn conflict(&self) -> Option<&str> {
+        self.conflict.as_deref()
+    }
+
+    /// The preview cards shown, for the native check.
+    #[cfg(feature = "snapshot")]
+    pub fn previews(&self) -> &[authority::Preview] {
+        &self.previews
+    }
+
+    /// Move a card as a finished drag does: the new rect, then the same push.
+    #[cfg(feature = "snapshot")]
+    pub fn move_card(&mut self, local: u64, rect: [f64; 4], cx: &mut Context<Self>) {
+        self.place(local, rect);
+        self.present();
+        self.push(cx);
+        cx.emit(BoardEvent::Changed);
+        cx.notify();
+    }
+
+    /// Where a card is on this board.
+    #[cfg(feature = "snapshot")]
+    pub fn rect(&self, local: u64) -> Option<[f64; 4]> {
+        self.engine.bounds(local)
     }
 
     pub fn probe_state(&self) -> serde_json::Value {
@@ -273,10 +574,17 @@ impl SpatialCanvas {
             }
             Op::Remove => {
                 if let Some(id) = id {
-                    self.hidden.push(id);
+                    if id >= PREVIEW_BASE {
+                        // Not this board's to hide: the object leaves the
+                        // shared board, and returns if the authority refuses.
+                        self.removing.push(id);
+                    } else {
+                        self.hidden.push(id);
+                    }
                     self.scene.elements.retain(|e| e.id != id);
                     self.selection.retain(|i| *i != id);
                     self.present();
+                    self.push(cx);
                 }
             }
             Op::Connect => {
@@ -301,6 +609,7 @@ impl SpatialCanvas {
             }
             Op::ShowAll => {
                 self.hidden.clear();
+                self.conflict = None;
                 self.sync(self.pages.clone(), self.active_card, cx);
                 for (_, note) in self.notes.clone() {
                     self.add_note(note, None, cx);
@@ -338,6 +647,7 @@ impl SpatialCanvas {
 
     pub fn state(&self, cx: &App) -> BoardState {
         BoardState {
+            canvas_links: self.link.links(),
             hidden: self.hidden.clone(),
             connections: self.connections.clone(),
             groups: self.groups.clone(),
@@ -372,6 +682,8 @@ impl SpatialCanvas {
 
     pub fn restore(&mut self, state: BoardState, cx: &mut Context<Self>) {
         let state = state.validate();
+        self.link = authority::Sync::new(&state.canvas_links, authority::run_id());
+        self.ready = false;
         self.hidden = state.hidden;
         self.connections = state.connections;
         self.groups = state.groups;
@@ -394,6 +706,7 @@ impl SpatialCanvas {
             self.camera = View { x, y, zoom };
         }
         self.present();
+        self.push(cx);
         cx.notify();
     }
 
@@ -412,6 +725,11 @@ impl SpatialCanvas {
                 self.notes
                     .iter()
                     .map(|(id, _)| (*id, Role::Card { connectable: true })),
+            )
+            .chain(
+                self.previews
+                    .iter()
+                    .map(|p| (p.local, Role::Card { connectable: false })),
             )
             .collect();
         let mut region_id = u64::MAX;
@@ -465,7 +783,9 @@ impl SpatialCanvas {
     pub fn sync(&mut self, pages: Vec<BoardPage>, active: u64, cx: &mut Context<Self>) {
         self.detach(cx);
         self.scene.elements.retain(|e| {
-            pages.iter().any(|p| p.id == e.id) || self.notes.iter().any(|(id, _)| *id == e.id)
+            e.id >= PREVIEW_BASE
+                || pages.iter().any(|p| p.id == e.id)
+                || self.notes.iter().any(|(id, _)| *id == e.id)
         });
         for (index, p) in pages.iter().enumerate() {
             if self.hidden.contains(&p.id) {
@@ -523,9 +843,12 @@ impl SpatialCanvas {
             .collect();
         self.pages = pages;
         self.selection.retain(|id| {
-            self.pages.iter().any(|p| p.id == *id) || self.notes.iter().any(|(n, _)| n == id)
+            *id >= PREVIEW_BASE
+                || self.pages.iter().any(|p| p.id == *id)
+                || self.notes.iter().any(|(n, _)| n == id)
         });
         self.present();
+        self.push(cx);
         cx.notify();
     }
 
@@ -590,6 +913,7 @@ impl SpatialCanvas {
             self.notes.push((id, note));
         }
         self.present();
+        self.push(cx);
         cx.emit(BoardEvent::Changed);
         cx.notify();
     }
@@ -602,6 +926,7 @@ impl SpatialCanvas {
             }
         }
         self.present();
+        self.push(cx);
         self.overview(cx);
         cx.emit(BoardEvent::Changed);
     }
@@ -787,6 +1112,7 @@ impl SpatialCanvas {
                     }
                     self.history.push(commit);
                     self.present();
+                    self.push(cx);
                     cx.emit(BoardEvent::Changed);
                 }
                 EngineEvent::Connect { from, to, .. } => {
@@ -797,7 +1123,7 @@ impl SpatialCanvas {
                 EngineEvent::Open(id) => {
                     if let Some((_, note)) = self.notes.iter().find(|(n, _)| *n == id) {
                         cx.emit(BoardEvent::EditNote(note.clone()));
-                    } else {
+                    } else if id < PREVIEW_BASE {
                         cx.emit(BoardEvent::Open(id));
                     }
                 }
@@ -966,6 +1292,84 @@ impl Render for SpatialCanvas {
                     }),
             );
         }
+        // Objects placed elsewhere: a typed preview card, never a copy of
+        // their content.
+        for preview in &self.previews {
+            let Some(rect) = self.engine.bounds(preview.local) else {
+                continue;
+            };
+            let r = self.engine.preview(&self.gesture, preview.local, rect);
+            let pos = self.camera.to_screen([r[0], r[1] + CAPTION as f64]);
+            let small = px((12. * z).max(9.));
+            surfaces.push(
+                div()
+                    .absolute()
+                    .left(px(pos[0] as f32))
+                    .top(px(pos[1] as f32))
+                    .w(px(r[2] as f32 * z))
+                    .h(px((r[3] as f32 - CAPTION) * z))
+                    .overflow_hidden()
+                    .flex()
+                    .flex_col()
+                    .gap_1()
+                    .p_3()
+                    .bg(cx.theme().secondary)
+                    .text_color(cx.theme().foreground)
+                    .child(
+                        div()
+                            .text_size(small)
+                            .text_color(cx.theme().muted_foreground)
+                            .child(preview.kind),
+                    )
+                    .child(
+                        div()
+                            .text_size(px((16. * z).max(10.)))
+                            .child(preview.title.clone()),
+                    )
+                    .child(
+                        div()
+                            .text_size(small)
+                            .text_color(cx.theme().muted_foreground)
+                            .child(preview.detail.clone()),
+                    ),
+            );
+        }
+        let conflict = self.conflict.clone().map(|message| {
+            div()
+                .absolute()
+                // Below the browser's board toolbar (`board_toolbar`, top-left),
+                // so a long message is never drawn under it.
+                .top(px(48.))
+                .left_0()
+                .right_0()
+                .flex()
+                .justify_center()
+                .child(
+                    div()
+                        .id("canvas-conflict")
+                        .flex()
+                        .items_center()
+                        .gap_3()
+                        .px_3()
+                        .py_2()
+                        .rounded_md()
+                        .border_1()
+                        .border_color(cx.theme().border)
+                        .bg(cx.theme().popover)
+                        .text_color(cx.theme().foreground)
+                        .child(message)
+                        .child(
+                            gpui_kit::component::button::Button::new("canvas-conflict-dismiss")
+                                .small()
+                                .ghost()
+                                .label("Dismiss")
+                                .on_click(cx.listener(|this, _, _, cx| {
+                                    this.conflict = None;
+                                    cx.notify();
+                                })),
+                        ),
+                )
+        });
         for [from, to] in &self.connections {
             if let (Some(a), Some(b)) = (self.engine.bounds(*from), self.engine.bounds(*to)) {
                 trails.push((
@@ -1086,6 +1490,7 @@ impl Render for SpatialCanvas {
             .child(div().absolute().inset_0().child(self.painter.clone()))
             .children(surfaces)
             .children(popup)
+            .children(conflict)
             .child(
                 canvas(
                     |_, _, _| {},
@@ -1145,7 +1550,9 @@ impl Render for SpatialCanvas {
                             .read_with(cx, |b, _| b.pages.iter().any(|p| p.id == id))
                             .unwrap_or(false)
                     });
-                    if hit.is_some() && !page {
+                    if hit.is_some_and(|id| id >= PREVIEW_BASE) {
+                        menu.menu("Remove from shared board", action(Op::Remove))
+                    } else if hit.is_some() && !page {
                         menu.menu("Open note", action(Op::Open))
                             .menu("Inspect provenance", action(Op::Provenance))
                             .menu("Connect to selected cards", action(Op::Connect))
@@ -1211,6 +1618,7 @@ mod tests {
                     id,
                     opener: None,
                     title: format!("Page {id}"),
+                    url: None,
                     page: None,
                 })
                 .collect();

@@ -31,6 +31,8 @@
 //! GPUI Kit's `Command` (`navigator.rs`); Home is `home.rs`.
 
 mod board;
+#[cfg(feature = "snapshot")]
+pub mod canvas_check;
 mod dock;
 #[cfg(feature = "performance-check")]
 pub mod performance;
@@ -1997,6 +1999,7 @@ impl Browser {
                 id: tab.id,
                 opener: self.tree.node(tab.id).and_then(|n| n.opener),
                 title: tab.title(cx).to_string(),
+                url: tab.url(cx).map(|url| url.to_string()),
                 page: tab.page.clone(),
             })
             .collect();

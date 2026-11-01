@@ -42,6 +42,11 @@ rustyred-web = { path = "deps/theorem-search/rustyredcore_THG/crates/rustyred-we
 theoremweb-agent-runtime = { path = "deps/theorem-search/apps/theoremweb/crates/agent-runtime", default-features = false }
 # The documents that host projects and the intents the workbench hands it.
 theorem-surface-contracts = { path = "deps/theorem-search/rustyredcore_THG/crates/theorem-surface-contracts" }
+# The shared board's contract (theorem.canvas.v1), wire types only, from the
+# canvas branch at deps/theorem-canvas: each card and note is an object there,
+# moved through the same revision-checked mutations agents use
+# (`src/canvas/authority.rs`).
+theorem-canvas = { path = "deps/theorem-canvas/rustyredcore_THG/crates/theorem-canvas" }
 # The runtime's reqwest client needs Tokio's reactor wherever its futures are
 # polled, and GPUI polls them on the main thread.
 async-compat = "0.2.5"
@@ -87,7 +92,7 @@ log = "0.4"
 mime_guess = "2"
 percent-encoding = "2"
 # Downloads stream through the same reqwest build RustyWeb's providers use.
-reqwest = { version = "0.12", default-features = false, features = ["http2", "rustls-tls-webpki-roots-no-provider"] }
+reqwest = { version = "0.12", default-features = false, features = ["http2", "json", "rustls-tls-webpki-roots-no-provider"] }
 # GPUI's HTTP client, so its images load from a URL (a result's favicon).
 gpui-pre-reqwest-client = "=0.3.9"
 # GPUI Kit's icons are in the binary in debug builds too. Otherwise a debug

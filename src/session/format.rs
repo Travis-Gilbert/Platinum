@@ -86,6 +86,16 @@ pub struct BoardState {
     pub cards: Vec<CardPlacement>,
     pub notes: Vec<NotePlacement>,
     pub camera: Option<[f64; 3]>,
+    /// Each card's or note's object on the shared Theorem board.
+    pub canvas_links: Vec<CanvasLink>,
+}
+
+/// A card or note and its object on the shared Theorem board, so after a
+/// restart the same object moves instead of a new one being made.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct CanvasLink {
+    pub local: u64,
+    pub id: String,
 }
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -119,6 +129,10 @@ impl BoardState {
                 && note.rect.iter().all(|n| n.is_finite() && n.abs() < 1e7)
                 && (60. ..=8192.).contains(&note.rect[2])
                 && (40. ..=8192.).contains(&note.rect[3])
+        });
+        let (mut locals, mut objects) = (HashSet::new(), HashSet::new());
+        self.canvas_links.retain(|link| {
+            !link.id.is_empty() && link.id.len() <= 256 && locals.insert(link.local) && objects.insert(link.id.clone())
         });
         self.camera = self.camera.filter(|c| {
             c.iter().all(|n| n.is_finite() && n.abs() < 1e7) && (0.02..=4.).contains(&c[2])
