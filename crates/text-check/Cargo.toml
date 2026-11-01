@@ -1,0 +1,22 @@
+[package]
+name = "frame-text-check"
+version = "0.1.0"
+edition = "2024"
+description = "Platinum's side of shared text checking: the Theorem checker for notes and web fields, with markdown prose masking, suggestion menus and the page-field protocol."
+publish = false
+
+[dependencies]
+# Theorem's shared checker. Not in the pinned `deps/theorem-search` revision
+# yet; `script/bootstrap` links the crate until the pin moves past it.
+theorem-text-check = { path = "../../deps/theorem-text-check/rustyredcore_THG/crates/theorem-text-check" }
+
+# Event offsets give the byte range of every piece of text in a note, which is
+# how code, links, HTML and front matter are told apart from prose.
+pulldown-cmark = { version = "0.13", default-features = false }
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2.0"
+
+[dev-dependencies]
+tempfile = "3"

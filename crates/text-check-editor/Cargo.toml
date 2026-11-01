@@ -1,0 +1,17 @@
+[package]
+name = "frame-text-check-editor"
+version = "0.1.0"
+edition = "2024"
+description = "Binds Platinum's shared text checking to the zorite-editor notes editor: debounced off-thread checks, underlines, and corrections that cannot corrupt text."
+publish = false
+
+[dependencies]
+frame-text-check = { path = "../text-check" }
+zorite-editor = { path = "../../vendor/zorite-editor" }
+# The same GPUI snapshot zorite-editor and the app build against.
+gpui = { package = "gpui-pre", version = "=0.3.9" }
+log = "0.4"
+
+[dev-dependencies]
+gpui = { package = "gpui-pre", version = "=0.3.9", features = ["test-support"] }
+tempfile = "3"

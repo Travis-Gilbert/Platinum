@@ -47,6 +47,31 @@ if [[ "$actual" != "$theorem_rev" ]]; then
   exit 1
 fi
 
+# theorem-text-check (spelling and grammar) landed after the revision above, and
+# bumping that pin would move every other Theorem crate Frame builds. Frame takes
+# just that crate, as a sparse detached checkout of a later commit of the same
+# repository. Move the pin to the commit that lands the crate on a Theorem
+# branch once there is one.
+text_check_rev="1d9c44a5ca00517904057014459831f73de4d993"
+text_check_branch="claude/pm-writing"
+text_check="$deps_dir/theorem-text-check"
+text_check_crate="rustyredcore_THG/crates/theorem-text-check"
+if [[ ! -d "$text_check" ]]; then
+  repo="${FRAME_THEOREM_REPO:-$root/../Theorem}"
+  if [[ ! -d "$repo/.git" ]]; then
+    git clone --no-checkout --branch "$text_check_branch" "$theorem_url" "$text_check"
+  else
+    git -C "$repo" fetch origin "$text_check_branch"
+    git -C "$repo" worktree add --detach --no-checkout "$text_check" "$text_check_rev"
+  fi
+  git -C "$text_check" sparse-checkout set --cone "$text_check_crate"
+  git -C "$text_check" checkout --detach "$text_check_rev"
+fi
+if [[ ! -f "$text_check/$text_check_crate/Cargo.toml" ]]; then
+  echo "deps/theorem-text-check has no $text_check_crate" >&2
+  exit 1
+fi
+
 # Companion client/authority changes stay reviewable in Platinum until their
 # upstream revision is published. Never modify a shared or dirty dependency.
 patch="$root/patches/theorem-model-routing.patch"

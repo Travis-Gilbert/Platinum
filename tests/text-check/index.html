@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Text Check Fixture</title>
+<style>
+  html, body { margin: 0; background: #ffffff; }
+  body { font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 8px 16px; }
+  label { display: block; margin: 8px 0 2px; color: #444444; }
+  textarea, input, #rich {
+    box-sizing: border-box; width: 520px; padding: 4px 6px; border: 1px solid #888888;
+    font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif; background: #ffffff;
+  }
+  textarea { height: 44px; }
+  #rich { min-height: 30px; }
+</style>
+</head>
+<body>
+  <!-- Each field holds exactly one thing worth correcting, so the span nearest
+       the caret is unambiguous wherever a right-click lands. -->
+  <label for="spell">Dictionary spelling</label>
+  <textarea id="spell">Please recieve this letter today.</textarea>
+
+  <label for="grammar">Grammar</label>
+  <textarea id="grammar">He are late for the meeting.</textarea>
+
+  <label for="line">Single line, common misspelling</label>
+  <input id="line" type="text" value="This has teh typo.">
+
+  <label for="rich">Contenteditable</label>
+  <div id="rich" contenteditable="true">We will recieve it soon.</div>
+
+  <label for="emoji">Emoji and a combining mark before the error</label>
+  <textarea id="emoji">&#x1F600; e&#x301; teh end.</textarea>
+
+  <label for="custom">Custom word</label>
+  <textarea id="custom">Ask Zorvath about the plan.</textarea>
+
+  <label for="secret">Password (never read)</label>
+  <input id="secret" type="password" value="recieve">
+
+  <label for="quiet">spellcheck="false" (never read)</label>
+  <textarea id="quiet" spellcheck="false">Please recieve this letter today.</textarea>
+</body>
+</html>
