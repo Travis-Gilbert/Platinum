@@ -4251,6 +4251,7 @@ dependencies = [
  "surfman",
  "tempfile",
  "theorem-browser-substrate",
+ "theorem-html-design",
  "theorem-surface-contracts",
  "theoremweb-agent-runtime",
  "tokenizers",
@@ -9925,6 +9926,7 @@ dependencies = [
  "approx",
  "palette_derive",
  "palette_math",
+ "serde",
 ]
 
 [[package]]
@@ -15652,6 +15654,19 @@ dependencies = [
  "sha2 0.10.9",
  "theorem-capability-registry",
  "uuid",
+]
+
+[[package]]
+name = "theorem-html-design"
+version = "0.1.0"
+dependencies = [
+ "palette",
+ "rustyred-thg-core",
+ "scraper",
+ "serde",
+ "serde_json",
+ "theorem-ide-runtime",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

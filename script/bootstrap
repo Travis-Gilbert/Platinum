@@ -3,7 +3,11 @@
 #
 # Platinum's RustyWeb and notes crates are path dependencies under deps/, a
 # read-only checkout of Theorem at a pinned commit of
-# claude/agent-runtime-record-view. That branch puts the chat runtime's
+# claude/pm-authoring-pin: commit 08495b1587 of claude/agent-runtime-record-view
+# plus the theorem-html-design crate (A01), which is the one crate Frame needs
+# that the older pin lacks. Cargo cannot write a lockfile that holds the same
+# crate from two checkouts, so the crate rides on the single pin rather than a
+# second one. agent-runtime-record-view puts the chat runtime's
 # record_view module behind a feature, on claude/browser-search-concurrency,
 # which adds detached browser searches to claude/notes-foundations, which builds on
 # claude/rustyweb-synthesis-on-request and codex/rustyweb-programmable-web-2.
@@ -16,8 +20,8 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="08495b15879a7bc2449d43c49530f549268d05fc"
-theorem_branch="claude/agent-runtime-record-view"
+theorem_rev="f88f7516ee798fec225296ad3a0f09c1057e65a2"
+theorem_branch="claude/pm-authoring-pin"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"

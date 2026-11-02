@@ -135,6 +135,9 @@ clap = { version = "4", features = ["derive"] }
 gpui-pre = { version = "=0.3.9", features = ["test-support"] }
 # Shows the search workers' logs in `examples/serp_check.rs`.
 env_logger = "0.11"
+# Authoring checks and the revision store behind `examples/html_author_live.rs`.
+# Lives in the single Theorem pin (see `script/bootstrap`).
+theorem-html-design = { path = "deps/theorem-search/rustyredcore_THG/crates/theorem-html-design" }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
 # Opt into the native backend's existing render-to-image test support.
