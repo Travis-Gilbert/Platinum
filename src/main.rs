@@ -30,6 +30,7 @@ mod profile_ui;
 mod recents;
 mod scene;
 mod search;
+mod sequence;
 mod serp;
 mod session;
 mod share;
