@@ -451,8 +451,10 @@ async fn run(args: Args, mut store: DesignStore<MemoryAuthority>, view: WebView,
             && std::fs::read_to_string(&release.file).is_ok_and(|page| page == corrected)
     });
     let warned_goes_out = store.release("harbor", 1, &all, &site.join("harbor-r1")).is_ok_and(|release| {
-        release.warnings.iter().map(String::as_str).collect::<BTreeSet<_>>()
-            == BTreeSet::from([NAV_OVERFLOW, PALE_LEDE])
+        // The record carries each warning whole, not only its id.
+        release.warnings.iter().all(|warning| !warning.message.is_empty())
+            && release.warnings.iter().map(|warning| warning.id.as_str()).collect::<BTreeSet<_>>()
+                == BTreeSet::from([NAV_OVERFLOW, PALE_LEDE])
     });
     let control_goes_out = store.release("control", 1, &all, &site.join("control-r1")).is_ok();
     let sandbox_ids = match store.release("sandbox", 1, &[desktop], &site.join("sandbox-r1")) {
