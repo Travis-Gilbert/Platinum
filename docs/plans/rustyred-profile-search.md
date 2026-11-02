@@ -181,7 +181,7 @@ A managed worktree isolates the original checkout's unrelated edits.
   the regression now passes without changing the component implementation.
 
 Fresh integration results: profile suite 36 passed (three opt-in credential tests
-ignored); strict profile Clippy passed; application suite 193 passed (one optional
+ignored); strict profile Clippy passed; application suite 197 passed (one optional
 model-download test ignored); normal executable and storage harness build passed.
 Native write/reopen/isolated processes passed, including cookies, localStorage,
 IndexedDB, profile records and HTTP cache requests 1 -> 1 -> 2. Native address acceptance
@@ -189,3 +189,32 @@ also passed: real keystrokes, four result kinds, and a visually inspected 2x
 render of the production Browser. Historical receipts above are separate.
 
 Evidence: [pr16-integration-2026-11-02](evidence/pr16-integration-2026-11-02/).
+
+
+### Namespace migration follow-up
+
+The Keychain namespace is part of the atomic SQLite migration, before any
+credential access. A strengthened regression first opens the migrated store,
+removes the legacy catalog, moves the installation, and only then asks for its
+Keychain service name. This failed with the previous lazy copy and now passes.
+The lazy fallback remains for graphs created by earlier builds of this PR.
+
+### Clearing every saved browsing copy
+
+The fresh integration review found that the history button did not clear Home's
+Continue list or the separate local search store. The UI now awaits all three
+owners, attempts each even if another fails, and reports failure unless all
+clears succeed. Recents persist an ordered empty snapshot and allow retries
+when that write fails. Search generations fence queued captures and searches,
+in-flight provider results, embeddings, and queued/in-flight crawl campaigns.
+A small tracked patch adds the missing clear operation to the pinned substrate
+using its atomic graph deletion API and existing search state owner. Ranking
+configuration survives; only the dedicated derived search directory is removed.
+The installation root, bookmarks, open tabs and website storage are preserved.
+The first concurrency regression exposed empty graph transactions on an empty
+store; the corrected operation is idempotent. Validation receipts are recorded
+in the integration evidence directory.
+
+The pin-unity check also exposed its outdated GStreamer single-patch argument
+matcher; it now recognizes the bootstrap patch tuple. Source and installed
+dependency identities pass `script/check-pins.py --require-deps --json`.

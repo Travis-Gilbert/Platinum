@@ -2,7 +2,7 @@
 # Prepares a Platinum checkout to build.
 #
 # Platinum's RustyWeb and notes crates are path dependencies under deps/, a
-# read-only checkout of Theorem at a pinned commit of
+# checkout of Theorem at a pinned commit of
 # claude/browser-search-concurrency. That branch adds detached browser searches
 # to claude/notes-foundations, which builds on
 # claude/rustyweb-synthesis-on-request and codex/rustyweb-programmable-web-2.
@@ -44,6 +44,13 @@ actual="$(git -C "$checkout" rev-parse HEAD)"
 if [[ "$actual" != "$theorem_rev" ]]; then
   echo "deps/theorem-search is at $actual, Platinum pins $theorem_rev" >&2
   exit 1
+fi
+
+# Apply the scoped browser-history API on top of the pinned substrate.
+patch="$root/patches/theorem-browser-clear-history.patch"
+if ! git -C "$checkout" apply --reverse --check "$patch" >/dev/null 2>&1; then
+  git -C "$checkout" apply --check "$patch"
+  git -C "$checkout" apply "$patch"
 fi
 
 if [[ -n "${FRAME_TARGET_DIR:-}" ]]; then

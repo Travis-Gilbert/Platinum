@@ -269,11 +269,8 @@ mod tests {
         .unwrap();
         drop(old);
         let store = ProfileStore::open(&root).unwrap();
-        assert_eq!(
-            Keychain::for_profile(&store).service,
-            "Frame.credentials.existing-installation.1"
-        );
         drop(store);
+        // Migration must preserve the namespace before the first credential read.
         // The graph becomes the authority; no future SQLite reads are needed.
         std::fs::remove_file(root.join("profiles.sqlite3")).unwrap();
         let moved = temp.path().join("Moved");

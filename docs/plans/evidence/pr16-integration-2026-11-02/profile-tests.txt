@@ -1,165 +1,18 @@
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on package cache
-     Locking 12 packages to latest Rust 1.97.1 compatible versions
-      Adding rustyred v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-bayes v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-contracts v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-datalog v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-derivation v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-egg v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-egraph v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-engine v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-log v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-query v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-scope v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-      Adding rustyred-turbovec v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling serde v1.0.229
-   Compiling parking_lot_core v0.9.12
-   Compiling serde_json v1.0.154
-   Compiling digest v0.10.7
-   Compiling num-complex v0.4.6
-   Compiling tokio v1.54.1
-   Compiling rand_chacha v0.9.0
-   Compiling futures-util v0.3.34
-   Compiling egglog-numeric-id v2.0.0
-   Compiling rand_chacha v0.3.1
-   Compiling parking_lot v0.12.5
-   Compiling rand v0.9.5
-   Compiling rand v0.8.8
-   Compiling egglog-concurrency v2.0.0
-   Compiling dashmap v6.2.1
-   Compiling rand_distr v0.4.3
-   Compiling petgraph v0.8.3
-   Compiling string_cache v0.8.9
-   Compiling num v0.4.3
-   Compiling icu_normalizer v2.1.1
-   Compiling egglog-union-find v2.0.0
-   Compiling once_cell v1.21.4
-   Compiling time v0.3.55
-   Compiling rustls-webpki v0.103.16
-   Compiling sha2 v0.10.9
-   Compiling const-random-macro v0.1.16
-   Compiling security-framework-sys v2.17.0
-   Compiling egglog-reports v2.0.0
-   Compiling idna_adapter v1.2.1
-   Compiling errno v0.3.14
-   Compiling ahash v0.8.12
-   Compiling idna v1.1.0
-   Compiling im-rc v15.1.0
-   Compiling const-random v0.1.18
-   Compiling rustls v0.23.46
-   Compiling security-framework v3.7.0
-   Compiling egglog-core-relations v2.0.0
-   Compiling tokio-util v0.7.20
-   Compiling tantivy-common v0.7.0
-   Compiling h2 v0.4.20
-   Compiling egraph-serialize v0.3.0
-   Compiling rustyred-egraph v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling tower v0.5.3
-   Compiling simba v0.8.1
-   Compiling rustls-native-certs v0.8.5
-   Compiling url v2.5.8
-   Compiling stop-words v0.9.0
-   Compiling tokio-rustls v0.26.6
-   Compiling getrandom v0.4.3
-   Compiling simdutf8 v0.1.5
-   Compiling tantivy-stacker v0.3.0
-   Compiling bytecheck v0.8.3
-   Compiling egglog-bridge v2.0.0
-   Compiling tower-http v0.6.11
-   Compiling tantivy-sstable v0.3.0
-   Compiling markup5ever v0.14.1
-   Compiling rustix v1.1.5
-   Compiling hyper v1.12.0
-   Compiling egglog v2.0.0
-   Compiling nalgebra v0.32.6
-   Compiling hyper-util v0.1.21
-   Compiling rustix v0.38.44
-   Compiling futures-executor v0.3.34
-   Compiling hyper-rustls v0.27.10
-   Compiling serde_urlencoded v0.7.1
-   Compiling regex-automata v0.4.18
-   Compiling rust-stemmers v1.2.0
-   Compiling http-body-util v0.1.5
-   Compiling itertools v0.12.1
-   Compiling arrayvec v0.7.8
-   Compiling blake3 v1.8.7
-   Compiling reqwest v0.12.28
-   Compiling tantivy-columnar v0.3.0
-   Compiling regex v1.13.1
-   Compiling statrs v0.17.1
-   Compiling tempfile v3.27.0
-   Compiling cached v0.56.0
-   Compiling measure_time v0.8.3
-   Compiling html5ever v0.29.1
-   Compiling chrono v0.4.45
-   Compiling fs4 v0.8.4
-   Compiling futures v0.3.34
-   Compiling curve25519-dalek v4.1.3
-   Compiling rend v0.5.4
-   Compiling ts-rs v12.0.1
-   Compiling uuid v1.28.0
-   Compiling ulid v1.2.1
-   Compiling quick-xml v0.38.4
-   Compiling tantivy-tokenizer-api v0.3.0
-   Compiling sketches-ddsketch v0.2.2
-   Compiling md-5 v0.10.6
-   Compiling lru v0.12.5
-   Compiling block-padding v0.3.3
-   Compiling env_logger v0.9.3
-   Compiling rustyred-engine v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling libsqlite3-sys v0.36.0
-   Compiling rustyred-egg v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling tantivy v0.22.1
-   Compiling object_store v0.12.5
-   Compiling rustyred-datalog v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling h3o v0.7.1
-   Compiling bm25 v2.3.2
-   Compiling imbl v7.0.2
-   Compiling rustyred-log v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling rkyv v0.8.18
-   Compiling inout v0.1.4
-   Compiling rustyred-turbovec v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling rustyred-contracts v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling ed25519-dalek v2.2.0
-   Compiling html2text v0.13.6
-   Compiling web_atoms v0.1.3
-   Compiling rustyred-derivation v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling rustyred-bayes v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling rustyred-scope v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling roaring v0.10.12
-   Compiling derive_more-impl v2.1.1
-   Compiling cssparser v0.35.0
-   Compiling markup5ever v0.35.0
-   Compiling cipher v0.4.4
-   Compiling html5ever v0.35.0
-   Compiling hmac v0.12.1
-   Compiling hashlink v0.11.1
-   Compiling rusqlite v0.38.0
-   Compiling pbkdf2 v0.12.2
-   Compiling aes v0.8.4
-   Compiling cbc v0.1.2
-   Compiling sha1 v0.10.7
-   Compiling derive_more v2.1.1
-   Compiling selectors v0.31.0
-   Compiling scraper v0.24.0
-   Compiling rustyred-query v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
-   Compiling rustyred v0.1.0-beta.2 (https://github.com/Travis-Gilbert/RustyRedDB.git?rev=708d22ef5da2801925ec0b1506b40b4aafb0e364#708d22ef)
    Compiling frame-profile v0.1.0 (/Users/travisgilbert/.codex/worktrees/pr16-integration/Platinum/crates/profile)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 18s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.46s
      Running unittests src/lib.rs (/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/deps/frame_profile-77c58533f2d3ccec)
 
 running 8 tests
 test credentials::tests::native_keychain_roundtrip ... ignored, explicit local OS-Keychain smoke test; creates and removes one synthetic item
 test migration::firefox::tests::native_nss_login_import_roundtrip_and_retry ... ignored, requires installed Mozilla NSS and certutil; synthetic credentials only
 test migration::firefox::tests::discovers_initialized_profiles_and_rejects_relative_traversal ... ok
-test migration::firefox::tests::places_wal_folders_unix_microseconds_and_retry ... ok
 test migration::firefox::tests::forms_are_allowlisted_and_builtin_extensions_excluded ... ok
 test migration::firefox::tests::sessions_take_current_navigation_exclude_closed_and_retry ... ok
-test credentials::tests::keychain_names_outlast_the_folder_rename ... ok
 test credentials::tests::sqlite_keychain_namespace_survives_rustyred_migration_and_move ... ok
+test credentials::tests::keychain_names_outlast_the_folder_rename ... ok
+test migration::firefox::tests::places_wal_folders_unix_microseconds_and_retry ... ok
 
-test result: ok. 6 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.37s
+test result: ok. 6 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 5.02s
 
      Running unittests src/bin/profile-import.rs (/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/deps/profile_import-6ecfea1b7722d0bd)
 
@@ -172,34 +25,34 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 running 16 tests
 test direct_chrome_password_import_uses_native_keychain_and_a_real_login_database ... ignored, explicit native migration smoke test; uses synthetic source/destination Keychain items
 test fill_serialization_cannot_turn_password_into_script_and_rechecks_origin ... ok
-test discovers_names_accounts_and_rejects_traversal ... ok
 test chrome_decrypts_external_openssl_vector_and_rejects_unknown_or_corrupt_formats ... ok
+test discovers_names_accounts_and_rejects_traversal ... ok
+test broken_category_does_not_block_other_categories_and_batch_report_is_durable ... ok
 test credentials_are_bound_to_exact_scheme_host_port_and_update_in_place ... ok
 test bookmarks_include_account_bookmarks_preserve_folders_and_deduplicate ... ok
 test history_snapshot_includes_committed_wal_and_import_is_idempotent ... ok
-test broken_category_does_not_block_other_categories_and_batch_report_is_durable ... ok
 test keychain_denial_never_creates_a_phantom_credential ... ok
 test password_csv_handles_quotes_unicode_newlines_and_keeps_secrets_out_of_rustyred ... ok
 test selective_form_import_excludes_payment_and_password_fields ... ok
 test html_bookmarks_use_a_real_html_parser_and_session_survives_reopen ... ok
-test session_import_uses_newest_file_ignores_closed_tabs_and_is_retry_safe ... ok
-test chromium_and_firefox_share_form_policy_and_retry_counts ... ok
-test imported_profiles_remain_separate_and_retries_reuse_destination ... ok
 test vault_verification_includes_http_without_allowing_http_fill ... ok
+test session_import_uses_newest_file_ignores_closed_tabs_and_is_retry_safe ... ok
+test imported_profiles_remain_separate_and_retries_reuse_destination ... ok
+test chromium_and_firefox_share_form_policy_and_retry_counts ... ok
 
-test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.73s
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.52s
 
      Running tests/storage.rs (/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/deps/storage-4d718892fa6f2dca)
 
 running 15 tests
-test credential_labels_update_and_delete_without_crossing_profiles ... ok
-test invalid_browser_visits_are_ignored_and_bookmarks_rejected ... ok
-test exact_address_beats_a_newer_fragment_visit_with_the_same_search_terms ... ok
 test abandoned_import_is_atomic_and_clear_history_has_no_revision_recovery ... ok
-test clear_history_rejects_a_visit_at_the_clear_timestamp ... ok
-test import_batch_deduplicates_pending_and_committed_records_and_merges_history ... ok
+test exact_address_beats_a_newer_fragment_visit_with_the_same_search_terms ... ok
+test credential_labels_update_and_delete_without_crossing_profiles ... ok
 test browser_writes_do_not_leave_control_event_records ... ok
 test history_ranks_recency_then_frequency_and_retains_updated_titles ... ok
+test clear_history_rejects_a_visit_at_the_clear_timestamp ... ok
+test invalid_browser_visits_are_ignored_and_bookmarks_rejected ... ok
+test import_batch_deduplicates_pending_and_committed_records_and_merges_history ... ok
 test legacy_default_profile_migrates_without_an_active_setting ... ok
 test queued_visit_before_clear_cannot_resurrect_history ... ok
 test search_storage_paths_preserve_default_and_imported_profile_identity ... ok
@@ -208,7 +61,7 @@ test migrates_all_records_preserves_identity_and_does_not_reimport ... ok
 test suggestions_rank_exact_urls_and_match_titles_and_literal_paths ... ok
 test shared_writer_sees_concurrent_commits_and_profiles_are_isolated ... ok
 
-test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.67s
 
    Doc-tests frame_profile
 

@@ -39,6 +39,13 @@ pub fn migrate(root: &Path, db: &mut Database) -> Result<()> {
         "Legacy active profile does not exist"
     );
     let mut nodes = Vec::new();
+    if let Some(namespace) = keychain_namespace(root)? {
+        nodes.push(NodeRecord::new(
+            "vault",
+            ["Setting"],
+            json!({"namespace": namespace}),
+        ));
+    }
     for profile in profiles {
         nodes.extend(profile_records(root, profile)?);
     }

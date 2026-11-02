@@ -163,8 +163,10 @@ the same installation/profile identity. The offline import CLI requires the
 browser to be closed, because the installation has one database writer.
 
 Address results distinguish Search, Visit, Bookmark, History and Switch to tab.
-History's **Clear browsing history** also clears the retained legacy history
-copy; bookmarks and open tabs remain. This does not erase external backups.
+History's **Clear browsing history** clears the retained legacy history,
+Home's Continue list, and captured pages and queries in local search. It waits
+for every store and cancels old pending search writes before reporting success.
+Bookmarks and open tabs remain. This does not erase external backups.
 Servo keeps its own website storage and per-profile HTTP disk cache, flushing
 completed cache entries on orderly shutdown.
 

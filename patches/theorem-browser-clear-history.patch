@@ -1,0 +1,58 @@
+diff --git a/apps/browser-substrate/src/programmable_search.rs b/apps/browser-substrate/src/programmable_search.rs
+index 6f9dbf6e9..543497630 100644
+--- a/apps/browser-substrate/src/programmable_search.rs
++++ b/apps/browser-substrate/src/programmable_search.rs
+@@ -223,6 +223,53 @@ impl PreparedBrowserSearch {
+     }
+ }
+ 
++impl BrowserSessionStore<rustyred_thg_core::graph_store::RedCoreGraphStore> {
++    /// Clear this dedicated browser store's captured pages, search sessions and
++    /// derived indexes, retaining ranking configuration. In-flight queries lose
++    /// their publication authority. Callers must also fence queued captures and
++    /// crawls while holding the same store lock.
++    pub fn clear_browsing_history(&mut self) -> GraphStoreResult<()> {
++        use rustyred_thg_core::{GraphMutation, GraphMutationBatch, NodeQuery};
++        let nodes = self
++            .store
++            .query_nodes(NodeQuery::default().with_include_expired(true))?;
++        let mutations: Vec<_> = nodes
++            .into_iter()
++            .filter(|node| {
++                !node
++                    .labels
++                    .iter()
++                    .any(|label| label == "RankProfileRevision")
++            })
++            .map(|node| GraphMutation::NodeDelete(node.id))
++            .collect();
++        if !mutations.is_empty() {
++            self.store
++                .commit_batch(GraphMutationBatch::new(mutations))?;
++        }
++        let previous = std::mem::take(&mut self.search);
++        self.search = BrowserSearchState {
++            root: previous.root,
++            opts: previous.opts,
++            embedder: previous.embedder,
++            rerankers: previous.rerankers,
++            media_rerankers: previous.media_rerankers,
++            ..Default::default()
++        };
++        self.ingested_pages = 0;
++        // This directory contains only derived browser search generations, not
++        // the profile database, session, preferences or engine website storage.
++        if let Some(root) = &self.search.root {
++            match std::fs::remove_dir_all(root) {
++                Ok(()) => {}
++                Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
++                Err(err) => return Err(error(err)),
++            }
++        }
++        Ok(())
++    }
++}
++
+ impl<S: GraphStore> BrowserSessionStore<S> {
+     pub(crate) fn admit_browser_relationship(
+         &mut self,

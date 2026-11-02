@@ -94,3 +94,18 @@ The synthetic native acceptance command is
 `script/media-env python3 tests/storage/check_native.py <storage_check binary>`.
 It checks cookies, localStorage, IndexedDB, cache reuse in a fresh process and
 absence of the same data in another profile.
+
+## Clearing local browser search history
+
+`theorem-browser-clear-history.patch` applies to Theorem
+`8c5d22bd6fea76dde197d0b9e73149d037d374d3` via `script/bootstrap`.
+The pinned substrate had no browser-history clearing operation. This patch uses
+RedCore's existing atomic deletion batch, retains rank-profile configuration,
+invalidates prepared-query ownership, and clears in-memory search state and
+only the derived `search-generations` directory. It does not delete the shared
+installation root. Platinum fences queued captures, searches, embeddings and
+crawl campaigns under the same store lock. Bootstrap checks both fresh and
+already-applied states without discarding dependency changes.
+The root application's regression opens durable stores, searches a captured
+page, clears through the profile UI's operation, and verifies after reopening
+that history, Home recents and local results are empty while bookmarks survive.

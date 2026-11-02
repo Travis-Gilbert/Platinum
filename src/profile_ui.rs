@@ -22,6 +22,25 @@ use gpui_kit::{
 pub struct ActiveProfile(pub ProfileStore);
 impl Global for ActiveProfile {}
 
+/// A successful clear acknowledges every browser-owned copy of visited data.
+pub(crate) fn clear_browsing_history(
+    store: ProfileStore,
+    cx: &mut gpui_kit::App,
+) -> gpui_kit::Task<anyhow::Result<()>> {
+    let recents = crate::recents::clear_and_flush(cx);
+    let search = crate::search::clear_history(cx);
+    cx.background_spawn(async move {
+        // Attempt every owner even if another fails.
+        let profile = store.clear_history();
+        let recents = recents.await;
+        let search = search.await;
+        profile?;
+        recents?;
+        search?;
+        anyhow::Ok(())
+    })
+}
+
 pub enum ProfileEvent {
     Open(url::Url),
 }
@@ -391,7 +410,7 @@ impl Render for ProfilePanel {
                         .on_click(cx.listener(|this, _, _, cx| {
                             this.busy = true;
                             let store = this.store.clone();
-                            let task = cx.background_spawn(async move { store.clear_history() });
+                            let task = clear_browsing_history(store, cx);
                             cx.spawn(async move |this, cx| {
                                 let result = task.await;
                                 let _ = this.update(cx, |this, cx| {
