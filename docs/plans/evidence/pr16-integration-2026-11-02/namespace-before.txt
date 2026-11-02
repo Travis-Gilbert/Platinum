@@ -1,0 +1,24 @@
+   Compiling frame-profile v0.1.0 (/Users/travisgilbert/.codex/worktrees/pr16-integration/Platinum/crates/profile)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.25s
+     Running unittests src/lib.rs (/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/deps/frame_profile-77c58533f2d3ccec)
+
+running 1 test
+test credentials::tests::sqlite_keychain_namespace_survives_rustyred_migration_and_move ... FAILED
+
+failures:
+
+---- credentials::tests::sqlite_keychain_namespace_survives_rustyred_migration_and_move stdout ----
+
+thread 'credentials::tests::sqlite_keychain_namespace_survives_rustyred_migration_and_move' (30208465) panicked at crates/profile/src/credentials.rs:279:9:
+assertion `left == right` failed
+  left: "Frame.credentials.f3d44db10241db4e5f40e7c15f9cf7074641c2b41603de7cc0ecaac7f6f635f1.1"
+ right: "Frame.credentials.existing-installation.1"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    credentials::tests::sqlite_keychain_namespace_survives_rustyred_migration_and_move
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.50s
+
+error: test failed, to rerun pass `-p frame-profile --lib`

@@ -22,6 +22,25 @@ use gpui_kit::{
 pub struct ActiveProfile(pub ProfileStore);
 impl Global for ActiveProfile {}
 
+/// A successful clear acknowledges every browser-owned copy of visited data.
+pub(crate) fn clear_browsing_history(
+    store: ProfileStore,
+    cx: &mut gpui_kit::App,
+) -> gpui_kit::Task<anyhow::Result<()>> {
+    let recents = crate::recents::clear_and_flush(cx);
+    let search = crate::search::clear_history(cx);
+    cx.background_spawn(async move {
+        // Attempt every owner even if another fails.
+        let profile = store.clear_history();
+        let recents = recents.await;
+        let search = search.await;
+        profile?;
+        recents?;
+        search?;
+        anyhow::Ok(())
+    })
+}
+
 pub enum ProfileEvent {
     Open(url::Url),
 }
@@ -89,16 +108,14 @@ impl ProfilePanel {
         panel
     }
     fn refresh(&mut self, cx: &mut Context<Self>) {
+        // Clearing holds the database lock through compaction. Ignore queued
+        // filter events too, not only new input from the disabled field.
+        if self.busy {
+            return;
+        }
         self.profiles = self.store.profiles().unwrap_or_default();
         if self.section == Section::Extensions {
-            self.extensions = (|| -> anyhow::Result<Vec<(String, String)>> {
-                let db = self.store.connect()?;
-                Ok(db
-                    .prepare("SELECT name,version FROM extensions ORDER BY name")?
-                    .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
-                    .collect::<Result<_, _>>()?)
-            })()
-            .unwrap_or_default();
+            self.extensions = self.store.extensions().unwrap_or_default();
         }
         if matches!(self.section, Section::Bookmarks | Section::History) {
             match self.store.suggestions(
@@ -385,7 +402,29 @@ impl Render for ProfilePanel {
                 );
             }
             Section::Bookmarks | Section::History => {
-                content = content.child(Input::new(&self.filter));
+                content = content.child(Input::new(&self.filter).disabled(self.busy));
+                if self.section == Section::History {
+                    content = content.child(Button::new("clear-history")
+                        .label("Clear browsing history")
+                        .disabled(self.busy)
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.busy = true;
+                            let store = this.store.clone();
+                            let task = clear_browsing_history(store, cx);
+                            cx.spawn(async move |this, cx| {
+                                let result = task.await;
+                                let _ = this.update(cx, |this, cx| {
+                                    this.busy = false;
+                                    this.message = match result {
+                                        Ok(()) => "Browsing history cleared. Bookmarks and open tabs are kept.".into(),
+                                        Err(_) => "Could not fully clear browsing history. Please retry.".into(),
+                                    };
+                                    this.refresh(cx);
+                                });
+                            }).detach();
+                            cx.notify();
+                        })));
+                }
                 if self.entries.is_empty() {
                     content = content.child(
                         "No matching entries. Import browser data or visit a page to get started.",
@@ -448,6 +487,41 @@ mod tests {
     use super::*;
     use gpui_kit::component::Root;
     use gpui_kit::{Modifiers, TestAppContext, VisualTestContext, size};
+    #[gpui_kit::test]
+    fn queued_filter_changes_do_not_read_during_history_clear(cx: &mut TestAppContext) {
+        let temp = tempfile::tempdir().unwrap();
+        let store = ProfileStore::open(temp.path()).unwrap();
+        store.visit("https://old.test/", "Old").unwrap();
+        cx.update(gpui_kit::init);
+        let mut panel = None;
+        let window = cx.open_window(size(px(800.), px(700.)), |window, cx| {
+            let view = cx.new(|cx| ProfilePanel::new(store.clone(), Section::History, window, cx));
+            panel = Some(view.clone());
+            Root::new(view, window, cx)
+        });
+        let panel = panel.unwrap();
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        cx.run_until_parked();
+        store.visit("https://new.test/", "New").unwrap();
+        cx.update(|_, cx| {
+            panel.update(cx, |p, cx| {
+                p.busy = true;
+                p.filter.update(cx, |_, cx| {
+                    cx.emit(gpui_kit::component::input::InputEvent::Change)
+                });
+            })
+        });
+        cx.run_until_parked();
+        assert_eq!(cx.update(|_, cx| panel.read(cx).entries.len()), 1);
+        cx.update(|_, cx| {
+            panel.update(cx, |p, cx| {
+                p.busy = false;
+                p.refresh(cx);
+            })
+        });
+        assert_eq!(cx.update(|_, cx| panel.read(cx).entries.len()), 2);
+    }
+
     #[gpui_kit::test]
     fn selecting_a_source_and_importing_keeps_its_data_out_of_the_current_profile(
         cx: &mut TestAppContext,

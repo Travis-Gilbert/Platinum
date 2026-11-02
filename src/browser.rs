@@ -76,7 +76,7 @@ use crate::actions::{
     SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
     ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
 };
-use crate::address::{Target, classify};
+use crate::address::{Suggestion, SuggestionAction, Target, append_library, classify};
 use crate::delegate::{self, Verdict};
 use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
@@ -371,7 +371,11 @@ pub struct Browser {
     top_groups: Vec<NodeId>,
     omnibox: Entity<InputState>,
     suggestion_state: Entity<CommandState>,
-    suggestions: Vec<frame_profile::LibraryEntry>,
+    suggestion_focus: FocusHandle,
+    suggestions: Vec<Suggestion>,
+    suggestion_generation: u64,
+    suggestion_task: Option<gpui_kit::Task<()>>,
+    suggestion_selection_started: bool,
     address_anchor: Rc<RefCell<Option<Bounds<Pixels>>>>,
     /// The person is typing in the address bar; leave its text alone.
     editing: bool,
@@ -390,6 +394,7 @@ pub struct Browser {
     /// Where each tab's Share button was last drawn, for the share sheet.
     share_anchors: Rc<RefCell<HashMap<u64, Bounds<Pixels>>>>,
     window_title: SharedString,
+    pending_history: Option<gpui_kit::Task<()>>,
     /// The workspace shown while no tab is open.
     underlay: Underlay,
     /// The sidebar is open, with the tabs as a tree under the pinned sites;
@@ -419,6 +424,7 @@ pub struct Browser {
     profile_panel: Option<Entity<ProfilePanel>>,
     profile_events: Option<Subscription>,
     _omnibox_events: Subscription,
+    _suggestion_blur: Subscription,
     _dock_events: Subscription,
     _downloads_events: Subscription,
     _appearance_events: Subscription,
@@ -430,6 +436,13 @@ impl Browser {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let omnibox = cx.new(|cx| InputState::new(window, cx).placeholder(SEARCH_PLACEHOLDER));
         let omnibox_events = cx.subscribe_in(&omnibox, window, Self::omnibox_event);
+        let suggestion_state = cx.new(|cx| CommandState::new(window, cx));
+        // CommandState changes its focus handle when its non-searchable model
+        // is rendered. Observe the stable parent instead of its initial input.
+        let suggestion_focus = cx.focus_handle();
+        let suggestion_blur = cx.on_focus_out(&suggestion_focus, window, |this, _, window, cx| {
+            this.address_blurred(window, cx)
+        });
         let this = cx.weak_entity();
         let dock = cx.new(|cx| {
             DockArea::new("frame-tabs", None, window, cx)
@@ -452,13 +465,18 @@ impl Browser {
         // Changes reach the file a second later; quitting writes at once.
         let quit = cx.on_app_quit(|browser, cx| {
             browser.save(cx);
+            browser.flush_history(cx);
             async {}
         });
         // Home lists them.
         let recents_events = cx.observe_global::<Recents>(|_, cx| cx.notify());
         let mut underlay = Underlay::new(window, cx);
         underlay.shown = workspace;
-        cx.on_release(|browser, cx| browser.save(cx)).detach();
+        cx.on_release(|browser, cx| {
+            browser.save(cx);
+            browser.flush_history(cx);
+        })
+        .detach();
         let mut icons = HashMap::new();
         if let Some(store) = &store {
             let urls = pins.iter().map(|pin| &pin.url).chain(
@@ -492,8 +510,12 @@ impl Browser {
             displayed: Vec::new(),
             top_groups: Vec::new(),
             omnibox,
-            suggestion_state: cx.new(|cx| CommandState::new(window, cx)),
+            suggestion_state,
+            suggestion_focus,
             suggestions: Vec::new(),
+            suggestion_generation: 0,
+            suggestion_task: None,
+            suggestion_selection_started: false,
             address_anchor: Rc::default(),
             editing: false,
             ask: false,
@@ -506,6 +528,7 @@ impl Browser {
             inspector,
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
+            pending_history: None,
             underlay,
             sidebar: restored.sidebar,
             sidebar_width: sidebar::fit_width(restored.sidebar_width.unwrap_or(sidebar::WIDTH)),
@@ -523,6 +546,7 @@ impl Browser {
             profile_panel: None,
             profile_events: None,
             _omnibox_events: omnibox_events,
+            _suggestion_blur: suggestion_blur,
             _dock_events: dock_events,
             _downloads_events: downloads_events,
             _appearance_events: appearance_events,
@@ -542,6 +566,12 @@ impl Browser {
             });
         }
         browser
+    }
+
+    fn flush_history(&mut self, cx: &App) {
+        if let Some(history) = self.pending_history.take() {
+            cx.foreground_executor().block_on(history);
+        }
     }
 
     /// The tabs `session` saved, asleep, laid out as the dock held them and
@@ -882,6 +912,7 @@ impl Browser {
             return;
         };
         if self.sync_from_dock(cx) {
+            self.dismiss_suggestions();
             self.editing = false;
             self.wake(self.active, window, cx);
             self.focus_content(window, cx);
@@ -951,6 +982,7 @@ impl Browser {
             return;
         };
         let (id, panel) = (tab.id, tab.panel_id());
+        self.dismiss_suggestions();
         self.close_navigator(window, cx);
         self.dock
             .update(cx, |dock, cx| dock.select_panel(panel, window, cx));
@@ -1002,6 +1034,7 @@ impl Browser {
             return;
         };
         if index != self.active && self.displayed.contains(&panel) {
+            self.dismiss_suggestions();
             self.active = index;
             self.editing = false;
             if self.tabs[index].asleep.is_some() {
@@ -1170,7 +1203,7 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.suggestions.clear();
+        self.dismiss_suggestions();
         if delegate::verdict(&url) == Verdict::Download {
             self.download(url, None, window, cx);
             return;
@@ -1496,7 +1529,18 @@ impl Browser {
                 }
                 if let Some(store) = cx.try_global::<ActiveProfile>() {
                     if let Some(url) = page.read(cx).url() {
-                        let _ = store.0.visit(url.as_str(), &page.read(cx).title());
+                        let store = store.0.clone();
+                        let title = page.read(cx).title().to_string();
+                        let visited = frame_profile::now();
+                        let previous = self.pending_history.take();
+                        self.pending_history = Some(cx.background_spawn(async move {
+                            if let Some(previous) = previous {
+                                previous.await;
+                            }
+                            if store.visit_at(url.as_str(), &title, visited).is_err() {
+                                log::warn!("Could not save browsing history");
+                            }
+                        }));
                     }
                 }
             }
@@ -1698,6 +1742,7 @@ impl Browser {
 
     /// The active tab now shows something else.
     fn after_switch(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.dismiss_suggestions();
         self.apply_visibility(cx);
         self.sync_chrome(window, cx);
         self.focus_content(window, cx);
@@ -1731,33 +1776,123 @@ impl Browser {
                 });
                 cx.notify();
             }
-            InputEvent::Blur => {
-                self.editing = false;
-                if !self.chrome_in_use() {
-                    self.revealed = false;
-                }
-                self.sync_chrome(window, cx);
-            }
+            InputEvent::Blur => self.address_blurred(window, cx),
             InputEvent::Change => {
-                let query = omnibox.read(cx).value();
-                self.suggestions.clear();
-                if !self.ask && !query.trim().is_empty() {
-                    if let Some(store) = cx.try_global::<ActiveProfile>() {
-                        self.suggestions = store.0.suggestions(&query, true, 4).unwrap_or_default();
-                        for entry in store.0.suggestions(&query, false, 6).unwrap_or_default() {
-                            if !self.suggestions.iter().any(|e| e.url == entry.url) {
-                                self.suggestions.push(entry);
-                            }
-                        }
-                    }
-                }
+                let query = omnibox.read(cx).value().to_string();
+                self.refresh_suggestions(query, window, cx);
                 cx.notify();
             }
         }
     }
 
-    fn submit(&mut self, new_tab: bool, window: &mut Window, cx: &mut Context<Self>) {
+    /// Input and results share an edit interaction. Restore the current address
+    /// only after focus has settled outside both, including keyboard focus moves.
+    fn address_blurred(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        cx.defer_in(window, |this, window, cx| {
+            if this.omnibox.focus_handle(cx).is_focused(window)
+                || this.suggestion_state.focus_handle(cx).is_focused(window)
+            {
+                return;
+            }
+            this.dismiss_suggestions();
+            this.editing = false;
+            if !this.chrome_in_use() {
+                this.revealed = false;
+            }
+            this.sync_chrome(window, cx);
+        });
+    }
+
+    fn dismiss_suggestions(&mut self) {
+        self.suggestion_generation = self.suggestion_generation.wrapping_add(1);
+        self.suggestion_task = None;
+        self.suggestion_selection_started = false;
         self.suggestions.clear();
+    }
+
+    fn refresh_suggestions(&mut self, query: String, window: &mut Window, cx: &mut Context<Self>) {
+        self.dismiss_suggestions();
+        if self.ask || query.trim().is_empty() || !self.omnibox.focus_handle(cx).is_focused(window)
+        {
+            return;
+        }
+        if let Some(primary) = Suggestion::primary(&query) {
+            self.suggestions.push(primary);
+        }
+        let needle = query.trim().to_lowercase();
+        for tab in &self.tabs {
+            let address = tab.address(cx).to_string();
+            let title = tab.title(cx).to_string();
+            if tab.id != self.tabs[self.active].id
+                && !address.is_empty()
+                && format!("{title} {address}")
+                    .to_lowercase()
+                    .contains(&needle)
+            {
+                self.suggestions.push(Suggestion {
+                    title: format!("Switch to tab · {title}"),
+                    detail: address,
+                    action: SuggestionAction::SwitchTab(tab.id),
+                });
+                if self.suggestions.len() >= 5 {
+                    break;
+                }
+            }
+        }
+        // Keyboard movement freezes these rows, including while a lookup is
+        // pending. A late result must not change what Enter will activate.
+        let generation = self.suggestion_generation;
+        let Some(store) = cx.try_global::<ActiveProfile>().map(|p| p.0.clone()) else {
+            return;
+        };
+        let timer = cx
+            .background_executor()
+            .timer(std::time::Duration::from_millis(100));
+        self.suggestion_task = Some(cx.spawn_in(window, async move |this, cx| {
+            timer.await;
+            let lookup_query = query.clone();
+            let task = cx.background_spawn(async move {
+                let mut entries = store.suggestions(&lookup_query, true, 4)?;
+                entries.extend(store.suggestions(&lookup_query, false, 6)?);
+                anyhow::Ok(entries)
+            });
+            let result = task.await;
+            let _ = this.update_in(cx, |this, window, cx| {
+                if this.suggestion_generation != generation
+                    || this.suggestion_selection_started
+                    || this.ask
+                    || this.omnibox.read(cx).value().as_ref() != query
+                    || !this.omnibox.focus_handle(cx).is_focused(window)
+                {
+                    return;
+                }
+                match result {
+                    Ok(entries) => append_library(&mut this.suggestions, entries),
+                    Err(_) => log::warn!("Could not read address-bar suggestions"),
+                }
+                cx.notify();
+            });
+        }));
+    }
+
+    fn pick_suggestion(
+        &mut self,
+        action: SuggestionAction,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.dismiss_suggestions();
+        match action {
+            SuggestionAction::Visit(url) => self.go(url, None, false, window, cx),
+            SuggestionAction::Search(query) => {
+                self.search(query, SerpMode::Search, false, window, cx)
+            }
+            SuggestionAction::SwitchTab(id) => self.activate_id(id, window, cx),
+        }
+    }
+
+    fn submit(&mut self, new_tab: bool, window: &mut Window, cx: &mut Context<Self>) {
+        self.dismiss_suggestions();
         let text = self.omnibox.read(cx).value().to_string();
         match classify(&text) {
             None => {}
@@ -1793,7 +1928,7 @@ impl Browser {
 
     /// Escape in the address bar puts the address back and returns to the page.
     fn escape_address_bar(&mut self, _: &Escape, window: &mut Window, cx: &mut Context<Self>) {
-        self.suggestions.clear();
+        self.dismiss_suggestions();
         self.editing = false;
         self.sync_chrome(window, cx);
         if self.tabs[self.active].showing != Showing::Start {
@@ -1804,6 +1939,7 @@ impl Browser {
     /// The Ask button: the address bar asks RustyWeb for an answer instead of
     /// searching, until it is turned off.
     fn toggle_ask(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.dismiss_suggestions();
         self.ask = !self.ask;
         let placeholder = if self.ask {
             ASK_PLACEHOLDER
@@ -3288,16 +3424,37 @@ impl Render for Browser {
         {
             None
         } else {
-            let mut group = CommandGroup::new().label("Bookmarks and history · ↓ to choose");
+            let mut group = CommandGroup::new().label("Search and places · ↓ to choose");
             for entry in &self.suggestions {
+                let title = entry.title.clone();
+                let detail = entry.detail.clone();
+                let icon = match entry.action {
+                    SuggestionAction::Search(_) => IconName::Search,
+                    _ => IconName::Globe,
+                };
                 group = group.item(
                     CommandItem::new()
-                        .label(if entry.title.is_empty() {
-                            entry.url.clone()
-                        } else {
-                            entry.title.clone()
-                        })
-                        .keywords([entry.url.clone()]),
+                        .label(title.clone())
+                        .keywords([detail.clone()])
+                        .child(move |_, cx| {
+                            h_flex()
+                                .gap_2()
+                                .w_full()
+                                .child(Icon::new(icon.clone()).small())
+                                .child(
+                                    v_flex()
+                                        .min_w_0()
+                                        .gap_1()
+                                        .child(div().text_sm().truncate().child(title.clone()))
+                                        .child(
+                                            div()
+                                                .text_xs()
+                                                .text_color(cx.theme().muted_foreground)
+                                                .truncate()
+                                                .child(detail.clone()),
+                                        ),
+                                )
+                        }),
                 );
             }
             let anchor = self.address_anchor.borrow().unwrap();
@@ -3310,11 +3467,20 @@ impl Render for Browser {
                         .snap_to_window_with_margin(px(8.))
                         .child(
                             div()
+                                .track_focus(&self.suggestion_focus)
                                 .w(anchor.size.width.max(px(240.)))
-                                .on_mouse_down_out(cx.listener(|this, _, _, cx| {
-                                    this.suggestions.clear();
+                                .on_mouse_down_out(cx.listener(|this, _, window, cx| {
+                                    this.dismiss_suggestions();
+                                    this.address_blurred(window, cx);
                                     cx.notify();
                                 }))
+                                .on_mouse_down(
+                                    MouseButton::Left,
+                                    cx.listener(|this, _, _, _| {
+                                        this.suggestion_selection_started = true;
+                                        this.suggestion_task = None;
+                                    }),
+                                )
                                 .occlude()
                                 .bg(theme.popover)
                                 .text_color(theme.popover_foreground)
@@ -3327,12 +3493,13 @@ impl Render for Browser {
                                         .group(group)
                                         .max_h(px(320.))
                                         .on_confirm(move |ix, window, cx| {
-                                            if let Some(url) = entries
-                                                .get(ix.row)
-                                                .and_then(|e| Url::parse(&e.url).ok())
-                                            {
+                                            if let Some(entry) = entries.get(ix.row) {
                                                 let _ = browser.update(cx, |this, cx| {
-                                                    this.go(url, None, false, window, cx)
+                                                    this.pick_suggestion(
+                                                        entry.action.clone(),
+                                                        window,
+                                                        cx,
+                                                    )
                                                 });
                                             }
                                         })
@@ -3340,7 +3507,7 @@ impl Render for Browser {
                                             let browser = cx.weak_entity();
                                             move |window, cx| {
                                                 let _ = browser.update(cx, |this, cx| {
-                                                    this.suggestions.clear();
+                                                    this.dismiss_suggestions();
                                                     this.focus_address_bar(window, cx);
                                                 });
                                             }
@@ -3445,8 +3612,16 @@ impl Render for Browser {
                         && !this.suggestions.is_empty()
                         && this.omnibox.focus_handle(cx).is_focused(window)
                     {
-                        this.suggestion_state
-                            .update(cx, |state, cx| state.focus(window, cx));
+                        this.suggestion_selection_started = true;
+                        this.suggestion_task = None;
+                        this.suggestion_state.update(cx, |state, cx| {
+                            state.set_selected_index(
+                                Some(gpui_kit::component::IndexPath::new(0).section(0)),
+                                window,
+                                cx,
+                            );
+                            state.focus(window, cx);
+                        });
                         cx.stop_propagation();
                     }
                 }),

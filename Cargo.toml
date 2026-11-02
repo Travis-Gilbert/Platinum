@@ -91,7 +91,7 @@ palette = { version = "0.7", default-features = false, features = ["std"] }
 
 [features]
 # Opt-in native performance harness; absent from ordinary builds.
-performance-check = []
+performance-check = ["dep:gpui-pre", "gpui-pre/test-support", "dep:gpui-pre-macos", "gpui-pre-macos/test-support"]
 # Development only: with `FRAME_SNAPSHOT=<file.png>` in the environment, the
 # window is kept as a picture in that file, redrawn every two seconds, to see
 # the chrome where taking a screenshot needs a permission the session lacks.

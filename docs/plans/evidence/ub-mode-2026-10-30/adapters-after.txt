@@ -1,0 +1,52 @@
+CRAP Report
+===========
+Languages: rust
+
+Function                       Namespace                                 CC    Cov%     CRAP
+--------------------------------------------------------------------------------------------
+passwords                      frame_profile::migration                  17   0.0%    306.0
+passwords                      frame_profile::migration::firefox         11   0.0%    132.0
+session_tabs                   frame_profile::migration                  20  92.9%     20.1
+delete                         frame_profile::credentials                 4   0.0%     20.0
+import                         frame_profile::migration                  15  89.7%     15.2
+tabs                           frame_profile::migration::firefox         14  95.4%     14.0
+history                        frame_profile::migration                  13 100.0%     13.0
+history                        frame_profile::migration::firefox         13 100.0%     13.0
+password_csv                   frame_profile::migration                  12  95.0%     12.0
+read_script                    frame_profile::credentials                 3   0.0%     12.0
+summary                        frame_profile::migration::Report           3   0.0%     12.0
+bookmarks                      frame_profile::migration::firefox         12 100.0%     12.0
+bookmarks_html                 frame_profile::migration                  10  88.9%     10.1
+extensions                     frame_profile::migration::firefox         10  91.7%     10.1
+bookmarks                      frame_profile::migration                  10  95.0%     10.0
+snapshot                       frame_profile::migration                   9  78.6%      9.8
+discover_at                    frame_profile::migration::firefox          9  87.8%      9.1
+extensions                     frame_profile::migration                   9  96.4%      9.0
+bookmark_node                  frame_profile::migration                   8  83.3%      8.3
+import_category                frame_profile::migration::firefox          8  86.7%      8.2
+discover_at                    frame_profile::migration                   7  96.8%      7.0
+chrome_key                     frame_profile::credentials                 2   0.0%      6.0
+verify_saved                   frame_profile::credentials                 6 100.0%      6.0
+form_rows                      frame_profile::migration                   6 100.0%      6.0
+import_forms                   frame_profile::migration                   6 100.0%      6.0
+fill_script                    frame_profile::credentials                 5 100.0%      5.0
+form_script                    frame_profile::credentials                 5 100.0%      5.0
+password                       frame_profile::credentials                 4  75.0%      4.2
+save                           frame_profile::credentials                 4 100.0%      4.0
+import_login                   frame_profile::migration                   4 100.0%      4.0
+accounts                       frame_profile::credentials                 3 100.0%      3.0
+decrypt_chrome                 frame_profile::credentials                 3 100.0%      3.0
+form_information               frame_profile::migration                   3 100.0%      3.0
+forms                          frame_profile::migration::firefox          3 100.0%      3.0
+fill_allowed                   frame_profile::credentials                 2 100.0%      2.0
+origin                         frame_profile::credentials                 2 100.0%      2.0
+for_profile                    frame_profile::credentials::Keychain       1   0.0%      2.0
+get                            frame_profile::credentials::Keychain       1   0.0%      2.0
+put                            frame_profile::credentials::Keychain       1   0.0%      2.0
+remove                         frame_profile::credentials::Keychain       1   0.0%      2.0
+discover                       frame_profile::migration                   1   0.0%      2.0
+account                        frame_profile::credentials                 1 100.0%      1.0
+derive_chrome_key              frame_profile::credentials                 1 100.0%      1.0
+form_field_allowed             frame_profile::credentials                 1 100.0%      1.0
+default                        frame_profile::migration::Categories       1 100.0%      1.0
+identity                       frame_profile::migration::SourceProfile    1 100.0%      1.0

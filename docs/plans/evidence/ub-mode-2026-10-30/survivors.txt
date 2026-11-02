@@ -1,0 +1,9 @@
+crates/profile/src/storage.rs:85 defn-/active_profile: '1' -> '0' | .unwrap_or(1);
+crates/profile/src/storage.rs:110 defn-/search_scores: '1' -> '0' | .fulltext_search(label, query, within.len().max(1), Some(&within))?
+crates/profile/src/storage.rs:41 defn-/shared_database: '>' -> '>=' | owners.retain(|_, owner| owner.strong_count() > 0);
+crates/profile/src/storage.rs:341 defn/history_metadata: '0' -> '1' | v["visited"].as_i64().unwrap_or(0),
+crates/profile/src/storage.rs:342 defn/history_metadata: '0' -> '1' | v["visits"].as_i64().unwrap_or(0),
+crates/profile/src/storage.rs:178 defn/imported_profile: '0' -> '1' | .unwrap_or(0)
+crates/profile/src/storage.rs:262 defn/visit_at: '0' -> '1' | json!(old["visits"].as_i64().unwrap_or(0).saturating_add(1));
+crates/profile/src/storage.rs:485 defn/history: '0' -> '1' | let old_time = old["visited"].as_i64().unwrap_or(0);
+crates/profile/src/storage.rs:486 defn/history: '0' -> '1' | let old_visits = old["visits"].as_i64().unwrap_or(0);
