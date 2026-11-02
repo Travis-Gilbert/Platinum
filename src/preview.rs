@@ -6,9 +6,11 @@
 //! no subresources. Three things keep the page from reaching anything else: the
 //! initiator check below, `is_fetchable() == false` (a page cannot `fetch()` a
 //! sibling revision), and the Content-Security-Policy on the response. The
-//! network is the embedder's to refuse: see `Blocked` in
-//! `examples/html_author_live.rs`, which answers every HTTP request the page
-//! makes and records it as evidence.
+//! network is the embedder's to refuse: `embedder_admits` below is its rule,
+//! and `Observed` in `examples/html_author_live.rs` applies it, answering every
+//! HTTP request the page makes with a refusal and recording it as evidence.
+//! That rule, not the page's policy, is what stops a form post: this engine does
+//! not enforce `form-action` (see `patches/README.md`, "Known upstream gaps").
 //!
 //! SOURCING: Servo's `ProtocolHandler` and `ProtocolRegistry`, registered the
 //! way `engine.rs` registers the notes scheme. The initiator check is the notes
@@ -58,11 +60,20 @@ pub fn parse(address: &Url) -> Option<(String, u64)> {
         .then(|| (design.into_owned(), revision))
 }
 
+/// The embedder's rule for a request that reaches `WebViewDelegate::load_web_resource`:
+/// a preview page may be read (`GET`, `HEAD`) from the preview scheme and from
+/// `data:`, and nothing else is answered. Every other request, whatever the page
+/// asked with (`fetch`, an image, a form post), is refused and recorded.
+pub fn embedder_admits(method: &http::Method, url: &Url) -> bool {
+    matches!(*method, http::Method::GET | http::Method::HEAD)
+        && matches!(url.scheme(), PREVIEW_SCHEME | "data")
+}
+
 /// Check the initiator, never the destination URL or a suppressible referrer:
 /// a preview page may be loaded by the embedder, or requested by another
 /// preview document, and by nothing else. See `engine::notes_request_allowed`.
 fn allowed(request: &Request) -> bool {
-    if request.current_url().scheme() != PREVIEW_SCHEME {
+    if request.method != http::Method::GET || request.current_url().scheme() != PREVIEW_SCHEME {
         return false;
     }
     let Some(client) = request.client.as_ref() else {
@@ -146,7 +157,77 @@ where
 
 #[cfg(test)]
 mod tests {
+    use servo::protocol_handler::{
+        InsecureRequestsPolicy, Origin, Referrer, RequestBuilder, RequestClient, UrlWithBlobClaim,
+    };
+
     use super::*;
+
+    /// A request a preview page makes: its own document is the initiator.
+    fn from_preview(method: http::Method, to: &str) -> Request {
+        let address = UrlWithBlobClaim::from_url_without_having_claimed_blob(to.parse().unwrap());
+        let mut request = RequestBuilder::new(None, address, Referrer::NoReferrer)
+            .method(method)
+            .build();
+        request.mode = RequestMode::Navigate;
+        request.destination = Destination::Document;
+        request.client = Some(RequestClient {
+            document_url: Some(url("sandbox", 1).as_str().parse().unwrap()),
+            is_embedder_navigation: false,
+            origin: Origin::Client,
+            preloaded_resources: Default::default(),
+            policy_container: Default::default(),
+            is_nested_browsing_context: false,
+            insecure_requests_policy: InsecureRequestsPolicy::DoNotUpgrade,
+            has_trustworthy_ancestor_origin: false,
+            is_window: true,
+        });
+        request
+    }
+
+    /// The sandbox fixture's `form_post` attempt, and the loads a preview needs,
+    /// in one fixture: the post is refused wherever it is aimed, and the same
+    /// origin's reads are answered, so the refusal is not a closed door.
+    #[test]
+    fn a_form_post_from_a_preview_is_refused_and_its_reads_are_answered() {
+        let own = url("sandbox", 1);
+        let pixel = Url::parse("data:image/gif;base64,R0lGODlhAQABAAAAACw=").unwrap();
+        for action in [
+            "https://example.com/probe-form",
+            "http://127.0.0.1:9/probe-form",
+            "data:text/html,posted",
+            own.as_str(),
+        ] {
+            let action = Url::parse(action).unwrap();
+            assert!(
+                !embedder_admits(&http::Method::POST, &action),
+                "POST {action} must be refused"
+            );
+        }
+        // Positive control: what the fixture's page does read is answered.
+        assert!(embedder_admits(&http::Method::GET, &own));
+        assert!(embedder_admits(&http::Method::GET, &pixel));
+        // And a read of the network is refused by the same rule, so it is the
+        // destination and not only the method that closes the door.
+        assert!(!embedder_admits(
+            &http::Method::GET,
+            &Url::parse("https://example.com/probe-form").unwrap()
+        ));
+    }
+
+    #[test]
+    fn the_protocol_serves_a_preview_read_and_refuses_a_preview_post() {
+        let own = url("sandbox", 1);
+        // Positive control in the same fixture: the read is allowed ...
+        assert!(allowed(&from_preview(http::Method::GET, own.as_str())));
+        // ... and a form post from the same origin, to the same address, is not.
+        assert!(!allowed(&from_preview(http::Method::POST, own.as_str())));
+        // The initiator check is untouched by the method check.
+        assert!(!allowed(&from_preview(
+            http::Method::GET,
+            "https://example.com/probe-form"
+        )));
+    }
 
     #[test]
     fn an_address_round_trips_a_design_with_awkward_characters() {

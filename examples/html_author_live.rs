@@ -30,6 +30,12 @@ mod preview;
 #[allow(dead_code)]
 #[path = "../src/scene.rs"]
 mod scene;
+// scene.rs's own frame test reads swatches through `crate::site`; only the
+// test build needs it, so the example binary keeps its three modules.
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../src/site.rs"]
+mod site;
 
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -108,7 +114,12 @@ impl WebViewDelegate for Observed {
     }
 
     fn load_web_resource(&self, _: WebView, load: WebResourceLoad) {
-        let url = load.request().url.clone();
+        let request = load.request();
+        if preview::embedder_admits(&request.method, &request.url) {
+            // Dropped unanswered, the load goes on as the engine meant it.
+            return;
+        }
+        let url = request.url.clone();
         self.blocked.borrow_mut().push(url.to_string());
         load.intercept(WebResourceResponse::new(url).status_code(http::StatusCode::FORBIDDEN))
             .cancel();

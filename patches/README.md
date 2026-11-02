@@ -113,3 +113,21 @@ the videoparsers plugin, and setup-media refreshes recognized development
 symlinks to use it while refusing to replace real files or arbitrary symlinks.
 The upstream GstCheck regression and native playback/smoothness evidence are in
 `docs/plans/evidence/browser-mp4-resize-2026-10-27/report.md`.
+
+## Known upstream gaps
+
+- `form-action` is not enforced. At fork revision
+  `efdf7370da024f467f7526798fe5c6e50e784b52`, a page served with
+  `Content-Security-Policy: form-action 'none'` can still submit a form: the
+  sandbox page of the HTML design preview (`frame-preview://`) posts to
+  `https://example.com/probe-form`, no `securitypolicyviolation` event fires, and
+  the request reaches the embedder. `connect-src` and `img-src` are enforced
+  and report violations at the same revision. The preview therefore relies on the
+  embedder, not the policy, to stop a post: `preview::embedder_admits` answers
+  only `GET`/`HEAD` for the preview scheme and `data:`, and the example's
+  `load_web_resource` refuses and records the rest. This is an upstream Servo
+  defect, not a Platinum one; do not rely on `form-action` for any page served
+  here until upstream enforces it. Evidence:
+  `docs/plans/platinum-master/evidence/A01/sandbox.json` (`form_post: submitted`)
+  and `result.json` (`embedder_refused`) on the Theorem lane branch
+  `claude/pm-authoring`.
