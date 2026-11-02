@@ -20,7 +20,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="f88f7516ee798fec225296ad3a0f09c1057e65a2"
+theorem_rev="b7ab7a9ff373f22ac02a3c764bd03c9323a67aac"
 theorem_branch="claude/pm-authoring-pin"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
