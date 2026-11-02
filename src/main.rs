@@ -8,6 +8,7 @@ mod actions;
 mod address;
 mod brand;
 mod browser;
+mod bundle;
 mod canvas;
 mod controls;
 mod delegate;
@@ -56,6 +57,7 @@ use crate::engine::Engine;
 use crate::theme::Appearance;
 
 fn main() -> anyhow::Result<()> {
+    bundle::init().context("configure bundled media runtime")?;
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
         return browser::workspace_check::run(output.into());

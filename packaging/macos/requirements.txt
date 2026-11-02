@@ -1,0 +1,3 @@
+# Binary inspection; dylibbundler owns dependency copying and relocation.
+macholib==1.16.4
+altgraph==0.17.5

@@ -1,0 +1,16 @@
+{
+  "development_paths_denied": true,
+  "probe": "gst-launch-1.0 using bundled libraries and plugins; not browser playback",
+  "results": [
+    {
+      "fixture": "movie_5.mp4",
+      "exit_code": 0,
+      "end_of_stream": true
+    },
+    {
+      "fixture": "movie_5.webm",
+      "exit_code": 0,
+      "end_of_stream": true
+    }
+  ]
+}
