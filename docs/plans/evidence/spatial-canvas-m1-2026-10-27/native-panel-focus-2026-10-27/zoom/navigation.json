@@ -1,0 +1,10 @@
+{
+  "initial_navigation": {
+    "source": "Page::open",
+    "url": "http://127.0.0.1:63796/zoom-probe.html",
+    "webview_id": "WebViewId(PainterId(1), (0,1))",
+    "document_id": "1793127369816:0.01827367885658293"
+  },
+  "started_notifications_at_baseline": 0,
+  "note": "Servo starts a new WebView in Started, so the initial load does not generate a status-change notification. Subsequent Started transitions are counted by the production delegate."
+}

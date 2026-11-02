@@ -1,0 +1,3 @@
+# script/media-env python3 tests/rendering/check_svg_paint.py '/Volumes/SSD Samsung/cargo-targets/frame'/debug/examples/media_check --evidence '/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2'/evidence
+# started 2026-10-25T23:25:21+00:00
+{"passed": true, "phases": {"svg-initial": {"pixels": [[255, 255, 255], [0, 255, 0], [0, 0, 255], [255, 0, 0]], "expected": [[255, 255, 255], [0, 255, 0], [0, 0, 255], [255, 0, 0]], "passed": true}, "svg-restyled": {"pixels": [[255, 0, 255], [255, 255, 0], [0, 0, 255], [255, 0, 0]], "expected": [[255, 0, 255], [255, 255, 0], [0, 0, 255], [255, 0, 0]], "passed": true}}}

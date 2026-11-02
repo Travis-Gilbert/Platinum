@@ -1,0 +1,17 @@
+{
+  "command": [
+    "ioreg",
+    "-n",
+    "Root",
+    "-d1",
+    "-a"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.038178208997123875,
+  "console_states": [
+    {
+      "CGSSessionScreenIsLocked": true,
+      "kCGSSessionOnConsoleKey": true
+    }
+  ]
+}

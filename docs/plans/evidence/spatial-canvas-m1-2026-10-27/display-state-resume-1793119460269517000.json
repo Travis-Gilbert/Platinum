@@ -1,0 +1,16 @@
+{
+  "command": [
+    "ioreg",
+    "-n",
+    "Root",
+    "-d1",
+    "-a"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.03931512500275858,
+  "console_states": [
+    {
+      "IOConsoleLocked": false
+    }
+  ]
+}

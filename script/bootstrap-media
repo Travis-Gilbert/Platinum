@@ -35,9 +35,9 @@ def checkout(name, url, revision, patches=(), sparse=False):
 
 def main():
     (ROOT / "deps").mkdir(exist_ok=True)
-    checkout("servo-mse", "https://github.com/Travis-Gilbert/servo.git",
-             "5c8325a389555f3b1adc476106d8529791afe13e",
-             ("servo-video-frame-pacing.patch", "servo-disk-cache-shutdown.patch"))
+    checkout("servo-consolidated", "https://github.com/Travis-Gilbert/servo.git",
+             "efdf7370da024f467f7526798fe5c6e50e784b52",
+             ("servo-disk-cache-shutdown.patch",))
     source = checkout("gstreamer-mse", "https://github.com/GStreamer/gstreamer.git",
                       "1b2a95a1b72787cda146b46df9605b168e5b683b", ("gstreamer-mse.patch",), sparse=True)
     build = ROOT / "deps/gstreamer-mse-build"

@@ -1,0 +1,171 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>WebGL2 unpack parameters</title>
+<body style="background:#1d2a3a;color:#e8e8e8;font:13px monospace">
+<pre id="log">WebGL2 unpack parameters</pre>
+<script>
+// Uploads a sub-image of a larger array with UNPACK_ROW_LENGTH, UNPACK_SKIP_PIXELS,
+// UNPACK_SKIP_ROWS, UNPACK_SKIP_IMAGES and UNPACK_IMAGE_HEIGHT, reads the texture back and checks the
+// pixels, through texImage2D, texSubImage2D, texImage3D and texSubImage3D, and through a pixel
+// unpack buffer. The error cases are the ones the WebGL 2 specification lists for these parameters.
+const canvas = document.createElement('canvas');
+canvas.width = canvas.height = 16;
+const gl = canvas.getContext('webgl2', { antialias: false });
+const out = { ready: true, cases: [] };
+
+const UNPACK_ROW_LENGTH = 0x0CF2, UNPACK_SKIP_ROWS = 0x0CF3, UNPACK_SKIP_PIXELS = 0x0CF4;
+const UNPACK_SKIP_IMAGES = 0x806D, UNPACK_IMAGE_HEIGHT = 0x806E;
+
+function reset() {
+  for (const p of [UNPACK_ROW_LENGTH, UNPACK_SKIP_ROWS, UNPACK_SKIP_PIXELS, UNPACK_SKIP_IMAGES, UNPACK_IMAGE_HEIGHT]) gl.pixelStorei(p, 0);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+}
+function check(name, ok, detail) {
+  out.cases.push({ name, ok: !!ok, detail });
+}
+// A 4x3 store of one-byte pixels, value = index, of which the 2x2 image at (1, 1) is 5 6 9 10.
+const store = new Uint8Array(12).map((_, i) => i);
+function readBack(width, height, layer) {
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  if (layer === undefined) {
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, currentTexture, 0);
+  } else {
+    gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, currentTexture, 0, layer);
+  }
+  // R8 is not color-readable on every driver; readPixels takes RGBA/UNSIGNED_BYTE and the red
+  // channel holds the value.
+  const px = new Uint8Array(width * height * 4);
+  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.deleteFramebuffer(fb);
+  return Array.from({ length: width * height }, (_, i) => px[i * 4]);
+}
+let currentTexture;
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+function texture2D() {
+  currentTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+}
+
+// 1. texImage2D with a row length and skips.
+gl.getError(); reset(); texture2D();
+gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+gl.pixelStorei(UNPACK_ROW_LENGTH, 4);
+gl.pixelStorei(UNPACK_SKIP_PIXELS, 1);
+gl.pixelStorei(UNPACK_SKIP_ROWS, 1);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 2, 2, 0, gl.RED, gl.UNSIGNED_BYTE, store);
+check('texImage2D ROW_LENGTH + SKIP_PIXELS + SKIP_ROWS: no error', gl.getError() === 0);
+check('texImage2D cuts out 5 6 9 10', same(readBack(2, 2), [5, 6, 9, 10]), readBack(2, 2));
+
+// 2. texSubImage2D with the same parameters, into a larger texture.
+gl.getError(); texture2D();
+gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+gl.pixelStorei(UNPACK_ROW_LENGTH, 0);
+gl.pixelStorei(UNPACK_SKIP_PIXELS, 0);
+gl.pixelStorei(UNPACK_SKIP_ROWS, 0);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 3, 3, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array(9));
+gl.pixelStorei(UNPACK_ROW_LENGTH, 4);
+gl.pixelStorei(UNPACK_SKIP_PIXELS, 1);
+gl.pixelStorei(UNPACK_SKIP_ROWS, 1);
+gl.texSubImage2D(gl.TEXTURE_2D, 0, 1, 1, 2, 2, gl.RED, gl.UNSIGNED_BYTE, store);
+check('texSubImage2D with the parameters: no error', gl.getError() === 0);
+check('texSubImage2D places 5 6 9 10 at (1,1)', same(readBack(3, 3), [0, 0, 0, 0, 5, 6, 0, 9, 10]), readBack(3, 3));
+
+// 3. The skipped pixels have to fit in the row length.
+gl.getError(); reset(); texture2D();
+gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+gl.pixelStorei(UNPACK_ROW_LENGTH, 4);
+gl.pixelStorei(UNPACK_SKIP_PIXELS, 3);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 2, 1, 0, gl.RED, gl.UNSIGNED_BYTE, store);
+check('SKIP_PIXELS + width > ROW_LENGTH is INVALID_OPERATION', gl.getError() === gl.INVALID_OPERATION);
+
+// 4. A store that is too small for the parameters.
+gl.getError(); reset(); texture2D();
+gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+gl.pixelStorei(UNPACK_ROW_LENGTH, 4);
+gl.pixelStorei(UNPACK_SKIP_ROWS, 2);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 2, 2, 0, gl.RED, gl.UNSIGNED_BYTE, store);
+check('data too small for the skipped rows is INVALID_OPERATION', gl.getError() === gl.INVALID_OPERATION);
+
+// 5. Reads of the parameters.
+reset();
+gl.pixelStorei(UNPACK_ROW_LENGTH, 7);
+gl.pixelStorei(UNPACK_SKIP_IMAGES, 2);
+check('getParameter returns the set values', gl.getParameter(UNPACK_ROW_LENGTH) === 7 && gl.getParameter(UNPACK_SKIP_IMAGES) === 2 && gl.getParameter(UNPACK_IMAGE_HEIGHT) === 0, [gl.getParameter(UNPACK_ROW_LENGTH), gl.getParameter(UNPACK_SKIP_IMAGES)]);
+gl.getError();
+gl.pixelStorei(UNPACK_ROW_LENGTH, -1);
+check('a negative value is INVALID_VALUE', gl.getError() === gl.INVALID_VALUE);
+
+// 6. texImage3D / texSubImage3D with IMAGE_HEIGHT and SKIP_IMAGES: two 2x1 layers, three rows apart.
+{
+  gl.getError(); reset();
+  currentTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, currentTexture);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  const data = new Uint8Array(24).map((_, i) => i);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.pixelStorei(UNPACK_IMAGE_HEIGHT, 3);
+  gl.pixelStorei(UNPACK_SKIP_IMAGES, 1);
+  gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.R8, 2, 1, 2, 0, gl.RED, gl.UNSIGNED_BYTE, data);
+  check('texImage3D IMAGE_HEIGHT + SKIP_IMAGES: no error', gl.getError() === 0);
+  const layers = [readBack(2, 1, 0), readBack(2, 1, 1)];
+  check('texImage3D takes layers 6 7 and 12 13', same(layers, [[6, 7], [12, 13]]), layers);
+
+  gl.getError(); reset();
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.pixelStorei(UNPACK_IMAGE_HEIGHT, 3);
+  gl.pixelStorei(UNPACK_SKIP_ROWS, 1);
+  gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, 0, 2, 1, 2, gl.RED, gl.UNSIGNED_BYTE, data);
+  check('texSubImage3D SKIP_ROWS + IMAGE_HEIGHT: no error', gl.getError() === 0);
+  const sub = [readBack(2, 1, 0), readBack(2, 1, 1)];
+  check('texSubImage3D takes rows 2 3 and 8 9', same(sub, [[2, 3], [8, 9]]), sub);
+
+  // SKIP_ROWS has to fit the image height of a 3D upload, even with a single image.
+  gl.getError(); reset();
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.pixelStorei(UNPACK_SKIP_ROWS, 1);
+  gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, 0, 2, 1, 1, gl.RED, gl.UNSIGNED_BYTE, data);
+  check('3D SKIP_ROWS + height > image height is INVALID_OPERATION', gl.getError() === gl.INVALID_OPERATION);
+}
+
+// 7. A pixel unpack buffer.
+{
+  gl.getError(); reset(); texture2D();
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER, buffer);
+  gl.bufferData(gl.PIXEL_UNPACK_BUFFER, store, gl.STATIC_DRAW);
+  gl.pixelStorei(UNPACK_ROW_LENGTH, 4);
+  gl.pixelStorei(UNPACK_SKIP_PIXELS, 1);
+  gl.pixelStorei(UNPACK_SKIP_ROWS, 1);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 2, 2, 0, gl.RED, gl.UNSIGNED_BYTE, 0);
+  check('PBO texImage2D with the parameters: no error', gl.getError() === 0);
+  check('PBO texImage2D cuts out 5 6 9 10', same(readBack(2, 2), [5, 6, 9, 10]), readBack(2, 2));
+  // The parameters do not leak into later uploads that do not use them.
+  gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER, null);
+  reset(); texture2D();
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 2, 2, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array([1, 2, 3, 4]));
+  check('a later upload without parameters is unaffected', same(readBack(2, 2), [1, 2, 3, 4]), readBack(2, 2));
+  // A PBO too small for the image and its parameters.
+  gl.getError();
+  gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER, buffer);
+  gl.pixelStorei(UNPACK_ROW_LENGTH, 4);
+  gl.pixelStorei(UNPACK_SKIP_ROWS, 2);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 2, 2, 0, gl.RED, gl.UNSIGNED_BYTE, 0);
+  check('PBO too small for the parameters is INVALID_OPERATION', gl.getError() === gl.INVALID_OPERATION);
+  gl.bindBuffer(gl.PIXEL_UNPACK_BUFFER, null);
+  reset();
+}
+
+out.failures = out.cases.filter((c) => !c.ok).map((c) => c.name);
+out.passed = out.failures.length === 0;
+document.getElementById('log').textContent = JSON.stringify(out, null, 1);
+setTimeout(() => console.log('FRAME_MEDIA_FRAME svg-initial'), 300);
+setTimeout(() => console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out)), 1500);
+</script>

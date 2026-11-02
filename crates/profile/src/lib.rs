@@ -3,13 +3,40 @@ pub mod credentials;
 pub mod migration;
 
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 mod legacy;
 mod storage;
 use std::time::{SystemTime, UNIX_EPOCH};
 pub use storage::ImportBatch;
 use url::Url;
+
+/// The app's name, which its folders take.
+pub const APP_NAME: &str = "Platinum";
+/// What the app and its folders were called before.
+const LEGACY_NAME: &str = "Frame";
+
+/// The app's folder under `base` (the data or cache directory): `Platinum`,
+/// taking over the `Frame` folder the app kept before it was renamed, so its
+/// profile, index and downloaded model carry over. A `Frame` link is left in
+/// its place, since builds of branches from before the rename still open it.
+/// The app and `profile-import` both find their folder here.
+pub fn app_dir(base: &Path) -> PathBuf {
+    let dir = base.join(APP_NAME);
+    let legacy = base.join(LEGACY_NAME);
+    if !dir.exists() && legacy.is_dir() {
+        let moved = std::fs::rename(&legacy, &dir)
+            .and_then(|()| std::os::unix::fs::symlink(APP_NAME, &legacy));
+        if let Err(error) = moved {
+            log::warn!(
+                "could not move {} to {}: {error}",
+                legacy.display(),
+                dir.display()
+            );
+        }
+    }
+    dir
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Profile {

@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Platinum canvas zoom gate</title>
+<style>
+  :root { color-scheme: light dark; font: 18px system-ui; }
+  body { margin: 32px; }
+  pre { white-space: pre-wrap; }
+  .ruler { width: 600px; height: 100px; border: 1px solid; background: repeating-linear-gradient(90deg, transparent 0 49px, #888 49px 50px); }
+</style>
+<h1>Stable CSS viewport, changing raster scale</h1>
+<p>The camera runs 1 → 0.35 → 2 → 1. A scale-only change must not resize this document.</p>
+<div class="ruler"></div><pre id="output"></pre>
+<script src="probe.js"></script>

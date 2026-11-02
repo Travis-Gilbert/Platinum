@@ -1,0 +1,107 @@
+[
+  {
+    "live_cards": 1,
+    "rss_bytes": 321585152,
+    "rss_delta_per_card": 107790336,
+    "holds_display_rate": false,
+    "samples": [
+      {
+        "seconds": 2.003656375,
+        "presented_fps_per_card": [
+          87.83941308299434
+        ],
+        "gpui_fps": 119.78101784044682,
+        "window_active": true
+      },
+      {
+        "seconds": 2.004328125,
+        "presented_fps_per_card": [
+          74.33912548625241
+        ],
+        "gpui_fps": 117.7451920453394,
+        "window_active": true
+      },
+      {
+        "seconds": 2.013932792,
+        "presented_fps_per_card": [
+          69.51572592497914
+        ],
+        "gpui_fps": 119.1698158713928,
+        "window_active": true
+      }
+    ]
+  },
+  {
+    "live_cards": 2,
+    "rss_bytes": 353026048,
+    "rss_delta_per_card": 69615616,
+    "holds_display_rate": false,
+    "samples": [
+      {
+        "seconds": 2.009713875,
+        "presented_fps_per_card": [
+          81.60365614234513,
+          81.10607287318449
+        ],
+        "gpui_fps": 117.4296515219113,
+        "window_active": true
+      },
+      {
+        "seconds": 2.003208625,
+        "presented_fps_per_card": [
+          71.88467451811216,
+          68.88947974652415
+        ],
+        "gpui_fps": 119.80779086352027,
+        "window_active": true
+      },
+      {
+        "seconds": 2.005319958,
+        "presented_fps_per_card": [
+          73.30501021224066,
+          71.80898959566431
+        ],
+        "gpui_fps": 120.18032286496597,
+        "window_active": true
+      }
+    ]
+  },
+  {
+    "live_cards": 3,
+    "rss_bytes": 387317760,
+    "rss_delta_per_card": 57840981,
+    "holds_display_rate": false,
+    "samples": [
+      {
+        "seconds": 2.0099685,
+        "presented_fps_per_card": [
+          76.61811615455666,
+          76.12059591978681,
+          74.13051498070742
+        ],
+        "gpui_fps": 118.90733610999378,
+        "window_active": true
+      },
+      {
+        "seconds": 2.018336667,
+        "presented_fps_per_card": [
+          73.32770712627598,
+          70.85041972336126,
+          69.85950476219536
+        ],
+        "gpui_fps": 114.94613549524342,
+        "window_active": true
+      },
+      {
+        "seconds": 2.023937833,
+        "presented_fps_per_card": [
+          72.63068934390535,
+          71.64251669977058,
+          69.17208508943366
+        ],
+        "gpui_fps": 105.73447292242004,
+        "window_active": true
+      }
+    ]
+  }
+]

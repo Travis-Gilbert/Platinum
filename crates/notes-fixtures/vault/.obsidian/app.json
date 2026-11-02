@@ -1,0 +1,19 @@
+{
+  "useMarkdownLinks": false,
+  "newLinkFormat": "shortest",
+  "alwaysUpdateLinks": true,
+  "newFileLocation": "folder",
+  "newFileFolderPath": "inbox",
+  "attachmentFolderPath": "attachments",
+  "userIgnoreFilters": ["excluded/"],
+  "showUnsupportedFiles": false,
+  "defaultViewMode": "preview",
+  "livePreview": true,
+  "strictLineBreaks": false,
+  "readableLineLength": true,
+  "showLineNumber": false,
+  "foldHeading": true,
+  "foldIndent": true,
+  "promptDelete": true,
+  "trashOption": "system"
+}

@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "webview_id": "WebViewId(PainterId(1), (0,1))",
+  "baseline": {
+    "documentId": "1793129946881:0.3889029053060671",
+    "innerWidth": 1280,
+    "innerHeight": 800,
+    "devicePixelRatio": 1.40625,
+    "resizeCount": 0,
+    "resizeEvents": [],
+    "scrollX": 0,
+    "scrollY": 40,
+    "cookie": "frame_canvas_session=m1",
+    "text": "I was halfway through",
+    "selectionStart": 8,
+    "selectionEnd": 8,
+    "selectionDirection": "none",
+    "textareaScrollTop": 0,
+    "focused": "draft",
+    "input": {
+      "clicks": 0,
+      "hovers": 0,
+      "drag": null,
+      "wheel": 0,
+      "choice": "First",
+      "dialogs": [],
+      "escape": 0,
+      "space": 3
+    }
+  },
+  "checks": [
+    "text",
+    "caret",
+    "scroll",
+    "cookie",
+    "document_identity"
+  ]
+}

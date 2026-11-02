@@ -1,0 +1,153 @@
+{
+  "events": [
+    {
+      "elapsed_ms": 0.058041999999999996,
+      "source": "start",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 11554.09275,
+      "source": "poll",
+      "active": true,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 11554.293584,
+      "source": "activation",
+      "active": false,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 11868.622125,
+      "source": "activation",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 13456.237916999999,
+      "source": "poll",
+      "active": true,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 13456.339042,
+      "source": "activation",
+      "active": false,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 13559.804209,
+      "source": "poll",
+      "active": false,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 13562.531667,
+      "source": "activation",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 29363.097792,
+      "source": "activation",
+      "active": false,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 29855.873166999998,
+      "source": "activation",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 30982.806167,
+      "source": "poll",
+      "active": true,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 30982.885792,
+      "source": "activation",
+      "active": false,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 31104.647666999997,
+      "source": "poll",
+      "active": false,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 31106.383209,
+      "source": "activation",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 41600.829709000005,
+      "source": "activation",
+      "active": false,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 41600.87424999999,
+      "source": "poll",
+      "active": false,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    }
+  ],
+  "polls": 2280,
+  "max_poll_gap_ms": 824.8352920000001,
+  "failure": "needs the foreground: window inactive, hidden or occluded; run stopped without retry",
+  "monitor": "GPUI activation/visibility observers plus 16 ms polling of AppKit's key window; failures latch",
+  "allow_owned_native_panel_focus": true
+}

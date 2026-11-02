@@ -1,0 +1,2133 @@
+{
+  "tags counts format=json": {
+    "command": "tags",
+    "args": [
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#_leading-underscore\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#-dash-first\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#🚀\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#1/2\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#2026-plan\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#a\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a_b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a-b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a·b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a//b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#body-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#bom\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#café\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callout-body-tag\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#callout-tag\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#callouts\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#code\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#comment-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#crlf\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#crlf-tag\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#daily\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#dashboard\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#dataview\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embed-demo\"\n  },\n  {\n    \"count\": \"5\",\n    \"tag\": \"#embeds\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#emoji-🚀\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#errand\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm/nested\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#footnotes\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#hashed-in-frontmatter\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#heading-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#home\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#html\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#images\"\n  },\n  {\n    \"count\": \"10\",\n    \"tag\": \"#links\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#list-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#math\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#media\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#meeting\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#mermaid\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#Mixed-Case\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#naïve\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#naïve/ünï\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#outline\"\n  },\n  {\n    \"count\": \"12\",\n    \"tag\": \"#project\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#project/alpha\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/alpha/beta\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#project/beta\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/gamma\"\n  },\n  {\n    \"count\": \"5\",\n    \"tag\": \"#properties\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#quote-tag\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#review\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#rtl\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#search\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#slides\"\n  },\n  {\n    \"count\": \"12\",\n    \"tag\": \"#syntax\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#table-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tables\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with/many\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with/many/levels\"\n  },\n  {\n    \"count\": \"3\",\n    \"tag\": \"#tagging\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#targets\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#task-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tasks\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#trailing-dash-\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#types\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#unicode\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#weekly\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#y2026\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#ελληνικά\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#ключ\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#עברית\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#عربي\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#한국어\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#日本\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#日本語\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#_leading-underscore"
+      },
+      {
+        "count": "1",
+        "tag": "#-dash-first"
+      },
+      {
+        "count": "1",
+        "tag": "#🚀"
+      },
+      {
+        "count": "1",
+        "tag": "#1/2"
+      },
+      {
+        "count": "1",
+        "tag": "#2026-plan"
+      },
+      {
+        "count": "2",
+        "tag": "#a"
+      },
+      {
+        "count": "1",
+        "tag": "#a_b"
+      },
+      {
+        "count": "1",
+        "tag": "#a-b"
+      },
+      {
+        "count": "1",
+        "tag": "#a·b"
+      },
+      {
+        "count": "1",
+        "tag": "#a//b"
+      },
+      {
+        "count": "1",
+        "tag": "#body-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#bom"
+      },
+      {
+        "count": "1",
+        "tag": "#café"
+      },
+      {
+        "count": "1",
+        "tag": "#callout-body-tag"
+      },
+      {
+        "count": "2",
+        "tag": "#callout-tag"
+      },
+      {
+        "count": "4",
+        "tag": "#callouts"
+      },
+      {
+        "count": "1",
+        "tag": "#code"
+      },
+      {
+        "count": "1",
+        "tag": "#comment-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#crlf"
+      },
+      {
+        "count": "1",
+        "tag": "#crlf-tag"
+      },
+      {
+        "count": "4",
+        "tag": "#daily"
+      },
+      {
+        "count": "1",
+        "tag": "#dashboard"
+      },
+      {
+        "count": "1",
+        "tag": "#dataview"
+      },
+      {
+        "count": "1",
+        "tag": "#embed-demo"
+      },
+      {
+        "count": "5",
+        "tag": "#embeds"
+      },
+      {
+        "count": "1",
+        "tag": "#emoji-🚀"
+      },
+      {
+        "count": "1",
+        "tag": "#errand"
+      },
+      {
+        "count": "1",
+        "tag": "#fm"
+      },
+      {
+        "count": "1",
+        "tag": "#fm-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#fm/nested"
+      },
+      {
+        "count": "1",
+        "tag": "#footnotes"
+      },
+      {
+        "count": "1",
+        "tag": "#hashed-in-frontmatter"
+      },
+      {
+        "count": "1",
+        "tag": "#heading-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#home"
+      },
+      {
+        "count": "1",
+        "tag": "#html"
+      },
+      {
+        "count": "1",
+        "tag": "#images"
+      },
+      {
+        "count": "10",
+        "tag": "#links"
+      },
+      {
+        "count": "1",
+        "tag": "#list-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#math"
+      },
+      {
+        "count": "1",
+        "tag": "#media"
+      },
+      {
+        "count": "1",
+        "tag": "#meeting"
+      },
+      {
+        "count": "1",
+        "tag": "#mermaid"
+      },
+      {
+        "count": "4",
+        "tag": "#Mixed-Case"
+      },
+      {
+        "count": "1",
+        "tag": "#naïve"
+      },
+      {
+        "count": "1",
+        "tag": "#naïve/ünï"
+      },
+      {
+        "count": "1",
+        "tag": "#outline"
+      },
+      {
+        "count": "12",
+        "tag": "#project"
+      },
+      {
+        "count": "4",
+        "tag": "#project/alpha"
+      },
+      {
+        "count": "1",
+        "tag": "#project/alpha/beta"
+      },
+      {
+        "count": "2",
+        "tag": "#project/beta"
+      },
+      {
+        "count": "1",
+        "tag": "#project/gamma"
+      },
+      {
+        "count": "5",
+        "tag": "#properties"
+      },
+      {
+        "count": "1",
+        "tag": "#quote-tag"
+      },
+      {
+        "count": "2",
+        "tag": "#review"
+      },
+      {
+        "count": "1",
+        "tag": "#rtl"
+      },
+      {
+        "count": "2",
+        "tag": "#search"
+      },
+      {
+        "count": "1",
+        "tag": "#slides"
+      },
+      {
+        "count": "12",
+        "tag": "#syntax"
+      },
+      {
+        "count": "1",
+        "tag": "#table-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tables"
+      },
+      {
+        "count": "1",
+        "tag": "#tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with/many"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with/many/levels"
+      },
+      {
+        "count": "3",
+        "tag": "#tagging"
+      },
+      {
+        "count": "2",
+        "tag": "#targets"
+      },
+      {
+        "count": "2",
+        "tag": "#task-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tasks"
+      },
+      {
+        "count": "1",
+        "tag": "#trailing-dash-"
+      },
+      {
+        "count": "1",
+        "tag": "#types"
+      },
+      {
+        "count": "2",
+        "tag": "#unicode"
+      },
+      {
+        "count": "1",
+        "tag": "#weekly"
+      },
+      {
+        "count": "1",
+        "tag": "#y2026"
+      },
+      {
+        "count": "1",
+        "tag": "#ελληνικά"
+      },
+      {
+        "count": "1",
+        "tag": "#ключ"
+      },
+      {
+        "count": "1",
+        "tag": "#עברית"
+      },
+      {
+        "count": "2",
+        "tag": "#عربي"
+      },
+      {
+        "count": "1",
+        "tag": "#한국어"
+      },
+      {
+        "count": "1",
+        "tag": "#日本"
+      },
+      {
+        "count": "1",
+        "tag": "#日本語"
+      }
+    ]
+  },
+  "tags counts sort=count format=json": {
+    "command": "tags",
+    "args": [
+      "counts",
+      "sort=count",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"12\",\n    \"tag\": \"#project\"\n  },\n  {\n    \"count\": \"12\",\n    \"tag\": \"#syntax\"\n  },\n  {\n    \"count\": \"10\",\n    \"tag\": \"#links\"\n  },\n  {\n    \"count\": \"5\",\n    \"tag\": \"#embeds\"\n  },\n  {\n    \"count\": \"5\",\n    \"tag\": \"#properties\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#Mixed-Case\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#callouts\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#daily\"\n  },\n  {\n    \"count\": \"4\",\n    \"tag\": \"#project/alpha\"\n  },\n  {\n    \"count\": \"3\",\n    \"tag\": \"#tagging\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#a\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#callout-tag\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#project/beta\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#review\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#search\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#targets\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#task-tag\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#unicode\"\n  },\n  {\n    \"count\": \"2\",\n    \"tag\": \"#عربي\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#-dash-first\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#1/2\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#2026-plan\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#_leading-underscore\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a-b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a//b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a_b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a·b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#body-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#bom\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#café\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callout-body-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#code\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#comment-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#crlf\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#crlf-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#dashboard\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#dataview\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embed-demo\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#emoji-🚀\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#errand\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm/nested\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#footnotes\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#hashed-in-frontmatter\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#heading-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#home\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#html\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#images\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#list-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#math\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#media\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#meeting\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#mermaid\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#naïve\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#naïve/ünï\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#outline\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/alpha/beta\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/gamma\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#quote-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#rtl\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#slides\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#table-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tables\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with/many\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with/many/levels\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tasks\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#trailing-dash-\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#types\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#weekly\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#y2026\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#ελληνικά\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#ключ\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#עברית\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#日本\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#日本語\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#한국어\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#🚀\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "12",
+        "tag": "#project"
+      },
+      {
+        "count": "12",
+        "tag": "#syntax"
+      },
+      {
+        "count": "10",
+        "tag": "#links"
+      },
+      {
+        "count": "5",
+        "tag": "#embeds"
+      },
+      {
+        "count": "5",
+        "tag": "#properties"
+      },
+      {
+        "count": "4",
+        "tag": "#Mixed-Case"
+      },
+      {
+        "count": "4",
+        "tag": "#callouts"
+      },
+      {
+        "count": "4",
+        "tag": "#daily"
+      },
+      {
+        "count": "4",
+        "tag": "#project/alpha"
+      },
+      {
+        "count": "3",
+        "tag": "#tagging"
+      },
+      {
+        "count": "2",
+        "tag": "#a"
+      },
+      {
+        "count": "2",
+        "tag": "#callout-tag"
+      },
+      {
+        "count": "2",
+        "tag": "#project/beta"
+      },
+      {
+        "count": "2",
+        "tag": "#review"
+      },
+      {
+        "count": "2",
+        "tag": "#search"
+      },
+      {
+        "count": "2",
+        "tag": "#targets"
+      },
+      {
+        "count": "2",
+        "tag": "#task-tag"
+      },
+      {
+        "count": "2",
+        "tag": "#unicode"
+      },
+      {
+        "count": "2",
+        "tag": "#عربي"
+      },
+      {
+        "count": "1",
+        "tag": "#-dash-first"
+      },
+      {
+        "count": "1",
+        "tag": "#1/2"
+      },
+      {
+        "count": "1",
+        "tag": "#2026-plan"
+      },
+      {
+        "count": "1",
+        "tag": "#_leading-underscore"
+      },
+      {
+        "count": "1",
+        "tag": "#a-b"
+      },
+      {
+        "count": "1",
+        "tag": "#a//b"
+      },
+      {
+        "count": "1",
+        "tag": "#a_b"
+      },
+      {
+        "count": "1",
+        "tag": "#a·b"
+      },
+      {
+        "count": "1",
+        "tag": "#body-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#bom"
+      },
+      {
+        "count": "1",
+        "tag": "#café"
+      },
+      {
+        "count": "1",
+        "tag": "#callout-body-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#code"
+      },
+      {
+        "count": "1",
+        "tag": "#comment-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#crlf"
+      },
+      {
+        "count": "1",
+        "tag": "#crlf-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#dashboard"
+      },
+      {
+        "count": "1",
+        "tag": "#dataview"
+      },
+      {
+        "count": "1",
+        "tag": "#embed-demo"
+      },
+      {
+        "count": "1",
+        "tag": "#emoji-🚀"
+      },
+      {
+        "count": "1",
+        "tag": "#errand"
+      },
+      {
+        "count": "1",
+        "tag": "#fm"
+      },
+      {
+        "count": "1",
+        "tag": "#fm-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#fm/nested"
+      },
+      {
+        "count": "1",
+        "tag": "#footnotes"
+      },
+      {
+        "count": "1",
+        "tag": "#hashed-in-frontmatter"
+      },
+      {
+        "count": "1",
+        "tag": "#heading-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#home"
+      },
+      {
+        "count": "1",
+        "tag": "#html"
+      },
+      {
+        "count": "1",
+        "tag": "#images"
+      },
+      {
+        "count": "1",
+        "tag": "#list-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#math"
+      },
+      {
+        "count": "1",
+        "tag": "#media"
+      },
+      {
+        "count": "1",
+        "tag": "#meeting"
+      },
+      {
+        "count": "1",
+        "tag": "#mermaid"
+      },
+      {
+        "count": "1",
+        "tag": "#naïve"
+      },
+      {
+        "count": "1",
+        "tag": "#naïve/ünï"
+      },
+      {
+        "count": "1",
+        "tag": "#outline"
+      },
+      {
+        "count": "1",
+        "tag": "#project/alpha/beta"
+      },
+      {
+        "count": "1",
+        "tag": "#project/gamma"
+      },
+      {
+        "count": "1",
+        "tag": "#quote-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#rtl"
+      },
+      {
+        "count": "1",
+        "tag": "#slides"
+      },
+      {
+        "count": "1",
+        "tag": "#table-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tables"
+      },
+      {
+        "count": "1",
+        "tag": "#tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with/many"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with/many/levels"
+      },
+      {
+        "count": "1",
+        "tag": "#tasks"
+      },
+      {
+        "count": "1",
+        "tag": "#trailing-dash-"
+      },
+      {
+        "count": "1",
+        "tag": "#types"
+      },
+      {
+        "count": "1",
+        "tag": "#weekly"
+      },
+      {
+        "count": "1",
+        "tag": "#y2026"
+      },
+      {
+        "count": "1",
+        "tag": "#ελληνικά"
+      },
+      {
+        "count": "1",
+        "tag": "#ключ"
+      },
+      {
+        "count": "1",
+        "tag": "#עברית"
+      },
+      {
+        "count": "1",
+        "tag": "#日本"
+      },
+      {
+        "count": "1",
+        "tag": "#日本語"
+      },
+      {
+        "count": "1",
+        "tag": "#한국어"
+      },
+      {
+        "count": "1",
+        "tag": "#🚀"
+      }
+    ]
+  },
+  "tags path=\"Dead End.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=Dead End.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=\"Unicode é 日本.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=Unicode é 日本.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#unicode\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#日本\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#unicode"
+      },
+      {
+        "count": "1",
+        "tag": "#日本"
+      }
+    ]
+  },
+  "tags path=\"a/Links From A.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=a/Links From A.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=\"b/Links From B.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=b/Links From B.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=\"callouts/All Callouts.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=callouts/All Callouts.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callouts\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#callouts"
+      }
+    ]
+  },
+  "tags path=\"callouts/Callout Titles and Folding.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callout-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callouts\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#callout-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#callouts"
+      }
+    ]
+  },
+  "tags path=\"callouts/Custom Callout.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=callouts/Custom Callout.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callouts\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#callouts"
+      }
+    ]
+  },
+  "tags path=\"callouts/Nested Callouts.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=callouts/Nested Callouts.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callouts\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#callouts"
+      }
+    ]
+  },
+  "tags path=\"dataview/Dataview Fields.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=dataview/Dataview Fields.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#dataview\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#dataview"
+      }
+    ]
+  },
+  "tags path=\"embeds/Embed Canvas and Base.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embeds\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#embeds"
+      }
+    ]
+  },
+  "tags path=\"embeds/Embed Images.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Embed Images.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embeds\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#images\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#embeds"
+      },
+      {
+        "count": "1",
+        "tag": "#images"
+      }
+    ]
+  },
+  "tags path=\"embeds/Embed Media.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Embed Media.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embeds\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#media\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#embeds"
+      },
+      {
+        "count": "1",
+        "tag": "#media"
+      }
+    ]
+  },
+  "tags path=\"embeds/Embed Notes.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Embed Notes.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embeds\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#embeds"
+      }
+    ]
+  },
+  "tags path=\"embeds/Embed Query.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Embed Query.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embed-demo\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#embeds\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#embed-demo"
+      },
+      {
+        "count": "1",
+        "tag": "#embeds"
+      }
+    ]
+  },
+  "tags path=\"embeds/Loop A.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Loop A.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=\"embeds/Loop B.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=embeds/Loop B.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=\"excluded/Hidden Note.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=excluded/Hidden Note.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#excluded\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#excluded"
+      }
+    ]
+  },
+  "tags path=\"links/Blocks Target.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Blocks Target.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#targets\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      },
+      {
+        "count": "1",
+        "tag": "#targets"
+      }
+    ]
+  },
+  "tags path=\"links/Headings Target.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Headings Target.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#targets\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      },
+      {
+        "count": "1",
+        "tag": "#targets"
+      }
+    ]
+  },
+  "tags path=\"links/Link Forms.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Link Forms.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=\"links/Markdown Links.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Markdown Links.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=\"links/Unresolved Links.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Unresolved Links.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=\"projects/Project Alpha.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=projects/Project Alpha.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project"
+      }
+    ]
+  },
+  "tags path=\"projects/Project Beta.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=projects/Project Beta.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/beta\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project"
+      },
+      {
+        "count": "1",
+        "tag": "#project/beta"
+      }
+    ]
+  },
+  "tags path=\"projects/Project Delta.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=projects/Project Delta.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project"
+      }
+    ]
+  },
+  "tags path=\"projects/Project Gamma.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=projects/Project Gamma.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project"
+      }
+    ]
+  },
+  "tags path=\"properties/Aliases and Cssclasses.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#properties\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#properties"
+      }
+    ]
+  },
+  "tags path=\"properties/All Property Types.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/All Property Types.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#properties\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#types\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#properties"
+      },
+      {
+        "count": "1",
+        "tag": "#types"
+      }
+    ]
+  },
+  "tags path=\"properties/Broken Frontmatter.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/Broken Frontmatter.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=\"properties/Empty Frontmatter.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/Empty Frontmatter.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=\"properties/Frontmatter Only.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/Frontmatter Only.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#properties\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#properties"
+      }
+    ]
+  },
+  "tags path=\"properties/Link Properties.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/Link Properties.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#properties\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#properties"
+      }
+    ]
+  },
+  "tags path=\"properties/Type Mismatch.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=properties/Type Mismatch.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#properties\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#properties"
+      }
+    ]
+  },
+  "tags path=\"review/Heading With Hash.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=review/Heading With Hash.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#review\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#review"
+      }
+    ]
+  },
+  "tags path=\"review/Missing Note Creation.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=review/Missing Note Creation.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#review\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#review"
+      }
+    ]
+  },
+  "tags path=\"search/Case Sensitivity.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=search/Case Sensitivity.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#search\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#search"
+      }
+    ]
+  },
+  "tags path=\"search/Search Corpus.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=search/Search Corpus.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/alpha\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#search\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project/alpha"
+      },
+      {
+        "count": "1",
+        "tag": "#search"
+      }
+    ]
+  },
+  "tags path=\"syntax/Bidirectional Text.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Bidirectional Text.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#rtl\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#عربي\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#rtl"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      },
+      {
+        "count": "1",
+        "tag": "#عربي"
+      }
+    ]
+  },
+  "tags path=\"syntax/Byte Order Mark.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Byte Order Mark.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#bom\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#bom"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"syntax/Code Blocks.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Code Blocks.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#code\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#code"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"syntax/Comments and Highlights.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Comments and Highlights.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#comment-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#comment-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"syntax/Folding and Lists.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Folding and Lists.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#outline\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#outline"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"syntax/Inline Formatting.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Inline Formatting.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"syntax/Line Endings.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Line Endings.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#crlf\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#crlf-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#crlf"
+      },
+      {
+        "count": "1",
+        "tag": "#crlf-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"syntax/Raw HTML.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Raw HTML.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#html\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#html"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=\"tagging/Frontmatter Tags.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=tagging/Frontmatter Tags.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#body-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#fm/nested\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#hashed-in-frontmatter\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#Mixed-Case\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tagging\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#body-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#fm-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#fm/nested"
+      },
+      {
+        "count": "1",
+        "tag": "#hashed-in-frontmatter"
+      },
+      {
+        "count": "1",
+        "tag": "#Mixed-Case"
+      },
+      {
+        "count": "1",
+        "tag": "#tagging"
+      }
+    ]
+  },
+  "tags path=\"tagging/Tags As Text.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=tagging/Tags As Text.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=\"tagging/Unicode Tags.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=tagging/Unicode Tags.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#🚀\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a·b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#café\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#emoji-🚀\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#naïve/ünï\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tagging\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#unicode\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#ελληνικά\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#ключ\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#עברית\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#عربي\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#한국어\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#日本語\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#🚀"
+      },
+      {
+        "count": "1",
+        "tag": "#a·b"
+      },
+      {
+        "count": "1",
+        "tag": "#café"
+      },
+      {
+        "count": "1",
+        "tag": "#emoji-🚀"
+      },
+      {
+        "count": "1",
+        "tag": "#naïve/ünï"
+      },
+      {
+        "count": "1",
+        "tag": "#tagging"
+      },
+      {
+        "count": "1",
+        "tag": "#unicode"
+      },
+      {
+        "count": "1",
+        "tag": "#ελληνικά"
+      },
+      {
+        "count": "1",
+        "tag": "#ключ"
+      },
+      {
+        "count": "1",
+        "tag": "#עברית"
+      },
+      {
+        "count": "1",
+        "tag": "#عربي"
+      },
+      {
+        "count": "1",
+        "tag": "#한국어"
+      },
+      {
+        "count": "1",
+        "tag": "#日本語"
+      }
+    ]
+  },
+  "tags path=\"tasks/Task Statuses.md\" counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=tasks/Task Statuses.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#errand\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#task-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tasks\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#errand"
+      },
+      {
+        "count": "1",
+        "tag": "#task-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tasks"
+      }
+    ]
+  },
+  "tags path=Home.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=Home.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#dashboard\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#home\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#dashboard"
+      },
+      {
+        "count": "1",
+        "tag": "#home"
+      }
+    ]
+  },
+  "tags path=Orphan.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=Orphan.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=a/Note.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=a/Note.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/alpha\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project/alpha"
+      }
+    ]
+  },
+  "tags path=b/Note.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=b/Note.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/beta\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#project/beta"
+      }
+    ]
+  },
+  "tags path=daily/2026-10-23.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=daily/2026-10-23.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#daily\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#daily"
+      }
+    ]
+  },
+  "tags path=daily/2026-10-24.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=daily/2026-10-24.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#daily\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#daily"
+      }
+    ]
+  },
+  "tags path=daily/2026-10-25.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=daily/2026-10-25.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#daily\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#daily"
+      }
+    ]
+  },
+  "tags path=inbox/Inbox.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=inbox/Inbox.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tags found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tags path=links/Aliases.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Aliases.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=links/Mentions.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=links/Mentions.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#links"
+      }
+    ]
+  },
+  "tags path=slides/Deck.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=slides/Deck.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#slides\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#slides"
+      }
+    ]
+  },
+  "tags path=syntax/Footnotes.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Footnotes.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#footnotes\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#footnotes"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=syntax/Math.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Math.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#math\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#math"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=syntax/Mermaid.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Mermaid.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#mermaid\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#mermaid"
+      },
+      {
+        "count": "1",
+        "tag": "#syntax"
+      }
+    ]
+  },
+  "tags path=syntax/Tables.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=syntax/Tables.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#syntax\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tables\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#syntax"
+      },
+      {
+        "count": "1",
+        "tag": "#tables"
+      }
+    ]
+  },
+  "tags path=tagging/Tags.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=tagging/Tags.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#_leading-underscore\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#-dash-first\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#1/2\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#2026-plan\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a_b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a-b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a/\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#a//b\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callout-body-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#callout-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#heading-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#list-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#Mixed-Case\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#mixed-case\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#MIXED-CASE\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/alpha\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/alpha/beta\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#project/gamma\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#quote-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#table-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tag/with/many/levels\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#tagging\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#task-tag\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#trailing-dash-\"\n  },\n  {\n    \"count\": \"1\",\n    \"tag\": \"#y2026\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#_leading-underscore"
+      },
+      {
+        "count": "1",
+        "tag": "#-dash-first"
+      },
+      {
+        "count": "1",
+        "tag": "#1/2"
+      },
+      {
+        "count": "1",
+        "tag": "#2026-plan"
+      },
+      {
+        "count": "1",
+        "tag": "#a_b"
+      },
+      {
+        "count": "1",
+        "tag": "#a-b"
+      },
+      {
+        "count": "1",
+        "tag": "#a/"
+      },
+      {
+        "count": "1",
+        "tag": "#a//b"
+      },
+      {
+        "count": "1",
+        "tag": "#callout-body-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#callout-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#heading-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#list-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#Mixed-Case"
+      },
+      {
+        "count": "1",
+        "tag": "#mixed-case"
+      },
+      {
+        "count": "1",
+        "tag": "#MIXED-CASE"
+      },
+      {
+        "count": "1",
+        "tag": "#project"
+      },
+      {
+        "count": "1",
+        "tag": "#project/alpha"
+      },
+      {
+        "count": "1",
+        "tag": "#project/alpha/beta"
+      },
+      {
+        "count": "1",
+        "tag": "#project/gamma"
+      },
+      {
+        "count": "1",
+        "tag": "#quote-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#table-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#tag/with/many/levels"
+      },
+      {
+        "count": "1",
+        "tag": "#tagging"
+      },
+      {
+        "count": "1",
+        "tag": "#task-tag"
+      },
+      {
+        "count": "1",
+        "tag": "#trailing-dash-"
+      },
+      {
+        "count": "1",
+        "tag": "#y2026"
+      }
+    ]
+  },
+  "tags path=templates/Daily.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=templates/Daily.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#daily\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#daily"
+      }
+    ]
+  },
+  "tags path=templates/Meeting.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=templates/Meeting.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#meeting\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#meeting"
+      }
+    ]
+  },
+  "tags path=weekly/2026-W43.md counts format=json": {
+    "command": "tags",
+    "args": [
+      "path=weekly/2026-W43.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"tag\": \"#weekly\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "tag": "#weekly"
+      }
+    ]
+  },
+  "tags total": {
+    "command": "tags",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "80\n",
+    "stderr": "",
+    "error": null
+  }
+}

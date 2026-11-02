@@ -1,0 +1,5 @@
+{
+  "pid": 45002,
+  "passed": false,
+  "error": "needs the foreground: window inactive, hidden or occluded; run stopped without retry"
+}

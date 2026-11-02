@@ -192,3 +192,26 @@ pub fn clear_history(directory: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+/// Older Platinum builds fixed the Keychain identity in their SQLite catalog.
+/// Read it without opening another authoritative writer or changing that input.
+pub(super) fn keychain_namespace(root: &Path) -> Result<Option<String>> {
+    let path = root.join("profiles.sqlite3");
+    if !path.exists() {
+        return Ok(None);
+    }
+    let old = snapshot(&path)?;
+    let exists: bool = old.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='vault')",
+        [],
+        |row| row.get(0),
+    )?;
+    if !exists {
+        return Ok(None);
+    }
+    Ok(old
+        .query_row("SELECT namespace FROM vault WHERE id=1", [], |row| {
+            row.get(0)
+        })
+        .optional()?)
+}

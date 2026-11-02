@@ -1,0 +1,1552 @@
+{
+  "outline path=\"Dead End.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=Dead End.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Dead End\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Dead End",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"Unicode é 日本.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=Unicode é 日本.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Unicode é 日本\",\n    \"level\": 1,\n    \"line\": 5\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Unicode é 日本",
+        "level": 1,
+        "line": 5
+      }
+    ]
+  },
+  "outline path=\"a/Links From A.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=a/Links From A.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Links From A\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Links From A",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"b/Links From B.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=b/Links From B.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Links From B\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Links From B",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"callouts/All Callouts.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=callouts/All Callouts.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"All Callouts\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Aliases\",\n    \"level\": 2,\n    \"line\": 47\n  },\n  {\n    \"heading\": \"Case and unknown types\",\n    \"level\": 2,\n    \"line\": 91\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "All Callouts",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Aliases",
+        "level": 2,
+        "line": 47
+      },
+      {
+        "heading": "Case and unknown types",
+        "level": 2,
+        "line": 91
+      }
+    ]
+  },
+  "outline path=\"callouts/Callout Titles and Folding.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Callout Titles and Folding\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Callout Titles and Folding",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"callouts/Custom Callout.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=callouts/Custom Callout.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Custom Callout\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Custom Callout",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"callouts/Nested Callouts.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=callouts/Nested Callouts.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Nested Callouts\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Nested Callouts",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"dataview/Dataview Fields.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=dataview/Dataview Fields.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Dataview Fields\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Dataview Fields",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"embeds/Embed Canvas and Base.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Embed Canvas and Base\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Embed Canvas and Base",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"embeds/Embed Images.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Embed Images.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Embed Images\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Embed Images",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"embeds/Embed Media.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Embed Media.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Embed Media\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Audio\",\n    \"level\": 2,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"Video\",\n    \"level\": 2,\n    \"line\": 16\n  },\n  {\n    \"heading\": \"PDF\",\n    \"level\": 2,\n    \"line\": 24\n  },\n  {\n    \"heading\": \"Not embedded anywhere\",\n    \"level\": 2,\n    \"line\": 38\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Embed Media",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Audio",
+        "level": 2,
+        "line": 6
+      },
+      {
+        "heading": "Video",
+        "level": 2,
+        "line": 16
+      },
+      {
+        "heading": "PDF",
+        "level": 2,
+        "line": 24
+      },
+      {
+        "heading": "Not embedded anywhere",
+        "level": 2,
+        "line": 38
+      }
+    ]
+  },
+  "outline path=\"embeds/Embed Notes.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Embed Notes.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Embed Notes\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Embed Notes",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"embeds/Embed Query.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Embed Query.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Embed Query\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Embed Query",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"embeds/Loop A.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Loop A.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Loop A\",\n    \"level\": 1,\n    \"line\": 1\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Loop A",
+        "level": 1,
+        "line": 1
+      }
+    ]
+  },
+  "outline path=\"embeds/Loop B.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=embeds/Loop B.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Loop B\",\n    \"level\": 1,\n    \"line\": 1\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Loop B",
+        "level": 1,
+        "line": 1
+      }
+    ]
+  },
+  "outline path=\"excluded/Hidden Note.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=excluded/Hidden Note.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Hidden Note\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Hidden Note",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"links/Blocks Target.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Blocks Target.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Blocks Target\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Blocks Target",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"links/Headings Target.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Headings Target.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Headings Target\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"First heading\",\n    \"level\": 2,\n    \"line\": 8\n  },\n  {\n    \"heading\": \"Nested heading\",\n    \"level\": 3,\n    \"line\": 12\n  },\n  {\n    \"heading\": \"Second heading\",\n    \"level\": 2,\n    \"line\": 16\n  },\n  {\n    \"heading\": \"Second heading\",\n    \"level\": 2,\n    \"line\": 20\n  },\n  {\n    \"heading\": \"Nested heading\",\n    \"level\": 3,\n    \"line\": 24\n  },\n  {\n    \"heading\": \"Heading with `code` and **bold**\",\n    \"level\": 2,\n    \"line\": 28\n  },\n  {\n    \"heading\": \"Heading with a [[Dead End]] link\",\n    \"level\": 2,\n    \"line\": 30\n  },\n  {\n    \"heading\": \"Skips two levels\",\n    \"level\": 4,\n    \"line\": 32\n  },\n  {\n    \"heading\": \"Deepest\",\n    \"level\": 6,\n    \"line\": 34\n  },\n  {\n    \"heading\": \"Trailing heading\",\n    \"level\": 2,\n    \"line\": 36\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Headings Target",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "First heading",
+        "level": 2,
+        "line": 8
+      },
+      {
+        "heading": "Nested heading",
+        "level": 3,
+        "line": 12
+      },
+      {
+        "heading": "Second heading",
+        "level": 2,
+        "line": 16
+      },
+      {
+        "heading": "Second heading",
+        "level": 2,
+        "line": 20
+      },
+      {
+        "heading": "Nested heading",
+        "level": 3,
+        "line": 24
+      },
+      {
+        "heading": "Heading with `code` and **bold**",
+        "level": 2,
+        "line": 28
+      },
+      {
+        "heading": "Heading with a [[Dead End]] link",
+        "level": 2,
+        "line": 30
+      },
+      {
+        "heading": "Skips two levels",
+        "level": 4,
+        "line": 32
+      },
+      {
+        "heading": "Deepest",
+        "level": 6,
+        "line": 34
+      },
+      {
+        "heading": "Trailing heading",
+        "level": 2,
+        "line": 36
+      }
+    ]
+  },
+  "outline path=\"links/Link Forms.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Link Forms.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Link Forms\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Wikilinks\",\n    \"level\": 2,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"See [[Dead End]]\",\n    \"level\": 3,\n    \"line\": 34\n  },\n  {\n    \"heading\": \"Typing triggers\",\n    \"level\": 2,\n    \"line\": 38\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Link Forms",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Wikilinks",
+        "level": 2,
+        "line": 6
+      },
+      {
+        "heading": "See [[Dead End]]",
+        "level": 3,
+        "line": 34
+      },
+      {
+        "heading": "Typing triggers",
+        "level": 2,
+        "line": 38
+      }
+    ]
+  },
+  "outline path=\"links/Markdown Links.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Markdown Links.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Markdown Links\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Markdown Links",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"links/Unresolved Links.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Unresolved Links.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Unresolved Links\",\n    \"level\": 1,\n    \"line\": 6\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Unresolved Links",
+        "level": 1,
+        "line": 6
+      }
+    ]
+  },
+  "outline path=\"projects/Project Alpha.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=projects/Project Alpha.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Project Alpha\",\n    \"level\": 1,\n    \"line\": 12\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Project Alpha",
+        "level": 1,
+        "line": 12
+      }
+    ]
+  },
+  "outline path=\"projects/Project Beta.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=projects/Project Beta.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Project Beta\",\n    \"level\": 1,\n    \"line\": 14\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Project Beta",
+        "level": 1,
+        "line": 14
+      }
+    ]
+  },
+  "outline path=\"projects/Project Delta.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=projects/Project Delta.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Project Delta\",\n    \"level\": 1,\n    \"line\": 8\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Project Delta",
+        "level": 1,
+        "line": 8
+      }
+    ]
+  },
+  "outline path=\"projects/Project Gamma.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=projects/Project Gamma.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Project Gamma\",\n    \"level\": 1,\n    \"line\": 11\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Project Gamma",
+        "level": 1,
+        "line": 11
+      }
+    ]
+  },
+  "outline path=\"properties/Aliases and Cssclasses.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Aliases and Cssclasses\",\n    \"level\": 1,\n    \"line\": 10\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Aliases and Cssclasses",
+        "level": 1,
+        "line": 10
+      }
+    ]
+  },
+  "outline path=\"properties/All Property Types.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/All Property Types.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"All Property Types\",\n    \"level\": 1,\n    \"line\": 39\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "All Property Types",
+        "level": 1,
+        "line": 39
+      }
+    ]
+  },
+  "outline path=\"properties/Broken Frontmatter.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/Broken Frontmatter.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Broken Frontmatter\",\n    \"level\": 1,\n    \"line\": 6\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Broken Frontmatter",
+        "level": 1,
+        "line": 6
+      }
+    ]
+  },
+  "outline path=\"properties/Empty Frontmatter.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/Empty Frontmatter.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Empty Frontmatter\",\n    \"level\": 1,\n    \"line\": 3\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Empty Frontmatter",
+        "level": 1,
+        "line": 3
+      }
+    ]
+  },
+  "outline path=\"properties/Frontmatter Only.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/Frontmatter Only.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No headings found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "outline path=\"properties/Link Properties.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/Link Properties.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Link Properties\",\n    \"level\": 1,\n    \"line\": 11\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Link Properties",
+        "level": 1,
+        "line": 11
+      }
+    ]
+  },
+  "outline path=\"properties/Type Mismatch.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=properties/Type Mismatch.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Type Mismatch\",\n    \"level\": 1,\n    \"line\": 9\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Type Mismatch",
+        "level": 1,
+        "line": 9
+      }
+    ]
+  },
+  "outline path=\"review/Heading With Hash.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=review/Heading With Hash.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Heading With Hash\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"C# basics\",\n    \"level\": 2,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"F# and C# together\",\n    \"level\": 2,\n    \"line\": 10\n  },\n  {\n    \"heading\": \"Heading with: a colon\",\n    \"level\": 2,\n    \"line\": 12\n  },\n  {\n    \"heading\": \"Heading with [brackets]\",\n    \"level\": 2,\n    \"line\": 14\n  },\n  {\n    \"heading\": \"Heading with ^ caret and | pipe\",\n    \"level\": 2,\n    \"line\": 16\n  },\n  {\n    \"heading\": \"Heading with a closing sequence\",\n    \"level\": 2,\n    \"line\": 18\n  },\n  {\n    \"heading\": \"Links to them\",\n    \"level\": 2,\n    \"line\": 20\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Heading With Hash",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "C# basics",
+        "level": 2,
+        "line": 6
+      },
+      {
+        "heading": "F# and C# together",
+        "level": 2,
+        "line": 10
+      },
+      {
+        "heading": "Heading with: a colon",
+        "level": 2,
+        "line": 12
+      },
+      {
+        "heading": "Heading with [brackets]",
+        "level": 2,
+        "line": 14
+      },
+      {
+        "heading": "Heading with ^ caret and | pipe",
+        "level": 2,
+        "line": 16
+      },
+      {
+        "heading": "Heading with a closing sequence",
+        "level": 2,
+        "line": 18
+      },
+      {
+        "heading": "Links to them",
+        "level": 2,
+        "line": 20
+      }
+    ]
+  },
+  "outline path=\"review/Missing Note Creation.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=review/Missing Note Creation.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Missing Note Creation\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Missing Note Creation",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"search/Case Sensitivity.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=search/Case Sensitivity.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Case Sensitivity\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Case Sensitivity",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"search/Search Corpus.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=search/Search Corpus.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Search Corpus\",\n    \"level\": 1,\n    \"line\": 8\n  },\n  {\n    \"heading\": \"Section One\",\n    \"level\": 2,\n    \"line\": 12\n  },\n  {\n    \"heading\": \"Section Two\",\n    \"level\": 2,\n    \"line\": 19\n  },\n  {\n    \"heading\": \"Links\",\n    \"level\": 2,\n    \"line\": 29\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Search Corpus",
+        "level": 1,
+        "line": 8
+      },
+      {
+        "heading": "Section One",
+        "level": 2,
+        "line": 12
+      },
+      {
+        "heading": "Section Two",
+        "level": 2,
+        "line": 19
+      },
+      {
+        "heading": "Links",
+        "level": 2,
+        "line": 29
+      }
+    ]
+  },
+  "outline path=\"syntax/Bidirectional Text.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Bidirectional Text.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Bidirectional Text\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Bidirectional Text",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"syntax/Byte Order Mark.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Byte Order Mark.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Byte Order Mark\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Byte Order Mark",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"syntax/Code Blocks.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Code Blocks.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Code Blocks\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Code Blocks",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"syntax/Comments and Highlights.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Comments and Highlights.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Comments and Highlights\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Comments and Highlights",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"syntax/Folding and Lists.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Folding and Lists.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Folding and Lists\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Section A\",\n    \"level\": 2,\n    \"line\": 8\n  },\n  {\n    \"heading\": \"Section A1\",\n    \"level\": 3,\n    \"line\": 12\n  },\n  {\n    \"heading\": \"Section A1a\",\n    \"level\": 4,\n    \"line\": 16\n  },\n  {\n    \"heading\": \"Section A2\",\n    \"level\": 3,\n    \"line\": 20\n  },\n  {\n    \"heading\": \"Section B\",\n    \"level\": 2,\n    \"line\": 24\n  },\n  {\n    \"heading\": \"Section C\",\n    \"level\": 2,\n    \"line\": 39\n  },\n  {\n    \"heading\": \"A second top-level heading\",\n    \"level\": 1,\n    \"line\": 43\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Folding and Lists",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Section A",
+        "level": 2,
+        "line": 8
+      },
+      {
+        "heading": "Section A1",
+        "level": 3,
+        "line": 12
+      },
+      {
+        "heading": "Section A1a",
+        "level": 4,
+        "line": 16
+      },
+      {
+        "heading": "Section A2",
+        "level": 3,
+        "line": 20
+      },
+      {
+        "heading": "Section B",
+        "level": 2,
+        "line": 24
+      },
+      {
+        "heading": "Section C",
+        "level": 2,
+        "line": 39
+      },
+      {
+        "heading": "A second top-level heading",
+        "level": 1,
+        "line": 43
+      }
+    ]
+  },
+  "outline path=\"syntax/Inline Formatting.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Inline Formatting.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Inline Formatting\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Setext heading\",\n    \"level\": 1,\n    \"line\": 15\n  },\n  {\n    \"heading\": \"Another setext heading\",\n    \"level\": 2,\n    \"line\": 18\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Inline Formatting",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Setext heading",
+        "level": 1,
+        "line": 15
+      },
+      {
+        "heading": "Another setext heading",
+        "level": 2,
+        "line": 18
+      }
+    ]
+  },
+  "outline path=\"syntax/Line Endings.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Line Endings.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Line Endings\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Line Endings",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"syntax/Raw HTML.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Raw HTML.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Raw HTML\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Raw HTML",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"tagging/Frontmatter Tags.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=tagging/Frontmatter Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Frontmatter Tags\",\n    \"level\": 1,\n    \"line\": 9\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Frontmatter Tags",
+        "level": 1,
+        "line": 9
+      }
+    ]
+  },
+  "outline path=\"tagging/Tags As Text.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=tagging/Tags As Text.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Tags As Text\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Tags As Text",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"tagging/Unicode Tags.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=tagging/Unicode Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Unicode Tags\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Unicode Tags",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=\"tasks/Task Statuses.md\" format=json": {
+    "command": "outline",
+    "args": [
+      "path=tasks/Task Statuses.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Task Statuses\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Nested\",\n    \"level\": 2,\n    \"line\": 31\n  },\n  {\n    \"heading\": \"Other bullets and contexts\",\n    \"level\": 2,\n    \"line\": 38\n  },\n  {\n    \"heading\": \"With details\",\n    \"level\": 2,\n    \"line\": 49\n  },\n  {\n    \"heading\": \"Not tasks\",\n    \"level\": 2,\n    \"line\": 56\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Task Statuses",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Nested",
+        "level": 2,
+        "line": 31
+      },
+      {
+        "heading": "Other bullets and contexts",
+        "level": 2,
+        "line": 38
+      },
+      {
+        "heading": "With details",
+        "level": 2,
+        "line": 49
+      },
+      {
+        "heading": "Not tasks",
+        "level": 2,
+        "line": 56
+      }
+    ]
+  },
+  "outline path=Home.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=Home.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Home\",\n    \"level\": 1,\n    \"line\": 11\n  },\n  {\n    \"heading\": \"Hubs\",\n    \"level\": 2,\n    \"line\": 16\n  },\n  {\n    \"heading\": \"Dashboard\",\n    \"level\": 2,\n    \"line\": 36\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Home",
+        "level": 1,
+        "line": 11
+      },
+      {
+        "heading": "Hubs",
+        "level": 2,
+        "line": 16
+      },
+      {
+        "heading": "Dashboard",
+        "level": 2,
+        "line": 36
+      }
+    ]
+  },
+  "outline path=Orphan.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=Orphan.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No headings found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "outline path=a/Note.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=a/Note.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Note\",\n    \"level\": 1,\n    \"line\": 5\n  },\n  {\n    \"heading\": \"Shared heading\",\n    \"level\": 2,\n    \"line\": 9\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Note",
+        "level": 1,
+        "line": 5
+      },
+      {
+        "heading": "Shared heading",
+        "level": 2,
+        "line": 9
+      }
+    ]
+  },
+  "outline path=b/Note.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=b/Note.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Note\",\n    \"level\": 1,\n    \"line\": 5\n  },\n  {\n    \"heading\": \"Shared heading\",\n    \"level\": 2,\n    \"line\": 9\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Note",
+        "level": 1,
+        "line": 5
+      },
+      {
+        "heading": "Shared heading",
+        "level": 2,
+        "line": 9
+      }
+    ]
+  },
+  "outline path=daily/2026-10-23.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=daily/2026-10-23.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"2026-10-23\",\n    \"level\": 1,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"Part 1\",\n    \"level\": 2,\n    \"line\": 10\n  },\n  {\n    \"heading\": \"Tasks\",\n    \"level\": 2,\n    \"line\": 14\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "2026-10-23",
+        "level": 1,
+        "line": 6
+      },
+      {
+        "heading": "Part 1",
+        "level": 2,
+        "line": 10
+      },
+      {
+        "heading": "Tasks",
+        "level": 2,
+        "line": 14
+      }
+    ]
+  },
+  "outline path=daily/2026-10-24.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=daily/2026-10-24.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"2026-10-24\",\n    \"level\": 1,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"Part 1\",\n    \"level\": 2,\n    \"line\": 10\n  },\n  {\n    \"heading\": \"Part 2\",\n    \"level\": 2,\n    \"line\": 14\n  },\n  {\n    \"heading\": \"Part 3\",\n    \"level\": 2,\n    \"line\": 18\n  },\n  {\n    \"heading\": \"Part 4\",\n    \"level\": 2,\n    \"line\": 22\n  },\n  {\n    \"heading\": \"Tasks\",\n    \"level\": 2,\n    \"line\": 26\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "2026-10-24",
+        "level": 1,
+        "line": 6
+      },
+      {
+        "heading": "Part 1",
+        "level": 2,
+        "line": 10
+      },
+      {
+        "heading": "Part 2",
+        "level": 2,
+        "line": 14
+      },
+      {
+        "heading": "Part 3",
+        "level": 2,
+        "line": 18
+      },
+      {
+        "heading": "Part 4",
+        "level": 2,
+        "line": 22
+      },
+      {
+        "heading": "Tasks",
+        "level": 2,
+        "line": 26
+      }
+    ]
+  },
+  "outline path=daily/2026-10-25.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=daily/2026-10-25.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"2026-10-25\",\n    \"level\": 1,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"Part 1\",\n    \"level\": 2,\n    \"line\": 10\n  },\n  {\n    \"heading\": \"Part 2\",\n    \"level\": 2,\n    \"line\": 14\n  },\n  {\n    \"heading\": \"Part 3\",\n    \"level\": 2,\n    \"line\": 18\n  },\n  {\n    \"heading\": \"Part 4\",\n    \"level\": 2,\n    \"line\": 22\n  },\n  {\n    \"heading\": \"Part 5\",\n    \"level\": 2,\n    \"line\": 26\n  },\n  {\n    \"heading\": \"Part 6\",\n    \"level\": 2,\n    \"line\": 30\n  },\n  {\n    \"heading\": \"Part 7\",\n    \"level\": 2,\n    \"line\": 34\n  },\n  {\n    \"heading\": \"Part 8\",\n    \"level\": 2,\n    \"line\": 38\n  },\n  {\n    \"heading\": \"Tasks\",\n    \"level\": 2,\n    \"line\": 42\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "2026-10-25",
+        "level": 1,
+        "line": 6
+      },
+      {
+        "heading": "Part 1",
+        "level": 2,
+        "line": 10
+      },
+      {
+        "heading": "Part 2",
+        "level": 2,
+        "line": 14
+      },
+      {
+        "heading": "Part 3",
+        "level": 2,
+        "line": 18
+      },
+      {
+        "heading": "Part 4",
+        "level": 2,
+        "line": 22
+      },
+      {
+        "heading": "Part 5",
+        "level": 2,
+        "line": 26
+      },
+      {
+        "heading": "Part 6",
+        "level": 2,
+        "line": 30
+      },
+      {
+        "heading": "Part 7",
+        "level": 2,
+        "line": 34
+      },
+      {
+        "heading": "Part 8",
+        "level": 2,
+        "line": 38
+      },
+      {
+        "heading": "Tasks",
+        "level": 2,
+        "line": 42
+      }
+    ]
+  },
+  "outline path=inbox/Inbox.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=inbox/Inbox.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Inbox\",\n    \"level\": 1,\n    \"line\": 1\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Inbox",
+        "level": 1,
+        "line": 1
+      }
+    ]
+  },
+  "outline path=links/Aliases.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Aliases.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Aliases\",\n    \"level\": 1,\n    \"line\": 8\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Aliases",
+        "level": 1,
+        "line": 8
+      }
+    ]
+  },
+  "outline path=links/Mentions.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=links/Mentions.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Mentions\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Mentions",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=slides/Deck.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=slides/Deck.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Deck\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Second slide\",\n    \"level\": 2,\n    \"line\": 10\n  },\n  {\n    \"heading\": \"Third slide\",\n    \"level\": 2,\n    \"line\": 17\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Deck",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Second slide",
+        "level": 2,
+        "line": 10
+      },
+      {
+        "heading": "Third slide",
+        "level": 2,
+        "line": 17
+      }
+    ]
+  },
+  "outline path=syntax/Footnotes.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Footnotes.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Footnotes\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Footnotes",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=syntax/Math.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Math.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Math\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Math",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=syntax/Mermaid.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Mermaid.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Mermaid\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Mermaid",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=syntax/Tables.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=syntax/Tables.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Tables\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Tables",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  },
+  "outline path=tagging/Tags.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=tagging/Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"Tags\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Tags in other places #heading-tag\",\n    \"level\": 2,\n    \"line\": 14\n  },\n  {\n    \"heading\": \"Things that are not tags\",\n    \"level\": 2,\n    \"line\": 27\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "Tags",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Tags in other places #heading-tag",
+        "level": 2,
+        "line": 14
+      },
+      {
+        "heading": "Things that are not tags",
+        "level": 2,
+        "line": 27
+      }
+    ]
+  },
+  "outline path=templates/Daily.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=templates/Daily.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"{{title}}\",\n    \"level\": 1,\n    \"line\": 6\n  },\n  {\n    \"heading\": \"Tasks\",\n    \"level\": 2,\n    \"line\": 10\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "{{title}}",
+        "level": 1,
+        "line": 6
+      },
+      {
+        "heading": "Tasks",
+        "level": 2,
+        "line": 10
+      }
+    ]
+  },
+  "outline path=templates/Meeting.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=templates/Meeting.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"{{title}}\",\n    \"level\": 1,\n    \"line\": 4\n  },\n  {\n    \"heading\": \"Notes\",\n    \"level\": 2,\n    \"line\": 8\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "{{title}}",
+        "level": 1,
+        "line": 4
+      },
+      {
+        "heading": "Notes",
+        "level": 2,
+        "line": 8
+      }
+    ]
+  },
+  "outline path=weekly/2026-W43.md format=json": {
+    "command": "outline",
+    "args": [
+      "path=weekly/2026-W43.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"heading\": \"2026-W43\",\n    \"level\": 1,\n    \"line\": 4\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "heading": "2026-W43",
+        "level": 1,
+        "line": 4
+      }
+    ]
+  }
+}

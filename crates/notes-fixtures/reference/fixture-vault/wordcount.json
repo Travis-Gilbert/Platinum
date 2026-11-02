@@ -1,0 +1,682 @@
+{
+  "wordcount path=\"Dead End.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=Dead End.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 20\ncharacters: 99\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"Unicode é 日本.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=Unicode é 日本.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 49\ncharacters: 231\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"a/Links From A.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=a/Links From A.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 40\ncharacters: 241\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"b/Links From B.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=b/Links From B.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 39\ncharacters: 233\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"callouts/All Callouts.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=callouts/All Callouts.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 134\ncharacters: 1039\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"callouts/Callout Titles and Folding.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 101\ncharacters: 668\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"callouts/Custom Callout.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=callouts/Custom Callout.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 26\ncharacters: 190\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"callouts/Nested Callouts.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=callouts/Nested Callouts.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 49\ncharacters: 373\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"dataview/Dataview Fields.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=dataview/Dataview Fields.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 49\ncharacters: 371\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Embed Canvas and Base.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 57\ncharacters: 370\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Embed Images.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Embed Images.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 123\ncharacters: 890\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Embed Media.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Embed Media.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 80\ncharacters: 495\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Embed Notes.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Embed Notes.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 78\ncharacters: 549\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Embed Query.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Embed Query.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 20\ncharacters: 160\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Loop A.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Loop A.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 11\ncharacters: 57\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"embeds/Loop B.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=embeds/Loop B.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 11\ncharacters: 59\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"excluded/Hidden Note.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=excluded/Hidden Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 17\ncharacters: 127\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"links/Blocks Target.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Blocks Target.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 70\ncharacters: 410\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"links/Headings Target.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Headings Target.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 77\ncharacters: 555\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"links/Link Forms.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Link Forms.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 243\ncharacters: 1482\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"links/Markdown Links.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Markdown Links.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 116\ncharacters: 774\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"links/Unresolved Links.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Unresolved Links.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 105\ncharacters: 612\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"projects/Project Alpha.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=projects/Project Alpha.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 25\ncharacters: 144\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"projects/Project Beta.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=projects/Project Beta.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 9\ncharacters: 62\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"projects/Project Delta.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=projects/Project Delta.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 17\ncharacters: 91\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"projects/Project Gamma.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=projects/Project Gamma.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 20\ncharacters: 100\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/Aliases and Cssclasses.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 20\ncharacters: 112\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/All Property Types.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/All Property Types.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 57\ncharacters: 364\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/Broken Frontmatter.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/Broken Frontmatter.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 19\ncharacters: 119\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/Empty Frontmatter.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/Empty Frontmatter.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 8\ncharacters: 50\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/Frontmatter Only.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/Frontmatter Only.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 0\ncharacters: 0\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/Link Properties.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/Link Properties.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 28\ncharacters: 169\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"properties/Type Mismatch.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=properties/Type Mismatch.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 14\ncharacters: 87\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"review/Heading With Hash.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=review/Heading With Hash.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 120\ncharacters: 736\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"review/Missing Note Creation.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=review/Missing Note Creation.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 93\ncharacters: 557\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"search/Case Sensitivity.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=search/Case Sensitivity.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 22\ncharacters: 155\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"search/Search Corpus.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=search/Search Corpus.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 99\ncharacters: 587\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Bidirectional Text.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Bidirectional Text.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 39\ncharacters: 238\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Byte Order Mark.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Byte Order Mark.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 17\ncharacters: 90\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Code Blocks.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Code Blocks.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 169\ncharacters: 1261\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Comments and Highlights.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Comments and Highlights.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 67\ncharacters: 507\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Folding and Lists.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Folding and Lists.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 90\ncharacters: 505\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Inline Formatting.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Inline Formatting.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 90\ncharacters: 632\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Line Endings.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Line Endings.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 24\ncharacters: 135\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"syntax/Raw HTML.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Raw HTML.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 140\ncharacters: 862\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"tagging/Frontmatter Tags.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=tagging/Frontmatter Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 12\ncharacters: 78\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"tagging/Tags As Text.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=tagging/Tags As Text.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 14\ncharacters: 83\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"tagging/Unicode Tags.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=tagging/Unicode Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 26\ncharacters: 166\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=\"tasks/Task Statuses.md\"": {
+    "command": "wordcount",
+    "args": [
+      "path=tasks/Task Statuses.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 178\ncharacters: 1033\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=Home.md": {
+    "command": "wordcount",
+    "args": [
+      "path=Home.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 255\ncharacters: 1918\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=Orphan.md": {
+    "command": "wordcount",
+    "args": [
+      "path=Orphan.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 33\ncharacters: 158\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=a/Note.md": {
+    "command": "wordcount",
+    "args": [
+      "path=a/Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 36\ncharacters: 201\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=b/Note.md": {
+    "command": "wordcount",
+    "args": [
+      "path=b/Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 36\ncharacters: 201\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=daily/2026-10-23.md": {
+    "command": "wordcount",
+    "args": [
+      "path=daily/2026-10-23.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 88\ncharacters: 467\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=daily/2026-10-24.md": {
+    "command": "wordcount",
+    "args": [
+      "path=daily/2026-10-24.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 303\ncharacters: 1583\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=daily/2026-10-25.md": {
+    "command": "wordcount",
+    "args": [
+      "path=daily/2026-10-25.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 589\ncharacters: 3077\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=inbox/Inbox.md": {
+    "command": "wordcount",
+    "args": [
+      "path=inbox/Inbox.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 12\ncharacters: 74\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=links/Aliases.md": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Aliases.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 20\ncharacters: 111\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=links/Mentions.md": {
+    "command": "wordcount",
+    "args": [
+      "path=links/Mentions.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 62\ncharacters: 350\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=slides/Deck.md": {
+    "command": "wordcount",
+    "args": [
+      "path=slides/Deck.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 18\ncharacters: 109\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=syntax/Footnotes.md": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Footnotes.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 68\ncharacters: 431\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=syntax/Math.md": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Math.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 52\ncharacters: 261\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=syntax/Mermaid.md": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Mermaid.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 61\ncharacters: 412\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=syntax/Tables.md": {
+    "command": "wordcount",
+    "args": [
+      "path=syntax/Tables.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 89\ncharacters: 617\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=tagging/Tags.md": {
+    "command": "wordcount",
+    "args": [
+      "path=tagging/Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 141\ncharacters: 936\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=templates/Daily.md": {
+    "command": "wordcount",
+    "args": [
+      "path=templates/Daily.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 10\ncharacters: 70\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=templates/Meeting.md": {
+    "command": "wordcount",
+    "args": [
+      "path=templates/Meeting.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 9\ncharacters: 63\n",
+    "stderr": "",
+    "error": null
+  },
+  "wordcount path=weekly/2026-W43.md": {
+    "command": "wordcount",
+    "args": [
+      "path=weekly/2026-W43.md"
+    ],
+    "exit_code": 0,
+    "stdout": "words: 11\ncharacters: 81\n",
+    "stderr": "",
+    "error": null
+  }
+}

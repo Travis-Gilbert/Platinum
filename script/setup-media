@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--release", action="store_true")
     args = parser.parse_args()
     if sys.platform != "darwin":
-        parser.error("Frame currently supports macOS only")
+        parser.error("Platinum currently supports macOS only")
     root = Path(__file__).resolve().parent.parent
     metadata = json.loads(output(
         "cargo", "metadata", "--locked", "--format-version", "1",

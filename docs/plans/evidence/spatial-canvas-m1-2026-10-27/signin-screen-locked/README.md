@@ -1,0 +1,1 @@
+Invalid native attempt: the screen was locked (CGSSessionScreenIsLocked=true). GPUI stopped its display link; images show only the initial Loading card. Do not use these artifacts as acceptance or a resize baseline. The sign-in process was terminated after identifying the blocker.

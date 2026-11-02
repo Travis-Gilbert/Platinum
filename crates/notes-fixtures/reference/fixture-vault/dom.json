@@ -1,0 +1,1770 @@
+{
+  "Dead End.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"Dead End.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/Dead End.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "Home.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"Home.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/Home.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "Orphan.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"Orphan.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/Orphan.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "Unicode é 日本.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"Unicode é 日本.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/Unicode é 日本.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "a/Links From A.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"a/Links From A.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/a/Links From A.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "a/Note.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"a/Note.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/a/Note.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "b/Links From B.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"b/Links From B.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/b/Links From B.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "b/Note.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"b/Note.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/b/Note.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "callouts/All Callouts.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"callouts/All Callouts.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/callouts/All Callouts.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "callouts/Callout Titles and Folding.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"callouts/Callout Titles and Folding.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/callouts/Callout Titles and Folding.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "callouts/Custom Callout.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"callouts/Custom Callout.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/callouts/Custom Callout.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "callouts/Nested Callouts.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"callouts/Nested Callouts.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/callouts/Nested Callouts.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "daily/2026-10-23.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"daily/2026-10-23.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/daily/2026-10-23.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "daily/2026-10-24.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"daily/2026-10-24.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/daily/2026-10-24.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "daily/2026-10-25.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"daily/2026-10-25.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/daily/2026-10-25.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "dataview/Dataview Fields.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"dataview/Dataview Fields.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/dataview/Dataview Fields.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "embeds/Embed Canvas and Base.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Embed Canvas and Base.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Embed Canvas and Base.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "embeds/Embed Images.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Embed Images.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Embed Images.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "embeds/Embed Media.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Embed Media.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Embed Media.md.html"
+    },
+    "attempts": 4,
+    "changes": 1,
+    "retries": []
+  },
+  "embeds/Embed Notes.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Embed Notes.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Embed Notes.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "embeds/Embed Query.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Embed Query.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Embed Query.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "embeds/Loop A.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Loop A.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Loop A.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "embeds/Loop B.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"embeds/Loop B.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/embeds/Loop B.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "excluded/Hidden Note.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"excluded/Hidden Note.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/excluded/Hidden Note.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "inbox/Inbox.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"inbox/Inbox.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/inbox/Inbox.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Aliases.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Aliases.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Aliases.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Blocks Target.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Blocks Target.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Blocks Target.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Headings Target.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Headings Target.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Headings Target.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Link Forms.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Link Forms.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Link Forms.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Markdown Links.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Markdown Links.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Markdown Links.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Mentions.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Mentions.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Mentions.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "links/Unresolved Links.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"links/Unresolved Links.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/links/Unresolved Links.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "projects/Project Alpha.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"projects/Project Alpha.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/projects/Project Alpha.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "projects/Project Beta.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"projects/Project Beta.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/projects/Project Beta.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "projects/Project Delta.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"projects/Project Delta.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/projects/Project Delta.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "projects/Project Gamma.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"projects/Project Gamma.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/projects/Project Gamma.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/Aliases and Cssclasses.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/Aliases and Cssclasses.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/Aliases and Cssclasses.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/All Property Types.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/All Property Types.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/All Property Types.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/Broken Frontmatter.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/Broken Frontmatter.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/Broken Frontmatter.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/Empty Frontmatter.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/Empty Frontmatter.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/Empty Frontmatter.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/Frontmatter Only.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/Frontmatter Only.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/Frontmatter Only.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/Link Properties.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/Link Properties.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/Link Properties.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "properties/Type Mismatch.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"properties/Type Mismatch.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/properties/Type Mismatch.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "review/Heading With Hash.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"review/Heading With Hash.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/review/Heading With Hash.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "review/Missing Note Creation.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"review/Missing Note Creation.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/review/Missing Note Creation.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "search/Case Sensitivity.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"search/Case Sensitivity.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/search/Case Sensitivity.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "search/Search Corpus.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"search/Search Corpus.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/search/Search Corpus.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "slides/Deck.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"slides/Deck.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/slides/Deck.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Bidirectional Text.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Bidirectional Text.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Bidirectional Text.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Byte Order Mark.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Byte Order Mark.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Byte Order Mark.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Code Blocks.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Code Blocks.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Code Blocks.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Comments and Highlights.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Comments and Highlights.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Comments and Highlights.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Folding and Lists.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Folding and Lists.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Folding and Lists.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Footnotes.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Footnotes.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Footnotes.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Inline Formatting.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Inline Formatting.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Inline Formatting.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Line Endings.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Line Endings.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Line Endings.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Math.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Math.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Math.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Mermaid.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Mermaid.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Mermaid.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Raw HTML.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Raw HTML.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Raw HTML.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "syntax/Tables.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"syntax/Tables.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/syntax/Tables.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "tagging/Frontmatter Tags.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"tagging/Frontmatter Tags.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/tagging/Frontmatter Tags.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "tagging/Tags As Text.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"tagging/Tags As Text.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/tagging/Tags As Text.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "tagging/Tags.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"tagging/Tags.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/tagging/Tags.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "tagging/Unicode Tags.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"tagging/Unicode Tags.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/tagging/Unicode Tags.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "tasks/Task Statuses.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"tasks/Task Statuses.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/tasks/Task Statuses.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "templates/Daily.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"templates/Daily.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/templates/Daily.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "templates/Meeting.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"templates/Meeting.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/templates/Meeting.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  },
+  "weekly/2026-W43.md": {
+    "open": {
+      "command": "eval",
+      "args": [
+        "code=(async () => { const f = app.vault.getFileByPath(\"weekly/2026-W43.md\"); if (!f) return 'missing'; const l = app.workspace.getLeaf(false); await l.openFile(f, { state: { mode: 'preview' } }); return l.view.getMode(); })()"
+      ],
+      "exit_code": 0,
+      "stdout": "=> preview\n",
+      "stderr": "",
+      "error": null
+    },
+    "dom": {
+      "command": "dev:dom",
+      "args": [
+        "selector=.workspace-leaf.mod-active .markdown-reading-view"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "error": null,
+      "stdout_file": "dom/weekly/2026-W43.md.html"
+    },
+    "attempts": 3,
+    "changes": 0,
+    "retries": []
+  }
+}

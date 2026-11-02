@@ -1,0 +1,41 @@
+{
+  "url": "https://www.vitsoe.com/us",
+  "title": "Vitsœ",
+  "description": "Furniture for thinking people. Since 1959 we have made furniture that allows you to live better, with less. Designed by Dieter Rams, made in Britain.",
+  "theme_color": null,
+  "fonts": [
+    {
+      "family": "Helvetica",
+      "roles": [
+        "Headings",
+        "Body"
+      ]
+    }
+  ],
+  "palette": [
+    {
+      "color": "#7f7f7f",
+      "share": 0.642
+    },
+    {
+      "color": "#ffffff",
+      "share": 0.148
+    },
+    {
+      "color": "#5a5148",
+      "share": 0.111
+    },
+    {
+      "color": "#0b0807",
+      "share": 0.062
+    },
+    {
+      "color": "#412d23",
+      "share": 0.029
+    },
+    {
+      "color": "#223444",
+      "share": 0.007
+    }
+  ]
+}

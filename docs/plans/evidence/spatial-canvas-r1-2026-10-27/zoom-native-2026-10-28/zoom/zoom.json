@@ -1,0 +1,939 @@
+{
+  "baseline": {
+    "documentId": "1793200881032:0.2558533446167147",
+    "innerWidth": 1280,
+    "innerHeight": 800,
+    "devicePixelRatio": 1.40625,
+    "resizeCount": 0,
+    "resizeEvents": [],
+    "scrollX": 0,
+    "scrollY": 0,
+    "cookie": "",
+    "text": null,
+    "selectionStart": null,
+    "selectionEnd": null,
+    "selectionDirection": null,
+    "textareaScrollTop": null,
+    "focused": "",
+    "input": null
+  },
+  "steps": [
+    {
+      "rendered_zoom": 1.0,
+      "camera_applied": true,
+      "step": 0,
+      "zoom": 1.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 0,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 827.404708,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport/docs/plans/evidence/spatial-canvas-r1-2026-10-27/zoom-native-2026-10-28/zoom/step-0.png"
+    },
+    {
+      "rendered_zoom": 0.3499999940395355,
+      "camera_applied": true,
+      "step": 1,
+      "zoom": 0.35,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 0.699999988079071,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 0,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 811.7786249999999,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport/docs/plans/evidence/spatial-canvas-r1-2026-10-27/zoom-native-2026-10-28/zoom/step-1.png"
+    },
+    {
+      "rendered_zoom": 2.0,
+      "camera_applied": true,
+      "step": 2,
+      "zoom": 2.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 0.699999988079071,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 0,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 806.057334,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport/docs/plans/evidence/spatial-canvas-r1-2026-10-27/zoom-native-2026-10-28/zoom/step-2.png"
+    },
+    {
+      "rendered_zoom": 1.0,
+      "camera_applied": true,
+      "step": 3,
+      "zoom": 1.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793200881032:0.2558533446167147",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 0,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 830.360042,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport/docs/plans/evidence/spatial-canvas-r1-2026-10-27/zoom-native-2026-10-28/zoom/step-3.png"
+    }
+  ],
+  "trace": [
+    {
+      "kind": "baseline",
+      "at": 1780.69,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1781.27,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1817.52,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1850.62,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1882.59,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1914.22,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1949.3,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 1981.1,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2016.07,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2052.42,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2085.1,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2120.72,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2155.68,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2191.82,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2222.53,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2257.55,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2292.57,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2327.59,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2362.77,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2397.26,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2432.43,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2464.38,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2500.06,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2534.94,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2570.02,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2605.02,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2638.75,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2672.44,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2707.51,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2740.53,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2772.52,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 2800.69,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2816.26,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2826.35,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2861.39,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2893.38,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2925.13,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2959.05,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 2992.89,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3023.5,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3056.85,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3088.91,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3124.3,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3159.38,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3192.02,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3226.86,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3261.92,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3294.35,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3329.95,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3361.11,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3392.3,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3422.41,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3457.44,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3488.24,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3522.7,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3555.83,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3588.22,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 0.699999988079071
+    },
+    {
+      "kind": "frame",
+      "at": 3615.27,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3625.41,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3659.01,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3690.64,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3721.62,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3752.11,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3787.14,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3820.9,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3856.14,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3891.03,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3926.13,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3961.14,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 3994.37,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4029.91,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4062.73,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4097.79,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4127.85,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4162.7,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4197.07,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4230.75,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4265.79,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4296.97,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4330.76,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4365.83,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4400.7,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4432.65,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4464.4,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4499.36,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4531.38,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4564.09,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4598.48,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4633.59,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4668.55,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4703.64,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4736.22,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4770.11,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4805.06,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4843.16,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4877.4,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4911.59,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4946.7,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 4980.81,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 5015.89,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "frame",
+      "at": 5048.09,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    },
+    {
+      "kind": "final",
+      "at": 5057.64,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "devicePixelRatio": 1.40625
+    }
+  ],
+  "passed": true
+}

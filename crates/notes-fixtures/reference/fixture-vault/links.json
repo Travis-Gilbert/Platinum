@@ -1,0 +1,2317 @@
+{
+  "backlinks path=\"Dead End.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=Dead End.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Headings Target.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"properties/Link Properties.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Bidirectional Text.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Byte Order Mark.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Comments and Highlights.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Footnotes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Line Endings.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Tables.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"tasks/Task Statuses.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "1",
+        "file": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Headings Target.md"
+      },
+      {
+        "count": "2",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "file": "properties/Link Properties.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Bidirectional Text.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Byte Order Mark.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Comments and Highlights.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Footnotes.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Line Endings.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Tables.md"
+      },
+      {
+        "count": "1",
+        "file": "tasks/Task Statuses.md"
+      }
+    ]
+  },
+  "backlinks path=\"Unicode é 日本.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=Unicode é 日本.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Link Forms.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Link Forms.md"
+      }
+    ]
+  },
+  "backlinks path=\"a/Links From A.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=a/Links From A.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"b/Links From B.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=b/Links From B.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"callouts/All Callouts.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=callouts/All Callouts.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"callouts/Callout Titles and Folding.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"callouts/Custom Callout.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=callouts/Custom Callout.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"callouts/Nested Callouts.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=callouts/Nested Callouts.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"dataview/Dataview Fields.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=dataview/Dataview Fields.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Embed Canvas and Base.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Embed Images.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Embed Images.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Embed Media.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Embed Media.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Embed Notes.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Embed Notes.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Embed Query.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Embed Query.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Loop A.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Loop A.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"embeds/Loop B.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "file": "embeds/Loop B.md"
+      }
+    ]
+  },
+  "backlinks path=\"embeds/Loop B.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=embeds/Loop B.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"embeds/Loop A.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "embeds/Loop A.md"
+      }
+    ]
+  },
+  "backlinks path=\"excluded/Hidden Note.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=excluded/Hidden Note.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"search/Search Corpus.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "search/Search Corpus.md"
+      }
+    ]
+  },
+  "backlinks path=\"links/Blocks Target.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Blocks Target.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Board.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"3\",\n    \"file\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"3\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Markdown Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"properties/Link Properties.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "canvases/Board.canvas"
+      },
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "3",
+        "file": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "3",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Markdown Links.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "file": "properties/Link Properties.md"
+      }
+    ]
+  },
+  "backlinks path=\"links/Headings Target.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Headings Target.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"callouts/Callout Titles and Folding.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"canvases/Board.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"3\",\n    \"file\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"8\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"5\",\n    \"file\": \"links/Markdown Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"properties/All Property Types.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"properties/Link Properties.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"syntax/Tables.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"tagging/Tags.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"tasks/Task Statuses.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "callouts/Callout Titles and Folding.md"
+      },
+      {
+        "count": "2",
+        "file": "canvases/Board.canvas"
+      },
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "3",
+        "file": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "8",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "5",
+        "file": "links/Markdown Links.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Unresolved Links.md"
+      },
+      {
+        "count": "2",
+        "file": "properties/All Property Types.md"
+      },
+      {
+        "count": "1",
+        "file": "properties/Link Properties.md"
+      },
+      {
+        "count": "1",
+        "file": "syntax/Tables.md"
+      },
+      {
+        "count": "1",
+        "file": "tagging/Tags.md"
+      },
+      {
+        "count": "1",
+        "file": "tasks/Task Statuses.md"
+      }
+    ]
+  },
+  "backlinks path=\"links/Link Forms.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Link Forms.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"properties/All Property Types.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "2",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "file": "properties/All Property Types.md"
+      }
+    ]
+  },
+  "backlinks path=\"links/Markdown Links.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Markdown Links.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"links/Unresolved Links.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Unresolved Links.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"projects/Project Alpha.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=projects/Project Alpha.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"projects/Project Beta.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"projects/Project Gamma.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "2",
+        "file": "projects/Project Beta.md"
+      },
+      {
+        "count": "1",
+        "file": "projects/Project Gamma.md"
+      }
+    ]
+  },
+  "backlinks path=\"projects/Project Beta.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=projects/Project Beta.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"projects/Project Alpha.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "2",
+        "file": "projects/Project Alpha.md"
+      }
+    ]
+  },
+  "backlinks path=\"projects/Project Delta.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=projects/Project Delta.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"projects/Project Gamma.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=projects/Project Gamma.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"projects/Project Beta.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "projects/Project Beta.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/Aliases and Cssclasses.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/All Property Types.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/All Property Types.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/Broken Frontmatter.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/Broken Frontmatter.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/Empty Frontmatter.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/Empty Frontmatter.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/Frontmatter Only.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/Frontmatter Only.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/Link Properties.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/Link Properties.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"properties/Type Mismatch.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=properties/Type Mismatch.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"review/Heading With Hash.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=review/Heading With Hash.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"7\",\n    \"file\": \"review/Heading With Hash.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "7",
+        "file": "review/Heading With Hash.md"
+      }
+    ]
+  },
+  "backlinks path=\"review/Missing Note Creation.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=review/Missing Note Creation.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"search/Case Sensitivity.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=search/Case Sensitivity.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"search/Search Corpus.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=search/Search Corpus.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Bidirectional Text.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Bidirectional Text.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Byte Order Mark.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Byte Order Mark.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Code Blocks.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Code Blocks.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Comments and Highlights.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Comments and Highlights.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Folding and Lists.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Folding and Lists.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Inline Formatting.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Inline Formatting.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Line Endings.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Line Endings.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"syntax/Raw HTML.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Raw HTML.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"tagging/Frontmatter Tags.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=tagging/Frontmatter Tags.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"tagging/Tags As Text.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=tagging/Tags As Text.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"tagging/Unicode Tags.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=tagging/Unicode Tags.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=\"tasks/Task Statuses.md\" counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=tasks/Task Statuses.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=Home.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=Home.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Board.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"canvases/Cards.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Unicode é 日本.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "canvases/Board.canvas"
+      },
+      {
+        "count": "1",
+        "file": "canvases/Cards.canvas"
+      },
+      {
+        "count": "1",
+        "file": "Unicode é 日本.md"
+      }
+    ]
+  },
+  "backlinks path=Orphan.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=Orphan.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No backlinks found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "backlinks path=a/Note.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=a/Note.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"4\",\n    \"file\": \"a/Links From A.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"a/Note.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"b/Links From B.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"b/Note.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"3\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Markdown Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"properties/All Property Types.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"properties/Link Properties.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"review/Missing Note Creation.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "4",
+        "file": "a/Links From A.md"
+      },
+      {
+        "count": "1",
+        "file": "a/Note.md"
+      },
+      {
+        "count": "2",
+        "file": "b/Links From B.md"
+      },
+      {
+        "count": "1",
+        "file": "b/Note.md"
+      },
+      {
+        "count": "1",
+        "file": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "3",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Markdown Links.md"
+      },
+      {
+        "count": "1",
+        "file": "properties/All Property Types.md"
+      },
+      {
+        "count": "1",
+        "file": "properties/Link Properties.md"
+      },
+      {
+        "count": "1",
+        "file": "review/Missing Note Creation.md"
+      }
+    ]
+  },
+  "backlinks path=b/Note.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=b/Note.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"2\",\n    \"file\": \"a/Links From A.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"a/Note.md\"\n  },\n  {\n    \"count\": \"4\",\n    \"file\": \"b/Links From B.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"b/Note.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"2\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"review/Missing Note Creation.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "2",
+        "file": "a/Links From A.md"
+      },
+      {
+        "count": "1",
+        "file": "a/Note.md"
+      },
+      {
+        "count": "4",
+        "file": "b/Links From B.md"
+      },
+      {
+        "count": "1",
+        "file": "b/Note.md"
+      },
+      {
+        "count": "1",
+        "file": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "2",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "file": "review/Missing Note Creation.md"
+      }
+    ]
+  },
+  "backlinks path=daily/2026-10-23.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=daily/2026-10-23.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"weekly/2026-W43.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "weekly/2026-W43.md"
+      }
+    ]
+  },
+  "backlinks path=daily/2026-10-24.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=daily/2026-10-24.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"weekly/2026-W43.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "weekly/2026-W43.md"
+      }
+    ]
+  },
+  "backlinks path=daily/2026-10-25.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=daily/2026-10-25.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"weekly/2026-W43.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "weekly/2026-W43.md"
+      }
+    ]
+  },
+  "backlinks path=inbox/Inbox.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=inbox/Inbox.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No backlinks found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "backlinks path=links/Aliases.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Aliases.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Aliases.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Mentions.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Aliases.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Mentions.md"
+      }
+    ]
+  },
+  "backlinks path=links/Mentions.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=links/Mentions.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"file\": \"links/Link Forms.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      },
+      {
+        "count": "1",
+        "file": "links/Link Forms.md"
+      }
+    ]
+  },
+  "backlinks path=slides/Deck.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=slides/Deck.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=syntax/Footnotes.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Footnotes.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=syntax/Math.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Math.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=syntax/Mermaid.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Mermaid.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=syntax/Tables.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=syntax/Tables.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=tagging/Tags.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=tagging/Tags.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "backlinks path=templates/Daily.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=templates/Daily.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No backlinks found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "backlinks path=templates/Meeting.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=templates/Meeting.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No backlinks found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "backlinks path=weekly/2026-W43.md counts format=json": {
+    "command": "backlinks",
+    "args": [
+      "path=weekly/2026-W43.md",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"file\": \"Home.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "file": "Home.md"
+      }
+    ]
+  },
+  "deadends": {
+    "command": "deadends",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "attachments/anim.gif\nattachments/clip.mp4\nattachments/clip.webm\nattachments/icon.bmp\nattachments/Pasted image 20261024101500.png\nattachments/photo.jpg\nattachments/pic.avif\nattachments/pic.webp\nattachments/pixel.png\nattachments/sample.pdf\nattachments/tone.m4a\nattachments/tone.mp3\nattachments/tone.ogg\nattachments/tone.wav\nattachments/unused.png\nattachments/vector.svg\nattachments/wide.png\nbases/Notes.base\nbases/Projects.base\nbases/Tasks.base\ncallouts/All Callouts.md\ncallouts/Custom Callout.md\ncallouts/Nested Callouts.md\ncanvases/Edges.canvas\ndaily/2026-10-23.md\ndaily/2026-10-24.md\ndaily/2026-10-25.md\ndataview/Dataview Fields.md\nDead End.md\nembeds/Embed Query.md\nexcluded/Hidden Note.md\ninbox/Inbox.md\nlinks/Blocks Target.md\nOrphan.md\nprojects/Project Delta.md\nproperties/Aliases and Cssclasses.md\nproperties/Broken Frontmatter.md\nproperties/Empty Frontmatter.md\nproperties/Frontmatter Only.md\nproperties/Type Mismatch.md\nsearch/Case Sensitivity.md\nsyntax/Code Blocks.md\nsyntax/Folding and Lists.md\nsyntax/Inline Formatting.md\nsyntax/Math.md\nsyntax/Mermaid.md\nsyntax/Raw HTML.md\ntagging/Frontmatter Tags.md\ntagging/Tags As Text.md\ntagging/Unicode Tags.md\ntemplates/Daily.md\ntemplates/Meeting.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "deadends total": {
+    "command": "deadends",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "52\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"Dead End.md\"": {
+    "command": "links",
+    "args": [
+      "path=Dead End.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"Unicode é 日本.md\"": {
+    "command": "links",
+    "args": [
+      "path=Unicode é 日本.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Home.md\nÜnïcode Note (unresolved)\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"a/Links From A.md\"": {
+    "command": "links",
+    "args": [
+      "path=a/Links From A.md"
+    ],
+    "exit_code": 0,
+    "stdout": "a/Note.md\nb/Note.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"b/Links From B.md\"": {
+    "command": "links",
+    "args": [
+      "path=b/Links From B.md"
+    ],
+    "exit_code": 0,
+    "stdout": "a/Note.md\nb/Note.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"callouts/All Callouts.md\"": {
+    "command": "links",
+    "args": [
+      "path=callouts/All Callouts.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"callouts/Callout Titles and Folding.md\"": {
+    "command": "links",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md"
+    ],
+    "exit_code": 0,
+    "stdout": "attachments/pixel.png\nlinks/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"callouts/Custom Callout.md\"": {
+    "command": "links",
+    "args": [
+      "path=callouts/Custom Callout.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"callouts/Nested Callouts.md\"": {
+    "command": "links",
+    "args": [
+      "path=callouts/Nested Callouts.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"dataview/Dataview Fields.md\"": {
+    "command": "links",
+    "args": [
+      "path=dataview/Dataview Fields.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Embed Canvas and Base.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md"
+    ],
+    "exit_code": 0,
+    "stdout": "bases/Notes.base\nbases/Projects.base\nbases/Tasks.base\ncanvases/Board.canvas\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Embed Images.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Embed Images.md"
+    ],
+    "exit_code": 0,
+    "stdout": "attachments/Pasted image 20261024101500.png\nattachments/anim.gif\nattachments/icon.bmp\nattachments/photo.jpg\nattachments/pic.avif\nattachments/pic.webp\nattachments/pixel.png\nattachments/vector.svg\nattachments/wide.png\nmissing-image.png (unresolved)\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Embed Media.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Embed Media.md"
+    ],
+    "exit_code": 0,
+    "stdout": "attachments/clip.mp4\nattachments/clip.webm\nattachments/sample.pdf\nattachments/tone.m4a\nattachments/tone.mp3\nattachments/tone.ogg\nattachments/tone.wav\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Embed Notes.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Embed Notes.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\nMissing Embed Target (unresolved)\na/Note.md\nb/Note.md\nembeds/Loop A.md\nlinks/Blocks Target.md\nlinks/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Embed Query.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Embed Query.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Loop A.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Loop A.md"
+    ],
+    "exit_code": 0,
+    "stdout": "embeds/Loop B.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"embeds/Loop B.md\"": {
+    "command": "links",
+    "args": [
+      "path=embeds/Loop B.md"
+    ],
+    "exit_code": 0,
+    "stdout": "embeds/Loop A.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"excluded/Hidden Note.md\"": {
+    "command": "links",
+    "args": [
+      "path=excluded/Hidden Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"links/Blocks Target.md\"": {
+    "command": "links",
+    "args": [
+      "path=links/Blocks Target.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"links/Headings Target.md\"": {
+    "command": "links",
+    "args": [
+      "path=links/Headings Target.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"links/Link Forms.md\"": {
+    "command": "links",
+    "args": [
+      "path=links/Link Forms.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\nStart (unresolved)\nUnicode é 日本.md\na/Note.md\nattachments/pixel.png\nattachments/sample.pdf\nb/Note.md\nbases/Notes.base\ncanvases/Board.canvas\nlinks/Aliases.md\nlinks/Blocks Target.md\nlinks/Headings Target.md\nlinks/Link Forms.md\nlinks/Mentions.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"links/Markdown Links.md\"": {
+    "command": "links",
+    "args": [
+      "path=links/Markdown Links.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Nothing Here.md (unresolved)\na/Note.md\nlinks/Blocks Target.md\nlinks/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"links/Unresolved Links.md\"": {
+    "command": "links",
+    "args": [
+      "path=links/Unresolved Links.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Gone.md (unresolved)\nMissing (unresolved)\nMissing Embed (unresolved)\nMissing In Frontmatter (unresolved)\nMissing With Extension.md (unresolved)\nSecond Alias (unresolved)\nlinks/Blocks Target.md\nlinks/Headings Target.md\nnowhere/Missing Deep (unresolved)\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"projects/Project Alpha.md\"": {
+    "command": "links",
+    "args": [
+      "path=projects/Project Alpha.md"
+    ],
+    "exit_code": 0,
+    "stdout": "bases/Projects.base\nprojects/Project Beta.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"projects/Project Beta.md\"": {
+    "command": "links",
+    "args": [
+      "path=projects/Project Beta.md"
+    ],
+    "exit_code": 0,
+    "stdout": "projects/Project Alpha.md\nprojects/Project Gamma.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"projects/Project Delta.md\"": {
+    "command": "links",
+    "args": [
+      "path=projects/Project Delta.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"projects/Project Gamma.md\"": {
+    "command": "links",
+    "args": [
+      "path=projects/Project Gamma.md"
+    ],
+    "exit_code": 0,
+    "stdout": "projects/Project Alpha.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/Aliases and Cssclasses.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/All Property Types.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/All Property Types.md"
+    ],
+    "exit_code": 0,
+    "stdout": "a/Note.md\nlinks/Headings Target.md\nlinks/Link Forms.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/Broken Frontmatter.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/Broken Frontmatter.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/Empty Frontmatter.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/Empty Frontmatter.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/Frontmatter Only.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/Frontmatter Only.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/Link Properties.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/Link Properties.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\nMissing In Frontmatter 2 (unresolved)\na/Note.md\nlinks/Blocks Target.md\nlinks/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"properties/Type Mismatch.md\"": {
+    "command": "links",
+    "args": [
+      "path=properties/Type Mismatch.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"review/Heading With Hash.md\"": {
+    "command": "links",
+    "args": [
+      "path=review/Heading With Hash.md"
+    ],
+    "exit_code": 0,
+    "stdout": "review/Heading With Hash.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"review/Missing Note Creation.md\"": {
+    "command": "links",
+    "args": [
+      "path=review/Missing Note Creation.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Created Deep/Created In Folder (unresolved)\nCreated On Click (unresolved)\nCreated With Extension.md (unresolved)\nMissing Node One (unresolved)\nMissing Node Two (unresolved)\na/Note.md\nb/Note.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"search/Case Sensitivity.md\"": {
+    "command": "links",
+    "args": [
+      "path=search/Case Sensitivity.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"search/Search Corpus.md\"": {
+    "command": "links",
+    "args": [
+      "path=search/Search Corpus.md"
+    ],
+    "exit_code": 0,
+    "stdout": "excluded/Hidden Note.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Bidirectional Text.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Bidirectional Text.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Byte Order Mark.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Byte Order Mark.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Code Blocks.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Code Blocks.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Comments and Highlights.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Comments and Highlights.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Folding and Lists.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Folding and Lists.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Inline Formatting.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Inline Formatting.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Line Endings.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Line Endings.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"syntax/Raw HTML.md\"": {
+    "command": "links",
+    "args": [
+      "path=syntax/Raw HTML.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"tagging/Frontmatter Tags.md\"": {
+    "command": "links",
+    "args": [
+      "path=tagging/Frontmatter Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"tagging/Tags As Text.md\"": {
+    "command": "links",
+    "args": [
+      "path=tagging/Tags As Text.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"tagging/Unicode Tags.md\"": {
+    "command": "links",
+    "args": [
+      "path=tagging/Unicode Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=\"tasks/Task Statuses.md\"": {
+    "command": "links",
+    "args": [
+      "path=tasks/Task Statuses.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\nlinks/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=Home.md": {
+    "command": "links",
+    "args": [
+      "path=Home.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\nUnicode é 日本.md\na/Links From A.md\na/Note.md\nb/Links From B.md\nb/Note.md\nbases/Notes.base\nbases/Projects.base\nbases/Tasks.base\ncallouts/All Callouts.md\ncallouts/Callout Titles and Folding.md\ncallouts/Custom Callout.md\ncallouts/Nested Callouts.md\ncanvases/Board.canvas\ncanvases/Cards.canvas\ncanvases/Edges.canvas\ncanvases/Groups.canvas\ndaily/2026-10-23.md\ndaily/2026-10-24.md\ndaily/2026-10-25.md\ndataview/Dataview Fields.md\nembeds/Embed Canvas and Base.md\nembeds/Embed Images.md\nembeds/Embed Media.md\nembeds/Embed Notes.md\nembeds/Embed Query.md\nexcluded/Hidden Note.md\nlinks/Aliases.md\nlinks/Blocks Target.md\nlinks/Headings Target.md\nlinks/Link Forms.md\nlinks/Markdown Links.md\nlinks/Mentions.md\nlinks/Unresolved Links.md\nprojects/Project Alpha.md\nprojects/Project Beta.md\nprojects/Project Delta.md\nprojects/Project Gamma.md\nproperties/Aliases and Cssclasses.md\nproperties/All Property Types.md\nproperties/Broken Frontmatter.md\nproperties/Empty Frontmatter.md\nproperties/Frontmatter Only.md\nproperties/Link Properties.md\nproperties/Type Mismatch.md\nreview/Heading With Hash.md\nreview/Missing Note Creation.md\nsearch/Case Sensitivity.md\nsearch/Search Corpus.md\nslides/Deck.md\nsyntax/Bidirectional Text.md\nsyntax/Byte Order Mark.md\nsyntax/Code Blocks.md\nsyntax/Comments and Highlights.md\nsyntax/Folding and Lists.md\nsyntax/Footnotes.md\nsyntax/Inline Formatting.md\nsyntax/Line Endings.md\nsyntax/Math.md\nsyntax/Mermaid.md\nsyntax/Raw HTML.md\nsyntax/Tables.md\ntagging/Frontmatter Tags.md\ntagging/Tags As Text.md\ntagging/Tags.md\ntagging/Unicode Tags.md\ntasks/Task Statuses.md\nweekly/2026-W43.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=Orphan.md": {
+    "command": "links",
+    "args": [
+      "path=Orphan.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=a/Note.md": {
+    "command": "links",
+    "args": [
+      "path=a/Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "a/Note.md\nb/Note.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=b/Note.md": {
+    "command": "links",
+    "args": [
+      "path=b/Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "a/Note.md\nb/Note.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=daily/2026-10-23.md": {
+    "command": "links",
+    "args": [
+      "path=daily/2026-10-23.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=daily/2026-10-24.md": {
+    "command": "links",
+    "args": [
+      "path=daily/2026-10-24.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=daily/2026-10-25.md": {
+    "command": "links",
+    "args": [
+      "path=daily/2026-10-25.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=inbox/Inbox.md": {
+    "command": "links",
+    "args": [
+      "path=inbox/Inbox.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=links/Aliases.md": {
+    "command": "links",
+    "args": [
+      "path=links/Aliases.md"
+    ],
+    "exit_code": 0,
+    "stdout": "links/Aliases.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=links/Mentions.md": {
+    "command": "links",
+    "args": [
+      "path=links/Mentions.md"
+    ],
+    "exit_code": 0,
+    "stdout": "links/Aliases.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=slides/Deck.md": {
+    "command": "links",
+    "args": [
+      "path=slides/Deck.md"
+    ],
+    "exit_code": 0,
+    "stdout": "attachments/pixel.png\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=syntax/Footnotes.md": {
+    "command": "links",
+    "args": [
+      "path=syntax/Footnotes.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=syntax/Math.md": {
+    "command": "links",
+    "args": [
+      "path=syntax/Math.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=syntax/Mermaid.md": {
+    "command": "links",
+    "args": [
+      "path=syntax/Mermaid.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=syntax/Tables.md": {
+    "command": "links",
+    "args": [
+      "path=syntax/Tables.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Dead End.md\nattachments/pixel.png\nlinks/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=tagging/Tags.md": {
+    "command": "links",
+    "args": [
+      "path=tagging/Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "links/Headings Target.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=templates/Daily.md": {
+    "command": "links",
+    "args": [
+      "path=templates/Daily.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=templates/Meeting.md": {
+    "command": "links",
+    "args": [
+      "path=templates/Meeting.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No links found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "links path=weekly/2026-W43.md": {
+    "command": "links",
+    "args": [
+      "path=weekly/2026-W43.md"
+    ],
+    "exit_code": 0,
+    "stdout": "daily/2026-10-23.md\ndaily/2026-10-24.md\ndaily/2026-10-25.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "orphans": {
+    "command": "orphans",
+    "args": [],
+    "exit_code": 0,
+    "stdout": "attachments/unused.png\ninbox/Inbox.md\nOrphan.md\ntemplates/Daily.md\ntemplates/Meeting.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "orphans total": {
+    "command": "orphans",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "5\n",
+    "stderr": "",
+    "error": null
+  },
+  "unresolved total": {
+    "command": "unresolved",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "19\n",
+    "stderr": "",
+    "error": null
+  },
+  "unresolved verbose counts format=json": {
+    "command": "unresolved",
+    "args": [
+      "verbose",
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": \"1\",\n    \"link\": \"Created Deep/Created In Folder\",\n    \"sources\": \"review/Missing Note Creation.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Created On Click\",\n    \"sources\": \"review/Missing Note Creation.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Created With Extension\",\n    \"sources\": \"review/Missing Note Creation.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Gone\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"4\",\n    \"link\": \"Missing\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing Canvas Target\",\n    \"sources\": \"canvases/Board.canvas\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing Embed\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing Embed Target\",\n    \"sources\": \"embeds/Embed Notes.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing In Frontmatter\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing In Frontmatter 2\",\n    \"sources\": \"properties/Link Properties.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing Node One\",\n    \"sources\": \"review/Missing Note Creation.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing Node Two\",\n    \"sources\": \"review/Missing Note Creation.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Missing With Extension\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"missing-image.png\",\n    \"sources\": \"embeds/Embed Images.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Nothing Here\",\n    \"sources\": \"links/Markdown Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"nowhere/Missing Deep\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Second Alias\",\n    \"sources\": \"links/Unresolved Links.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Start\",\n    \"sources\": \"links/Link Forms.md\"\n  },\n  {\n    \"count\": \"1\",\n    \"link\": \"Ünïcode Note\",\n    \"sources\": \"Unicode é 日本.md\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": "1",
+        "link": "Created Deep/Created In Folder",
+        "sources": "review/Missing Note Creation.md"
+      },
+      {
+        "count": "1",
+        "link": "Created On Click",
+        "sources": "review/Missing Note Creation.md"
+      },
+      {
+        "count": "1",
+        "link": "Created With Extension",
+        "sources": "review/Missing Note Creation.md"
+      },
+      {
+        "count": "1",
+        "link": "Gone",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "4",
+        "link": "Missing",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing Canvas Target",
+        "sources": "canvases/Board.canvas"
+      },
+      {
+        "count": "1",
+        "link": "Missing Embed",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing Embed Target",
+        "sources": "embeds/Embed Notes.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing In Frontmatter",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing In Frontmatter 2",
+        "sources": "properties/Link Properties.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing Node One",
+        "sources": "review/Missing Note Creation.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing Node Two",
+        "sources": "review/Missing Note Creation.md"
+      },
+      {
+        "count": "1",
+        "link": "Missing With Extension",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "link": "missing-image.png",
+        "sources": "embeds/Embed Images.md"
+      },
+      {
+        "count": "1",
+        "link": "Nothing Here",
+        "sources": "links/Markdown Links.md"
+      },
+      {
+        "count": "1",
+        "link": "nowhere/Missing Deep",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "link": "Second Alias",
+        "sources": "links/Unresolved Links.md"
+      },
+      {
+        "count": "1",
+        "link": "Start",
+        "sources": "links/Link Forms.md"
+      },
+      {
+        "count": "1",
+        "link": "Ünïcode Note",
+        "sources": "Unicode é 日本.md"
+      }
+    ]
+  }
+}

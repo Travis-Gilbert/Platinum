@@ -1,7 +1,7 @@
-//! Downloads: files Frame saves to the Downloads folder instead of showing.
+//! Downloads: files Platinum saves to the Downloads folder instead of showing.
 //!
 //! Servo has no download support (its `download` attribute is a TODO, and a
-//! type it cannot render becomes a one-line placeholder page), so Frame
+//! type it cannot render becomes a one-line placeholder page), so Platinum
 //! decides what is a download, in `delegate.rs` and `page.rs` or from the
 //! person's "Download Linked File", and fetches it itself, with the page's
 //! cookies so that signed-in downloads work.

@@ -1,0 +1,236 @@
+{
+  "zoom_valid": true,
+  "signin_valid_run": true,
+  "signin_session_passed": true,
+  "input_checks_total": 63,
+  "input_checks_passed": 52,
+  "failed_checks": [
+    {
+      "check": "visible popup closes on camera motion",
+      "zoom": 0.35,
+      "selector": "#choice",
+      "opened": false,
+      "closed": true,
+      "passed": false
+    },
+    {
+      "check": "native picker shown and camera-dismissed",
+      "zoom": 0.35,
+      "kind": "color",
+      "opened": false,
+      "closed": true,
+      "passed": false,
+      "observation": "AppKit panel isVisible; render_to_image cannot capture system panels"
+    },
+    {
+      "check": "select option through keyboard",
+      "zoom": 0.35,
+      "choice": "First",
+      "passed": false
+    },
+    {
+      "check": "pointer and wheel",
+      "zoom": 1.0,
+      "before": {
+        "clicks": 4,
+        "hovers": 2,
+        "drag": null,
+        "wheel": 0,
+        "choice": "First",
+        "dialogs": [
+          {
+            "kind": "alert"
+          },
+          {
+            "kind": "confirm",
+            "response": true
+          },
+          {
+            "kind": "prompt",
+            "response": ""
+          }
+        ],
+        "escape": 0,
+        "space": 4,
+        "click": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "clicks": 5,
+        "hovers": 2,
+        "drag": {
+          "start": [
+            324,
+            331
+          ],
+          "end": [
+            349,
+            346
+          ]
+        },
+        "wheel": 40,
+        "choice": "First",
+        "dialogs": [
+          {
+            "kind": "alert"
+          },
+          {
+            "kind": "confirm",
+            "response": true
+          },
+          {
+            "kind": "prompt",
+            "response": ""
+          }
+        ],
+        "escape": 0,
+        "space": 4,
+        "click": [
+          130,
+          331
+        ]
+      },
+      "passed": false
+    },
+    {
+      "check": "visible popup closes on camera motion",
+      "zoom": 1.0,
+      "selector": "#choice",
+      "opened": false,
+      "closed": true,
+      "passed": false
+    },
+    {
+      "check": "native picker shown and camera-dismissed",
+      "zoom": 1.0,
+      "kind": "color",
+      "opened": false,
+      "closed": true,
+      "passed": false,
+      "observation": "AppKit panel isVisible; render_to_image cannot capture system panels"
+    },
+    {
+      "check": "select option through keyboard",
+      "zoom": 1.0,
+      "choice": "First",
+      "passed": false
+    },
+    {
+      "check": "pointer and wheel",
+      "zoom": 2.0,
+      "before": {
+        "clicks": 8,
+        "hovers": 3,
+        "drag": null,
+        "wheel": 0,
+        "choice": "First",
+        "dialogs": [
+          {
+            "kind": "alert"
+          },
+          {
+            "kind": "confirm",
+            "response": true
+          },
+          {
+            "kind": "prompt",
+            "response": ""
+          },
+          {
+            "kind": "alert"
+          },
+          {
+            "kind": "confirm",
+            "response": true
+          },
+          {
+            "kind": "prompt",
+            "response": ""
+          }
+        ],
+        "escape": 0,
+        "space": 5,
+        "click": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "clicks": 9,
+        "hovers": 3,
+        "drag": {
+          "start": [
+            324,
+            331
+          ],
+          "end": [
+            336,
+            339
+          ]
+        },
+        "wheel": 20,
+        "choice": "First",
+        "dialogs": [
+          {
+            "kind": "alert"
+          },
+          {
+            "kind": "confirm",
+            "response": true
+          },
+          {
+            "kind": "prompt",
+            "response": ""
+          },
+          {
+            "kind": "alert"
+          },
+          {
+            "kind": "confirm",
+            "response": true
+          },
+          {
+            "kind": "prompt",
+            "response": ""
+          }
+        ],
+        "escape": 0,
+        "space": 5,
+        "click": [
+          130,
+          331
+        ]
+      },
+      "passed": false
+    },
+    {
+      "check": "visible popup closes on camera motion",
+      "zoom": 2.0,
+      "selector": "#choice",
+      "opened": false,
+      "closed": true,
+      "passed": false
+    },
+    {
+      "check": "native picker shown and camera-dismissed",
+      "zoom": 2.0,
+      "kind": "color",
+      "opened": false,
+      "closed": true,
+      "passed": false,
+      "observation": "AppKit panel isVisible; render_to_image cannot capture system panels"
+    },
+    {
+      "check": "select option through keyboard",
+      "zoom": 2.0,
+      "choice": "First",
+      "passed": false
+    }
+  ],
+  "measurement_complete": false,
+  "stop_rule_triggered": true,
+  "stop_reason": "window became occluded",
+  "code_fixes_after_stop": false
+}

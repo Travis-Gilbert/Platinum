@@ -1,0 +1,30 @@
+{
+  "display_refresh_hz": 120.0000048000002,
+  "layout": {
+    "viewport_points": [
+      900.0,
+      650.0
+    ],
+    "display_scale": 2.0,
+    "grid_columns": 4,
+    "grid_rows": 4
+  },
+  "baseline_rss_bytes": 214007808,
+  "baseline_memory": {
+    "rss_bytes": 214007808,
+    "physical_footprint_bytes": 128031130,
+    "physical_footprint_reported": "122.1M",
+    "iosurface_regions": [
+      "IOSurface                         18.5M    18.4M    18.4M       0K       0K    18.4M       0K        9 "
+    ],
+    "iosurface_region_reported": true,
+    "vmmap_file": "vmmap-baseline.txt",
+    "elapsed_seconds": 1.569708167,
+    "precision": "Physical footprint rounded by vmmap; IOSurface lines retain all original columns. Missing region is not zero."
+  },
+  "concurrent_compilers_at_start": [],
+  "window_kind": "Normal",
+  "active_at_start": true,
+  "criterion": "Every card and GPUI >=95% display refresh in each of three two-second samples",
+  "frame_pacing": "Unmodified GPUI macOS display link; no timer or refresh override"
+}

@@ -1,0 +1,53 @@
+# Inspection pin
+
+The Platinum prototype is a CDP client of the Servo fork. It does not pin a
+Chrome revision and it does not load the Chrome DevTools frontend.
+
+Ordinary browsing uses an in-process client (`cdp_builtin_enabled`). That
+does not open a socket. An external listener is a separate development
+option: `cdp_server_enabled` plus a non-empty `cdp_server_token`. The
+listener accepts only a loopback `Host`, an empty or devtools `Origin`, and
+a matching `token` query parameter. `/json/list` advertises
+`ws://127.0.0.1:<port>/devtools/page/<id>?token=<token>`.
+
+WebMCP page API: `document.modelContext`, Community Group draft of 27 October
+2026. It is behind `dom_webmcp_enabled` (default off) and `[SecureContext]`.
+Registration takes a tool dictionary. `execute` returns a promise. The
+inspection channel still carries JSON strings; the page and CDP boundaries
+convert them. Declarative form attributes are not implemented.
+
+`WebMCP.invokeTool` takes `toolName`, optional `frameId`, and an `input`
+object. `toolsAdded` reports `inputSchema` as an object. `toolsRemoved`
+reports `{ tools: [{ name, frameId }] }`. `toolResponded` reports `status`
+(`success`, `error`, or `cancelled`), `output`, and `errorText`.
+
+Inspection follows the top-level document of the tab on screen. A child
+frame does not replace that document. A Start tab or native search results
+detach, even if the tab still stores an older page.
+
+The prototype sends these methods. The server answers anything else with
+JSON-RPC -32601.
+
+- Runtime.enable
+- Runtime.evaluate
+- Log.enable
+- Page.enable
+- Page.getFrameTree
+- DOM.enable
+- DOM.getDocument
+- DOM.requestChildNodes
+- DOM.setAttributeValue
+- CSS.enable
+- CSS.getComputedStyleForNode
+- Overlay.enable
+- Overlay.highlightNode
+- Network.enable
+- Network.getResponseBody
+- WebMCP.enable
+- WebMCP.invokeTool
+
+Events the prototype shows: `Log.entryAdded`, `Runtime.executionContextCreated`,
+`Runtime.executionContextDestroyed`, `DOM.setChildNodes`,
+`Network.requestWillBeSent`, `Network.responseReceived`,
+`Network.loadingFailed`, `WebMCP.toolsAdded`, `WebMCP.toolsRemoved`,
+`WebMCP.toolResponded`.

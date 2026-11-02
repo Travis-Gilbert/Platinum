@@ -131,8 +131,8 @@ refresh driver. Deferring every paint to the next GPUI render introduced an
 extra display-tick boundary for video-only content. Direct painting retained the
 scrolling improvement and reduced that video jitter. Stable video frames also
 use the existing Paint API repaint path instead of invalidating style/layout.
-This Servo change is preserved in patches/servo-video-frame-pacing.patch and
-applied idempotently by script/bootstrap-media.
+This Servo change began as patches/servo-video-frame-pacing.patch and is now
+commit efdf7370 in the pinned Servo fork.
 
 Final paired medians: scrolling p95 redraw gap 16.74 → 9.35 ms; video-only
 p95 redraw gap 25.53 → 17.47 ms and new surfaces/s 46.8 → 60.0. Whole-process

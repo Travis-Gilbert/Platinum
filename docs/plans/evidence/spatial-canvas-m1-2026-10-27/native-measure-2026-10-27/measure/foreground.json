@@ -1,0 +1,27 @@
+{
+  "events": [
+    {
+      "elapsed_ms": 0.046125000000000006,
+      "source": "start",
+      "active": true,
+      "appkit_key": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 12697.973125,
+      "source": "poll",
+      "active": true,
+      "appkit_key": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    }
+  ],
+  "polls": 688,
+  "max_poll_gap_ms": 82.29029200000001,
+  "failure": "needs the foreground: window inactive, hidden or occluded; run stopped without retry",
+  "monitor": "GPUI activation/visibility observers plus 16 ms polling of AppKit's key window; failures latch",
+  "allow_owned_native_panel_focus": false
+}

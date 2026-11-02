@@ -1,0 +1,40 @@
+250 | pub trait WorkletThreadPool: JSTraceable {
+    |           ----------------- method in this trait
+...
+280 |     fn perform_a_worklet_task(&self, worklet_id: WorkletId, worklet_task: WorkletTask);
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated functions `find_window_proxy_by_name` and `handle_tick_all_animations_for_testing` are never used
+    --> deps/servo-mse/components/script/event_loop/script_thread.rs:762:19
+     |
+ 532 | impl ScriptThread {
+     | ----------------- associated functions in this implementation
+...
+ 762 |     pub(crate) fn find_window_proxy_by_name(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+3366 |     pub(crate) fn handle_tick_all_animations_for_testing(no_gc: &NoGC, id: PipelineId) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: this lint expectation is unfulfilled
+   --> deps/servo-mse/components/script/dom/mod.rs:208:10
+    |
+208 | #[expect(unused)]
+    |          ^^^^^^
+    |
+    = note: `#[warn(unfulfilled_lint_expectations)]` on by default
+
+warning: this lint expectation is unfulfilled
+   --> deps/servo-mse/components/script/dom/bindings/mod.rs:179:14
+    |
+179 |     #[expect(non_camel_case_types)]
+    |              ^^^^^^^^^^^^^^^^^^^^
+
+   Compiling servo-layout v0.7.0 (/Volumes/SSD Samsung/frame-worktrees/site-panel/deps/servo-mse/components/layout)
+   Compiling servo v0.7.0 (/Volumes/SSD Samsung/frame-worktrees/site-panel/deps/servo-mse/components/servo)
+warning: `servo-script` (lib) generated 24 warnings (run `cargo fix --lib -p servo-script` to apply 6 suggestions)
+   Compiling frame v0.1.0 (/Volumes/SSD Samsung/frame-worktrees/site-panel)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3m 20s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+EXIT 0

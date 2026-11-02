@@ -153,3 +153,39 @@ requirements; the old-checkout checks are not integration acceptance.
 The Servo cache patch was reverse-apply checked again. Removed whitespace-only
 context markers in the patch file so the staged diff also passes `git diff
 --check`; application source and patch behavior did not change.
+
+
+## PR #16 integration review (2026-11-02)
+
+The user authorized fixing review findings, resolving conflicts and merging the
+existing PR. Integration uses main `b2b3b694fbd487d77e99227b99b0ae075e86be9c`.
+A managed worktree isolates the original checkout's unrelated edits.
+
+- Preserve current main's tree/pin/session JSON format and import handoff. The
+  old SessionWriter was superseded on main; RustyRed still owns profile records
+  and imported/legacy session records. Browser history writes drain at shutdown.
+- Preserve the Platinum folder migration and default profile path. Persist the
+  existing SQLite Keychain namespace in RustyRed, including after folder moves.
+  No new authoritative SQLite catalog is created by credential access.
+- Apply the tracked disk-cache shutdown patch to current main's Servo revision
+  `efdf7370da024f467f7526798fe5c6e50e784b52`; retain its notes protocols, inspector,
+  media fixes and existing website storage behavior.
+- Fix both Greptile findings: focus leaving address results ends editing and
+  restores the active address; history filtering is disabled during clearing,
+  and queued filter events skip the database read while clearing is busy.
+- Refresh address tests and the native preview for current main's workspace/tab
+  distinction. Preserve all current-main tests and unrelated behavior. Explicitly
+  invalidate suggestions on tab/dock changes even if input focus stays put.
+- The first blur regression failed because CommandState changes its focus handle
+  when rendered as non-searchable. Observe its stable parent focus subtree;
+  the regression now passes without changing the component implementation.
+
+Fresh integration results: profile suite 36 passed (three opt-in credential tests
+ignored); strict profile Clippy passed; application suite 193 passed (one optional
+model-download test ignored); normal executable and storage harness build passed.
+Native write/reopen/isolated processes passed, including cookies, localStorage,
+IndexedDB, profile records and HTTP cache requests 1 -> 1 -> 2. Native address acceptance
+also passed: real keystrokes, four result kinds, and a visually inspected 2x
+render of the production Browser. Historical receipts above are separate.
+
+Evidence: [pr16-integration-2026-11-02](evidence/pr16-integration-2026-11-02/).

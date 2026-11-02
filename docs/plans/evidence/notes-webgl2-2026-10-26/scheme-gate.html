@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>WebGL2 scheme gate</title>
+<body style="background:#1d2a3a;color:#e8e8e8;font:13px monospace">
+<pre id="log">WebGL2 scheme gate</pre>
+<script>
+// Frame turns WebGL2 on for `frame-notes:` pages only. This page reports what a page on its own
+// scheme can see; `?expect=1` says the scheme should have WebGL2, `?expect=0` that it should not.
+const expect = new URLSearchParams(location.search).get('expect') === '1';
+const canvas = document.createElement('canvas');
+const gl2 = canvas.getContext('webgl2');
+const out = {
+  ready: true,
+  scheme: location.protocol,
+  expect,
+  webgl2Context: !!gl2,
+  interfaces: Object.fromEntries(
+    ['WebGL2RenderingContext', 'WebGLSampler', 'WebGLSync', 'WebGLQuery', 'WebGLTransformFeedback', 'WebGLVertexArrayObject']
+      .map((name) => [name, typeof window[name] !== 'undefined'])
+  ),
+  // WebGL1 is on for every scheme and must stay so.
+  webgl1Context: !!document.createElement('canvas').getContext('webgl'),
+};
+out.passed = out.webgl2Context === expect &&
+  Object.values(out.interfaces).every((present) => present === expect) &&
+  out.webgl1Context;
+document.getElementById('log').textContent = JSON.stringify(out, null, 1);
+setTimeout(() => console.log('FRAME_MEDIA_FRAME svg-initial'), 300);
+setTimeout(() => console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out)), 1200);
+</script>

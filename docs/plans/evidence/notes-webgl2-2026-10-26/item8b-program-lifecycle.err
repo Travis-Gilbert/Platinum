@@ -1,0 +1,6 @@
+media check: document 0 HeadParsed
+media check: document 0 Complete
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+frame screenshot pixels: {"size":[1280,820],"background":955582,"nodePixels":0,"linkPixels":0,"otherPixels":16578,"nonBackgroundPixels":16578}
+frame screenshot: /var/folders/5f/gw6fzw9n1z15vht733bcn7jr0000gn/T/frame-media-svg-initial.png
+probe exit 0 after 2 s

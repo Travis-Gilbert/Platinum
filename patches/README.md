@@ -1,7 +1,8 @@
 # Experimental MSE integration
 
 `script/bootstrap-media` checks out Servo commit
-`5c8325a389555f3b1adc476106d8529791afe13e` from `Travis-Gilbert/youtube-mse`
+`efdf7370da024f467f7526798fe5c6e50e784b52` from `Travis-Gilbert/servo`
+(branch `main`)
 and applies the GStreamer patch without discarding local work. That commit
 also rounds text selection highlights the way code editors draw them
 (`components/layout/display_list/selection.rs`).
@@ -37,20 +38,22 @@ under validation and do not establish complete MSE conformance or Chrome parity.
 
 ## Browser search concurrency
 
-`browser-search-concurrency.patch` is applied by `script/bootstrap` to Theorem
-`6e57dbb39124f472d8619fb20a9984e89eb225e8`, the revision already installed when the
-performance baseline was measured. It separates preparation and retention under
-the browser-store lock from provider/model I/O without that lock, preserving
-existing query, privacy and retention owners. Active index generations are
-leased until their queries complete. No search engine or HTTP client is copied.
+This is commit `8c5d22bd6fea76dde197d0b9e73149d037d374d3` in the pinned Theorem
+(branch `claude/browser-search-concurrency`, one commit on
+`claude/notes-foundations` `7eb1ba02`). Until then `script/bootstrap` applied it
+as `browser-search-concurrency.patch`. It was measured against `6e57dbb3`, the
+revision installed for the performance baseline. It separates preparation and
+retention under the browser-store lock from provider/model I/O without that
+lock, preserving existing query, privacy and retention owners. Active index
+generations are leased until their queries complete. No search engine or HTTP
+client is copied.
 See `docs/plans/browser-performance.md` for validation and measurement evidence.
 
 
 ## Video frame pacing
 
-`servo-video-frame-pacing.patch` applies to Servo
-`5c8325a389555f3b1adc476106d8529791afe13e` via `script/bootstrap-media`.
-Stable-size video frames with the same WebRender image key request a repaint
+This is commit `efdf7370` in the pinned Servo; it was a separate patch until
+the fork's branches were consolidated. Stable-size video frames with the same WebRender image key request a repaint
 through the existing Paint API instead of invalidating style/layout each time.
 New image keys and natural-dimension changes still rebuild layout, preserving
 source/poster transitions and resize events. The patch does not change decoding
@@ -78,7 +81,7 @@ The upstream GstCheck regression and native playback/smoothness evidence are in
 ## HTTP cache persistence at shutdown
 
 `servo-disk-cache-shutdown.patch` applies to Servo
-`5c8325a389555f3b1adc476106d8529791afe13e` via `script/bootstrap-media`.
+`efdf7370da024f467f7526798fe5c6e50e784b52` via `script/bootstrap-media`.
 The upstream cache writes evicted entries to disk but otherwise loses its hot
 memory entries on restart. The resource thread now flushes completed public
 entries with the existing disk-cache serializer before acknowledging shutdown.

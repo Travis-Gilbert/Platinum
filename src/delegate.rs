@@ -1,16 +1,16 @@
-//! What Servo tells Frame about one tab's web view, queued for that tab's
+//! What Servo tells Platinum about one tab's web view, queued for that tab's
 //! page, plus the one decision made on the spot: where a navigation may go.
 //!
 //! SOURCING: Servo's `WebViewDelegate`. Adapted from Theorem UI's desktop host
 //! (`desktop/src/delegate.rs`): there is one delegate per tab here, and a new
 //! window (`window.open`, `target="_blank"`, "Open link in new tab") becomes a
-//! Frame tab instead of going to the system browser.
+//! Platinum tab instead of going to the system browser.
 //! The navigation policy is ours: it is this app's rule, not a library's.
 //! So is the list of file types that are downloads: Servo cannot report a
 //! download, so a link to an installer or an archive is caught here, before
 //! Servo fetches it, and handed to `downloads.rs`.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::rc::Rc;
 
@@ -23,6 +23,7 @@ use url::Url;
 
 use crate::scene::SceneRenderingContext;
 use crate::search::VisitedPage;
+use crate::site::SiteInfo;
 
 /// One thing the page has to act on after Servo's turn of the loop.
 pub enum ServoEvent {
@@ -42,6 +43,8 @@ pub enum ServoEvent {
     Loaded,
     /// The finished page's document, read back for the local search index.
     Document(VisitedPage),
+    /// What the site panel shows, read on demand. It never reaches the index.
+    Site(SiteInfo),
     Crashed(String),
     OpenExternally(Url),
     /// The page opened a new window; it becomes a tab.
@@ -65,11 +68,27 @@ pub struct NewWebView {
 pub struct Delegate {
     events: RefCell<VecDeque<ServoEvent>>,
     status: RefCell<Option<String>>,
+    pub(crate) navigation_starts: Cell<u64>,
+    pub(crate) frames: Cell<u64>,
+    hidden: Cell<bool>,
 }
 
 impl Delegate {
     pub fn new() -> Rc<Self> {
         Rc::new(Self::default())
+    }
+
+    pub(crate) fn set_visible(&self, visible: bool) {
+        self.hidden.set(!visible);
+    }
+
+    fn present_if_visible(&self, paint_and_present: impl FnOnce()) {
+        if self.hidden.get() {
+            return;
+        }
+        paint_and_present();
+        self.frames.set(self.frames.get() + 1);
+        self.push(ServoEvent::Frame);
     }
 
     pub fn take_events(&self) -> VecDeque<ServoEvent> {
@@ -84,6 +103,11 @@ impl Delegate {
     /// A document read back from the page, queued like Servo's own events.
     pub fn document(&self, page: VisitedPage) {
         self.push(ServoEvent::Document(page));
+    }
+
+    /// What the site panel shows, read back from the page.
+    pub fn site(&self, info: SiteInfo) {
+        self.push(ServoEvent::Site(info));
     }
 
     /// The page turned out to be a file Servo cannot show.
@@ -143,11 +167,12 @@ impl WebViewDelegate for Delegate {
     fn notify_new_frame_ready(&self, webview: WebView) {
         #[cfg(feature = "performance-check")]
         let _measure = crate::performance::Span::new("servo_frame");
-        #[cfg(feature = "performance-check")]
-        let _paint = crate::performance::Span::new("webview_paint");
-        webview.paint();
-        webview.rendering_context().present();
-        self.push(ServoEvent::Frame);
+        self.present_if_visible(|| {
+            #[cfg(feature = "performance-check")]
+            let _paint = crate::performance::Span::new("webview_paint");
+            webview.paint();
+            webview.rendering_context().present();
+        });
     }
 
     fn notify_cursor_changed(&self, _: WebView, cursor: Cursor) {
@@ -172,6 +197,9 @@ impl WebViewDelegate for Delegate {
 
     fn notify_load_status_changed(&self, _: WebView, status: LoadStatus) {
         self.push(ServoEvent::Changed);
+        if status == LoadStatus::Started {
+            self.navigation_starts.set(self.navigation_starts.get() + 1);
+        }
         if status == LoadStatus::Complete {
             self.push(ServoEvent::Loaded);
         }
@@ -261,6 +289,26 @@ mod tests {
 
     fn verdict_for(url: &str) -> Verdict {
         verdict(&Url::parse(url).unwrap())
+    }
+
+    #[test]
+    fn hidden_frame_notifications_do_not_paint_present_or_replace_the_live_frame() {
+        let delegate = Delegate::default();
+        let surface = Cell::new(0);
+        delegate.present_if_visible(|| surface.set(1));
+        delegate.take_events();
+        delegate.set_visible(false);
+        for _ in 0..4 {
+            delegate.present_if_visible(|| surface.set(2));
+        }
+        assert_eq!(surface.get(), 1);
+        assert_eq!(delegate.frames.get(), 1);
+        assert!(delegate.take_events().is_empty());
+        delegate.set_visible(true);
+        delegate.present_if_visible(|| surface.set(3));
+        assert_eq!(surface.get(), 3);
+        assert_eq!(delegate.frames.get(), 2);
+        assert!(matches!(delegate.take_events().pop_front(), Some(ServoEvent::Frame)));
     }
 
     #[test]

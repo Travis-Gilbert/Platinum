@@ -1,0 +1,84 @@
+[
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.007148500000766944,
+    "output": "disk-1793122729444066000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "frame-tests",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "test",
+      "--locked",
+      "--bin",
+      "frame"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 35.462144749999425,
+    "output": "frame-tests-1793122729451732000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.004536541000561556,
+    "output": "disk-1793122775180312000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": null
+  },
+  {
+    "name": "canvas-build",
+    "command": [
+      "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+      "cargo",
+      "build",
+      "--locked",
+      "--example",
+      "canvas_check"
+    ],
+    "cwd": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas",
+    "environment": {
+      "TMPDIR": "/Volumes/SSD Samsung/tmp",
+      "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/frame-canvas"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 11.874248583000735,
+    "output": "canvas-build-1793122775185203000.log",
+    "timed_out": false,
+    "interrupted": false,
+    "binary_sha256": null
+  }
+]

@@ -1,0 +1,6 @@
+media check: document 0 HeadParsed
+[2026-10-26T03:41:09Z ERROR webgl::webgl_thread] Last GL operation failed: GetParameterFloat2(AliasedPointSizeRange, Sender(..))
+media check: document 0 Complete
+[2026-10-26T03:41:12Z ERROR webgl::webgl_thread] Last GL operation failed: GetParameterFloat2(AliasedPointSizeRange, Sender(..))
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 0 GLD_TEXTURE_INDEX_RECTANGLE is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+frame screenshot: $DARWIN_USER_TEMP_DIR/frame-media-svg-initial.png

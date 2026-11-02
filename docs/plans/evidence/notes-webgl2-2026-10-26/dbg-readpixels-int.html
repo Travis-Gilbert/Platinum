@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>readPixels from an integer fbo</title>
+<body style="background:#1d2a3a;color:#e8e8e8;font:13px monospace">
+<pre id="log">readPixels from an integer fbo</pre>
+<script>
+// Narrowed from conformance2/reading/read-pixels-from-fbo-test.html: integer color buffers read
+// through RGBA_INTEGER with PACK_ALIGNMENT 1 and with the default alignment.
+const canvas = document.createElement('canvas');
+canvas.width = canvas.height = 16;
+const gl = canvas.getContext('webgl2', { antialias: false });
+const out = { ready: true, cases: [] };
+
+function run(name, alignment, internalFormat, format, type, readFormat, readType, Arr, clear) {
+  gl.pixelStorei(gl.PACK_ALIGNMENT, alignment);
+  const steps = {};
+  gl.getError();
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 2, 2, 0, format, type, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  steps.setup = gl.getError();
+  steps.status = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+  clear();
+  steps.clear = gl.getError();
+  const buf = new Arr(16);
+  gl.readPixels(0, 0, 2, 2, readFormat, readType, buf);
+  steps.read = gl.getError();
+  out.cases.push({ name, alignment, steps, first: Array.from(buf.slice(0, 4)) });
+  gl.deleteTexture(tex);
+  gl.deleteFramebuffer(fbo);
+  steps.afterDelete = gl.getError();
+}
+
+const clearU = (v) => () => gl.clearBufferuiv(gl.COLOR, 0, new Uint32Array(v));
+const clearI = (v) => () => gl.clearBufferiv(gl.COLOR, 0, new Int32Array(v));
+const clearF = (v) => () => { gl.clearColor(...v); gl.clear(gl.COLOR_BUFFER_BIT); };
+for (const alignment of [4, 1]) {
+  run('R8', alignment, gl.R8, gl.RED, gl.UNSIGNED_BYTE, gl.RGBA, gl.UNSIGNED_BYTE, Uint8Array, clearF([0.5, 0, 0, 0]));
+  run('R8UI', alignment, gl.R8UI, gl.RED_INTEGER, gl.UNSIGNED_BYTE, gl.RGBA_INTEGER, gl.UNSIGNED_INT, Uint32Array, clearU([250, 0, 0, 0]));
+  run('R8I', alignment, gl.R8I, gl.RED_INTEGER, gl.BYTE, gl.RGBA_INTEGER, gl.INT, Int32Array, clearI([-126, 0, 0, 0]));
+  run('RG16UI', alignment, gl.RG16UI, gl.RG_INTEGER, gl.UNSIGNED_SHORT, gl.RGBA_INTEGER, gl.UNSIGNED_INT, Uint32Array, clearU([30001, 18, 0, 0]));
+  run('RGBA8UI', alignment, gl.RGBA8UI, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, gl.RGBA_INTEGER, gl.UNSIGNED_INT, Uint32Array, clearU([127, 0, 255, 178]));
+  run('RGBA32UI', alignment, gl.RGBA32UI, gl.RGBA_INTEGER, gl.UNSIGNED_INT, gl.RGBA_INTEGER, gl.UNSIGNED_INT, Uint32Array, clearU([126726, 6726, 98765, 2015]));
+}
+out.failures = out.cases.filter((c) => c.steps.read !== 0 || !c.steps.status || c.first[0] === 0).map((c) => c.name + '@' + c.alignment);
+out.passed = out.failures.length === 0;
+document.getElementById('log').textContent = JSON.stringify(out, null, 1);
+setTimeout(() => console.log('FRAME_MEDIA_FRAME svg-initial'), 300);
+setTimeout(() => console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out)), 1500);
+</script>

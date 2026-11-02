@@ -94,7 +94,10 @@ fn main() -> anyhow::Result<()> {
         engine::Engine::after_spin(
             move |cx| {
                 if let Some(passed) = *probe.result.borrow() {
-                    println!("{}", serde_json::json!({"phase": event_phase, "passed": passed}));
+                    println!(
+                        "{}",
+                        serde_json::json!({"phase": event_phase, "passed": passed})
+                    );
                     cx.quit();
                     return false;
                 }

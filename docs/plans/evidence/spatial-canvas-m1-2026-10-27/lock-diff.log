@@ -1,0 +1,12 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 4a0fc81..a1a0fcb 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -3973,6 +3973,7 @@ dependencies = [
+  "gpui-kit",
+  "gpui-pre",
+  "gpui-pre-macos",
++ "gpui-whiteboard",
+  "http",
+  "humansize",
+  "image",

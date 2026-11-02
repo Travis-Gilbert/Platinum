@@ -1,0 +1,315 @@
+{
+  "artifacts": [
+    {
+      "path": "evidence/svg-initial.png",
+      "sha256": "652c9d0cded7600a0dad76f2520a1b8e18ded73a3902b9ced50766dfca5df7b7"
+    },
+    {
+      "path": "evidence/svg-paint.json",
+      "sha256": "71666155e76f833da02c1265e430f6a45198500d00be8c493e4afa43bee1864b"
+    },
+    {
+      "path": "evidence/svg-restyled.png",
+      "sha256": "0779b83dfc4a2147b2ca0062f38f77d23dfc12fe6a4c0c7bb76a39ecc2831769"
+    },
+    {
+      "path": "logs/B1.log",
+      "sha256": "e8c34219181d0551dca0c0f5eecaf3162a635ea2795d0d4c970565d1e776c172"
+    },
+    {
+      "path": "logs/B2.log",
+      "sha256": "b4f0ab15c07ce856de259ba251d3bbaa40374a218a778fbbb5baa44d305a2cd3"
+    },
+    {
+      "path": "logs/B3.log",
+      "sha256": "f9f2c1b8efefb44124319f22f4e364a9fa3fb2462fb3ee0954efee8331a27f49"
+    },
+    {
+      "path": "logs/L1.log",
+      "sha256": "f887b9bccd88f2bf17efbc2b0f2a1fa8c09eec6acfa836f98091f43ade33de61"
+    },
+    {
+      "path": "logs/L2.log",
+      "sha256": "c7e0b879ae4deb5e3e9334dc90c684128d89a3f76c0eaeee49a57c0bb8feab1d"
+    },
+    {
+      "path": "logs/L3.log",
+      "sha256": "c897548bb315c0e18bcdee050305dc47aa2ed97d6e676f5f506ce4fb2fa9a282"
+    },
+    {
+      "path": "logs/L4.log",
+      "sha256": "186318d810ae89434dfd8341f79c12c77519a46aa2349d0c6d33ac2760a778e6"
+    },
+    {
+      "path": "logs/L5.log",
+      "sha256": "b2c6311f380d6e4a1caa0178250b690bea176f526a02cb1e7ff526b770a0c2ec"
+    },
+    {
+      "path": "logs/P1.log",
+      "sha256": "02c1bd59ba1082d0095b8705e77d21fffc1a0107ba108067d8b74b5c23d69d50"
+    },
+    {
+      "path": "logs/P2.log",
+      "sha256": "008ad51711305b09b54400152eb513c89aa1673ccb3b5d401d2d65ef5d9e479a"
+    },
+    {
+      "path": "logs/T1.log",
+      "sha256": "fa36c3c95fdf6550eb894e7a12434e3faa3cfd48604f4df720e16e1f7b66cd3e"
+    },
+    {
+      "path": "logs/T2.log",
+      "sha256": "a217461a8472e54bd149acbd8e380072fc1d603898c7e4220ff3074704eacdaf"
+    }
+  ],
+  "pins": {
+    "deps": {
+      "checked": true,
+      "fork_toolchain": "1.97.1",
+      "gstreamer_patch_applied": true,
+      "heads": {
+        "gstreamer-mse": "1b2a95a1b72787cda146b46df9605b168e5b683b",
+        "servo-mse": "81d8e2999569a8a496142651a1d129aed22fda77",
+        "theorem-rustyweb-pw2": "6e57dbb39124f472d8619fb20a9984e89eb225e8"
+      },
+      "mse_runtime_present": true
+    },
+    "gstreamer": {
+      "patch": "gstreamer-mse.patch",
+      "rev": "1b2a95a1b72787cda146b46df9605b168e5b683b",
+      "url": "https://github.com/GStreamer/gstreamer.git"
+    },
+    "patches": {
+      "gstreamer-mse.patch": "8b0eec62f2001ec051c4e89a68a18e6312fd3a85754ff1f89d4e8fdbd1302321",
+      "servo-mse.patch": "bafb3b251210d0ed97cf8ac6fa06b2362083275a0650932e2a527348ea96cd5a"
+    },
+    "rust_toolchain": "1.97.1",
+    "schema": "frame-pins/1.0",
+    "servo": {
+      "archival_base": "ebc89e684b721f0a8e2407aad20b121a61187779",
+      "branch": "Travis-Gilbert/youtube-mse",
+      "rev": "81d8e2999569a8a496142651a1d129aed22fda77",
+      "url": "https://github.com/Travis-Gilbert/servo.git"
+    },
+    "theorem": {
+      "branch": "claude/rustyweb-full-frame",
+      "rev": "6e57dbb39124f472d8619fb20a9984e89eb225e8",
+      "url": "https://github.com/Travis-Gilbert/Theorem.git"
+    }
+  },
+  "rows": [
+    {
+      "command": "python3 script/check-pins.py --require-deps",
+      "duration_s": 0.1,
+      "evidence_class": "source",
+      "exit_code": 0,
+      "id": "P1",
+      "item": "Pin unity: the bootstrap scripts, patches/README.md, the nightly workflow, this spec, Cargo.toml and the deps/ checkouts name one Theorem, one Servo and one GStreamer revision",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/P1.log",
+      "log_sha256": "02c1bd59ba1082d0095b8705e77d21fffc1a0107ba108067d8b74b5c23d69d50",
+      "oracle_class": "source",
+      "outcome": "demonstrated",
+      "stage": "preflight"
+    },
+    {
+      "command": "python3 script/check-pins.py --verify-servo-patch --require-deps",
+      "duration_s": 1.7,
+      "evidence_class": "source",
+      "exit_code": 0,
+      "id": "P2",
+      "item": "The archival patches/servo-mse.patch covers exactly the base..pin diff of the fork and reproduces the pinned tree byte-for-byte",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/P2.log",
+      "log_sha256": "008ad51711305b09b54400152eb513c89aa1673ccb3b5d401d2d65ef5d9e479a",
+      "oracle_class": "source",
+      "outcome": "demonstrated",
+      "stage": "preflight"
+    },
+    {
+      "command": "script/media-env gst-inspect-1.0 mse",
+      "duration_s": 0.3,
+      "evidence_class": "integration",
+      "exit_code": 0,
+      "id": "B1",
+      "item": "The patched GStreamer MSE runtime loads: gst-inspect sees the mse plugin through script/media-env",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/B1.log",
+      "log_sha256": "e8c34219181d0551dca0c0f5eecaf3162a635ea2795d0d4c970565d1e776c172",
+      "oracle_class": "integration",
+      "outcome": "demonstrated",
+      "stage": "run"
+    },
+    {
+      "command": "script/media-env cargo build --locked --bin frame --examples",
+      "duration_s": 10.1,
+      "evidence_class": "integration",
+      "exit_code": 0,
+      "id": "B2",
+      "item": "cargo build --locked of frame and every example against the pinned Servo fork, Theorem substrate and patched MSE runtime",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/B2.log",
+      "log_sha256": "b4f0ab15c07ce856de259ba251d3bbaa40374a218a778fbbb5baa44d305a2cd3",
+      "oracle_class": "integration",
+      "outcome": "demonstrated",
+      "stage": "run"
+    },
+    {
+      "command": "script/setup-media",
+      "duration_s": 0.9,
+      "evidence_class": "integration",
+      "exit_code": 0,
+      "id": "B3",
+      "item": "script/setup-media resolves every GStreamer plugin the pinned Servo expects beside the built binaries",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/B3.log",
+      "log_sha256": "f9f2c1b8efefb44124319f22f4e364a9fa3fb2462fb3ee0954efee8331a27f49",
+      "oracle_class": "integration",
+      "outcome": "demonstrated",
+      "stage": "run"
+    },
+    {
+      "command": "script/media-env python3 tests/media/check_native.py",
+      "duration_s": 0.4,
+      "evidence_class": "fixture",
+      "exit_code": 0,
+      "id": "T1",
+      "item": "Native MSE backend regression: buffered-range removal and refill for VP8 and Vorbis against the pinned WPT fixtures",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/T1.log",
+      "log_sha256": "fa36c3c95fdf6550eb894e7a12434e3faa3cfd48604f4df720e16e1f7b66cd3e",
+      "oracle_class": "fixture",
+      "outcome": "demonstrated",
+      "stage": "run"
+    },
+    {
+      "command": "script/media-env cargo test --locked",
+      "duration_s": 9.9,
+      "evidence_class": "integration",
+      "exit_code": 0,
+      "id": "T2",
+      "item": "Chrome UI integration tests in headless windows (src/browser/tests.rs)",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/T2.log",
+      "log_sha256": "a217461a8472e54bd149acbd8e380072fc1d603898c7e4220ff3074704eacdaf",
+      "oracle_class": "integration",
+      "outcome": "demonstrated",
+      "stage": "run"
+    },
+    {
+      "command": "script/media-env cargo run --locked --example media_check -- http://127.0.0.1:8766/media/",
+      "duration_s": 9.1,
+      "evidence_class": "live",
+      "exit_code": 0,
+      "id": "L1",
+      "item": "Ordinary MP4/WebM playback: clock advance, dimensions, decoded red pixels, pause, seek, resume (muted; audible output is L7)",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/L1.log",
+      "log_sha256": "f887b9bccd88f2bf17efbc2b0f2a1fa8c09eec6acfa836f98091f43ade33de61",
+      "oracle_class": "live",
+      "outcome": "demonstrated",
+      "stage": "live"
+    },
+    {
+      "command": "script/media-env cargo run --locked --example media_check -- --mse http://127.0.0.1:8766/media-source/",
+      "duration_s": 6.8,
+      "evidence_class": "live",
+      "exit_code": 0,
+      "id": "L2",
+      "item": "MSE in the browser fixture: chunked separate audio/video appends, end-of-stream, rendered frames, repeated play, seek/resume",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/L2.log",
+      "log_sha256": "c7e0b879ae4deb5e3e9334dc90c684128d89a3f76c0eaeee49a57c0bb8feab1d",
+      "oracle_class": "live",
+      "outcome": "demonstrated",
+      "stage": "live"
+    },
+    {
+      "command": "script/media-env cargo run --locked --example media_check",
+      "duration_s": 4.8,
+      "evidence_class": "live",
+      "exit_code": 0,
+      "id": "L3",
+      "item": "Timer GC regression: 256 coalesced timer callbacks survive allocation pressure (checksum 32640; exit 139 before the fix)",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/L3.log",
+      "log_sha256": "c897548bb315c0e18bcdee050305dc47aa2ed97d6e676f5f506ce4fb2fa9a282",
+      "oracle_class": "live",
+      "outcome": "demonstrated",
+      "stage": "live"
+    },
+    {
+      "command": "script/media-env python3 tests/rendering/check_svg_paint.py '/Volumes/SSD Samsung/cargo-targets/frame'/debug/examples/media_check --evidence '/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2'/evidence",
+      "duration_s": 4.3,
+      "evidence_class": "live",
+      "exit_code": 0,
+      "id": "L4",
+      "item": "Inline SVG paint pixels: CSS-inherited and stylesheet-selected paint survive rasterization, before and after restyle (needs Pillow)",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/L4.log",
+      "log_sha256": "186318d810ae89434dfd8341f79c12c77519a46aa2349d0c6d33ac2760a778e6",
+      "oracle_class": "live",
+      "outcome": "demonstrated",
+      "stage": "live"
+    },
+    {
+      "command": "script/media-env cargo run --locked --example media_check -- --youtube https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+      "duration_s": 25.2,
+      "evidence_class": "live",
+      "exit_code": 0,
+      "id": "L5",
+      "item": "Public YouTube watch acceptance: video identity, no ad, playback, pause, seek and 1.5x speed on aqz-KE-bpKQ in a temporary profile",
+      "log": "/Volumes/SSD Samsung/scratch/frame-oracle-live-20261025-r2/logs/L5.log",
+      "log_sha256": "b2c6311f380d6e4a1caa0178250b690bea176f526a02cb1e7ff526b770a0c2ec",
+      "oracle_class": "live",
+      "outcome": "demonstrated",
+      "stage": "live"
+    },
+    {
+      "command": null,
+      "duration_s": 0.0,
+      "evidence_class": "not-run",
+      "exit_code": null,
+      "id": "L6",
+      "item": "media-source WPT conformance suite against the built fork with retained pass/fail evidence (docs/plans/youtube.md step 4)",
+      "oracle_class": "wpt",
+      "outcome": "not-run",
+      "reason": "Frame has no WPT runner path yet; the suite is open implementation work",
+      "stage": "live"
+    },
+    {
+      "command": null,
+      "duration_s": 0.0,
+      "evidence_class": "not-run",
+      "exit_code": null,
+      "id": "L7",
+      "item": "Audible output and full visible-window playback in the rebuilt Frame app",
+      "oracle_class": "manual",
+      "outcome": "not-run",
+      "reason": "requires a human at a Mac with audio",
+      "stage": "live"
+    },
+    {
+      "command": null,
+      "duration_s": 0.0,
+      "evidence_class": "not-run",
+      "exit_code": null,
+      "id": "L8",
+      "item": "Chrome parity measurements on the same machine and network: startup, seek recovery, stalls, dropped frames, sync, CPU/GPU, memory, power",
+      "oracle_class": "manual",
+      "outcome": "not-run",
+      "reason": "requires Chrome and human measurement; performance thresholds come from those measurements, not from invention",
+      "stage": "live"
+    }
+  ],
+  "run": {
+    "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)",
+    "finished_at": "2026-10-25T23:25:50+00:00",
+    "frame_dirty": true,
+    "frame_head": "651b9a36dcb897289edef7db95a5e53be684642c",
+    "id": "d01ed61b31394057b87e41e2be5827cd",
+    "mode": "live",
+    "platform": {
+      "machine": "arm64",
+      "python": "3.15.0",
+      "release": "27.0.0",
+      "system": "Darwin"
+    },
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "started_at": "2026-10-25T23:24:35+00:00"
+  },
+  "schema": "frame-oracle-receipt/1.0",
+  "spec": {
+    "path": "docs/plans/oracle-spec.json",
+    "sha256": "4beabd142bca3ef41407cce57e28d6dba0f6088b36df286273f6c2a48a392709"
+  },
+  "status": "passed"
+}

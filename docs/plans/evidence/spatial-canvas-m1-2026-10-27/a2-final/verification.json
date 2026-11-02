@@ -1,0 +1,143 @@
+[
+  {
+    "name": "diff-whitespace",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01987475000350969,
+    "output": "diff-whitespace-verification.log"
+  },
+  {
+    "name": "protected-paths",
+    "command": [
+      "git",
+      "diff",
+      "--name-only",
+      "--",
+      "deps/",
+      "vendor/"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.011457290998805547,
+    "output": "protected-paths-verification.log"
+  },
+  {
+    "name": "branch",
+    "command": [
+      "git",
+      "status",
+      "--short",
+      "--branch"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.018079042001772905,
+    "output": "branch-verification.log"
+  },
+  {
+    "name": "disk",
+    "command": [
+      "df",
+      "-h",
+      "/Volumes/SSD Samsung"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004108708002604544,
+    "output": "disk-verification.log"
+  },
+  {
+    "name": "format-new-rust",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "examples/canvas_check.rs",
+      "examples/canvas_check/acceptance.rs",
+      "examples/canvas_check/measurements.rs",
+      "src/canvas/surface.rs",
+      "src/canvas/mod.rs",
+      "src/canvas/input.rs"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.13666283400016255,
+    "output": "format-new-rust-verification.log"
+  },
+  {
+    "name": "runner-python-parse",
+    "exit_code": 0,
+    "elapsed_seconds": 0.001995916998566827
+  },
+  {
+    "name": "native-cleanup",
+    "elapsed_seconds": 0.0007654159999219701,
+    "results": [
+      {
+        "name": "zoom",
+        "pid": 68612,
+        "running": false,
+        "fixture_port": 61671,
+        "listening": false,
+        "temporary_directory_exists": false
+      },
+      {
+        "name": "signin",
+        "pid": 69297,
+        "running": false,
+        "fixture_port": 61789,
+        "listening": false,
+        "temporary_directory_exists": false
+      },
+      {
+        "name": "measure",
+        "pid": 70624,
+        "running": false,
+        "fixture_port": 62115,
+        "listening": false,
+        "temporary_directory_exists": false
+      }
+    ]
+  },
+  {
+    "name": "display-state-after",
+    "command": [
+      "ioreg",
+      "-n",
+      "Root",
+      "-d1",
+      "-a"
+    ],
+    "elapsed_seconds": 0.03969137500098441,
+    "states": [
+      {
+        "IOConsoleLocked": false
+      }
+    ]
+  },
+  {
+    "name": "borrow-error-count",
+    "count": 0
+  },
+  {
+    "name": "format-scoped",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "examples/canvas_check.rs",
+      "examples/canvas_check/acceptance.rs",
+      "examples/canvas_check/measurements.rs",
+      "src/canvas/surface.rs",
+      "src/canvas/mod.rs",
+      "src/canvas/input.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.06560350000290782,
+    "output": "format-scoped-verification.log"
+  }
+]

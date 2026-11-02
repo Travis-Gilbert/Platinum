@@ -1,0 +1,16 @@
+{
+  "path": "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+  "sha256": "833ef039de7a98eea48b47703174d4d22058f8b41456d95dd58ba90a7cbcf109",
+  "size_bytes": 221591536,
+  "recorded_at": "2026-10-27T23:33:48.575638+00:00",
+  "servo": {
+    "checkout": "/Volumes/SSD Samsung/frame-deps/servo-r1",
+    "head": "2b522612c4db75a7f3214a0f17ef8abe5a8c47a1",
+    "diff_sha256": "a96da0dd224aa3a6bde1b73edfcf4d7b98d04e50f0a81f96d3db6e47f8e919c9"
+  },
+  "frame": {
+    "checkout": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport",
+    "head": "89264e49f7a2f2f732296c850d2b7d50bb3160c2",
+    "diff_sha256": "071285d0b7d15be07f3444b8336c66c87685cdaca2dcc87d29fd80328b5687c6"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "dry_run": true,
+  "binary": "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/canvas_check",
+  "binary_exists": true,
+  "wrapper": "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+  "cases": [
+    [
+      "surface",
+      "benchmark.html",
+      [
+        "--diagnose"
+      ]
+    ],
+    [
+      "zoom",
+      "zoom-probe.html",
+      []
+    ],
+    [
+      "signin",
+      "signin/",
+      []
+    ],
+    [
+      "measure",
+      "benchmark.html",
+      [
+        "--measure"
+      ]
+    ]
+  ],
+  "bind": "127.0.0.1",
+  "caffeinate": [
+    "caffeinate",
+    "-d",
+    "-w",
+    "86451"
+  ],
+  "stop_on": "first failed process or probe verdict; no retry",
+  "windows_opened": 0,
+  "server_started": false,
+  "caffeinate_started": false
+}

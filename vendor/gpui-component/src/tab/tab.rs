@@ -559,6 +559,9 @@ pub struct Tab {
     /// there rather than in a hover group, which would replace the caller's.
     pub(super) hovered: bool,
     pub(super) max_width: Option<Pixels>,
+    // THEOREM PATCH: the capsule this tab shares with its neighbors that
+    // have the same key; see `TabBar::capsule_bg`.
+    pub(super) capsule: Option<u64>,
     // THEOREM PATCH: the selected folder tab's fill, in place of the theme's.
     selected_bg: Option<Background>,
     // THEOREM PATCH: and the color of its text and icons on that fill.
@@ -618,6 +621,7 @@ impl Default for Tab {
             variant: TabVariant::default(),
             size: Size::default(),
             max_width: None,
+            capsule: None,
             selected_bg: None,
             selected_fg: None,
             on_click: None,
@@ -686,6 +690,14 @@ impl Tab {
     /// Use Folder variant.
     pub fn folder(mut self) -> Self {
         self.variant = TabVariant::Folder;
+        self
+    }
+
+    // THEOREM PATCH: capsules of tabs, as Dia's row of tabs draws them.
+    /// Share a capsule with the neighboring tabs that have the same `key`,
+    /// drawn when the [`super::TabBar`] has a `capsule_bg`.
+    pub fn capsule(mut self, key: u64) -> Self {
+        self.capsule = Some(key);
         self
     }
 

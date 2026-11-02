@@ -209,6 +209,26 @@ impl ProfileStore {
     pub fn directory(&self) -> PathBuf {
         profile_directory(&self.root, self.profile.id)
     }
+    pub fn default_directory(&self) -> PathBuf {
+        profile_directory(&self.root, 1)
+    }
+    pub(crate) fn keychain_namespace(&self, fallback: &str) -> Result<String> {
+        let mut db = self.db()?;
+        if let Some(kept) = value(&db, "vault")? {
+            return Ok(kept["namespace"]
+                .as_str()
+                .context("Invalid Keychain namespace")?
+                .to_owned());
+        }
+        let namespace =
+            super::legacy::keychain_namespace(&self.root)?.unwrap_or_else(|| fallback.to_owned());
+        db.upsert_node(NodeRecord::new(
+            "vault",
+            ["Setting"],
+            json!({"namespace": namespace}),
+        ))?;
+        Ok(namespace)
+    }
     pub fn search_directory(&self) -> PathBuf {
         if self.profile.id == 1 {
             self.root.clone()

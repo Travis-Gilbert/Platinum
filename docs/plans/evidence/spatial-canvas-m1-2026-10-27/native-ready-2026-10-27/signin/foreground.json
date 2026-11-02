@@ -1,0 +1,33 @@
+{
+  "events": [
+    {
+      "elapsed_ms": 0.048834,
+      "source": "start",
+      "active": true,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    },
+    {
+      "elapsed_ms": 11669.388625,
+      "source": "activation",
+      "active": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": true
+    },
+    {
+      "elapsed_ms": 11709.932709,
+      "source": "poll",
+      "active": false,
+      "visibility": "Visible",
+      "visible": true,
+      "owned_key_panel": false
+    }
+  ],
+  "polls": 650,
+  "max_poll_gap_ms": 239.290542,
+  "failure": "needs the foreground: window inactive, hidden or occluded; run stopped without retry",
+  "monitor": "GPUI activation/visibility observers plus 16 ms polling; failures latch",
+  "allow_owned_native_panel_focus": true
+}

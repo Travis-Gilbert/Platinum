@@ -1,0 +1,18 @@
+{
+  "display_refresh_hz": 120.0000048000002,
+  "layout": {
+    "viewport_points": [
+      900.0,
+      650.0
+    ],
+    "display_scale": 2.0,
+    "grid_columns": 4,
+    "grid_rows": 4
+  },
+  "baseline_rss_bytes": 204144640,
+  "concurrent_compilers_at_start": [],
+  "window_kind": "PopUp",
+  "active_at_start": true,
+  "criterion": "Every card and GPUI >=95% display refresh in each of three two-second samples",
+  "frame_pacing": "Unmodified GPUI macOS display link; no timer or refresh override"
+}

@@ -1,0 +1,655 @@
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:12:
+ //! `EmbedderControl` responders is ours. Adapted from Theorem UI's desktop
+ //! host (`desktop/src/controls.rs`).
+ 
+-use std::{time::Duration, cell::RefCell, rc::Rc};
++use std::{cell::RefCell, rc::Rc, time::Duration};
+ 
++use gpui_kit::component::WindowExt as _;
+ use gpui_kit::component::button::{Button, ButtonVariants as _};
+ use gpui_kit::component::input::{Input, InputState};
+-use gpui_kit::component::native_menu::NativeMenu;
+ use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
+-use gpui_kit::component::WindowExt as _;
++use gpui_kit::component::native_menu::NativeMenu;
+ use gpui_kit::component::{ActiveTheme as _, Root, h_flex, v_flex};
+ use gpui_kit::{
+-    Action, App, AppContext as _, Bounds, Focusable as _, Subscription, Context, Entity, IntoElement, NoAction,
+-    ParentElement as _, PathPromptOptions, Pixels, Point, PromptLevel, Render, Styled as _, Task,
+-    TitlebarOptions, WeakEntity, Window, WindowBounds, WindowKind, WindowOptions, point, px, size,
++    Action, App, AppContext as _, Bounds, Context, Entity, Focusable as _, IntoElement, NoAction,
++    ParentElement as _, PathPromptOptions, Pixels, Point, PromptLevel, Render, Styled as _,
++    Subscription, Task, TitlebarOptions, WeakEntity, Window, WindowBounds, WindowKind,
++    WindowOptions, point, px, size,
+ };
+ use servo::{
+     ColorPicker, ContextMenu, ContextMenuAction, ContextMenuItem, DeviceIntRect, EmbedderControl,
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:80:
+ 
+ impl Controls {
+     pub(crate) fn popup_has_focus(&self, window: &Window, cx: &App) -> bool {
+-        self.popup.as_ref().is_some_and(|(menu, _, _)| menu.focus_handle(cx).is_focused(window))
++        self.popup
++            .as_ref()
++            .is_some_and(|(menu, _, _)| menu.focus_handle(cx).is_focused(window))
+     }
+ 
+     pub fn dismiss_menus(&mut self) {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:87:
+-        if self.popup.is_some() { control_trace("popup dismissed"); }
++        if self.popup.is_some() {
++            control_trace("popup dismissed");
++        }
+         self.menu = None;
+         self.popup = None;
+     }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:101:
+ 
+ pub(crate) fn control_trace(message: &str) {
+     if std::env::var_os("FRAME_CANVAS_TRACE").is_some() {
+-        eprintln!("CONTROL {} {message}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
++        eprintln!(
++            "CONTROL {} {message}",
++            std::time::SystemTime::now()
++                .duration_since(std::time::UNIX_EPOCH)
++                .unwrap()
++                .as_millis()
++        );
+     }
+ }
+ 
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:130:
+                     window.focus(&self.focus_handle(cx), cx);
+                     cx.emit(crate::page::PageEvent::RevealCanvas);
+                     let page = cx.entity();
+-                    window.defer(cx, move |window, cx| page.update(cx, |p, cx| p.show_canvas_dialog(dialog, window, cx)));
++                    window.defer(cx, move |window, cx| {
++                        page.update(cx, |p, cx| p.show_canvas_dialog(dialog, window, cx))
++                    });
+                 } else {
+                     self.show_dialog(dialog, window, cx);
+                 }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:137:
+-            },
++            }
+             EmbedderControl::InputMethod(control) => self.input_method = Some(control),
+         }
+     }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:141:
+ 
+     pub(crate) fn hide_control(&mut self, id: EmbedderControlId, cx: &mut Context<Self>) {
+-        control_trace(&format!("hide {id:?}; popup={} color={}", self.controls.popup.is_some(), self.controls.color.is_some()));
++        control_trace(&format!(
++            "hide {id:?}; popup={} color={}",
++            self.controls.popup.is_some(),
++            self.controls.color.is_some()
++        ));
+         if self
+             .controls
+             .menu
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:163:
+             .is_some_and(|session| session.picker.id() == id)
+         {
+             self.controls.color = None;
+-            cx.foreground_executor().spawn(async { color_panel::close(); }).detach();
++            cx.foreground_executor()
++                .spawn(async {
++                    color_panel::close();
++                })
++                .detach();
+         }
+     }
+ 
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:181:
+                 menu = menu.action_context(focus);
+                 for entry in select.options() {
+                     let options = match entry {
+-                        SelectElementOptionOrOptgroup::Option(option) => std::slice::from_ref(option),
++                        SelectElementOptionOrOptgroup::Option(option) => {
++                            std::slice::from_ref(option)
++                        }
+                         SelectElementOptionOrOptgroup::Optgroup { label, options } => {
+                             menu = menu.label(label.clone());
+                             options.as_slice()
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:190:
+                     for option in options {
+                         let page = page.clone();
+                         let id = option.id;
+-                        menu = menu.item(PopupMenuItem::new(option.label.clone())
+-                            .disabled(option.is_disabled).checked(chosen.contains(&option.id))
+-                            .on_click(move |_, window, cx| { let _ = page.update(cx, |p, cx| p.pick_option(&PickOption { id }, window, cx)); }));
++                        menu = menu.item(
++                            PopupMenuItem::new(option.label.clone())
++                                .disabled(option.is_disabled)
++                                .checked(chosen.contains(&option.id))
++                                .on_click(move |_, window, cx| {
++                                    let _ = page.update(cx, |p, cx| {
++                                        p.pick_option(&PickOption { id }, window, cx)
++                                    });
++                                }),
++                        );
+                     }
+                 }
+                 menu
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:238:
+         select.submit();
+     }
+ 
+-    fn show_context_menu(&mut self, menu: ContextMenu, window: &mut Window, cx: &mut Context<Self>) {
++    fn show_context_menu(
++        &mut self,
++        menu: ContextMenu,
++        window: &mut Window,
++        cx: &mut Context<Self>,
++    ) {
+         let rect = menu.position();
+         let position = self.window_point(rect.min.x, rect.min.y);
+         if self.canvas_world.is_some() {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:247:
+             let popup = PopupMenu::build(window, cx, |mut popup, _, _| {
+                 popup = popup.action_context(focus);
+                 for item in menu.items() {
+-                    if let ContextMenuItem::Item { label, action, enabled } = item {
++                    if let ContextMenuItem::Item {
++                        label,
++                        action,
++                        enabled,
++                    } = item
++                    {
+                         let page = page.clone();
+                         let action = *action;
+-                        popup = popup.item(PopupMenuItem::new(label.clone()).disabled(!enabled)
+-                            .on_click(move |_, _, cx| { let _ = page.update(cx, |p, _| p.select_context_action(action)); }));
++                        popup = popup.item(
++                            PopupMenuItem::new(label.clone())
++                                .disabled(!enabled)
++                                .on_click(move |_, _, cx| {
++                                    let _ = page.update(cx, |p, _| p.select_context_action(action));
++                                }),
++                        );
+                     }
+                 }
+                 popup
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:290:
+         );
+     }
+ 
+-    fn mount_popup(&mut self, popup: Entity<PopupMenu>, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
+-        let subscription = cx.subscribe_in(&popup, window, |page, _, _: &gpui_kit::DismissEvent, window, cx| {
+-            page.controls.dismiss_menus();
+-            window.focus(&page.focus_handle(cx), cx);
+-            cx.notify();
+-        });
++    fn mount_popup(
++        &mut self,
++        popup: Entity<PopupMenu>,
++        position: Point<Pixels>,
++        window: &mut Window,
++        cx: &mut Context<Self>,
++    ) {
++        let subscription = cx.subscribe_in(
++            &popup,
++            window,
++            |page, _, _: &gpui_kit::DismissEvent, window, cx| {
++                page.controls.dismiss_menus();
++                window.focus(&page.focus_handle(cx), cx);
++                cx.notify();
++            },
++        );
+         window.focus(&popup.focus_handle(cx), cx);
+         self.controls.popup_window = Some(window.window_handle());
+         self.controls.popup = Some((popup, position, subscription));
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:304:
+     }
+ 
+     pub(crate) fn native_picker_visible(&self, kind: &str) -> bool {
+-        if kind == "color" { color_panel::is_visible() } else { file_panel_visible(false) }
++        if kind == "color" {
++            color_panel::is_visible()
++        } else {
++            file_panel_visible(false)
++        }
+     }
+ 
+     pub(crate) fn camera_moved(&mut self, cx: &mut Context<Self>) {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:311:
+-        if self.controls.popup.is_some() || self.controls.color.is_some() || self.controls.file_open { control_trace("camera dismiss controls"); }
++        if self.controls.popup.is_some() || self.controls.color.is_some() || self.controls.file_open
++        {
++            control_trace("camera dismiss controls");
++        }
+         if let Some((popup, _, _)) = &self.controls.popup {
+             let focus = popup.focus_handle(cx);
+             let restore = self.focus_handle(cx);
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:315:
+             if let Some(owner) = self.controls.popup_window {
+                 cx.defer(move |cx| {
+                     let _ = owner.update(cx, |_, window, cx| {
+-                        if focus.is_focused(window) { window.focus(&restore, cx); }
++                        if focus.is_focused(window) {
++                            window.focus(&restore, cx);
++                        }
+                     });
+                 });
+             }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:322:
+         }
+         self.controls.dismiss_menus();
+         if self.controls.color.take().is_some() {
+-            cx.foreground_executor().spawn(async { color_panel::close(); }).detach();
++            cx.foreground_executor()
++                .spawn(async {
++                    color_panel::close();
++                })
++                .detach();
+         }
+         if self.controls.file_open {
+-            cx.foreground_executor().spawn(async { file_panel_visible(true); }).detach();
++            cx.foreground_executor()
++                .spawn(async {
++                    file_panel_visible(true);
++                })
++                .detach();
+         }
+         cx.notify();
+     }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:332:
+ 
+-    fn show_canvas_dialog(&mut self, dialog: SimpleDialog, window: &mut Window, cx: &mut Context<Self>) {
+-        if !self.controls.begin_dialog() { return; }
++    fn show_canvas_dialog(
++        &mut self,
++        dialog: SimpleDialog,
++        window: &mut Window,
++        cx: &mut Context<Self>,
++    ) {
++        if !self.controls.begin_dialog() {
++            return;
++        }
+         let (message, initial, cancel) = match &dialog {
+             SimpleDialog::Alert(d) => (d.message().to_owned(), None, false),
+             SimpleDialog::Confirm(d) => (d.message().to_owned(), None, true),
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:338:
+-            SimpleDialog::Prompt(d) => (d.message().to_owned(), Some(d.current_value().to_owned()), true),
++            SimpleDialog::Prompt(d) => (
++                d.message().to_owned(),
++                Some(d.current_value().to_owned()),
++                true,
++            ),
+         };
+-        let input = initial.map(|value| cx.new(|cx| InputState::new(window, cx).default_value(value)));
++        let input =
++            initial.map(|value| cx.new(|cx| InputState::new(window, cx).default_value(value)));
+         let responder = Rc::new(RefCell::new(Some(dialog)));
+         let page = cx.entity().downgrade();
+         window.open_alert_dialog(cx, move |dialog, _, _| {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:346:
+             let input_ok = input.clone();
+             let page = page.clone();
+             let dialog = if cancel { dialog.confirm() } else { dialog };
+-            dialog.title(message.clone()).close_button(false)
++            dialog
++                .title(message.clone())
++                .close_button(false)
+                 .children(input.as_ref().map(|input| Input::new(input)))
+                 .on_ok(move |_, _, cx| {
+                     if let Some(dialog) = responder.borrow_mut().take() {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:354:
+                             SimpleDialog::Alert(d) => d.confirm(),
+                             SimpleDialog::Confirm(d) => d.confirm(),
+                             SimpleDialog::Prompt(mut d) => {
+-                                if let Some(input) = &input_ok { d.set_current_value(&input.read(cx).value()); }
++                                if let Some(input) = &input_ok {
++                                    d.set_current_value(&input.read(cx).value());
++                                }
+                                 d.confirm();
+                             }
+                         }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:397:
+         control_trace("file open returned");
+         cx.spawn(async move |page, cx| {
+             match paths.await {
+-                Ok(Ok(Some(paths))) => { picker.select(&paths); picker.submit(); }
++                Ok(Ok(Some(paths))) => {
++                    picker.select(&paths);
++                    picker.submit();
++                }
+                 _ => picker.dismiss(),
+             }
+             let _ = page.update(cx, |page, _| page.controls.file_open = false);
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:410:
+         let poll = cx.spawn(async move |page, cx| {
+             control_trace("color open begin outside App update");
+             color_panel::open(current);
+-            control_trace(&format!("color open returned visible={}", color_panel::is_visible()));
++            control_trace(&format!(
++                "color open returned visible={}",
++                color_panel::is_visible()
++            ));
+             loop {
+                 cx.background_executor().timer(COLOR_PANEL_POLL).await;
+                 let open = page.update(cx, |page, _| page.poll_color_panel());
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:648:
+ 
+ #[cfg(target_os = "macos")]
+ fn file_panel_visible(cancel: bool) -> bool {
+-    let Some(mtm) = objc2::MainThreadMarker::new() else { return false; };
++    let Some(mtm) = objc2::MainThreadMarker::new() else {
++        return false;
++    };
+     let app = objc2_app_kit::NSApplication::sharedApplication(mtm);
+     let mut visible = false;
+     for window in app.windows().iter() {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:655:
+         if let Some(panel) = window.downcast_ref::<objc2_app_kit::NSOpenPanel>() {
+             if panel.isVisible() {
+                 visible = true;
+-                if cancel { unsafe { panel.cancel(None); } }
++                if cancel {
++                    unsafe {
++                        panel.cancel(None);
++                    }
++                }
+             }
+         }
+     }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/controls.rs:663:
+ }
+ 
+ #[cfg(not(target_os = "macos"))]
+-fn file_panel_visible(_: bool) -> bool { false }
++fn file_panel_visible(_: bool) -> bool {
++    false
++}
+ 
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:226:
+                     page.webview.set_focused(true)
+                 }),
+                 cx.on_blur(&focus_handle, window, |page, window, cx| {
+-                    let popup_focused = page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
+-                    crate::controls::control_trace(if popup_focused { "Page blur -> owned popup retains Servo focus" } else { "Page blur -> Servo false" });
++                    let popup_focused =
++                        page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
++                    crate::controls::control_trace(if popup_focused {
++                        "Page blur -> owned popup retains Servo focus"
++                    } else {
++                        "Page blur -> Servo false"
++                    });
+                     page.release_buttons();
+-                    if let Some(input) = &page.canvas_input { input.borrow_mut().cancel_space(); }
+-                    if !popup_focused { page.webview.set_focused(false); }
++                    if let Some(input) = &page.canvas_input {
++                        input.borrow_mut().cancel_space();
++                    }
++                    if !popup_focused {
++                        page.webview.set_focused(false);
++                    }
+                 }),
+                 cx.observe_global::<ChromeTheme>(|page, cx| {
+                     page.webview.notify_theme_change(servo_theme(cx));
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:581:
+         if !self.focus_handle.is_focused(window) {
+             return false;
+         }
+-        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().space_pending) {
+-            self.canvas_input.as_ref().unwrap().borrow_mut().pending_events.push(gpui_kit::PlatformInput::KeyDown(gpui_kit::KeyDownEvent {
+-                keystroke: keystroke.clone(), is_held: false, prefer_character_input: false,
+-            }));
++        if self
++            .canvas_input
++            .as_ref()
++            .is_some_and(|input| input.borrow().space_pending)
++        {
++            self.canvas_input
++                .as_ref()
++                .unwrap()
++                .borrow_mut()
++                .pending_events
++                .push(gpui_kit::PlatformInput::KeyDown(gpui_kit::KeyDownEvent {
++                    keystroke: keystroke.clone(),
++                    is_held: false,
++                    prefer_character_input: false,
++                }));
+             return true;
+         }
+         if keystroke.key == "space" && self.canvas_input.is_some() {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:607:
+     fn canvas_space(&mut self, key: &Keystroke, window: &Window, cx: &mut Context<Self>) {
+         let input = self.canvas_input.as_ref().unwrap().clone();
+         if input.borrow().space_editable {
+-            self.send(InputEvent::Keyboard(keys::keyboard_event(key, KeyState::Down, true)));
++            self.send(InputEvent::Keyboard(keys::keyboard_event(
++                key,
++                KeyState::Down,
++                true,
++            )));
+             return;
+         }
+-        if input.borrow().space.is_some() { return; }
++        if input.borrow().space.is_some() {
++            return;
++        }
+         input.borrow_mut().hold_space(key);
+         input.borrow_mut().space_pending = true;
+         let generation = input.borrow().space_generation;
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:617:
+         let (send, receive) = futures::channel::oneshot::channel();
+-        self.webview.evaluate_javascript(r#"(() => {
++        self.webview.evaluate_javascript(
++            r#"(() => {
+             if (document.designMode === 'on') return true;
+             let e = document.activeElement;
+             while (e?.shadowRoot?.activeElement) e = e.shadowRoot.activeElement;
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:622:
+             return !!e && (e.isContentEditable || e.tagName === 'IFRAME' ||
+                 (e.matches('input,textarea,select') && !e.disabled && !e.readOnly));
+-        })()"#, move |result| { let _ = send.send(result); });
++        })()"#,
++            move |result| {
++                let _ = send.send(result);
++            },
++        );
+         let owner = window.window_handle();
+         cx.spawn(async move |page, cx| {
+             use futures::FutureExt as _;
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:628:
+             let response = receive.fuse();
+-            let timeout = cx.background_executor().timer(std::time::Duration::from_secs(1)).fuse();
++            let timeout = cx
++                .background_executor()
++                .timer(std::time::Duration::from_secs(1))
++                .fuse();
+             futures::pin_mut!(response, timeout);
+             let editable = futures::select! {
+                 result = response => !matches!(result, Ok(Ok(JSValue::Boolean(false)))),
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:634:
+             };
+             let queued = page.update(cx, |page, _| {
+                 let mut state = input.borrow_mut();
+-                if state.space_generation != generation || !state.space_pending { return Vec::new(); }
++                if state.space_generation != generation || !state.space_pending {
++                    return Vec::new();
++                }
+                 state.space_pending = false;
+                 state.space_editable = editable;
+                 if editable {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:641:
+                     if let Some(key) = state.space.take() {
+-                        page.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Down, false)));
++                        page.send(InputEvent::Keyboard(keys::keyboard_event(
++                            &key,
++                            KeyState::Down,
++                            false,
++                        )));
+                     }
+                 }
+                 std::mem::take(&mut state.pending_events)
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:646:
+             });
+             if let Ok(queued) = queued {
+                 let _ = owner.update(cx, |_, window, cx| {
+-                    for event in queued { window.dispatch_event(event, cx); }
++                    for event in queued {
++                        window.dispatch_event(event, cx);
++                    }
+                 });
+             }
+-        }).detach();
++        })
++        .detach();
+     }
+ 
+     fn key_up(&mut self, event: &KeyUpEvent, window: &mut Window, cx: &mut Context<Self>) {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:656:
+         if !self.focus_handle.is_focused(window) {
+             return;
+         }
+-        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().space_pending) {
+-            self.canvas_input.as_ref().unwrap().borrow_mut().pending_events.push(gpui_kit::PlatformInput::KeyUp(event.clone()));
++        if self
++            .canvas_input
++            .as_ref()
++            .is_some_and(|input| input.borrow().space_pending)
++        {
++            self.canvas_input
++                .as_ref()
++                .unwrap()
++                .borrow_mut()
++                .pending_events
++                .push(gpui_kit::PlatformInput::KeyUp(event.clone()));
+             cx.stop_propagation();
+             return;
+         }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:665:
+             if let Some(input) = &self.canvas_input {
+                 let mut state = input.borrow_mut();
+                 if std::mem::take(&mut state.space_editable) {
+-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&event.keystroke, KeyState::Up, false)));
++                    self.send(InputEvent::Keyboard(keys::keyboard_event(
++                        &event.keystroke,
++                        KeyState::Up,
++                        false,
++                    )));
+                 } else if self.input_method.is_some() && state.space.is_none() {
+                     self.held.remove(&event.keystroke.key);
+-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&event.keystroke, KeyState::Up, false)));
++                    self.send(InputEvent::Keyboard(keys::keyboard_event(
++                        &event.keystroke,
++                        KeyState::Up,
++                        false,
++                    )));
+                 } else if let Some(key) = state.release_space() {
+-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Down, false)));
+-                    self.send(InputEvent::Keyboard(keys::keyboard_event(&key, KeyState::Up, false)));
++                    self.send(InputEvent::Keyboard(keys::keyboard_event(
++                        &key,
++                        KeyState::Down,
++                        false,
++                    )));
++                    self.send(InputEvent::Keyboard(keys::keyboard_event(
++                        &key,
++                        KeyState::Up,
++                        false,
++                    )));
+                 }
+                 cx.stop_propagation();
+                 return;
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:757:
+ 
+     pub(crate) fn transform(&self) -> Option<crate::canvas::surface::SurfaceTransform> {
+         Some(crate::canvas::surface::SurfaceTransform {
+-            bounds: self.bounds?, zoom: self.canvas_zoom, raster_scale: self.scale,
++            bounds: self.bounds?,
++            zoom: self.canvas_zoom,
++            raster_scale: self.scale,
+         })
+     }
+ 
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:766:
+     }
+ 
+     pub(crate) fn window_point(&self, x: i32, y: i32) -> Point<Pixels> {
+-        self.transform().map_or(point(px(0.), px(0.)), |t| t.window_point(x as f32, y as f32))
++        self.transform().map_or(point(px(0.), px(0.)), |t| {
++            t.window_point(x as f32, y as f32)
++        })
+     }
+ 
+     fn mouse_down(&mut self, event: &MouseDownEvent, window: &mut Window, cx: &mut Context<Self>) {
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:819:
+     }
+ 
+     fn mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
+-        if self.canvas_cached { return; }
+-        if self.canvas_input.as_ref().is_some_and(|input| input.borrow().board_drag || input.borrow().space_pending) { return; }
++        if self.canvas_cached {
++            return;
++        }
++        if self
++            .canvas_input
++            .as_ref()
++            .is_some_and(|input| input.borrow().board_drag || input.borrow().space_pending)
++        {
++            return;
++        }
+         if let Some(point) = self.device_point(event.position) {
+             self.last_pointer = Some(event.position);
+             self.send(InputEvent::MouseMove(ServoMouseMove::new(point.into())));
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:835:
+     }
+ 
+     fn scroll(&mut self, event: &ScrollWheelEvent, _: &mut Window, cx: &mut Context<Self>) {
+-        if self.canvas_cached { return; }
+-        if self.canvas_input.is_some() && event.modifiers.platform { return; }
++        if self.canvas_cached {
++            return;
++        }
++        if self.canvas_input.is_some() && event.modifiers.platform {
++            return;
++        }
+         let Some(point) = self.device_point(event.position) else {
+             return;
+         };
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:871:
+     fn place(&mut self, bounds: Bounds<Pixels>, scale: f32) {
+         self.bounds = Some(bounds);
+         let (world, scale) = if let Some(world) = self.canvas_world {
+-            if !self.canvas_settled { return; }
+-            (world, crate::canvas::surface::settled_scale(world, self.canvas_zoom, scale, self.canvas_cap))
++            if !self.canvas_settled {
++                return;
++            }
++            (
++                world,
++                crate::canvas::surface::settled_scale(
++                    world,
++                    self.canvas_zoom,
++                    scale,
++                    self.canvas_cap,
++                ),
++            )
+         } else {
+             self.canvas_zoom = 1.;
+             (bounds.size, scale)
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:881:
+             (f32::from(world.width) * scale).round().max(1.) as u32,
+             (f32::from(world.height) * scale).round().max(1.) as u32,
+         );
+-        if self.scale == scale && self.raster_size == Some(pixels) { return; }
++        if self.scale == scale && self.raster_size == Some(pixels) {
++            return;
++        }
+         if self.scale != scale {
+             self.webview.set_hidpi_scale_factor(Scale::new(scale));
+         }
+Diff in /Volumes/SSD Samsung/frame-worktrees/spatial-canvas/examples/../src/page.rs:1034:
+             .on_mouse_exit(cx.listener(Self::mouse_exit))
+             .on_hover(cx.listener(|page, hovered, _, _| {
+                 if !hovered {
+-                    page.send(InputEvent::MouseLeftViewport(MouseLeftViewportEvent::default()));
++                    page.send(InputEvent::MouseLeftViewport(
++                        MouseLeftViewportEvent::default(),
++                    ));
+                 }
+             }))
+             .on_scroll_wheel(cx.listener(Self::scroll))

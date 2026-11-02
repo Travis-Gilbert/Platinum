@@ -1,0 +1,219 @@
+{
+  "date": "2026-10-25",
+  "frameBase": "b7db17457ce2e12c3fcaa5ab9c0ea1fde52a58aa",
+  "servoBase": "81d8e2999569a8a496142651a1d129aed22fda77",
+  "theoremRustywebBase": "6e57dbb39124f472d8619fb20a9984e89eb225e8",
+  "theoremBootstrapPin": "7ef4dfe0c20def5dbc91705f051a6a846946ec54",
+  "buildCommand": "script/media-env cargo build --locked --example media_check",
+  "probeBuild": {
+    "binary": "graph_probe",
+    "command": "script/media-env cargo build --locked --example graph_probe",
+    "profile": "dev",
+    "duration": "17m 45s",
+    "durationSource": "cargo's Finished line",
+    "finished": "2026-10-25T23:27-04:00"
+  },
+  "sha256": {
+    "graphProbePage": "67f47f6fd635073e609df5344663e90ca9d765e67ab4bf5eb98e44d2ba702326",
+    "graphProbeScript": "f15158db19b1cb4fe708f7f1a86701546c8e7a65b5681b0eb61c44dc09141482",
+    "media_check": "a2828ae3567205ce6af6dcd55836abbfad071031515d68a90e127def5ebf4f95",
+    "graph_probe": "7fe74f40ac3ff194968887eafe606a785589f734c75609f3ca6a87428b6e6350",
+    "graphProbeCanvasPage": "bc7ff8b3b5fc7e47d24b293ab9824db5d71a6584c79f90e9e1e03fdd072952e9"
+  },
+  "binaries": {
+    "media_check": {
+      "sha256": "a2828ae3567205ce6af6dcd55836abbfad071031515d68a90e127def5ebf4f95",
+      "builtFrom": "examples/media_check.rs at frameBase"
+    },
+    "graph_probe": {
+      "sha256": "7fe74f40ac3ff194968887eafe606a785589f734c75609f3ca6a87428b6e6350",
+      "builtFrom": "a temporary copy of examples/media_check.rs that sets dom_webgl2_enabled after Engine::start; deleted after the run (recipe in docs/plans/notes-app.md)"
+    }
+  },
+  "libraries": {
+    "v2": "@cosmos.gl/graph 2.6.4 (regl, WebGL1)",
+    "v3": "@cosmos.gl/graph 3.5.1 with @luma.gl/core, engine, webgl and shadertools 9.3.6 (WebGL2)",
+    "canvas": "force-graph 1.52.0 (Canvas 2D, d3-force-3d)"
+  },
+  "graphSize": {
+    "points": 5000,
+    "links": 10000
+  },
+  "runs": [
+    {
+      "name": "servo-default-v3",
+      "binary": "media_check",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "ready": false,
+      "passed": false,
+      "fps": null,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": null,
+      "glErrors": [],
+      "pageErrors": [
+        "uncaught exception: undefined"
+      ]
+    },
+    {
+      "name": "servo-default-v2",
+      "binary": "media_check",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v2",
+      "ready": true,
+      "passed": true,
+      "fps": 17,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": null,
+      "glErrors": [
+        "DetachShader"
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined",
+        "(regl) Reading 'float' values is not permitted in your browser. For a fallback, please see: https://www.npmjs.com/package/glsl-read-float"
+      ]
+    },
+    {
+      "name": "servo-webgl2-v3",
+      "binary": "graph_probe",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3",
+      "ready": true,
+      "passed": true,
+      "fps": 28,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "glErrors": [
+        "GetParameterFloat2"
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined",
+        "ResizeObserver loop completed with undelivered notifications.",
+        "r.gl.copyTexSubImage3D is not a function",
+        "r.gl.copyTexSubImage3D is not a function",
+        "r.gl.copyTexSubImage3D is not a function",
+        "r.gl.copyTexSubImage3D is not a function"
+      ]
+    },
+    {
+      "name": "servo-webgl2-v3-sim0",
+      "binary": "graph_probe",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0",
+      "ready": true,
+      "passed": true,
+      "fps": 29,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "glErrors": [
+        "DrawBuffers",
+        "GetParameterFloat2"
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined",
+        "ResizeObserver loop completed with undelivered notifications."
+      ]
+    },
+    {
+      "name": "servo-webgl2-v3-sim0-pointfix",
+      "binary": "graph_probe",
+      "url": "http://127.0.0.1:8765/graph-probe.html?lib=v3&sim=0&pointfix=1",
+      "ready": true,
+      "passed": true,
+      "fps": 29,
+      "webgl2Extensions": 0,
+      "webgl2PointSizeRange": [
+        0,
+        0
+      ],
+      "glErrors": [
+        "DrawBuffers",
+        "GetParameterFloat2"
+      ],
+      "pageErrors": [
+        "uncaught exception: undefined",
+        "ResizeObserver loop completed with undelivered notifications."
+      ]
+    },
+    {
+      "name": "servo-default-canvas",
+      "date": "2026-10-26",
+      "binary": "media_check",
+      "url": "http://127.0.0.1:8765/graph-probe-canvas.html",
+      "ready": true,
+      "passed": true,
+      "fps": 13,
+      "ticksPerSecond": 13,
+      "positionsMovedOf200": 200,
+      "canvas": [
+        1280,
+        820
+      ],
+      "nodePixels": 2774,
+      "linkPixels": 296853,
+      "pageErrors": [
+        "uncaught exception: undefined @ :0:1"
+      ]
+    }
+  ],
+  "control": {
+    "file": "chromium-v3.json",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/3.6556.2 Chrome/152.0.7977.167 Safari/537.36",
+    "passed": true,
+    "fps": 120,
+    "webgl2Extensions": 36,
+    "webgl2PointSizeRange": [
+      1,
+      511
+    ],
+    "floatReadback": [
+      0.5,
+      0.5,
+      0,
+      1
+    ]
+  },
+  "limitations": [
+    "passed only means cosmos.gl initialised without throwing; it does not check that nodes were drawn",
+    "positionsMovedOf400 counts sampled positions that differ from the initial layout. In every Servo WebGL2 run the float readback returns zeros (positionSample [0, 0, 0, 0], progress 0), so 400 there means the readback failed, not that the simulation ran",
+    "The Chromium control ran in the Claude desktop app's built-in browser, not in Frame",
+    "Screenshots are downscaled to 640 px wide",
+    "upload1Linear samples zero in Chromium too: the probe never enables OES_texture_float_linear, so it is not a Servo finding",
+    "graph-probe-canvas.html uses no WebGL, yet its Servo run logs the same zero-texture warning, so the warning comes from Servo's or Frame's own drawing, not from the probe pages",
+    "The canvas runs differ in size: Servo drew at scale 1 (1280 by 820), Chromium at a device pixel ratio of 2 (2048 by 1536)"
+  ],
+  "canvasControl": {
+    "file": "chromium-canvas.json",
+    "date": "2026-10-26",
+    "passed": true,
+    "fps": 32,
+    "ticksPerSecond": 32,
+    "canvas": [
+      2048,
+      1536
+    ]
+  },
+  "extensionLog": "chromium-v3-extensions.json",
+  "filesApiBranch": {
+    "ref": "refs/heads/sdk-source/files-api",
+    "tip": "a287925ace5cb3b39cf96d042418495586512502",
+    "tipCommitted": "2026-10-24T18:04:29-04:00",
+    "main": "8e151d510722c2946f3f1cf63eb5a73e06c1695b",
+    "aheadOfMain": 11,
+    "behindMain": 2,
+    "onOrigin": false,
+    "originHeads": 324,
+    "routes": 19,
+    "smoke": {
+      "script": "docs/plans/files-api/smoke.sh",
+      "store": "memory",
+      "requireAuth": false,
+      "output": "docs/plans/files-api/smoke-output.txt",
+      "mergedLine": 30,
+      "preconditionFailedLines": "32-35"
+    },
+    "checked": "2026-10-26"
+  }
+}

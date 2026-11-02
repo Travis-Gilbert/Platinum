@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+    "cargo",
+    "test",
+    "--locked",
+    "--bin",
+    "frame"
+  ],
+  "elapsed_seconds": 0.17048275000342983,
+  "exit_code": 1,
+  "output": "frame-tests-full-access.log"
+}

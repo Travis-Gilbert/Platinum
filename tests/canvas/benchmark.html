@@ -1,0 +1,24 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Canvas animated lifecycle fixture</title>
+<style>html,body { margin:0; background:#132334; color:white; } canvas { width:100vw; height:100vh; display:block; }</style>
+<canvas></canvas>
+<script>
+const canvas = document.querySelector('canvas');
+const context = canvas.getContext('2d');
+window.canvasBench = {paused:false, frames:0};
+function draw(time) {
+  if (!canvasBench.paused) {
+    if (canvas.width !== innerWidth || canvas.height !== innerHeight) {
+      canvas.width = innerWidth; canvas.height = innerHeight;
+    }
+    context.fillStyle = '#132334'; context.fillRect(0,0,canvas.width,canvas.height);
+    context.fillStyle = '#74d7b5'; context.fillRect((time/8) % canvas.width,30,80,80);
+    context.fillStyle = 'white'; context.font = '32px sans-serif';
+    context.fillText('Live frame ' + (++canvasBench.frames), 30, 180);
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+<script src="probe.js"></script>

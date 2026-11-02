@@ -18,7 +18,14 @@ The changes:
   at its leading edge, as a browser's does, instead of centering.
 - `src/tab/tab_bar.rs`: the wrapper each tab is laid out in takes the tab's
   `max_width` too. Without it, tabs that grow (`flex_1()`) stop at the cap
-  while their wrappers keep growing, and gaps open between them.
+  while their wrappers keep growing, and gaps open between them. It takes
+  the tab's `flex_shrink` and `min_width` as well, so tabs of one width give
+  way, down to a floor, when the bar is full.
+- `src/tab/tab.rs`, `src/tab/tab_bar.rs`: capsules, as Dia's row of tabs
+  draws them. `Tab::capsule(key)` groups neighboring tabs with one key, and
+  `TabBar::capsule_bg(bg)` fills each run of them, rounded at its ends, a
+  little apart from the next run, with separators only inside a run. Frame
+  keys each tab by the top of its branch in the sidebar's tree.
 - `src/button/button.rs`: a `Toolbar` keeps a button's `custom` variant
   instead of making every button its ghost; the custom colors are the ones
   that suit the surface under the toolbar (test in `src/toolbar.rs`).
@@ -28,5 +35,5 @@ The changes:
 
 Re-applying them on a GPUI Kit upgrade: copy the new `gpui-component` from the
 registry, carry the marked changes, and build Frame. Drop any the new release
-makes unnecessary (`tabs_sit_side_by_side_with_new_tab_at_the_end` in Frame's
-tests covers the tab wrapper).
+makes unnecessary (`tabs_sit_in_capsules_with_new_tab_after_them` in Frame's
+tests covers the tab wrapper and the capsules).

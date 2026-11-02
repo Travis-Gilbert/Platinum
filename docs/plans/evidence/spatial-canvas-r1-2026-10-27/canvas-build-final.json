@@ -1,0 +1,17 @@
+{
+  "name": "canvas-build-final",
+  "cwd": "/Volumes/SSD Samsung/frame-worktrees/canvas-viewport",
+  "command": [
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+    "cargo",
+    "build",
+    "--locked",
+    "--example",
+    "canvas_check"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 14.444836875001783,
+  "environment": {
+    "TMPDIR": "/Volumes/SSD Samsung/tmp"
+  }
+}

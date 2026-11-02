@@ -1,0 +1,2060 @@
+{
+  "aliases path=\"Dead End.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=Dead End.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"Unicode é 日本.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=Unicode é 日本.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Ünïcode Note\n日本のノート\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"a/Links From A.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=a/Links From A.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"b/Links From B.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=b/Links From B.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"callouts/All Callouts.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=callouts/All Callouts.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"callouts/Callout Titles and Folding.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"callouts/Custom Callout.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=callouts/Custom Callout.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"callouts/Nested Callouts.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=callouts/Nested Callouts.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"dataview/Dataview Fields.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=dataview/Dataview Fields.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Embed Canvas and Base.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Embed Images.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Embed Images.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Embed Media.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Embed Media.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Embed Notes.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Embed Notes.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Embed Query.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Embed Query.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Loop A.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Loop A.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"embeds/Loop B.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=embeds/Loop B.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"excluded/Hidden Note.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=excluded/Hidden Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"links/Blocks Target.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=links/Blocks Target.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"links/Headings Target.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=links/Headings Target.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"links/Link Forms.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=links/Link Forms.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"links/Markdown Links.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=links/Markdown Links.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"links/Unresolved Links.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=links/Unresolved Links.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"projects/Project Alpha.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=projects/Project Alpha.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"projects/Project Beta.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=projects/Project Beta.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"projects/Project Delta.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=projects/Project Delta.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"projects/Project Gamma.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=projects/Project Gamma.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/Aliases and Cssclasses.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Alias Note\nAlias, with comma\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/All Property Types.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/All Property Types.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Every Property\nProperty Zoo\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/Broken Frontmatter.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/Broken Frontmatter.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/Empty Frontmatter.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/Empty Frontmatter.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/Frontmatter Only.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/Frontmatter Only.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Only Frontmatter\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/Link Properties.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/Link Properties.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"properties/Type Mismatch.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=properties/Type Mismatch.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"review/Heading With Hash.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=review/Heading With Hash.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"review/Missing Note Creation.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=review/Missing Note Creation.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"search/Case Sensitivity.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=search/Case Sensitivity.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"search/Search Corpus.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=search/Search Corpus.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Bidirectional Text.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Bidirectional Text.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Byte Order Mark.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Byte Order Mark.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Code Blocks.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Code Blocks.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Comments and Highlights.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Comments and Highlights.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Folding and Lists.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Folding and Lists.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Inline Formatting.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Inline Formatting.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Line Endings.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Line Endings.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"syntax/Raw HTML.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Raw HTML.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"tagging/Frontmatter Tags.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=tagging/Frontmatter Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"tagging/Tags As Text.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=tagging/Tags As Text.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"tagging/Unicode Tags.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=tagging/Unicode Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=\"tasks/Task Statuses.md\"": {
+    "command": "aliases",
+    "args": [
+      "path=tasks/Task Statuses.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=Home.md": {
+    "command": "aliases",
+    "args": [
+      "path=Home.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Start\nWelcome\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=Orphan.md": {
+    "command": "aliases",
+    "args": [
+      "path=Orphan.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=a/Note.md": {
+    "command": "aliases",
+    "args": [
+      "path=a/Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Note A\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=b/Note.md": {
+    "command": "aliases",
+    "args": [
+      "path=b/Note.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Note B\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=daily/2026-10-23.md": {
+    "command": "aliases",
+    "args": [
+      "path=daily/2026-10-23.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=daily/2026-10-24.md": {
+    "command": "aliases",
+    "args": [
+      "path=daily/2026-10-24.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=daily/2026-10-25.md": {
+    "command": "aliases",
+    "args": [
+      "path=daily/2026-10-25.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=inbox/Inbox.md": {
+    "command": "aliases",
+    "args": [
+      "path=inbox/Inbox.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=links/Aliases.md": {
+    "command": "aliases",
+    "args": [
+      "path=links/Aliases.md"
+    ],
+    "exit_code": 0,
+    "stdout": "Alias One\nSecond Alias\nÜnïcode Alias\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=links/Mentions.md": {
+    "command": "aliases",
+    "args": [
+      "path=links/Mentions.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=slides/Deck.md": {
+    "command": "aliases",
+    "args": [
+      "path=slides/Deck.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=syntax/Footnotes.md": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Footnotes.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=syntax/Math.md": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Math.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=syntax/Mermaid.md": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Mermaid.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=syntax/Tables.md": {
+    "command": "aliases",
+    "args": [
+      "path=syntax/Tables.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=tagging/Tags.md": {
+    "command": "aliases",
+    "args": [
+      "path=tagging/Tags.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=templates/Daily.md": {
+    "command": "aliases",
+    "args": [
+      "path=templates/Daily.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=templates/Meeting.md": {
+    "command": "aliases",
+    "args": [
+      "path=templates/Meeting.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases path=weekly/2026-W43.md": {
+    "command": "aliases",
+    "args": [
+      "path=weekly/2026-W43.md"
+    ],
+    "exit_code": 0,
+    "stdout": "No aliases found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases total": {
+    "command": "aliases",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "14\n",
+    "stderr": "",
+    "error": null
+  },
+  "aliases verbose": {
+    "command": "aliases",
+    "args": [
+      "verbose"
+    ],
+    "exit_code": 0,
+    "stdout": "Alias Note\tproperties/Aliases and Cssclasses.md\nAlias One\tlinks/Aliases.md\nAlias, with comma\tproperties/Aliases and Cssclasses.md\nEvery Property\tproperties/All Property Types.md\nNote A\ta/Note.md\nNote B\tb/Note.md\nOnly Frontmatter\tproperties/Frontmatter Only.md\nProperty Zoo\tproperties/All Property Types.md\nSecond Alias\tlinks/Aliases.md\nStart\tHome.md\nÜnïcode Alias\tlinks/Aliases.md\nÜnïcode Note\tUnicode é 日本.md\nWelcome\tHome.md\n日本のノート\tUnicode é 日本.md\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties counts format=json": {
+    "command": "properties",
+    "args": [
+      "counts",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"count\": 8,\n    \"name\": \"aliases\",\n    \"type\": \"aliases\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"author\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 2,\n    \"name\": \"checkbox\",\n    \"type\": \"checkbox\"\n  },\n  {\n    \"count\": 2,\n    \"name\": \"cover\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 4,\n    \"name\": \"created\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 3,\n    \"name\": \"cssclasses\",\n    \"type\": \"multitext\"\n  },\n  {\n    \"count\": 2,\n    \"name\": \"date\",\n    \"type\": \"date\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"datetime\",\n    \"type\": \"datetime\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"decimal\",\n    \"type\": \"number\"\n  },\n  {\n    \"count\": 4,\n    \"name\": \"done\",\n    \"type\": \"checkbox\"\n  },\n  {\n    \"count\": 4,\n    \"name\": \"due\",\n    \"type\": \"date\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"empty\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"key with spaces\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"link\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"links\",\n    \"type\": \"multitext\"\n  },\n  {\n    \"count\": 2,\n    \"name\": \"list\",\n    \"type\": \"multitext\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"markdown_link\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"multiline\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"nested\",\n    \"type\": \"unknown\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"null_value\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 2,\n    \"name\": \"number\",\n    \"type\": \"number\"\n  },\n  {\n    \"count\": 6,\n    \"name\": \"rating\",\n    \"type\": \"number\"\n  },\n  {\n    \"count\": 5,\n    \"name\": \"related\",\n    \"type\": \"multitext\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"source\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 4,\n    \"name\": \"status\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 61,\n    \"name\": \"tags\",\n    \"type\": \"tags\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"text\",\n    \"type\": \"text\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"unchecked\",\n    \"type\": \"checkbox\"\n  },\n  {\n    \"count\": 1,\n    \"name\": \"unicode-key-ñ\",\n    \"type\": \"text\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "count": 8,
+        "name": "aliases",
+        "type": "aliases"
+      },
+      {
+        "count": 1,
+        "name": "author",
+        "type": "text"
+      },
+      {
+        "count": 2,
+        "name": "checkbox",
+        "type": "checkbox"
+      },
+      {
+        "count": 2,
+        "name": "cover",
+        "type": "text"
+      },
+      {
+        "count": 4,
+        "name": "created",
+        "type": "text"
+      },
+      {
+        "count": 3,
+        "name": "cssclasses",
+        "type": "multitext"
+      },
+      {
+        "count": 2,
+        "name": "date",
+        "type": "date"
+      },
+      {
+        "count": 1,
+        "name": "datetime",
+        "type": "datetime"
+      },
+      {
+        "count": 1,
+        "name": "decimal",
+        "type": "number"
+      },
+      {
+        "count": 4,
+        "name": "done",
+        "type": "checkbox"
+      },
+      {
+        "count": 4,
+        "name": "due",
+        "type": "date"
+      },
+      {
+        "count": 1,
+        "name": "empty",
+        "type": "text"
+      },
+      {
+        "count": 1,
+        "name": "key with spaces",
+        "type": "text"
+      },
+      {
+        "count": 1,
+        "name": "link",
+        "type": "text"
+      },
+      {
+        "count": 1,
+        "name": "links",
+        "type": "multitext"
+      },
+      {
+        "count": 2,
+        "name": "list",
+        "type": "multitext"
+      },
+      {
+        "count": 1,
+        "name": "markdown_link",
+        "type": "text"
+      },
+      {
+        "count": 1,
+        "name": "multiline",
+        "type": "text"
+      },
+      {
+        "count": 1,
+        "name": "nested",
+        "type": "unknown"
+      },
+      {
+        "count": 1,
+        "name": "null_value",
+        "type": "text"
+      },
+      {
+        "count": 2,
+        "name": "number",
+        "type": "number"
+      },
+      {
+        "count": 6,
+        "name": "rating",
+        "type": "number"
+      },
+      {
+        "count": 5,
+        "name": "related",
+        "type": "multitext"
+      },
+      {
+        "count": 1,
+        "name": "source",
+        "type": "text"
+      },
+      {
+        "count": 4,
+        "name": "status",
+        "type": "text"
+      },
+      {
+        "count": 61,
+        "name": "tags",
+        "type": "tags"
+      },
+      {
+        "count": 1,
+        "name": "text",
+        "type": "text"
+      },
+      {
+        "count": 1,
+        "name": "unchecked",
+        "type": "checkbox"
+      },
+      {
+        "count": 1,
+        "name": "unicode-key-ñ",
+        "type": "text"
+      }
+    ]
+  },
+  "properties path=\"Dead End.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=Dead End.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=\"Unicode é 日本.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=Unicode é 日本.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Ünïcode Note\",\n    \"日本のノート\"\n  ],\n  \"tags\": [\n    \"unicode\",\n    \"日本\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Ünïcode Note",
+        "日本のノート"
+      ],
+      "tags": [
+        "unicode",
+        "日本"
+      ]
+    }
+  },
+  "properties path=\"a/Links From A.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=a/Links From A.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=\"b/Links From B.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=b/Links From B.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=\"callouts/All Callouts.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=callouts/All Callouts.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"callouts\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "callouts"
+      ]
+    }
+  },
+  "properties path=\"callouts/Callout Titles and Folding.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=callouts/Callout Titles and Folding.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"callouts\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "callouts"
+      ]
+    }
+  },
+  "properties path=\"callouts/Custom Callout.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=callouts/Custom Callout.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"callouts\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "callouts"
+      ]
+    }
+  },
+  "properties path=\"callouts/Nested Callouts.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=callouts/Nested Callouts.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"callouts\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "callouts"
+      ]
+    }
+  },
+  "properties path=\"dataview/Dataview Fields.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=dataview/Dataview Fields.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"dataview\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "dataview"
+      ]
+    }
+  },
+  "properties path=\"embeds/Embed Canvas and Base.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Embed Canvas and Base.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"embeds\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "embeds"
+      ]
+    }
+  },
+  "properties path=\"embeds/Embed Images.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Embed Images.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"embeds\",\n    \"images\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "embeds",
+        "images"
+      ]
+    }
+  },
+  "properties path=\"embeds/Embed Media.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Embed Media.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"embeds\",\n    \"media\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "embeds",
+        "media"
+      ]
+    }
+  },
+  "properties path=\"embeds/Embed Notes.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Embed Notes.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"embeds\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "embeds"
+      ]
+    }
+  },
+  "properties path=\"embeds/Embed Query.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Embed Query.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"embeds\",\n    \"embed-demo\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "embeds",
+        "embed-demo"
+      ]
+    }
+  },
+  "properties path=\"embeds/Loop A.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Loop A.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No frontmatter found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties path=\"embeds/Loop B.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=embeds/Loop B.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No frontmatter found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties path=\"excluded/Hidden Note.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=excluded/Hidden Note.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"excluded\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "excluded"
+      ]
+    }
+  },
+  "properties path=\"links/Blocks Target.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Blocks Target.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\",\n    \"targets\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links",
+        "targets"
+      ]
+    }
+  },
+  "properties path=\"links/Headings Target.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Headings Target.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\",\n    \"targets\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links",
+        "targets"
+      ]
+    }
+  },
+  "properties path=\"links/Link Forms.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Link Forms.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=\"links/Markdown Links.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Markdown Links.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=\"links/Unresolved Links.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Unresolved Links.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"related\": [\n    \"[[Missing In Frontmatter]]\"\n  ],\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "related": [
+        "[[Missing In Frontmatter]]"
+      ],
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=\"projects/Project Alpha.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=projects/Project Alpha.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"cover\": \"attachments/pixel.png\",\n  \"done\": false,\n  \"due\": \"2026-11-15\",\n  \"rating\": 5,\n  \"related\": [\n    \"[[Project Beta]]\"\n  ],\n  \"status\": \"In progress\",\n  \"tags\": [\n    \"project\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "cover": "attachments/pixel.png",
+      "done": false,
+      "due": "2026-11-15",
+      "rating": 5,
+      "related": [
+        "[[Project Beta]]"
+      ],
+      "status": "In progress",
+      "tags": [
+        "project"
+      ]
+    }
+  },
+  "properties path=\"projects/Project Beta.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=projects/Project Beta.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"cover\": \"attachments/wide.png\",\n  \"done\": false,\n  \"due\": \"2026-12-01\",\n  \"rating\": 3,\n  \"related\": [\n    \"[[Project Alpha]]\",\n    \"[[Project Gamma]]\"\n  ],\n  \"status\": \"Planned\",\n  \"tags\": [\n    \"project\",\n    \"project/beta\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "cover": "attachments/wide.png",
+      "done": false,
+      "due": "2026-12-01",
+      "rating": 3,
+      "related": [
+        "[[Project Alpha]]",
+        "[[Project Gamma]]"
+      ],
+      "status": "Planned",
+      "tags": [
+        "project",
+        "project/beta"
+      ]
+    }
+  },
+  "properties path=\"projects/Project Delta.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=projects/Project Delta.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"done\": false,\n  \"due\": \"2027-01-15\",\n  \"rating\": 2,\n  \"tags\": [\n    \"project\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "done": false,
+      "due": "2027-01-15",
+      "rating": 2,
+      "tags": [
+        "project"
+      ]
+    }
+  },
+  "properties path=\"projects/Project Gamma.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=projects/Project Gamma.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"done\": true,\n  \"due\": \"2026-09-30\",\n  \"rating\": 4,\n  \"related\": [\n    \"[[Project Alpha]]\"\n  ],\n  \"status\": \"Done\",\n  \"tags\": [\n    \"project\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "done": true,
+      "due": "2026-09-30",
+      "rating": 4,
+      "related": [
+        "[[Project Alpha]]"
+      ],
+      "status": "Done",
+      "tags": [
+        "project"
+      ]
+    }
+  },
+  "properties path=\"properties/Aliases and Cssclasses.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/Aliases and Cssclasses.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Alias Note\",\n    \"Alias, with comma\"\n  ],\n  \"cssclasses\": [\n    \"wide-page\",\n    \"cards\"\n  ],\n  \"tags\": [\n    \"properties\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Alias Note",
+        "Alias, with comma"
+      ],
+      "cssclasses": [
+        "wide-page",
+        "cards"
+      ],
+      "tags": [
+        "properties"
+      ]
+    }
+  },
+  "properties path=\"properties/All Property Types.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/All Property Types.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Every Property\",\n    \"Property Zoo\"\n  ],\n  \"checkbox\": true,\n  \"cssclasses\": [\n    \"wide-page\",\n    \"zoo\"\n  ],\n  \"date\": \"2026-10-25\",\n  \"datetime\": \"2026-10-25T14:30:00\",\n  \"decimal\": 3.14,\n  \"empty\": null,\n  \"key with spaces\": \"ok\",\n  \"link\": \"[[Headings Target]]\",\n  \"links\": [\n    \"[[Link Forms]]\",\n    \"[[a/Note]]\"\n  ],\n  \"list\": [\n    \"alpha\",\n    \"beta\",\n    \"gamma\"\n  ],\n  \"markdown_link\": \"[Headings Target](Headings%20Target.md)\",\n  \"multiline\": \"first line\\nsecond line\\n\",\n  \"nested\": {\n    \"inner\": {\n      \"deep\": 1\n    },\n    \"key\": \"value\"\n  },\n  \"null_value\": null,\n  \"number\": 42,\n  \"tags\": [\n    \"properties\",\n    \"types\"\n  ],\n  \"text\": \"Plain text value\",\n  \"unchecked\": false,\n  \"unicode-key-ñ\": \"ok\"\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Every Property",
+        "Property Zoo"
+      ],
+      "checkbox": true,
+      "cssclasses": [
+        "wide-page",
+        "zoo"
+      ],
+      "date": "2026-10-25",
+      "datetime": "2026-10-25T14:30:00",
+      "decimal": 3.14,
+      "empty": null,
+      "key with spaces": "ok",
+      "link": "[[Headings Target]]",
+      "links": [
+        "[[Link Forms]]",
+        "[[a/Note]]"
+      ],
+      "list": [
+        "alpha",
+        "beta",
+        "gamma"
+      ],
+      "markdown_link": "[Headings Target](Headings%20Target.md)",
+      "multiline": "first line\nsecond line\n",
+      "nested": {
+        "inner": {
+          "deep": 1
+        },
+        "key": "value"
+      },
+      "null_value": null,
+      "number": 42,
+      "tags": [
+        "properties",
+        "types"
+      ],
+      "text": "Plain text value",
+      "unchecked": false,
+      "unicode-key-ñ": "ok"
+    }
+  },
+  "properties path=\"properties/Broken Frontmatter.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/Broken Frontmatter.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No frontmatter found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties path=\"properties/Empty Frontmatter.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/Empty Frontmatter.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No frontmatter found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties path=\"properties/Frontmatter Only.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/Frontmatter Only.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Only Frontmatter\"\n  ],\n  \"tags\": [\n    \"properties\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Only Frontmatter"
+      ],
+      "tags": [
+        "properties"
+      ]
+    }
+  },
+  "properties path=\"properties/Link Properties.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/Link Properties.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"author\": \"[[Dead End]]\",\n  \"related\": [\n    \"[[Headings Target]]\",\n    \"[[a/Note|Note A]]\",\n    \"[Blocks Target](Blocks%20Target.md)\",\n    \"[[Missing In Frontmatter 2]]\"\n  ],\n  \"source\": \"https://obsidian.md\",\n  \"tags\": [\n    \"properties\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "author": "[[Dead End]]",
+      "related": [
+        "[[Headings Target]]",
+        "[[a/Note|Note A]]",
+        "[Blocks Target](Blocks%20Target.md)",
+        "[[Missing In Frontmatter 2]]"
+      ],
+      "source": "https://obsidian.md",
+      "tags": [
+        "properties"
+      ]
+    }
+  },
+  "properties path=\"properties/Type Mismatch.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=properties/Type Mismatch.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"checkbox\": \"maybe\",\n  \"date\": \"someday\",\n  \"list\": \"just a string\",\n  \"number\": \"forty-two\",\n  \"rating\": \"five\",\n  \"tags\": [\n    \"properties\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "checkbox": "maybe",
+      "date": "someday",
+      "list": "just a string",
+      "number": "forty-two",
+      "rating": "five",
+      "tags": [
+        "properties"
+      ]
+    }
+  },
+  "properties path=\"review/Heading With Hash.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=review/Heading With Hash.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"review\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "review"
+      ]
+    }
+  },
+  "properties path=\"review/Missing Note Creation.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=review/Missing Note Creation.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"review\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "review"
+      ]
+    }
+  },
+  "properties path=\"search/Case Sensitivity.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=search/Case Sensitivity.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"search\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "search"
+      ]
+    }
+  },
+  "properties path=\"search/Search Corpus.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=search/Search Corpus.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"rating\": 4,\n  \"status\": \"draft\",\n  \"tags\": [\n    \"search\",\n    \"project/alpha\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "rating": 4,
+      "status": "draft",
+      "tags": [
+        "search",
+        "project/alpha"
+      ]
+    }
+  },
+  "properties path=\"syntax/Bidirectional Text.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Bidirectional Text.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"rtl\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "rtl"
+      ]
+    }
+  },
+  "properties path=\"syntax/Byte Order Mark.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Byte Order Mark.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"bom\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "bom"
+      ]
+    }
+  },
+  "properties path=\"syntax/Code Blocks.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Code Blocks.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"code\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "code"
+      ]
+    }
+  },
+  "properties path=\"syntax/Comments and Highlights.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Comments and Highlights.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax"
+      ]
+    }
+  },
+  "properties path=\"syntax/Folding and Lists.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Folding and Lists.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"outline\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "outline"
+      ]
+    }
+  },
+  "properties path=\"syntax/Inline Formatting.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Inline Formatting.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax"
+      ]
+    }
+  },
+  "properties path=\"syntax/Line Endings.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Line Endings.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"crlf\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "crlf"
+      ]
+    }
+  },
+  "properties path=\"syntax/Raw HTML.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Raw HTML.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"html\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "html"
+      ]
+    }
+  },
+  "properties path=\"tagging/Frontmatter Tags.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=tagging/Frontmatter Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"fm-tag\",\n    \"fm/nested\",\n    \"#hashed-in-frontmatter\",\n    \"Mixed-Case\",\n    \"tagging\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "fm-tag",
+        "fm/nested",
+        "#hashed-in-frontmatter",
+        "Mixed-Case",
+        "tagging"
+      ]
+    }
+  },
+  "properties path=\"tagging/Tags As Text.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=tagging/Tags As Text.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": \"text-tag-a, text-tag-b\"\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": "text-tag-a, text-tag-b"
+    }
+  },
+  "properties path=\"tagging/Unicode Tags.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=tagging/Unicode Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"tagging\",\n    \"unicode\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "tagging",
+        "unicode"
+      ]
+    }
+  },
+  "properties path=\"tasks/Task Statuses.md\" format=json": {
+    "command": "properties",
+    "args": [
+      "path=tasks/Task Statuses.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"tasks\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "tasks"
+      ]
+    }
+  },
+  "properties path=Home.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=Home.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Start\",\n    \"Welcome\"\n  ],\n  \"cssclasses\": [\n    \"dashboard\"\n  ],\n  \"tags\": [\n    \"home\",\n    \"dashboard\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Start",
+        "Welcome"
+      ],
+      "cssclasses": [
+        "dashboard"
+      ],
+      "tags": [
+        "home",
+        "dashboard"
+      ]
+    }
+  },
+  "properties path=Orphan.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=Orphan.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No frontmatter found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties path=a/Note.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=a/Note.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Note A\"\n  ],\n  \"tags\": [\n    \"project/alpha\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Note A"
+      ],
+      "tags": [
+        "project/alpha"
+      ]
+    }
+  },
+  "properties path=b/Note.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=b/Note.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Note B\"\n  ],\n  \"tags\": [\n    \"project/beta\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Note B"
+      ],
+      "tags": [
+        "project/beta"
+      ]
+    }
+  },
+  "properties path=daily/2026-10-23.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=daily/2026-10-23.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"created\": \"2026-10-23\",\n  \"tags\": [\n    \"daily\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "created": "2026-10-23",
+      "tags": [
+        "daily"
+      ]
+    }
+  },
+  "properties path=daily/2026-10-24.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=daily/2026-10-24.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"created\": \"2026-10-24\",\n  \"tags\": [\n    \"daily\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "created": "2026-10-24",
+      "tags": [
+        "daily"
+      ]
+    }
+  },
+  "properties path=daily/2026-10-25.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=daily/2026-10-25.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"created\": \"2026-10-25\",\n  \"tags\": [\n    \"daily\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "created": "2026-10-25",
+      "tags": [
+        "daily"
+      ]
+    }
+  },
+  "properties path=inbox/Inbox.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=inbox/Inbox.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No frontmatter found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "properties path=links/Aliases.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Aliases.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"aliases\": [\n    \"Alias One\",\n    \"Second Alias\",\n    \"Ünïcode Alias\"\n  ],\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "aliases": [
+        "Alias One",
+        "Second Alias",
+        "Ünïcode Alias"
+      ],
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=links/Mentions.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=links/Mentions.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"links\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "links"
+      ]
+    }
+  },
+  "properties path=slides/Deck.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=slides/Deck.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"slides\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "slides"
+      ]
+    }
+  },
+  "properties path=syntax/Footnotes.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Footnotes.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"footnotes\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "footnotes"
+      ]
+    }
+  },
+  "properties path=syntax/Math.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Math.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"math\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "math"
+      ]
+    }
+  },
+  "properties path=syntax/Mermaid.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Mermaid.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"mermaid\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "mermaid"
+      ]
+    }
+  },
+  "properties path=syntax/Tables.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=syntax/Tables.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"syntax\",\n    \"tables\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "syntax",
+        "tables"
+      ]
+    }
+  },
+  "properties path=tagging/Tags.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=tagging/Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"tagging\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "tagging"
+      ]
+    }
+  },
+  "properties path=templates/Daily.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=templates/Daily.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"created\": \"{{date:YYYY-MM-DD}}\",\n  \"tags\": [\n    \"daily\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "created": "{{date:YYYY-MM-DD}}",
+      "tags": [
+        "daily"
+      ]
+    }
+  },
+  "properties path=templates/Meeting.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=templates/Meeting.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"meeting\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "meeting"
+      ]
+    }
+  },
+  "properties path=weekly/2026-W43.md format=json": {
+    "command": "properties",
+    "args": [
+      "path=weekly/2026-W43.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"tags\": [\n    \"weekly\"\n  ]\n}\n",
+    "stderr": "",
+    "error": null,
+    "parsed": {
+      "tags": [
+        "weekly"
+      ]
+    }
+  }
+}

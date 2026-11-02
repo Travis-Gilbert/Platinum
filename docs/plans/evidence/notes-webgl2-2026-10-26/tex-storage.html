@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>WebGL2 texStorage</title>
+<body style="background:#1d2a3a;color:#e8e8e8;font:13px monospace">
+<pre id="log">WebGL2 texStorage</pre>
+<script>
+// texStorage2D and texStorage3D follow OpenGL ES 3.0 (3.8.4): the level count has to fit the size,
+// the texture becomes immutable, and sizes need not be powers of two.
+const canvas = document.createElement('canvas');
+canvas.width = canvas.height = 16;
+const gl = canvas.getContext('webgl2', { antialias: false });
+const out = { ready: true, cases: [] };
+function expectError(name, expected, body) {
+  gl.getError();
+  let threw = null;
+  try { body(); } catch (e) { threw = String(e); }
+  const error = gl.getError();
+  out.cases.push({ name, expected, error, threw, ok: error === expected && !threw });
+}
+const tex = (target) => { const t = gl.createTexture(); gl.bindTexture(target, t); return t; };
+
+expectError('texStorage2D 5x3, 3 levels', 0, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 3, gl.RGBA8, 5, 3); });
+expectError('texStorage2D 5x3, 4 levels is too many', gl.INVALID_OPERATION, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 4, gl.RGBA8, 5, 3); });
+expectError('texStorage2D 1x1, 1 level', 0, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 1, 1); });
+expectError('texStorage2D 0 levels', gl.INVALID_VALUE, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 4, 4); });
+expectError('texStorage2D unsized format', gl.INVALID_ENUM, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA, 4, 4); });
+expectError('texStorage2D twice is immutable', gl.INVALID_OPERATION, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 4, 4); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 4, 4); });
+expectError('texImage2D on an immutable texture', gl.INVALID_OPERATION, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 4, 4); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 4, 4, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); });
+expectError('texSubImage2D on an immutable texture', 0, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, 4, 4); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 2, 2, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(16)); });
+expectError('texStorage2D RG32F (cosmos.gl positions)', 0, () => { tex(gl.TEXTURE_2D); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RG32F, 100, 3); });
+expectError('texStorage3D 4x4x3, 3 levels', 0, () => { tex(gl.TEXTURE_3D); gl.texStorage3D(gl.TEXTURE_3D, 3, gl.RGBA8, 4, 4, 3); });
+expectError('texStorage3D 4x4x3, 4 levels is too many', gl.INVALID_OPERATION, () => { tex(gl.TEXTURE_3D); gl.texStorage3D(gl.TEXTURE_3D, 4, gl.RGBA8, 4, 4, 3); });
+expectError('texStorage3D TEXTURE_2D_ARRAY, 3 levels of 4x4, 5 layers', 0, () => { tex(gl.TEXTURE_2D_ARRAY); gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 3, gl.RGBA8, 4, 4, 5); });
+expectError('texStorage3D TEXTURE_2D_ARRAY, layers are not halved', gl.INVALID_OPERATION, () => { tex(gl.TEXTURE_2D_ARRAY); gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 4, gl.RGBA8, 4, 4, 5); });
+expectError('texStorage3D twice is immutable', gl.INVALID_OPERATION, () => { tex(gl.TEXTURE_3D); gl.texStorage3D(gl.TEXTURE_3D, 1, gl.RGBA8, 2, 2, 2); gl.texStorage3D(gl.TEXTURE_3D, 1, gl.RGBA8, 2, 2, 2); });
+
+out.failures = out.cases.filter((c) => !c.ok).map((c) => c.name);
+out.passed = out.failures.length === 0;
+document.getElementById('log').textContent = JSON.stringify(out, null, 1);
+setTimeout(() => console.log('FRAME_MEDIA_FRAME svg-initial'), 300);
+setTimeout(() => console.log('FRAME_MEDIA_RESULT ' + JSON.stringify(out)), 1500);
+</script>

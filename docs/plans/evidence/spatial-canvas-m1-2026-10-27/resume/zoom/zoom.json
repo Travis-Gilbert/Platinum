@@ -1,0 +1,277 @@
+{
+  "baseline": {
+    "documentId": "1793119755831:0.2758713057914892",
+    "innerWidth": 1280,
+    "innerHeight": 800,
+    "devicePixelRatio": 1.40625,
+    "resizeCount": 0,
+    "resizeEvents": [],
+    "scrollX": 0,
+    "scrollY": 0,
+    "cookie": "",
+    "text": null,
+    "selectionStart": null,
+    "selectionEnd": null,
+    "selectionDirection": null,
+    "textareaScrollTop": null,
+    "focused": "",
+    "input": null
+  },
+  "steps": [
+    {
+      "rendered_zoom": 1.0,
+      "camera_applied": true,
+      "step": 0,
+      "zoom": 1.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 0,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 856.3374580000001,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/resume/zoom/step-0.png"
+    },
+    {
+      "rendered_zoom": 0.3499999940395355,
+      "camera_applied": true,
+      "step": 1,
+      "zoom": 0.35,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 0.699999988079071,
+        "resizeCount": 1,
+        "resizeEvents": [
+          {
+            "at": 2656.17,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 1,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 838.37625,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/resume/zoom/step-1.png"
+    },
+    {
+      "rendered_zoom": 2.0,
+      "camera_applied": true,
+      "step": 2,
+      "zoom": 2.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 0.699999988079071,
+        "resizeCount": 1,
+        "resizeEvents": [
+          {
+            "at": 2656.17,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 2,
+        "resizeEvents": [
+          {
+            "at": 2656.17,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3487.94,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 1.40625
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 2,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 839.040333,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/resume/zoom/step-2.png"
+    },
+    {
+      "rendered_zoom": 1.0,
+      "camera_applied": true,
+      "step": 3,
+      "zoom": 1.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 2,
+        "resizeEvents": [
+          {
+            "at": 2656.17,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3487.94,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 1.40625
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "settled": {
+        "documentId": "1793119755831:0.2758713057914892",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 2,
+        "resizeEvents": [
+          {
+            "at": 2656.17,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3487.94,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 1.40625
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 0,
+        "cookie": "",
+        "text": null,
+        "selectionStart": null,
+        "selectionEnd": null,
+        "selectionDirection": null,
+        "textareaScrollTop": null,
+        "focused": "",
+        "input": null
+      },
+      "resize_delta": 2,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 846.506542,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/resume/zoom/step-3.png"
+    }
+  ],
+  "passed": false,
+  "expected_blocker": "R1"
+}

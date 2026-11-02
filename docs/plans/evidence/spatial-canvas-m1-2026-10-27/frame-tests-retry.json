@@ -1,0 +1,14 @@
+{
+  "name": "frame-tests-retry",
+  "command": [
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh",
+    "cargo",
+    "test",
+    "--locked",
+    "--bin",
+    "frame"
+  ],
+  "elapsed_seconds": 451.34578862499984,
+  "exit_code": 0,
+  "output": "frame-tests-retry.log"
+}

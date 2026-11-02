@@ -1,0 +1,26 @@
+{
+  "status": "blocked_occluded_window",
+  "reason": "macOS screen locked; GPUI reports Hidden and stops its display link. No valid live sample.",
+  "servo_revision": "2b522612c4db75a7f3214a0f17ef8abe5a8c47a1",
+  "sequence": [
+    1,
+    0.35,
+    2,
+    1
+  ],
+  "resize_events": null,
+  "inner_width_drift": null,
+  "inner_height_drift": null,
+  "device_pixel_ratios": null,
+  "expected_upstream_blocker": "R1",
+  "observed_servo_failure": false,
+  "window_evidence": [
+    "zoom/window.json",
+    "signin/window.json"
+  ],
+  "invalid_prior_artifacts": [
+    "zoom-inactive-window/",
+    "zoom-screen-locked/",
+    "signin-screen-locked/"
+  ]
+}

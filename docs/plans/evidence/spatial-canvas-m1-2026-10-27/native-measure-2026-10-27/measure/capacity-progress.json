@@ -1,0 +1,34 @@
+[
+  {
+    "live_cards": 1,
+    "rss_bytes": 301105152,
+    "rss_delta_per_card": 87097344,
+    "holds_display_rate": false,
+    "samples": [
+      {
+        "seconds": 2.010891375,
+        "presented_fps_per_card": [
+          86.52879124313714
+        ],
+        "gpui_fps": 116.36630546490856,
+        "window_active": true
+      },
+      {
+        "seconds": 2.008178667,
+        "presented_fps_per_card": [
+          75.19251273870842
+        ],
+        "gpui_fps": 117.51942388301448,
+        "window_active": true
+      },
+      {
+        "seconds": 2.008010166,
+        "presented_fps_per_card": [
+          77.68884970874196
+        ],
+        "gpui_fps": 120.01931269106932,
+        "window_active": true
+      }
+    ]
+  }
+]

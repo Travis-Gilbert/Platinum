@@ -1,0 +1,17 @@
+## feat/spatial-canvas
+ M Cargo.lock
+ M Cargo.toml
+ M docs/plans/notes-app.md
+ M src/actions.rs
+ M src/browser.rs
+ M src/controls.rs
+ M src/delegate.rs
+ M src/main.rs
+ M src/page.rs
+ M vendor/gpui-whiteboard/src/lib.rs
+ M vendor/gpui-whiteboard/src/paint.rs
+?? docs/plans/evidence/spatial-canvas-m1-2026-10-27/
+?? examples/canvas_check.rs
+?? examples/canvas_check/
+?? src/canvas/
+?? tests/canvas/

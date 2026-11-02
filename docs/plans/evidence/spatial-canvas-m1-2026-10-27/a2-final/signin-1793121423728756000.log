@@ -1,0 +1,121 @@
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+CONTROL 1793121426199 Page focus -> Servo true
+CONTROL 1793121426216 show InputMethod
+{"rendered_zoom":1.0,"camera_applied":true,"step":0,"zoom":1.0,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":0,"resizeEvents":[],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":0,"resizeEvents":[],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":0,"width_drift":0,"height_drift":0,"elapsed_ms":839.043458,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/a2-final/signin/step-0.png"}
+{"rendered_zoom":0.3499999940395355,"camera_applied":true,"step":1,"zoom":0.35,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":0,"resizeEvents":[],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071,"resizeCount":2,"resizeEvents":[{"at":3449.05,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3469.63,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":2,"width_drift":0,"height_drift":0,"elapsed_ms":1087.134625,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/a2-final/signin/step-1.png"}
+{"rendered_zoom":2.0,"camera_applied":true,"step":2,"zoom":2.0,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071,"resizeCount":2,"resizeEvents":[{"at":3449.05,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3469.63,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":4,"resizeEvents":[{"at":3449.05,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3469.63,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071},{"at":4531.56,"innerWidth":637,"innerHeight":398,"devicePixelRatio":1.40625},{"at":4552.29,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":4,"width_drift":0,"height_drift":0,"elapsed_ms":835.038041,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/a2-final/signin/step-2.png"}
+{"rendered_zoom":1.0,"camera_applied":true,"step":3,"zoom":1.0,"webview_id":"WebViewId(PainterId(1), (0,1))","navigation_starts":0,"same_webview":true,"during_gesture":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":4,"resizeEvents":[{"at":3449.05,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3469.63,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071},{"at":4531.56,"innerWidth":637,"innerHeight":398,"devicePixelRatio":1.40625},{"at":4552.29,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"settled":{"documentId":"1793121424350:0.7223914949713907","innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625,"resizeCount":4,"resizeEvents":[{"at":3449.05,"innerWidth":2571,"innerHeight":1607,"devicePixelRatio":0.699999988079071},{"at":3469.63,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":0.699999988079071},{"at":4531.56,"innerWidth":637,"innerHeight":398,"devicePixelRatio":1.40625},{"at":4552.29,"innerWidth":1280,"innerHeight":800,"devicePixelRatio":1.40625}],"scrollX":0,"scrollY":40,"cookie":"frame_canvas_session=m1","text":"I was halfway through","selectionStart":8,"selectionEnd":8,"selectionDirection":"none","textareaScrollTop":0,"focused":"draft","input":{"clicks":0,"hovers":0,"drag":null,"wheel":0,"choice":"First","dialogs":[],"escape":0,"space":3}},"resize_delta":4,"width_drift":0,"height_drift":0,"elapsed_ms":831.38775,"screenshot":"/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/a2-final/signin/step-3.png"}
+CONTROL 1793121432362 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(0) }; popup=false color=false
+CONTROL 1793121432589 Page blur -> Servo false
+CONTROL 1793121435008 show SelectElement
+CONTROL 1793121435008 popup mounted
+CONTROL 1793121435334 camera dismiss controls
+CONTROL 1793121435334 popup dismissed
+CONTROL 1793121436020 show ContextMenu
+CONTROL 1793121436020 popup mounted
+CONTROL 1793121436367 camera dismiss controls
+CONTROL 1793121436367 popup dismissed
+CONTROL 1793121437058 show InputMethod
+CONTROL 1793121437082 show ColorPicker
+CONTROL 1793121437082 color open begin outside App update
+CONTROL 1793121437190 color open returned visible=true
+CONTROL 1793121437582 camera dismiss controls
+CONTROL 1793121438373 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(3) }; popup=false color=false
+CONTROL 1793121438375 show FilePicker
+CONTROL 1793121438375 file open begin
+CONTROL 1793121438375 file open returned
+CONTROL 1793121439038 camera dismiss controls
+CONTROL 1793121439829 show SelectElement
+CONTROL 1793121439829 popup mounted
+CONTROL 1793121440271 popup dismissed
+
+ALERT: Canvas alert
+CONTROL 1793121441037 show SimpleDialog
+CONTROL 1793121442858 show SimpleDialog
+CONTROL 1793121444657 show SimpleDialog
+CONTROL 1793121447795 Page focus -> Servo true
+CONTROL 1793121447991 Page blur -> Servo false
+CONTROL 1793121453033 show SelectElement
+CONTROL 1793121453033 popup mounted
+CONTROL 1793121453356 camera dismiss controls
+CONTROL 1793121453356 popup dismissed
+CONTROL 1793121454050 show ContextMenu
+CONTROL 1793121454050 popup mounted
+CONTROL 1793121454400 camera dismiss controls
+CONTROL 1793121454400 popup dismissed
+CONTROL 1793121455116 show InputMethod
+CONTROL 1793121455117 show ColorPicker
+CONTROL 1793121455117 color open begin outside App update
+CONTROL 1793121455117 color open returned visible=true
+CONTROL 1793121455619 camera dismiss controls
+CONTROL 1793121456392 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(12) }; popup=false color=false
+CONTROL 1793121456418 show FilePicker
+CONTROL 1793121456418 file open begin
+CONTROL 1793121456418 file open returned
+CONTROL 1793121456892 camera dismiss controls
+CONTROL 1793121457683 show SelectElement
+CONTROL 1793121457684 popup mounted
+CONTROL 1793121458129 popup dismissed
+
+ALERT: Canvas alert
+CONTROL 1793121458885 show SimpleDialog
+CONTROL 1793121460718 show SimpleDialog
+CONTROL 1793121462550 show SimpleDialog
+CONTROL 1793121463442 Page focus -> Servo true
+CONTROL 1793121465891 Page blur -> Servo false
+CONTROL 1793121468233 Page focus -> Servo true
+CONTROL 1793121468856 Page blur -> Servo false
+CONTROL 1793121470856 show SelectElement
+CONTROL 1793121470856 popup mounted
+CONTROL 1793121471181 camera dismiss controls
+CONTROL 1793121471181 popup dismissed
+CONTROL 1793121471878 show ContextMenu
+CONTROL 1793121471878 popup mounted
+CONTROL 1793121472231 camera dismiss controls
+CONTROL 1793121472232 popup dismissed
+CONTROL 1793121472944 show InputMethod
+CONTROL 1793121472944 show ColorPicker
+CONTROL 1793121472944 color open begin outside App update
+CONTROL 1793121472945 color open returned visible=true
+CONTROL 1793121473446 camera dismiss controls
+CONTROL 1793121474243 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(21) }; popup=false color=false
+CONTROL 1793121474243 show FilePicker
+CONTROL 1793121474243 file open begin
+CONTROL 1793121474243 file open returned
+CONTROL 1793121474744 camera dismiss controls
+CONTROL 1793121475543 show SelectElement
+CONTROL 1793121475543 popup mounted
+CONTROL 1793121475986 popup dismissed
+
+ALERT: Canvas alert
+CONTROL 1793121476746 show SimpleDialog
+CONTROL 1793121478586 show SimpleDialog
+CONTROL 1793121480432 show SimpleDialog
+CONTROL 1793121484810 show InputMethod
+CONTROL 1793121485753 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(28) }; popup=false color=false
+CONTROL 1793121485754 show InputMethod
+CONTROL 1793121486689 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(29) }; popup=false color=false
+CONTROL 1793121486690 show InputMethod
+CONTROL 1793121487629 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(30) }; popup=false color=false
+CONTROL 1793121487629 show InputMethod
+CONTROL 1793121488595 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(31) }; popup=false color=false
+CONTROL 1793121488595 show InputMethod
+CONTROL 1793121489545 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(32) }; popup=false color=false
+CONTROL 1793121489545 show InputMethod
+CONTROL 1793121490490 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(33) }; popup=false color=false
+CONTROL 1793121490490 show InputMethod
+CONTROL 1793121491467 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(34) }; popup=false color=false
+CONTROL 1793121491468 show InputMethod
+CONTROL 1793121492466 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(35) }; popup=false color=false
+CONTROL 1793121492466 show InputMethod
+CONTROL 1793121493451 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(36) }; popup=false color=false
+CONTROL 1793121493451 show InputMethod
+CONTROL 1793121494450 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(37) }; popup=false color=false
+CONTROL 1793121494450 show InputMethod
+CONTROL 1793121495444 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(38) }; popup=false color=false
+CONTROL 1793121495445 show InputMethod
+CONTROL 1793121496431 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(39) }; popup=false color=false
+CONTROL 1793121496431 show InputMethod
+CONTROL 1793121497428 hide EmbedderControlId { webview_id: WebViewId(PainterId(1), (0,1)), pipeline_id: (1,1), index: Epoch(40) }; popup=false color=false
+CONTROL 1793121499777 Page focus -> Servo true
+CONTROL 1793121499965 Page blur -> Servo false

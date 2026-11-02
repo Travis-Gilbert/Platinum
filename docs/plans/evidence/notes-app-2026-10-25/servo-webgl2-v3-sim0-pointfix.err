@@ -1,0 +1,15 @@
+media check: document 0 HeadParsed
+[2026-10-26T03:41:42Z ERROR webgl::webgl_thread] Last GL operation failed: GetParameterFloat2(AliasedPointSizeRange, Sender(..))
+media check: document 0 Complete
+[2026-10-26T03:41:44Z ERROR webgl::webgl_thread] Last GL operation failed: GetParameterFloat2(AliasedPointSizeRange, Sender(..))
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 0 GLD_TEXTURE_INDEX_RECTANGLE is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+[2026-10-26T03:41:47Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+[2026-10-26T03:41:48Z ERROR webgl::webgl_thread] Last GL operation failed: DrawBuffers([1029])
+frame screenshot: $DARWIN_USER_TEMP_DIR/frame-media-svg-initial.png

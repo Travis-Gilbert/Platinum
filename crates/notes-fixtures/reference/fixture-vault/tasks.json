@@ -1,0 +1,1724 @@
+{
+  "tasks done format=json": {
+    "command": "tasks",
+    "args": [
+      "done",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-23.md\",\n    \"line\": \"16\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Water the plants\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"28\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Write the fixture notes\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"29\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Check the links\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"44\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Review the plan\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"46\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Compare the graph\"\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"17\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Pick the name\"\n  },\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"line\": \"15\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Ship it\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"22\",\n    \"status\": \"x\",\n    \"text\": \"- [x] call the bank\"\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"13\",\n    \"status\": \"x\",\n    \"text\": \"- [x] مهمة بالعربية\"\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"9\",\n    \"status\": \"x\",\n    \"text\": \"- [x] A finished task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"7\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"8\",\n    \"status\": \"X\",\n    \"text\": \"- [X] Done with a capital\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"9\",\n    \"status\": \"/\",\n    \"text\": \"- [/] In progress\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"10\",\n    \"status\": \"-\",\n    \"text\": \"- [-] Cancelled\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"11\",\n    \"status\": \">\",\n    \"text\": \"- [>] Forwarded\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"12\",\n    \"status\": \"<\",\n    \"text\": \"- [<] Scheduled\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"13\",\n    \"status\": \"?\",\n    \"text\": \"- [?] Question\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"14\",\n    \"status\": \"!\",\n    \"text\": \"- [!] Important\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"15\",\n    \"status\": \"*\",\n    \"text\": \"- [*] Star\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"16\",\n    \"status\": \"\\\"\",\n    \"text\": \"- [\\\"] Quote\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"17\",\n    \"status\": \"l\",\n    \"text\": \"- [l] Location\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"18\",\n    \"status\": \"b\",\n    \"text\": \"- [b] Bookmark\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"19\",\n    \"status\": \"i\",\n    \"text\": \"- [i] Information\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"20\",\n    \"status\": \"S\",\n    \"text\": \"- [S] Savings\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"21\",\n    \"status\": \"I\",\n    \"text\": \"- [I] Idea\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"22\",\n    \"status\": \"p\",\n    \"text\": \"- [p] Pro\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"23\",\n    \"status\": \"c\",\n    \"text\": \"- [c] Con\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"24\",\n    \"status\": \"f\",\n    \"text\": \"- [f] Fire\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"25\",\n    \"status\": \"k\",\n    \"text\": \"- [k] Key\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"26\",\n    \"status\": \"w\",\n    \"text\": \"- [w] Win\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"27\",\n    \"status\": \"u\",\n    \"text\": \"- [u] Up\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"28\",\n    \"status\": \"d\",\n    \"text\": \"- [d] Down\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"34\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Child done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"36\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Grandchild\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"53\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Completed [completion:: 2026-10-20]\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-23.md",
+        "line": "16",
+        "status": "x",
+        "text": "- [x] Water the plants"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "28",
+        "status": "x",
+        "text": "- [x] Write the fixture notes"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "29",
+        "status": "x",
+        "text": "- [x] Check the links"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "44",
+        "status": "x",
+        "text": "- [x] Review the plan"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "46",
+        "status": "/",
+        "text": "- [/] Compare the graph"
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "17",
+        "status": "x",
+        "text": "- [x] Pick the name"
+      },
+      {
+        "file": "projects/Project Gamma.md",
+        "line": "15",
+        "status": "x",
+        "text": "- [x] Ship it"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "22",
+        "status": "x",
+        "text": "- [x] call the bank"
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "13",
+        "status": "x",
+        "text": "- [x] مهمة بالعربية"
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "9",
+        "status": "x",
+        "text": "- [x] A finished task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "7",
+        "status": "x",
+        "text": "- [x] Done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "8",
+        "status": "X",
+        "text": "- [X] Done with a capital"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "9",
+        "status": "/",
+        "text": "- [/] In progress"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "10",
+        "status": "-",
+        "text": "- [-] Cancelled"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "11",
+        "status": ">",
+        "text": "- [>] Forwarded"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "12",
+        "status": "<",
+        "text": "- [<] Scheduled"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "13",
+        "status": "?",
+        "text": "- [?] Question"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "14",
+        "status": "!",
+        "text": "- [!] Important"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "15",
+        "status": "*",
+        "text": "- [*] Star"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "16",
+        "status": "\"",
+        "text": "- [\"] Quote"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "17",
+        "status": "l",
+        "text": "- [l] Location"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "18",
+        "status": "b",
+        "text": "- [b] Bookmark"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "19",
+        "status": "i",
+        "text": "- [i] Information"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "20",
+        "status": "S",
+        "text": "- [S] Savings"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "21",
+        "status": "I",
+        "text": "- [I] Idea"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "22",
+        "status": "p",
+        "text": "- [p] Pro"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "23",
+        "status": "c",
+        "text": "- [c] Con"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "24",
+        "status": "f",
+        "text": "- [f] Fire"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "25",
+        "status": "k",
+        "text": "- [k] Key"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "26",
+        "status": "w",
+        "text": "- [w] Win"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "27",
+        "status": "u",
+        "text": "- [u] Up"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "28",
+        "status": "d",
+        "text": "- [d] Down"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "34",
+        "status": "x",
+        "text": "- [x] Child done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "36",
+        "status": "/",
+        "text": "- [/] Grandchild"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "53",
+        "status": "x",
+        "text": "- [x] Completed [completion:: 2026-10-20]"
+      }
+    ]
+  },
+  "tasks format=json": {
+    "command": "tasks",
+    "args": [
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-23.md\",\n    \"line\": \"16\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Water the plants\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"28\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Write the fixture notes\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"29\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Check the links\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"44\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Review the plan\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"45\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Run the reference harness\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"46\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Compare the graph\"\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"16\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Draft the plan\"\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"17\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Pick the name\"\n  },\n  {\n    \"file\": \"projects/Project Beta.md\",\n    \"line\": \"18\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Find a name\"\n  },\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"line\": \"15\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Ship it\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"21\",\n    \"status\": \" \",\n    \"text\": \"- [ ] call the plumber tomorrow\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"22\",\n    \"status\": \"x\",\n    \"text\": \"- [x] call the bank\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"23\",\n    \"status\": \" \",\n    \"text\": \"- [ ] email the team\"\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"12\",\n    \"status\": \" \",\n    \"text\": \"- [ ] משימה בעברית\"\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"13\",\n    \"status\": \"x\",\n    \"text\": \"- [x] مهمة بالعربية\"\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"8\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task\"\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"9\",\n    \"status\": \"x\",\n    \"text\": \"- [x] A finished task\"\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"line\": \"17\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task #task-tag\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"6\",\n    \"status\": \" \",\n    \"text\": \"- [ ] To do\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"7\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"8\",\n    \"status\": \"X\",\n    \"text\": \"- [X] Done with a capital\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"9\",\n    \"status\": \"/\",\n    \"text\": \"- [/] In progress\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"10\",\n    \"status\": \"-\",\n    \"text\": \"- [-] Cancelled\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"11\",\n    \"status\": \">\",\n    \"text\": \"- [>] Forwarded\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"12\",\n    \"status\": \"<\",\n    \"text\": \"- [<] Scheduled\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"13\",\n    \"status\": \"?\",\n    \"text\": \"- [?] Question\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"14\",\n    \"status\": \"!\",\n    \"text\": \"- [!] Important\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"15\",\n    \"status\": \"*\",\n    \"text\": \"- [*] Star\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"16\",\n    \"status\": \"\\\"\",\n    \"text\": \"- [\\\"] Quote\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"17\",\n    \"status\": \"l\",\n    \"text\": \"- [l] Location\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"18\",\n    \"status\": \"b\",\n    \"text\": \"- [b] Bookmark\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"19\",\n    \"status\": \"i\",\n    \"text\": \"- [i] Information\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"20\",\n    \"status\": \"S\",\n    \"text\": \"- [S] Savings\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"21\",\n    \"status\": \"I\",\n    \"text\": \"- [I] Idea\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"22\",\n    \"status\": \"p\",\n    \"text\": \"- [p] Pro\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"23\",\n    \"status\": \"c\",\n    \"text\": \"- [c] Con\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"24\",\n    \"status\": \"f\",\n    \"text\": \"- [f] Fire\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"25\",\n    \"status\": \"k\",\n    \"text\": \"- [k] Key\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"26\",\n    \"status\": \"w\",\n    \"text\": \"- [w] Win\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"27\",\n    \"status\": \"u\",\n    \"text\": \"- [u] Up\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"28\",\n    \"status\": \"d\",\n    \"text\": \"- [d] Down\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"33\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Parent\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"34\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Child done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"35\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Child open\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"36\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Grandchild\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"40\",\n    \"status\": \" \",\n    \"text\": \"1. [ ] Numbered task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"41\",\n    \"status\": \" \",\n    \"text\": \"* [ ] Star bullet task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"42\",\n    \"status\": \" \",\n    \"text\": \"+ [ ] Plus bullet task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"44\",\n    \"status\": \" \",\n    \"text\": \"> - [ ] Task in a quote\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"47\",\n    \"status\": \" \",\n    \"text\": \"> - [ ] Task in a callout\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"51\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"52\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"53\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Completed [completion:: 2026-10-20]\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"54\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task with a block id ^task-block\"\n  },\n  {\n    \"file\": \"templates/Daily.md\",\n    \"line\": \"12\",\n    \"status\": \" \",\n    \"text\": \"- [ ]\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-23.md",
+        "line": "16",
+        "status": "x",
+        "text": "- [x] Water the plants"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "28",
+        "status": "x",
+        "text": "- [x] Write the fixture notes"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "29",
+        "status": "x",
+        "text": "- [x] Check the links"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "44",
+        "status": "x",
+        "text": "- [x] Review the plan"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "45",
+        "status": " ",
+        "text": "- [ ] Run the reference harness"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "46",
+        "status": "/",
+        "text": "- [/] Compare the graph"
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "16",
+        "status": " ",
+        "text": "- [ ] Draft the plan"
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "17",
+        "status": "x",
+        "text": "- [x] Pick the name"
+      },
+      {
+        "file": "projects/Project Beta.md",
+        "line": "18",
+        "status": " ",
+        "text": "- [ ] Find a name"
+      },
+      {
+        "file": "projects/Project Gamma.md",
+        "line": "15",
+        "status": "x",
+        "text": "- [x] Ship it"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "21",
+        "status": " ",
+        "text": "- [ ] call the plumber tomorrow"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "22",
+        "status": "x",
+        "text": "- [x] call the bank"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "23",
+        "status": " ",
+        "text": "- [ ] email the team"
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "12",
+        "status": " ",
+        "text": "- [ ] משימה בעברית"
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "13",
+        "status": "x",
+        "text": "- [x] مهمة بالعربية"
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "8",
+        "status": " ",
+        "text": "- [ ] A task"
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "9",
+        "status": "x",
+        "text": "- [x] A finished task"
+      },
+      {
+        "file": "tagging/Tags.md",
+        "line": "17",
+        "status": " ",
+        "text": "- [ ] A task #task-tag"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "6",
+        "status": " ",
+        "text": "- [ ] To do"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "7",
+        "status": "x",
+        "text": "- [x] Done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "8",
+        "status": "X",
+        "text": "- [X] Done with a capital"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "9",
+        "status": "/",
+        "text": "- [/] In progress"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "10",
+        "status": "-",
+        "text": "- [-] Cancelled"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "11",
+        "status": ">",
+        "text": "- [>] Forwarded"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "12",
+        "status": "<",
+        "text": "- [<] Scheduled"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "13",
+        "status": "?",
+        "text": "- [?] Question"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "14",
+        "status": "!",
+        "text": "- [!] Important"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "15",
+        "status": "*",
+        "text": "- [*] Star"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "16",
+        "status": "\"",
+        "text": "- [\"] Quote"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "17",
+        "status": "l",
+        "text": "- [l] Location"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "18",
+        "status": "b",
+        "text": "- [b] Bookmark"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "19",
+        "status": "i",
+        "text": "- [i] Information"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "20",
+        "status": "S",
+        "text": "- [S] Savings"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "21",
+        "status": "I",
+        "text": "- [I] Idea"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "22",
+        "status": "p",
+        "text": "- [p] Pro"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "23",
+        "status": "c",
+        "text": "- [c] Con"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "24",
+        "status": "f",
+        "text": "- [f] Fire"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "25",
+        "status": "k",
+        "text": "- [k] Key"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "26",
+        "status": "w",
+        "text": "- [w] Win"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "27",
+        "status": "u",
+        "text": "- [u] Up"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "28",
+        "status": "d",
+        "text": "- [d] Down"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "33",
+        "status": " ",
+        "text": "- [ ] Parent"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "34",
+        "status": "x",
+        "text": "- [x] Child done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "35",
+        "status": " ",
+        "text": "- [ ] Child open"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "36",
+        "status": "/",
+        "text": "- [/] Grandchild"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "40",
+        "status": " ",
+        "text": "1. [ ] Numbered task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "41",
+        "status": " ",
+        "text": "* [ ] Star bullet task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "42",
+        "status": " ",
+        "text": "+ [ ] Plus bullet task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "44",
+        "status": " ",
+        "text": "> - [ ] Task in a quote"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "47",
+        "status": " ",
+        "text": "> - [ ] Task in a callout"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "51",
+        "status": " ",
+        "text": "- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "52",
+        "status": " ",
+        "text": "- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "53",
+        "status": "x",
+        "text": "- [x] Completed [completion:: 2026-10-20]"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "54",
+        "status": " ",
+        "text": "- [ ] A task with a block id ^task-block"
+      },
+      {
+        "file": "templates/Daily.md",
+        "line": "12",
+        "status": " ",
+        "text": "- [ ]"
+      }
+    ]
+  },
+  "tasks path=\"projects/Project Alpha.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=projects/Project Alpha.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"16\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Draft the plan\"\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"17\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Pick the name\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "16",
+        "status": " ",
+        "text": "- [ ] Draft the plan"
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "17",
+        "status": "x",
+        "text": "- [x] Pick the name"
+      }
+    ]
+  },
+  "tasks path=\"projects/Project Beta.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=projects/Project Beta.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"projects/Project Beta.md\",\n    \"line\": \"18\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Find a name\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "projects/Project Beta.md",
+        "line": "18",
+        "status": " ",
+        "text": "- [ ] Find a name"
+      }
+    ]
+  },
+  "tasks path=\"projects/Project Gamma.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=projects/Project Gamma.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"line\": \"15\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Ship it\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "projects/Project Gamma.md",
+        "line": "15",
+        "status": "x",
+        "text": "- [x] Ship it"
+      }
+    ]
+  },
+  "tasks path=\"search/Search Corpus.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=search/Search Corpus.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"21\",\n    \"status\": \" \",\n    \"text\": \"- [ ] call the plumber tomorrow\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"22\",\n    \"status\": \"x\",\n    \"text\": \"- [x] call the bank\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"23\",\n    \"status\": \" \",\n    \"text\": \"- [ ] email the team\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "search/Search Corpus.md",
+        "line": "21",
+        "status": " ",
+        "text": "- [ ] call the plumber tomorrow"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "22",
+        "status": "x",
+        "text": "- [x] call the bank"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "23",
+        "status": " ",
+        "text": "- [ ] email the team"
+      }
+    ]
+  },
+  "tasks path=\"syntax/Bidirectional Text.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=syntax/Bidirectional Text.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"12\",\n    \"status\": \" \",\n    \"text\": \"- [ ] משימה בעברית\"\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"13\",\n    \"status\": \"x\",\n    \"text\": \"- [x] مهمة بالعربية\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "12",
+        "status": " ",
+        "text": "- [ ] משימה בעברית"
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "13",
+        "status": "x",
+        "text": "- [x] مهمة بالعربية"
+      }
+    ]
+  },
+  "tasks path=\"syntax/Code Blocks.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=syntax/Code Blocks.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tasks found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tasks path=\"syntax/Line Endings.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=syntax/Line Endings.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"8\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task\"\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"9\",\n    \"status\": \"x\",\n    \"text\": \"- [x] A finished task\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "8",
+        "status": " ",
+        "text": "- [ ] A task"
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "9",
+        "status": "x",
+        "text": "- [x] A finished task"
+      }
+    ]
+  },
+  "tasks path=\"tasks/Task Statuses.md\" format=json": {
+    "command": "tasks",
+    "args": [
+      "path=tasks/Task Statuses.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"6\",\n    \"status\": \" \",\n    \"text\": \"- [ ] To do\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"7\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"8\",\n    \"status\": \"X\",\n    \"text\": \"- [X] Done with a capital\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"9\",\n    \"status\": \"/\",\n    \"text\": \"- [/] In progress\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"10\",\n    \"status\": \"-\",\n    \"text\": \"- [-] Cancelled\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"11\",\n    \"status\": \">\",\n    \"text\": \"- [>] Forwarded\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"12\",\n    \"status\": \"<\",\n    \"text\": \"- [<] Scheduled\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"13\",\n    \"status\": \"?\",\n    \"text\": \"- [?] Question\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"14\",\n    \"status\": \"!\",\n    \"text\": \"- [!] Important\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"15\",\n    \"status\": \"*\",\n    \"text\": \"- [*] Star\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"16\",\n    \"status\": \"\\\"\",\n    \"text\": \"- [\\\"] Quote\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"17\",\n    \"status\": \"l\",\n    \"text\": \"- [l] Location\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"18\",\n    \"status\": \"b\",\n    \"text\": \"- [b] Bookmark\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"19\",\n    \"status\": \"i\",\n    \"text\": \"- [i] Information\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"20\",\n    \"status\": \"S\",\n    \"text\": \"- [S] Savings\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"21\",\n    \"status\": \"I\",\n    \"text\": \"- [I] Idea\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"22\",\n    \"status\": \"p\",\n    \"text\": \"- [p] Pro\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"23\",\n    \"status\": \"c\",\n    \"text\": \"- [c] Con\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"24\",\n    \"status\": \"f\",\n    \"text\": \"- [f] Fire\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"25\",\n    \"status\": \"k\",\n    \"text\": \"- [k] Key\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"26\",\n    \"status\": \"w\",\n    \"text\": \"- [w] Win\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"27\",\n    \"status\": \"u\",\n    \"text\": \"- [u] Up\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"28\",\n    \"status\": \"d\",\n    \"text\": \"- [d] Down\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"33\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Parent\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"34\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Child done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"35\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Child open\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"36\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Grandchild\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"40\",\n    \"status\": \" \",\n    \"text\": \"1. [ ] Numbered task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"41\",\n    \"status\": \" \",\n    \"text\": \"* [ ] Star bullet task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"42\",\n    \"status\": \" \",\n    \"text\": \"+ [ ] Plus bullet task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"44\",\n    \"status\": \" \",\n    \"text\": \"> - [ ] Task in a quote\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"47\",\n    \"status\": \" \",\n    \"text\": \"> - [ ] Task in a callout\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"51\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"52\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"53\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Completed [completion:: 2026-10-20]\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"54\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task with a block id ^task-block\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "6",
+        "status": " ",
+        "text": "- [ ] To do"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "7",
+        "status": "x",
+        "text": "- [x] Done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "8",
+        "status": "X",
+        "text": "- [X] Done with a capital"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "9",
+        "status": "/",
+        "text": "- [/] In progress"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "10",
+        "status": "-",
+        "text": "- [-] Cancelled"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "11",
+        "status": ">",
+        "text": "- [>] Forwarded"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "12",
+        "status": "<",
+        "text": "- [<] Scheduled"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "13",
+        "status": "?",
+        "text": "- [?] Question"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "14",
+        "status": "!",
+        "text": "- [!] Important"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "15",
+        "status": "*",
+        "text": "- [*] Star"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "16",
+        "status": "\"",
+        "text": "- [\"] Quote"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "17",
+        "status": "l",
+        "text": "- [l] Location"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "18",
+        "status": "b",
+        "text": "- [b] Bookmark"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "19",
+        "status": "i",
+        "text": "- [i] Information"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "20",
+        "status": "S",
+        "text": "- [S] Savings"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "21",
+        "status": "I",
+        "text": "- [I] Idea"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "22",
+        "status": "p",
+        "text": "- [p] Pro"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "23",
+        "status": "c",
+        "text": "- [c] Con"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "24",
+        "status": "f",
+        "text": "- [f] Fire"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "25",
+        "status": "k",
+        "text": "- [k] Key"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "26",
+        "status": "w",
+        "text": "- [w] Win"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "27",
+        "status": "u",
+        "text": "- [u] Up"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "28",
+        "status": "d",
+        "text": "- [d] Down"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "33",
+        "status": " ",
+        "text": "- [ ] Parent"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "34",
+        "status": "x",
+        "text": "- [x] Child done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "35",
+        "status": " ",
+        "text": "- [ ] Child open"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "36",
+        "status": "/",
+        "text": "- [/] Grandchild"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "40",
+        "status": " ",
+        "text": "1. [ ] Numbered task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "41",
+        "status": " ",
+        "text": "* [ ] Star bullet task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "42",
+        "status": " ",
+        "text": "+ [ ] Plus bullet task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "44",
+        "status": " ",
+        "text": "> - [ ] Task in a quote"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "47",
+        "status": " ",
+        "text": "> - [ ] Task in a callout"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "51",
+        "status": " ",
+        "text": "- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "52",
+        "status": " ",
+        "text": "- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "53",
+        "status": "x",
+        "text": "- [x] Completed [completion:: 2026-10-20]"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "54",
+        "status": " ",
+        "text": "- [ ] A task with a block id ^task-block"
+      }
+    ]
+  },
+  "tasks path=daily/2026-10-23.md format=json": {
+    "command": "tasks",
+    "args": [
+      "path=daily/2026-10-23.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-23.md\",\n    \"line\": \"16\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Water the plants\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-23.md",
+        "line": "16",
+        "status": "x",
+        "text": "- [x] Water the plants"
+      }
+    ]
+  },
+  "tasks path=daily/2026-10-24.md format=json": {
+    "command": "tasks",
+    "args": [
+      "path=daily/2026-10-24.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"28\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Write the fixture notes\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"29\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Check the links\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "28",
+        "status": "x",
+        "text": "- [x] Write the fixture notes"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "29",
+        "status": "x",
+        "text": "- [x] Check the links"
+      }
+    ]
+  },
+  "tasks path=daily/2026-10-25.md format=json": {
+    "command": "tasks",
+    "args": [
+      "path=daily/2026-10-25.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"44\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Review the plan\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"45\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Run the reference harness\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"46\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Compare the graph\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "44",
+        "status": "x",
+        "text": "- [x] Review the plan"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "45",
+        "status": " ",
+        "text": "- [ ] Run the reference harness"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "46",
+        "status": "/",
+        "text": "- [/] Compare the graph"
+      }
+    ]
+  },
+  "tasks path=tagging/Tags.md format=json": {
+    "command": "tasks",
+    "args": [
+      "path=tagging/Tags.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"line\": \"17\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task #task-tag\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tagging/Tags.md",
+        "line": "17",
+        "status": " ",
+        "text": "- [ ] A task #task-tag"
+      }
+    ]
+  },
+  "tasks path=templates/Daily.md format=json": {
+    "command": "tasks",
+    "args": [
+      "path=templates/Daily.md",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"templates/Daily.md\",\n    \"line\": \"12\",\n    \"status\": \" \",\n    \"text\": \"- [ ]\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "templates/Daily.md",
+        "line": "12",
+        "status": " ",
+        "text": "- [ ]"
+      }
+    ]
+  },
+  "tasks status=! format=json": {
+    "command": "tasks",
+    "args": [
+      "status=!",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"14\",\n    \"status\": \"!\",\n    \"text\": \"- [!] Important\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "14",
+        "status": "!",
+        "text": "- [!] Important"
+      }
+    ]
+  },
+  "tasks status=\" format=json": {
+    "command": "tasks",
+    "args": [
+      "status=\"",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"16\",\n    \"status\": \"\\\"\",\n    \"text\": \"- [\\\"] Quote\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "16",
+        "status": "\"",
+        "text": "- [\"] Quote"
+      }
+    ]
+  },
+  "tasks status=* format=json": {
+    "command": "tasks",
+    "args": [
+      "status=*",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"15\",\n    \"status\": \"*\",\n    \"text\": \"- [*] Star\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "15",
+        "status": "*",
+        "text": "- [*] Star"
+      }
+    ]
+  },
+  "tasks status=- format=json": {
+    "command": "tasks",
+    "args": [
+      "status=-",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"10\",\n    \"status\": \"-\",\n    \"text\": \"- [-] Cancelled\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "10",
+        "status": "-",
+        "text": "- [-] Cancelled"
+      }
+    ]
+  },
+  "tasks status=/ format=json": {
+    "command": "tasks",
+    "args": [
+      "status=/",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"46\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Compare the graph\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"9\",\n    \"status\": \"/\",\n    \"text\": \"- [/] In progress\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"36\",\n    \"status\": \"/\",\n    \"text\": \"- [/] Grandchild\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "46",
+        "status": "/",
+        "text": "- [/] Compare the graph"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "9",
+        "status": "/",
+        "text": "- [/] In progress"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "36",
+        "status": "/",
+        "text": "- [/] Grandchild"
+      }
+    ]
+  },
+  "tasks status=< format=json": {
+    "command": "tasks",
+    "args": [
+      "status=<",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"12\",\n    \"status\": \"<\",\n    \"text\": \"- [<] Scheduled\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "12",
+        "status": "<",
+        "text": "- [<] Scheduled"
+      }
+    ]
+  },
+  "tasks status=> format=json": {
+    "command": "tasks",
+    "args": [
+      "status=>",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"11\",\n    \"status\": \">\",\n    \"text\": \"- [>] Forwarded\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "11",
+        "status": ">",
+        "text": "- [>] Forwarded"
+      }
+    ]
+  },
+  "tasks status=? format=json": {
+    "command": "tasks",
+    "args": [
+      "status=?",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"13\",\n    \"status\": \"?\",\n    \"text\": \"- [?] Question\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "13",
+        "status": "?",
+        "text": "- [?] Question"
+      }
+    ]
+  },
+  "tasks status=I format=json": {
+    "command": "tasks",
+    "args": [
+      "status=I",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"21\",\n    \"status\": \"I\",\n    \"text\": \"- [I] Idea\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "21",
+        "status": "I",
+        "text": "- [I] Idea"
+      }
+    ]
+  },
+  "tasks status=S format=json": {
+    "command": "tasks",
+    "args": [
+      "status=S",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"20\",\n    \"status\": \"S\",\n    \"text\": \"- [S] Savings\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "20",
+        "status": "S",
+        "text": "- [S] Savings"
+      }
+    ]
+  },
+  "tasks status=X format=json": {
+    "command": "tasks",
+    "args": [
+      "status=X",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"8\",\n    \"status\": \"X\",\n    \"text\": \"- [X] Done with a capital\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "8",
+        "status": "X",
+        "text": "- [X] Done with a capital"
+      }
+    ]
+  },
+  "tasks status=b format=json": {
+    "command": "tasks",
+    "args": [
+      "status=b",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"18\",\n    \"status\": \"b\",\n    \"text\": \"- [b] Bookmark\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "18",
+        "status": "b",
+        "text": "- [b] Bookmark"
+      }
+    ]
+  },
+  "tasks status=c format=json": {
+    "command": "tasks",
+    "args": [
+      "status=c",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"23\",\n    \"status\": \"c\",\n    \"text\": \"- [c] Con\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "23",
+        "status": "c",
+        "text": "- [c] Con"
+      }
+    ]
+  },
+  "tasks status=d format=json": {
+    "command": "tasks",
+    "args": [
+      "status=d",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"28\",\n    \"status\": \"d\",\n    \"text\": \"- [d] Down\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "28",
+        "status": "d",
+        "text": "- [d] Down"
+      }
+    ]
+  },
+  "tasks status=f format=json": {
+    "command": "tasks",
+    "args": [
+      "status=f",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"24\",\n    \"status\": \"f\",\n    \"text\": \"- [f] Fire\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "24",
+        "status": "f",
+        "text": "- [f] Fire"
+      }
+    ]
+  },
+  "tasks status=i format=json": {
+    "command": "tasks",
+    "args": [
+      "status=i",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"19\",\n    \"status\": \"i\",\n    \"text\": \"- [i] Information\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "19",
+        "status": "i",
+        "text": "- [i] Information"
+      }
+    ]
+  },
+  "tasks status=k format=json": {
+    "command": "tasks",
+    "args": [
+      "status=k",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"25\",\n    \"status\": \"k\",\n    \"text\": \"- [k] Key\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "25",
+        "status": "k",
+        "text": "- [k] Key"
+      }
+    ]
+  },
+  "tasks status=l format=json": {
+    "command": "tasks",
+    "args": [
+      "status=l",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"17\",\n    \"status\": \"l\",\n    \"text\": \"- [l] Location\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "17",
+        "status": "l",
+        "text": "- [l] Location"
+      }
+    ]
+  },
+  "tasks status=p format=json": {
+    "command": "tasks",
+    "args": [
+      "status=p",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"22\",\n    \"status\": \"p\",\n    \"text\": \"- [p] Pro\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "22",
+        "status": "p",
+        "text": "- [p] Pro"
+      }
+    ]
+  },
+  "tasks status=u format=json": {
+    "command": "tasks",
+    "args": [
+      "status=u",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"27\",\n    \"status\": \"u\",\n    \"text\": \"- [u] Up\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "27",
+        "status": "u",
+        "text": "- [u] Up"
+      }
+    ]
+  },
+  "tasks status=w format=json": {
+    "command": "tasks",
+    "args": [
+      "status=w",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"26\",\n    \"status\": \"w\",\n    \"text\": \"- [w] Win\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "26",
+        "status": "w",
+        "text": "- [w] Win"
+      }
+    ]
+  },
+  "tasks status=x format=json": {
+    "command": "tasks",
+    "args": [
+      "status=x",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-23.md\",\n    \"line\": \"16\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Water the plants\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"28\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Write the fixture notes\"\n  },\n  {\n    \"file\": \"daily/2026-10-24.md\",\n    \"line\": \"29\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Check the links\"\n  },\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"44\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Review the plan\"\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"17\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Pick the name\"\n  },\n  {\n    \"file\": \"projects/Project Gamma.md\",\n    \"line\": \"15\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Ship it\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"22\",\n    \"status\": \"x\",\n    \"text\": \"- [x] call the bank\"\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"13\",\n    \"status\": \"x\",\n    \"text\": \"- [x] مهمة بالعربية\"\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"9\",\n    \"status\": \"x\",\n    \"text\": \"- [x] A finished task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"7\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"34\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Child done\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"53\",\n    \"status\": \"x\",\n    \"text\": \"- [x] Completed [completion:: 2026-10-20]\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-23.md",
+        "line": "16",
+        "status": "x",
+        "text": "- [x] Water the plants"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "28",
+        "status": "x",
+        "text": "- [x] Write the fixture notes"
+      },
+      {
+        "file": "daily/2026-10-24.md",
+        "line": "29",
+        "status": "x",
+        "text": "- [x] Check the links"
+      },
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "44",
+        "status": "x",
+        "text": "- [x] Review the plan"
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "17",
+        "status": "x",
+        "text": "- [x] Pick the name"
+      },
+      {
+        "file": "projects/Project Gamma.md",
+        "line": "15",
+        "status": "x",
+        "text": "- [x] Ship it"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "22",
+        "status": "x",
+        "text": "- [x] call the bank"
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "13",
+        "status": "x",
+        "text": "- [x] مهمة بالعربية"
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "9",
+        "status": "x",
+        "text": "- [x] A finished task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "7",
+        "status": "x",
+        "text": "- [x] Done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "34",
+        "status": "x",
+        "text": "- [x] Child done"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "53",
+        "status": "x",
+        "text": "- [x] Completed [completion:: 2026-10-20]"
+      }
+    ]
+  },
+  "tasks status=😀 format=json": {
+    "command": "tasks",
+    "args": [
+      "status=😀",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "No tasks found.\n",
+    "stderr": "",
+    "error": null
+  },
+  "tasks todo format=json": {
+    "command": "tasks",
+    "args": [
+      "todo",
+      "format=json"
+    ],
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"file\": \"daily/2026-10-25.md\",\n    \"line\": \"45\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Run the reference harness\"\n  },\n  {\n    \"file\": \"projects/Project Alpha.md\",\n    \"line\": \"16\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Draft the plan\"\n  },\n  {\n    \"file\": \"projects/Project Beta.md\",\n    \"line\": \"18\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Find a name\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"21\",\n    \"status\": \" \",\n    \"text\": \"- [ ] call the plumber tomorrow\"\n  },\n  {\n    \"file\": \"search/Search Corpus.md\",\n    \"line\": \"23\",\n    \"status\": \" \",\n    \"text\": \"- [ ] email the team\"\n  },\n  {\n    \"file\": \"syntax/Bidirectional Text.md\",\n    \"line\": \"12\",\n    \"status\": \" \",\n    \"text\": \"- [ ] משימה בעברית\"\n  },\n  {\n    \"file\": \"syntax/Line Endings.md\",\n    \"line\": \"8\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task\"\n  },\n  {\n    \"file\": \"tagging/Tags.md\",\n    \"line\": \"17\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task #task-tag\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"6\",\n    \"status\": \" \",\n    \"text\": \"- [ ] To do\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"33\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Parent\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"35\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Child open\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"40\",\n    \"status\": \" \",\n    \"text\": \"1. [ ] Numbered task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"41\",\n    \"status\": \" \",\n    \"text\": \"* [ ] Star bullet task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"42\",\n    \"status\": \" \",\n    \"text\": \"+ [ ] Plus bullet task\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"44\",\n    \"status\": \" \",\n    \"text\": \"> - [ ] Task in a quote\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"47\",\n    \"status\": \" \",\n    \"text\": \"> - [ ] Task in a callout\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"51\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"52\",\n    \"status\": \" \",\n    \"text\": \"- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]\"\n  },\n  {\n    \"file\": \"tasks/Task Statuses.md\",\n    \"line\": \"54\",\n    \"status\": \" \",\n    \"text\": \"- [ ] A task with a block id ^task-block\"\n  },\n  {\n    \"file\": \"templates/Daily.md\",\n    \"line\": \"12\",\n    \"status\": \" \",\n    \"text\": \"- [ ]\"\n  }\n]\n",
+    "stderr": "",
+    "error": null,
+    "parsed": [
+      {
+        "file": "daily/2026-10-25.md",
+        "line": "45",
+        "status": " ",
+        "text": "- [ ] Run the reference harness"
+      },
+      {
+        "file": "projects/Project Alpha.md",
+        "line": "16",
+        "status": " ",
+        "text": "- [ ] Draft the plan"
+      },
+      {
+        "file": "projects/Project Beta.md",
+        "line": "18",
+        "status": " ",
+        "text": "- [ ] Find a name"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "21",
+        "status": " ",
+        "text": "- [ ] call the plumber tomorrow"
+      },
+      {
+        "file": "search/Search Corpus.md",
+        "line": "23",
+        "status": " ",
+        "text": "- [ ] email the team"
+      },
+      {
+        "file": "syntax/Bidirectional Text.md",
+        "line": "12",
+        "status": " ",
+        "text": "- [ ] משימה בעברית"
+      },
+      {
+        "file": "syntax/Line Endings.md",
+        "line": "8",
+        "status": " ",
+        "text": "- [ ] A task"
+      },
+      {
+        "file": "tagging/Tags.md",
+        "line": "17",
+        "status": " ",
+        "text": "- [ ] A task #task-tag"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "6",
+        "status": " ",
+        "text": "- [ ] To do"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "33",
+        "status": " ",
+        "text": "- [ ] Parent"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "35",
+        "status": " ",
+        "text": "- [ ] Child open"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "40",
+        "status": " ",
+        "text": "1. [ ] Numbered task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "41",
+        "status": " ",
+        "text": "* [ ] Star bullet task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "42",
+        "status": " ",
+        "text": "+ [ ] Plus bullet task"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "44",
+        "status": " ",
+        "text": "> - [ ] Task in a quote"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "47",
+        "status": " ",
+        "text": "> - [ ] Task in a callout"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "51",
+        "status": " ",
+        "text": "- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "52",
+        "status": " ",
+        "text": "- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]"
+      },
+      {
+        "file": "tasks/Task Statuses.md",
+        "line": "54",
+        "status": " ",
+        "text": "- [ ] A task with a block id ^task-block"
+      },
+      {
+        "file": "templates/Daily.md",
+        "line": "12",
+        "status": " ",
+        "text": "- [ ]"
+      }
+    ]
+  },
+  "tasks total": {
+    "command": "tasks",
+    "args": [
+      "total"
+    ],
+    "exit_code": 0,
+    "stdout": "55\n",
+    "stderr": "",
+    "error": null
+  },
+  "tasks verbose": {
+    "command": "tasks",
+    "args": [
+      "verbose"
+    ],
+    "exit_code": 0,
+    "stdout": "daily/2026-10-23.md\n16\t- [x] Water the plants\n\ndaily/2026-10-24.md\n28\t- [x] Write the fixture notes\n29\t- [x] Check the links\n\ndaily/2026-10-25.md\n44\t- [x] Review the plan\n45\t- [ ] Run the reference harness\n46\t- [/] Compare the graph\n\nprojects/Project Alpha.md\n16\t- [ ] Draft the plan\n17\t- [x] Pick the name\n\nprojects/Project Beta.md\n18\t- [ ] Find a name\n\nprojects/Project Gamma.md\n15\t- [x] Ship it\n\nsearch/Search Corpus.md\n21\t- [ ] call the plumber tomorrow\n22\t- [x] call the bank\n23\t- [ ] email the team\n\nsyntax/Bidirectional Text.md\n12\t- [ ] משימה בעברית\n13\t- [x] مهمة بالعربية\n\nsyntax/Line Endings.md\n8\t- [ ] A task\n9\t- [x] A finished task\n\ntagging/Tags.md\n17\t- [ ] A task #task-tag\n\ntasks/Task Statuses.md\n6\t- [ ] To do\n7\t- [x] Done\n8\t- [X] Done with a capital\n9\t- [/] In progress\n10\t- [-] Cancelled\n11\t- [>] Forwarded\n12\t- [<] Scheduled\n13\t- [?] Question\n14\t- [!] Important\n15\t- [*] Star\n16\t- [\"] Quote\n17\t- [l] Location\n18\t- [b] Bookmark\n19\t- [i] Information\n20\t- [S] Savings\n21\t- [I] Idea\n22\t- [p] Pro\n23\t- [c] Con\n24\t- [f] Fire\n25\t- [k] Key\n26\t- [w] Win\n27\t- [u] Up\n28\t- [d] Down\n33\t- [ ] Parent\n34\t- [x] Child done\n35\t- [ ] Child open\n36\t- [/] Grandchild\n40\t1. [ ] Numbered task\n41\t* [ ] Star bullet task\n42\t+ [ ] Plus bullet task\n44\t> - [ ] Task in a quote\n47\t> - [ ] Task in a callout\n51\t- [ ] Call the plumber #errand [[Dead End]] 🗓️ 2026-11-01\n52\t- [ ] Task with a tag #task-tag, a link [[Headings Target]] and a field [due:: 2026-11-02]\n53\t- [x] Completed [completion:: 2026-10-20]\n54\t- [ ] A task with a block id ^task-block\n\ntemplates/Daily.md\n12\t- [ ]\n",
+    "stderr": "",
+    "error": null
+  }
+}

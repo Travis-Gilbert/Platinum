@@ -1,0 +1,5 @@
+{
+  "pid": 47411,
+  "passed": false,
+  "error": "measurement window became occluded; frame-rate sample rejected"
+}

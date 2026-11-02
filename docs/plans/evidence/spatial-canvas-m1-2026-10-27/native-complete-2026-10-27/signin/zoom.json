@@ -1,0 +1,406 @@
+{
+  "baseline": {
+    "documentId": "1793129946881:0.3889029053060671",
+    "innerWidth": 1280,
+    "innerHeight": 800,
+    "devicePixelRatio": 1.40625,
+    "resizeCount": 0,
+    "resizeEvents": [],
+    "scrollX": 0,
+    "scrollY": 40,
+    "cookie": "frame_canvas_session=m1",
+    "text": "I was halfway through",
+    "selectionStart": 8,
+    "selectionEnd": 8,
+    "selectionDirection": "none",
+    "textareaScrollTop": 0,
+    "focused": "draft",
+    "input": {
+      "clicks": 0,
+      "hovers": 0,
+      "drag": null,
+      "wheel": 0,
+      "choice": "First",
+      "dialogs": [],
+      "escape": 0,
+      "space": 3
+    }
+  },
+  "steps": [
+    {
+      "rendered_zoom": 1.0,
+      "camera_applied": true,
+      "step": 0,
+      "zoom": 1.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "settled": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "resize_delta": 0,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 814.544625,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-0.png"
+    },
+    {
+      "rendered_zoom": 0.3499999940395355,
+      "camera_applied": true,
+      "step": 1,
+      "zoom": 0.35,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 0,
+        "resizeEvents": [],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "settled": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 0.699999988079071,
+        "resizeCount": 2,
+        "resizeEvents": [
+          {
+            "at": 3496.96,
+            "innerWidth": 2571,
+            "innerHeight": 1607,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3521.15,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "resize_delta": 2,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 1064.7085,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-1.png"
+    },
+    {
+      "rendered_zoom": 2.0,
+      "camera_applied": true,
+      "step": 2,
+      "zoom": 2.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 0.699999988079071,
+        "resizeCount": 2,
+        "resizeEvents": [
+          {
+            "at": 3496.96,
+            "innerWidth": 2571,
+            "innerHeight": 1607,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3521.15,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "settled": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 4,
+        "resizeEvents": [
+          {
+            "at": 3496.96,
+            "innerWidth": 2571,
+            "innerHeight": 1607,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3521.15,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 4563.55,
+            "innerWidth": 637,
+            "innerHeight": 398,
+            "devicePixelRatio": 1.40625
+          },
+          {
+            "at": 4588.44,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 1.40625
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "resize_delta": 4,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 823.0259159999999,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-2.png"
+    },
+    {
+      "rendered_zoom": 1.0,
+      "camera_applied": true,
+      "step": 3,
+      "zoom": 1.0,
+      "webview_id": "WebViewId(PainterId(1), (0,1))",
+      "navigation_starts": 0,
+      "same_webview": true,
+      "during_gesture": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 4,
+        "resizeEvents": [
+          {
+            "at": 3496.96,
+            "innerWidth": 2571,
+            "innerHeight": 1607,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3521.15,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 4563.55,
+            "innerWidth": 637,
+            "innerHeight": 398,
+            "devicePixelRatio": 1.40625
+          },
+          {
+            "at": 4588.44,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 1.40625
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "settled": {
+        "documentId": "1793129946881:0.3889029053060671",
+        "innerWidth": 1280,
+        "innerHeight": 800,
+        "devicePixelRatio": 1.40625,
+        "resizeCount": 4,
+        "resizeEvents": [
+          {
+            "at": 3496.96,
+            "innerWidth": 2571,
+            "innerHeight": 1607,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 3521.15,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 0.699999988079071
+          },
+          {
+            "at": 4563.55,
+            "innerWidth": 637,
+            "innerHeight": 398,
+            "devicePixelRatio": 1.40625
+          },
+          {
+            "at": 4588.44,
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "devicePixelRatio": 1.40625
+          }
+        ],
+        "scrollX": 0,
+        "scrollY": 40,
+        "cookie": "frame_canvas_session=m1",
+        "text": "I was halfway through",
+        "selectionStart": 8,
+        "selectionEnd": 8,
+        "selectionDirection": "none",
+        "textareaScrollTop": 0,
+        "focused": "draft",
+        "input": {
+          "clicks": 0,
+          "hovers": 0,
+          "drag": null,
+          "wheel": 0,
+          "choice": "First",
+          "dialogs": [],
+          "escape": 0,
+          "space": 3
+        }
+      },
+      "resize_delta": 4,
+      "width_drift": 0,
+      "height_drift": 0,
+      "elapsed_ms": 805.8122500000001,
+      "screenshot": "/Volumes/SSD Samsung/frame-worktrees/spatial-canvas/docs/plans/evidence/spatial-canvas-m1-2026-10-27/native-complete-2026-10-27/signin/step-3.png"
+    }
+  ],
+  "passed": false,
+  "expected_blocker": "R1"
+}

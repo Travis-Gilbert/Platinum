@@ -1,0 +1,29 @@
+{
+  "name": "servo-webview",
+  "cwd": "/Volumes/SSD Samsung/frame-deps/servo-r1",
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "servo",
+    "--test",
+    "webview",
+    "--",
+    "test_set_viewport",
+    "test_resize",
+    "test_negative_resize",
+    "test_webview_resize",
+    "test_page_zoom",
+    "test_viewport",
+    "test_pinch_zoom",
+    "--test-threads=1"
+  ],
+  "exit_code": 101,
+  "elapsed_seconds": 5.165232666004158,
+  "environment": {
+    "TMPDIR": "/Volumes/SSD Samsung/tmp",
+    "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/servo-r1",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0"
+  }
+}

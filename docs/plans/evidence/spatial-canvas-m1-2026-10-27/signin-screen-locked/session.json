@@ -1,0 +1,38 @@
+{
+  "passed": false,
+  "webview_id": "WebViewId(PainterId(1), (0,1))",
+  "baseline": {
+    "documentId": "1793118570788:0.4194399860939725",
+    "innerWidth": 1280,
+    "innerHeight": 800,
+    "devicePixelRatio": 2,
+    "resizeCount": 0,
+    "resizeEvents": [],
+    "scrollX": 0,
+    "scrollY": 40,
+    "cookie": "frame_canvas_session=m1",
+    "text": "",
+    "selectionStart": 0,
+    "selectionEnd": 0,
+    "selectionDirection": "none",
+    "textareaScrollTop": 0,
+    "focused": "",
+    "input": {
+      "clicks": 0,
+      "hovers": 0,
+      "drag": null,
+      "wheel": 0,
+      "choice": "First",
+      "dialogs": [],
+      "escape": 0,
+      "space": 0
+    }
+  },
+  "checks": [
+    "text",
+    "caret",
+    "scroll",
+    "cookie",
+    "document_identity"
+  ]
+}

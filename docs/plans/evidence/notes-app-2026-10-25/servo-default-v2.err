@@ -1,0 +1,10 @@
+media check: document 0 HeadParsed
+media check: document 0 Complete
+[2026-10-26T03:40:56Z ERROR webgl::webgl_thread] Last GL operation failed: DetachShader(WebGLProgramId(1), WebGLShaderId(3))
+[2026-10-26T03:40:56Z ERROR webgl::webgl_thread] Last GL operation failed: DetachShader(WebGLProgramId(1), WebGLShaderId(2))
+[2026-10-26T03:40:56Z ERROR webgl::webgl_thread] Last GL operation failed: DetachShader(WebGLProgramId(1), WebGLShaderId(3))
+[2026-10-26T03:40:56Z ERROR webgl::webgl_thread] Last GL operation failed: DetachShader(WebGLProgramId(1), WebGLShaderId(2))
+[2026-10-26T03:40:56Z ERROR webgl::webgl_thread] Last GL operation failed: DetachShader(WebGLProgramId(1), WebGLShaderId(3))
+[2026-10-26T03:40:56Z ERROR webgl::webgl_thread] Last GL operation failed: DetachShader(WebGLProgramId(1), WebGLShaderId(2))
+UNSUPPORTED (log once): POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable and bound to sampler type (Float) - using zero texture because texture unloadable
+frame screenshot: $DARWIN_USER_TEMP_DIR/frame-media-svg-initial.png

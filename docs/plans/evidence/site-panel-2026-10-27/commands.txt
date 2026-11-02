@@ -1,0 +1,37 @@
+Site panel data lane, 2026-10-27. Worktree /Volumes/SSD Samsung/frame-worktrees/site-panel (feat/site-panel).
+
+Builds and tests use the shared wrapper, target dir /Volumes/SSD Samsung/cargo-targets/frame-canvas:
+
+  "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" cargo test --locked --bin frame
+      cargo-test-full.log      the whole output
+      cargo-test-results.txt   the test lines and the result line (72 passed; 0 failed)
+
+  "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" cargo build --locked --example site_panel_check
+      example-build-tail.txt   exit 0
+
+  "/Volumes/SSD Samsung/cargo-targets/frame-canvas.sh" cargo test --locked --bin frame site::tests::a_bigger -- --nocapture
+      palette-timing.txt       the palette of a 2000x1400 frame: 10.7 ms (unoptimized test build)
+
+The checks run the built example with the media runtime and a temporary profile:
+
+  TMPDIR="/Volumes/SSD Samsung/tmp" RUST_LOG=error script/media-env \
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/site_panel_check" \
+    --out docs/plans/evidence/site-panel-2026-10-27/fixture
+      fixture-check.txt        the output, PASS
+      fixture/index-light.json, fixture/index-dark.json, fixture/sparse.json
+
+  TMPDIR="/Volumes/SSD Samsung/tmp" RUST_LOG=error script/media-env \
+    "/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/examples/site_panel_check" \
+    https://www.vitsoe.com --settle 8 \
+    --out docs/plans/evidence/site-panel-2026-10-27/vitsoe
+      vitsoe-check.txt         the output
+      vitsoe/reading.json
+
+Earlier runs in cargo-targets/frame are not evidence. There, worktrees that link different Servo
+checkouts share artifact names, and this worktree's first build linked servo-config and the
+generated script bindings from a Servo without WebGL2 (servo-script failed with E0407/E0277/E0599).
+The coordinator moved the lanes to frame-canvas; everything above was run there, through the wrapper.
+
+document.fonts in this Servo (printed by the example before each reading):
+  fixture (file://): check undefined, status undefined, ready object, forEach function, size 0, FontFace undefined
+  vitsoe.com (https): check undefined, status undefined, ready object, forEach function, size 4, FontFace function
