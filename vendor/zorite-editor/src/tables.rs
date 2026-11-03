@@ -493,7 +493,7 @@ impl EditorState {
             .map_or(self.content.len(), |&s| s - 1);
         let old_caret = self.cursor_offset();
         let range = sep_start..sep_end;
-        self.record_edit(&range, &new_sep);
+        let edit = self.record_edit(&range, &new_sep);
         self.content = self.content[..sep_start].to_owned() + &new_sep + &self.content[sep_end..];
         let delta = new_sep.len() as isize - (sep_end - sep_start) as isize;
         let caret = if old_caret >= sep_end {
@@ -503,6 +503,7 @@ impl EditorState {
         };
         self.selected_range = caret..caret;
         self.remap_diagnostics(&range, new_sep.len());
+        self.emit_edit(edit, super::EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -540,11 +541,12 @@ impl EditorState {
         let new_row = format!("\n|{}", "  |".repeat(cols));
         let pos = self.line_end(after);
         let range = pos..pos;
-        self.record_edit(&range, &new_row);
+        let edit = self.record_edit(&range, &new_row);
         self.content = self.content[..pos].to_owned() + &new_row + &self.content[pos..];
         self.remap_diagnostics(&range, new_row.len());
         self.selected_range = (pos + 3)..(pos + 3); // first cell, after "\n| "
         self.table_menu = None;
+        self.emit_edit(edit, super::EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -572,7 +574,7 @@ impl EditorState {
             (start.saturating_sub(1), line_end)
         };
         let range = del_start..del_end;
-        self.record_edit(&range, "");
+        let edit = self.record_edit(&range, "");
         self.content = self.content[..del_start].to_owned() + &self.content[del_end..];
         self.remap_diagnostics(&range, 0);
         // Stay at the same cell/offset, on the row now at this position (shifted
@@ -585,6 +587,7 @@ impl EditorState {
         let caret = self.caret_pos_for_cell(target, cell, in_cell);
         self.selected_range = caret..caret;
         self.table_menu = None;
+        self.emit_edit(edit, super::EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -615,7 +618,7 @@ impl EditorState {
             (starts[first].saturating_sub(1), line_end_last)
         };
         let range = del_start..del_end;
-        self.record_edit(&range, "");
+        let edit = self.record_edit(&range, "");
         self.content = self.content[..del_start].to_owned() + &self.content[del_end..];
         self.remap_diagnostics(&range, 0);
         let caret = del_start.min(self.content.len());
@@ -623,6 +626,7 @@ impl EditorState {
         self.selection_reversed = false;
         self.goal_x = None;
         self.table_menu = None;
+        self.emit_edit(edit, super::EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -656,12 +660,13 @@ impl EditorState {
         let insert = format!("\n{line}");
         let pos = self.line_end(after);
         let range = pos..pos;
-        self.record_edit(&range, &insert);
+        let edit = self.record_edit(&range, &insert);
         self.content = self.content[..pos].to_owned() + &insert + &self.content[pos..];
         self.remap_diagnostics(&range, insert.len());
         let caret = self.caret_pos_for_cell(after + 1, cell, in_cell);
         self.selected_range = caret..caret;
         self.table_menu = None;
+        self.emit_edit(edit, super::EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -717,7 +722,7 @@ impl EditorState {
             (None, false) => 1,
             _ => 0,
         };
-        self.record_edit(&range, &new);
+        let edit = self.record_edit(&range, &new);
         self.content.replace_range(range.clone(), &new);
         self.remap_diagnostics(&range, new.len());
         let caret = match cell_pos {
@@ -742,6 +747,7 @@ impl EditorState {
         let caret = caret.min(self.content.len());
         self.selected_range = caret..caret;
         self.table_menu = None;
+        self.emit_edit(edit, super::EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -899,12 +905,13 @@ impl EditorState {
             return;
         };
         let at = if right { cell + 1 } else { cell };
-        if self.rewrite_table_columns(ColEdit::Insert(at)) {
+        if let Some(edit) = self.rewrite_table_columns(ColEdit::Insert(at)) {
             // Inserting to the left shifts the caret's cell one column right.
             let new_cell = if right { cell } else { cell + 1 };
             let caret = self.caret_pos_for_cell(row, new_cell, in_cell);
             self.selected_range = caret..caret;
             self.table_menu = None;
+            self.emit_edit(edit, super::EditOrigin::Local, cx);
             cx.emit(EditorEvent::Changed);
             cx.notify();
         }
@@ -916,21 +923,22 @@ impl EditorState {
         let Some((row, cell, in_cell)) = self.caret_table_cell_pos() else {
             return;
         };
-        if self.rewrite_table_columns(ColEdit::Delete(cell)) {
+        if let Some(edit) = self.rewrite_table_columns(ColEdit::Delete(cell)) {
             let caret = self.caret_pos_for_cell(row, cell, in_cell);
             self.selected_range = caret..caret;
             self.table_menu = None;
+            self.emit_edit(edit, super::EditOrigin::Local, cx);
             cx.emit(EditorEvent::Changed);
             cx.notify();
         }
     }
 
     /// Rewrite every row of the caret's table to insert/delete a cell, normalizing
-    /// cell spacing. Returns `false` (no edit) outside a table or when a delete
+    /// cell spacing. Returns `None` (no edit) outside a table or when a delete
     /// would remove the last column; the caller restores the caret.
-    fn rewrite_table_columns(&mut self, edit: ColEdit) -> bool {
+    fn rewrite_table_columns(&mut self, edit: ColEdit) -> Option<super::TextEdit> {
         let Some((header, sep, end, _cols)) = self.caret_table_block() else {
-            return false;
+            return None;
         };
         let lines: Vec<&str> = self.content.split('\n').collect();
         let mut new_rows: Vec<String> = Vec::with_capacity(end - header);
@@ -947,7 +955,7 @@ impl EditorState {
                 ),
                 ColEdit::Delete(c) => {
                     if cells.len() <= 1 || c >= cells.len() {
-                        return false; // never delete the last column
+                        return None; // never delete the last column
                     }
                     cells.remove(c);
                 }
@@ -959,11 +967,11 @@ impl EditorState {
         let block_end = self.line_end(end - 1);
         let new_block = new_rows.join("\n");
         let range = block_start..block_end;
-        self.record_edit(&range, &new_block);
+        let edit = self.record_edit(&range, &new_block);
         self.content =
             self.content[..block_start].to_owned() + &new_block + &self.content[block_end..];
         self.remap_diagnostics(&range, new_block.len());
-        true
+        Some(edit)
     }
 }
 

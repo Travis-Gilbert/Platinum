@@ -5,7 +5,7 @@
 //! nothing, so any markdown behavior added here must be checked there and
 //! vice versa. See AGENTS.md "The three views".)
 //!
-//! Host-agnostic — depends only on `gpui` (+ `unicode-segmentation`); no
+//! Host-agnostic — uses `gpui`, `unicode-segmentation` and `str_indices`; no
 //! `gpui-component`. Built directly on gpui's text primitives: an
 //! [`EntityInputHandler`] for keyboard + IME input, `shape_line` for per-line
 //! text shaping, and a custom [`Element`] that lays out + paints the lines,
@@ -29,6 +29,12 @@
 //!
 //! Usage: create an [`EditorState`] entity and render it; call [`bind_keys`]
 //! once at startup so the editing actions resolve while it's focused.
+
+#[cfg(test)]
+mod authority_tests;
+
+mod authority;
+pub use authority::{BufferEdit, EditOrigin, HistoryAction, RemoteEditError, TextEdit};
 
 use std::ops::Range;
 use std::sync::Arc;
@@ -494,6 +500,16 @@ impl TableMenuAction {
 /// `cx.subscribe(&editor, …)` — e.g. to re-run spell-check after an edit.
 #[derive(Clone, Debug, PartialEq)]
 pub enum EditorEvent {
+    /// Lossless byte replacement, including loads and standalone undo/redo.
+    /// Remote edits never echo here. Subscribe to this instead of diffing `Changed`.
+    Edited(BufferEdit),
+    /// Hosted undo/redo. Call the document authority, then `apply_remote` with
+    /// these generation-tagged replacements. Failure leaves the buffer unchanged.
+    HistoryRequested {
+        action: HistoryAction,
+        generation: u64,
+    },
+
     /// The document text changed via a user edit (typing, delete, paste, IME,
     /// applying a suggestion). Not emitted for programmatic `set_text`.
     Changed,
@@ -770,6 +786,8 @@ pub struct EditorState {
     focus_handle: FocusHandle,
     /// The whole document, newline-separated. Byte offsets index into this.
     content: String,
+    /// Host owns persistence and history; this buffer is its synchronous projection.
+    hosted: bool,
     placeholder: SharedString,
     /// Selection as a byte range; the caret is one end (see [`Self::cursor_offset`]).
     selected_range: Range<usize>,
@@ -994,14 +1012,12 @@ pub struct EditorState {
     /// but different heights means an async (non-edit) height change, the
     /// scroll-anchoring trigger.
     last_paint_gen: u64,
-    /// Bumped on every content mutation — cheap staleness key for caches
-    /// (the UTF-16 conversion anchor below; a shape cache later).
+    /// Bumped on every content mutation — staleness key for scan/shape caches,
+    /// the UTF-16 anchor, and authority responses.
     content_gen: u64,
-    /// Resume point for UTF-8↔UTF-16 conversion: `(generation, utf8, utf16)`
-    /// of the last converted offset. IME composition fires conversions many
-    /// times per keystroke, clustered near the caret — resuming from the
-    /// anchor makes them O(distance) instead of O(document) (CJK latency
-    /// grew with note size; found auditing against Cditor's per-block IME).
+    /// Last normalized (generation, byte, UTF-16) boundary. IME queries reuse
+    /// a matching-generation prefix; counting is always delegated to str_indices.
+    /// Constant space: no retained text or index, invalidated on every mutation.
     utf16_anchor: std::cell::Cell<(u64, usize, usize)>,
     /// A `$$…$$` block being edited in-line: its byte range + the host-supplied view (the
     /// structural editor) painted in a reserved gap at the block's spot. `None` = none.
@@ -1074,6 +1090,7 @@ impl EditorState {
         Self {
             focus_handle: cx.focus_handle(),
             content: String::new(),
+            hosted: false,
             placeholder: SharedString::default(),
             selected_range: 0..0,
             selection_reversed: false,
@@ -1171,7 +1188,12 @@ impl EditorState {
 
     /// Builder: start with the given text (caret at the start).
     pub fn with_text(mut self, text: impl Into<String>) -> Self {
-        self.content = normalize_loaded(text.into());
+        self.content_gen += 1;
+        self.content = if self.hosted {
+            text.into()
+        } else {
+            normalize_loaded(text.into())
+        };
         let caret = caret_off_marker_line(&self.content, 0);
         self.selected_range = caret..caret;
         self
@@ -1193,6 +1215,16 @@ impl EditorState {
     /// undo history, so a host writing back a structural edit (e.g. a committed `$$…$$`
     /// formula) lands as a normal undo step rather than clobbering the history.
     pub fn replace_range(&mut self, range: Range<usize>, text: &str, cx: &mut Context<Self>) {
+        self.replace_range_selected(range, text, None, cx);
+    }
+
+    fn replace_range_selected(
+        &mut self,
+        range: Range<usize>,
+        text: &str,
+        selection: Option<Range<usize>>,
+        cx: &mut Context<Self>,
+    ) {
         // Snap to char boundaries (start down, end up) so a stale/shifted range — e.g. one
         // captured before a prior formula commit moved the bytes — can't panic mid-UTF-8.
         let len = self.content.len();
@@ -1205,22 +1237,28 @@ impl EditorState {
             end += 1;
         }
         let range = start..end;
-        self.record_edit(&range, text);
+        let edit = self.record_edit(&range, text);
         self.content.replace_range(range.clone(), text);
         self.remap_diagnostics(&range, text.len());
         let caret = range.start + text.len();
-        self.selected_range = caret..caret;
+        self.selected_range = selection.unwrap_or(caret..caret);
         self.selection_reversed = false;
         self.marked_range = None;
         // Don't coalesce a following keystroke into this structural replacement.
         self.last_edit = EditKind::Other;
+        self.emit_edit(edit, EditOrigin::Local, cx);
         cx.notify();
     }
 
     /// Replace the whole document; resets the caret to the start.
     pub fn set_text(&mut self, text: impl Into<String>, cx: &mut Context<Self>) {
+        let range = 0..self.content.len();
         self.content_gen += 1;
-        self.content = normalize_loaded(text.into());
+        self.content = if self.hosted {
+            text.into()
+        } else {
+            normalize_loaded(text.into())
+        };
         // Never park the loaded caret on a collapsed marker line (`<!-- table/
         // math:… -->`): the first focus would reveal it raw mid-interaction.
         // This is the ONE passive parking path — every other caret write is a
@@ -1233,6 +1271,14 @@ impl EditorState {
         self.undo_stack.clear();
         self.redo_stack.clear();
         self.last_edit = EditKind::Other;
+        self.emit_edit(
+            TextEdit {
+                range,
+                text: self.content.clone(),
+            },
+            EditOrigin::Load,
+            cx,
+        );
         cx.notify();
     }
 
@@ -1417,7 +1463,7 @@ impl EditorState {
     /// Run the host's auto-replace hook after a boundary character landed at
     /// `boundary` (the byte offset of the char itself). Applies the returned
     /// replacement as its own undo step and shifts the caret by the growth.
-    fn apply_auto_replace(&mut self, boundary: usize) {
+    fn apply_auto_replace(&mut self, boundary: usize, cx: &mut Context<Self>) {
         let Some(f) = self.auto_replace.as_ref() else {
             return;
         };
@@ -1441,7 +1487,7 @@ impl EditorState {
             // onto their own lines (issue #54: the formula renders display,
             // the words stay VISIBLE — nothing is ever hidden). Paragraph-
             // bounded, one recorded edit.
-            self.normalize_math_at(row);
+            self.normalize_math_at(row, cx);
             return;
         };
         if r.start >= r.end || r.end > line.len() {
@@ -1449,12 +1495,13 @@ impl EditorState {
         }
         let abs = line_start + r.start..line_start + r.end;
         let delta = replacement.len() as isize - abs.len() as isize;
-        self.record_edit(&abs, &replacement);
+        let edit = self.record_edit(&abs, &replacement);
         self.content =
             self.content[..abs.start].to_owned() + &replacement + &self.content[abs.end..];
         self.remap_diagnostics(&abs, replacement.len());
         let caret = (self.selected_range.start as isize + delta) as usize;
         self.selected_range = caret..caret;
+        self.emit_edit(edit, EditOrigin::Local, cx);
     }
 
     /// Begin an in-line structural edit of the `$$…$$` block at `range`: reserve a gap at
@@ -2529,20 +2576,27 @@ impl EditorState {
                     sel.start + ol..sel.end + ol,
                 )
             };
-        self.splice(range, new, new_sel);
+        self.splice(range, new, new_sel, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
 
     /// The edit every wrap/unwrap ends in: replace `range` with `new`, select
     /// `new_sel`, keep undo and diagnostics in step. Callers emit `Changed`.
-    fn splice(&mut self, range: Range<usize>, new: String, new_sel: Range<usize>) {
-        self.record_edit(&range, &new);
+    fn splice(
+        &mut self,
+        range: Range<usize>,
+        new: String,
+        new_sel: Range<usize>,
+        cx: &mut Context<Self>,
+    ) {
+        let edit = self.record_edit(&range, &new);
         self.content.replace_range(range.clone(), &new);
         self.selected_range = new_sel;
         self.selection_reversed = false;
         self.goal_x = None;
         self.remap_diagnostics(&range, new.len());
+        self.emit_edit(edit, EditOrigin::Local, cx);
     }
 
     /// Is the selection wrapped by `open`…`close` — the markers just inside or
@@ -2558,7 +2612,7 @@ impl EditorState {
     /// Strip a `kind`-colored tag wrapping the selection (just inside or just
     /// outside it), whatever its color. `true` when one was removed; the
     /// caller emits `Changed`.
-    fn strip_color(&mut self, kind: ColorKind) -> bool {
+    fn strip_color(&mut self, kind: ColorKind, cx: &mut Context<Self>) -> bool {
         use zorite_markdown::syntax::{StyledKind, styled_tag};
         let sel = self.selected_range.clone();
         if sel.is_empty() {
@@ -2578,7 +2632,7 @@ impl EditorState {
         {
             let inner = self.content[sel.clone()].to_string();
             let len = inner.len();
-            self.splice(lt..sel.end + close.len(), inner, lt..lt + len);
+            self.splice(lt..sel.end + close.len(), inner, lt..lt + len, cx);
             return true;
         }
         // Markers just inside: the selection IS `<span …>body</span>`.
@@ -2591,7 +2645,7 @@ impl EditorState {
         {
             let inner = text[gt + 1..text.len() - close.len()].to_string();
             let len = inner.len();
-            self.splice(sel.clone(), inner, sel.start..sel.start + len);
+            self.splice(sel.clone(), inner, sel.start..sel.start + len, cx);
             return true;
         }
         false
@@ -2606,7 +2660,7 @@ impl EditorState {
         if self.selected_range.is_empty() {
             return;
         }
-        let stripped = self.strip_color(kind);
+        let stripped = self.strip_color(kind, cx);
         if kind == ColorKind::Highlight && self.wrapped_by("==", "==") {
             self.toggle_wrap_pair("==", "==", cx);
         }
@@ -2632,7 +2686,7 @@ impl EditorState {
     /// ⌘⇧H: toggle the plain `==…==` highlight on the selection. A colored
     /// highlight already on it gives way to the plain one.
     fn highlight(&mut self, _: &Highlight, _: &mut Window, cx: &mut Context<Self>) {
-        self.strip_color(ColorKind::Highlight);
+        self.strip_color(ColorKind::Highlight, cx);
         self.toggle_wrap("==", cx);
     }
 
@@ -2800,7 +2854,7 @@ impl EditorState {
             }
             _ => (line_start..line_start, indent),
         };
-        self.record_edit(&range, &new_text);
+        let edit = self.record_edit(&range, &new_text);
         let delta = new_text.len() as isize - (range.end - range.start) as isize;
         self.content.replace_range(range.clone(), &new_text);
         let caret = (cursor as isize + delta).max(line_start as isize) as usize;
@@ -2808,6 +2862,7 @@ impl EditorState {
         self.selection_reversed = false;
         self.goal_x = None;
         self.remap_diagnostics(&range, new_text.len());
+        self.emit_edit(edit, EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -2837,13 +2892,14 @@ impl EditorState {
             return;
         }
         let range = line_start..line_start + removed;
-        self.record_edit(&range, "");
+        let edit = self.record_edit(&range, "");
         self.content.replace_range(range.clone(), "");
         let caret = cursor.saturating_sub(removed).max(line_start);
         self.selected_range = caret..caret;
         self.selection_reversed = false;
         self.goal_x = None;
         self.remap_diagnostics(&range, 0);
+        self.emit_edit(edit, EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -2984,18 +3040,32 @@ impl EditorState {
     // --- Undo / redo ---------------------------------------------------------
 
     fn undo(&mut self, _: &Undo, _: &mut Window, cx: &mut Context<Self>) {
+        if self.hosted {
+            cx.emit(EditorEvent::HistoryRequested {
+                action: HistoryAction::Undo,
+                generation: self.content_gen,
+            });
+            return;
+        }
         if let Some(prev) = self.undo_stack.pop() {
             self.redo_stack.push(self.snapshot());
-            self.restore(prev);
+            self.restore(prev, cx);
             self.last_edit = EditKind::Other;
             cx.notify();
         }
     }
 
     fn redo(&mut self, _: &Redo, _: &mut Window, cx: &mut Context<Self>) {
+        if self.hosted {
+            cx.emit(EditorEvent::HistoryRequested {
+                action: HistoryAction::Redo,
+                generation: self.content_gen,
+            });
+            return;
+        }
         if let Some(next) = self.redo_stack.pop() {
             self.undo_stack.push(self.snapshot());
-            self.restore(next);
+            self.restore(next, cx);
             self.last_edit = EditKind::Other;
             cx.notify();
         }
@@ -3010,19 +3080,28 @@ impl EditorState {
         }
     }
 
-    fn restore(&mut self, s: Snapshot) {
+    fn restore(&mut self, s: Snapshot, cx: &mut Context<Self>) {
+        let range = 0..self.content.len();
         self.content_gen += 1;
         self.content = s.content;
         let caret = s.caret.min(self.content.len());
         self.selected_range = caret..caret;
         self.selection_reversed = false;
         self.marked_range = None;
+        self.emit_edit(
+            TextEdit {
+                range,
+                text: self.content.clone(),
+            },
+            EditOrigin::Local,
+            cx,
+        );
     }
 
     /// Snapshot the pre-edit state for undo, coalescing a run of single-grapheme
     /// inserts (or a run of deletes) into one undo step so typing isn't undone
     /// one character at a time.
-    fn record_edit(&mut self, range: &Range<usize>, new_text: &str) {
+    fn record_edit(&mut self, range: &Range<usize>, new_text: &str) -> TextEdit {
         self.content_gen += 1;
         let kind = if new_text.is_empty() {
             EditKind::Delete
@@ -3039,7 +3118,7 @@ impl EditorState {
             (EditKind::Delete, EditKind::Delete) => true,
             _ => false,
         };
-        if !coalesce {
+        if !self.hosted && !coalesce {
             self.undo_stack.push(self.snapshot());
             if self.undo_stack.len() > UNDO_LIMIT {
                 self.undo_stack.remove(0);
@@ -3052,6 +3131,10 @@ impl EditorState {
         // table ops, …) are not, so auto-pairing skips them.
         self.last_edit_keystroke = (new_text != "\n" && new_text.graphemes(true).count() == 1)
             || (new_text.is_empty() && self.content[range.clone()].graphemes(true).count() == 1);
+        TextEdit {
+            range: range.clone(),
+            text: new_text.to_owned(),
+        }
     }
 
     // --- Mouse ---------------------------------------------------------------
@@ -3246,10 +3329,11 @@ impl EditorState {
             if let Some(new_line) =
                 markdown_syntax::toggle_task_checkbox(&self.content[range.clone()])
             {
-                self.record_edit(&range, &new_line);
+                let edit = self.record_edit(&range, &new_line);
                 self.content =
                     self.content[..range.start].to_owned() + &new_line + &self.content[range.end..];
                 self.remap_diagnostics(&range, new_line.len());
+                self.emit_edit(edit, EditOrigin::Local, cx);
                 cx.emit(EditorEvent::Changed);
                 cx.notify();
             }
@@ -3278,9 +3362,10 @@ impl EditorState {
             if let Some((at, folded)) = zorite_markdown::syntax::alert_fold_char(line) {
                 let range = start + at..start + at + 1;
                 let repl = if folded { "+" } else { "-" };
-                self.record_edit(&range, repl);
+                let edit = self.record_edit(&range, repl);
                 self.content.replace_range(range.clone(), repl);
                 self.remap_diagnostics(&range, 1);
+                self.emit_edit(edit, EditOrigin::Local, cx);
                 cx.emit(EditorEvent::Changed);
                 cx.notify();
             }
@@ -3788,7 +3873,7 @@ impl EditorState {
         }
         let range = start..end;
         let delta = new_line.len() as isize - (end - start) as isize;
-        self.record_edit(&range, &new_line);
+        let edit = self.record_edit(&range, &new_line);
         self.content = self.content[..start].to_owned() + &new_line + &self.content[end..];
         self.remap_diagnostics(&range, new_line.len());
         // The line just grew/shrank by `delta` — shift a caret at/after its old
@@ -3804,6 +3889,7 @@ impl EditorState {
             }
         };
         self.selected_range = remap(self.selected_range.start)..remap(self.selected_range.end);
+        self.emit_edit(edit, EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -3990,7 +4076,7 @@ impl EditorState {
     /// Run the shared math-fence normalizer over the paragraph containing
     /// `row` (blank-line bounded), splicing only when it changes something.
     /// One recorded (undoable) edit; the caret shifts with the insertion.
-    fn normalize_math_at(&mut self, row: usize) {
+    fn normalize_math_at(&mut self, row: usize, cx: &mut Context<Self>) {
         if self.markdown_style.is_none() {
             return;
         }
@@ -4016,7 +4102,7 @@ impl EditorState {
         };
         let old_caret = self.selected_range.start;
         let delta = normalized.len() as isize - (span.end - span.start) as isize;
-        self.record_edit(&span, &normalized);
+        let edit = self.record_edit(&span, &normalized);
         self.content =
             self.content[..span.start].to_owned() + &normalized + &self.content[span.end..];
         self.remap_diagnostics(&span, normalized.len());
@@ -4030,6 +4116,7 @@ impl EditorState {
         let caret = caret.min(self.content.len());
         self.selected_range = caret..caret;
         self.last_edit = EditKind::Other;
+        self.emit_edit(edit, EditOrigin::Local, cx);
     }
 
     /// Replace `range` with a chosen suggestion and close the menu.
@@ -4380,9 +4467,8 @@ impl EditorState {
             if t < n {
                 new.push('\n');
             }
-            self.replace_range(block_start..target_off, &new, cx);
             let caret = block_start + rest_len;
-            self.selected_range = caret..caret;
+            self.replace_range_selected(block_start..target_off, &new, Some(caret..caret), cx);
         } else {
             // Up: [between... block] → [block \n between...]
             let target_off = starts[t];
@@ -4390,8 +4476,12 @@ impl EditorState {
             let mut new = block_text.clone();
             new.push('\n');
             new.push_str(&between[..between.len().saturating_sub(1)]);
-            self.replace_range(target_off..block_end, &new, cx);
-            self.selected_range = target_off..target_off;
+            self.replace_range_selected(
+                target_off..block_end,
+                &new,
+                Some(target_off..target_off),
+                cx,
+            );
         }
         cx.emit(EditorEvent::Changed);
     }
@@ -4872,12 +4962,12 @@ impl EditorState {
         }
         let indent = &line[..line.len() - trimmed.len()];
         let new_line = format!("{indent}```{}", if lang == "text" { "" } else { lang });
-        self.replace_range(start..end, &new_line, cx);
         // replace_range parks the caret at the fence line's end, which reveals
         // the raw ``` marker (reveal-on-caret). Step onto the body's first
         // line instead so the fence stays hidden.
-        let caret = (start + new_line.len() + 1).min(self.content.len());
-        self.selected_range = caret..caret;
+        let new_len = self.content.len() - (end - start) + new_line.len();
+        let caret = (start + new_line.len() + 1).min(new_len);
+        self.replace_range_selected(start..end, &new_line, Some(caret..caret), cx);
         cx.emit(EditorEvent::Changed);
     }
 
@@ -4980,41 +5070,34 @@ impl EditorState {
     // --- UTF-16 + grapheme boundaries (IME / cursor movement) ----------------
 
     fn offset_from_utf16(&self, offset: usize) -> usize {
-        let (mut utf8, mut utf16) = self.utf16_resume(offset, false);
-        for ch in self.content[utf8..].chars() {
-            if utf16 >= offset {
-                break;
-            }
-            utf16 += ch.len_utf16();
-            utf8 += ch.len_utf8();
-        }
-        self.utf16_anchor.set((self.content_gen, utf8, utf16));
-        utf8
+        let (byte, unit) = self.utf16_resume(offset, false);
+        let tail = &self.content[byte..];
+        let relative_byte = str_indices::utf16::to_byte_idx(tail, offset - unit);
+        // The requested unit may be past the end or inside a surrogate pair.
+        // Save the actual boundary's units, never the unnormalized request.
+        let unit = unit + str_indices::utf16::count(&tail[..relative_byte]);
+        let byte = byte + relative_byte;
+        self.utf16_anchor.set((self.content_gen, byte, unit));
+        byte
     }
 
     fn offset_to_utf16(&self, offset: usize) -> usize {
-        let (mut utf8, mut utf16) = self.utf16_resume(offset, true);
-        for ch in self.content[utf8..].chars() {
-            if utf8 >= offset {
-                break;
-            }
-            utf8 += ch.len_utf8();
-            utf16 += ch.len_utf16();
-        }
-        self.utf16_anchor.set((self.content_gen, utf8, utf16));
-        utf16
+        let offset = self
+            .content
+            .floor_char_boundary(offset.min(self.content.len()));
+        let (byte, unit) = self.utf16_resume(offset, true);
+        let unit = unit + str_indices::utf16::from_byte_idx(&self.content[byte..], offset - byte);
+        self.utf16_anchor.set((self.content_gen, offset, unit));
+        unit
     }
 
-    /// Where a conversion can start: the saved anchor when it's from the
-    /// current content generation and at/before the target (`by_utf8` picks
-    /// which unit the target is in), else the document start. IME composition
-    /// converts monotonically-close offsets many times per keystroke, so this
-    /// turns O(document) scans into O(distance-from-anchor).
-    fn utf16_resume(&self, target: usize, by_utf8: bool) -> (usize, usize) {
-        let (generation, utf8, utf16) = self.utf16_anchor.get();
-        let anchor_pos = if by_utf8 { utf8 } else { utf16 };
-        if generation == self.content_gen && anchor_pos <= target && utf8 <= self.content.len() {
-            (utf8, utf16)
+    /// Resume only for the same text and a target at/after the saved boundary;
+    /// backward queries count from the document start. This selects a slice,
+    /// not a character scanner: str_indices owns all counting and conversion.
+    fn utf16_resume(&self, target: usize, by_byte: bool) -> (usize, usize) {
+        let (generation, byte, unit) = self.utf16_anchor.get();
+        if generation == self.content_gen && (if by_byte { byte } else { unit }) <= target {
+            (byte, unit)
         } else {
             (0, 0)
         }
@@ -5199,7 +5282,7 @@ impl EntityInputHandler for EditorState {
         // diff can't reconstruct when the selection starts with the typed char.
         self.last_replaced =
             (range.start < range.end).then(|| self.content[range.clone()].to_string());
-        self.record_edit(&range, new_text);
+        let edit = self.record_edit(&range, new_text);
         self.content =
             self.content[0..range.start].to_owned() + new_text + &self.content[range.end..];
         let caret = range.start + new_text.len();
@@ -5210,8 +5293,9 @@ impl EntityInputHandler for EditorState {
         // Keep unaffected diagnostics valid across the edit (shift those after
         // it, drop those it overlapped); the host recomputes the edited region.
         self.remap_diagnostics(&range, new_text.len());
+        self.emit_edit(edit, EditOrigin::Local, cx);
         if word_boundary_input(new_text) {
-            self.apply_auto_replace(range.start);
+            self.apply_auto_replace(range.start, cx);
         }
         cx.emit(EditorEvent::Changed);
         cx.notify();
@@ -5230,7 +5314,13 @@ impl EntityInputHandler for EditorState {
             .map(|r| self.range_from_utf16(r))
             .or(self.marked_range.clone())
             .unwrap_or(self.selected_range.clone());
+        // Composition has always bypassed standalone snapshot history. It still
+        // emits every splice, so a hosted session can own composition history.
         self.content_gen += 1;
+        let edit = TextEdit {
+            range: range.clone(),
+            text: new_text.to_owned(),
+        };
         self.content =
             self.content[0..range.start].to_owned() + new_text + &self.content[range.end..];
         self.marked_range =
@@ -5252,6 +5342,7 @@ impl EntityInputHandler for EditorState {
                 caret..caret
             });
         self.remap_diagnostics(&range, new_text.len());
+        self.emit_edit(edit, EditOrigin::Local, cx);
         cx.emit(EditorEvent::Changed);
         cx.notify();
     }
@@ -6983,14 +7074,7 @@ struct ShapeMemo {
 /// `utf16` code units into `text`, as a byte offset — clamped to `text.len()`,
 /// and never inside a character.
 fn utf16_to_byte(text: &str, utf16: usize) -> usize {
-    let mut units = 0;
-    for (byte, ch) in text.char_indices() {
-        if units >= utf16 {
-            return byte;
-        }
-        units += ch.len_utf16();
-    }
-    text.len()
+    str_indices::utf16::to_byte_idx(text, utf16)
 }
 
 /// Whether a just-typed input completes a word: a single boundary character

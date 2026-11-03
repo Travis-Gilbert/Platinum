@@ -13,6 +13,8 @@ keywords = ["gpui", "editor", "markdown", "wysiwyg", "text-editor"]
 categories = ["gui", "text-editors"]
 
 [dependencies]
+# THEOREM PATCH: UTF-8/UTF-16 indexing, also used by ropey in the host.
+str_indices = "=0.4.4"
 # THEOREM PATCH: match Frame's patched GPUI snapshot.
 gpui = { package = "gpui-pre", version = "=0.3.9" }
 
@@ -33,4 +35,8 @@ gpui-bidi = { path = "../gpui-bidi", version = "0.1" }
 
 # `#[gpui::test]` + headless windows, using Frame's existing test feature.
 [dev-dependencies]
+# THEOREM PATCH: host offset fixtures and real Vault integration tests only.
+frame-notes = { path = "../../crates/notes" }
+# Existing workspace dependency; real Vault consumer regression tests.
+tempfile = "3"
 gpui = { package = "gpui-pre", version = "=0.3.9", features = ["test-support"] }

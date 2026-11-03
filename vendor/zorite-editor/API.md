@@ -5,6 +5,82 @@ with its signature, parameters, return contract, edge cases, and cost. For the
 what-and-why (the three views, quick start, the WYSIWYG opt-in recipe), see
 the [README](README.md).
 
+## Platinum authority seam (THEOREM PATCH)
+
+```rust
+pub fn set_hosted(&mut self, hosted: bool);
+pub fn generation(&self) -> u64;
+pub fn apply_remote(&mut self, generation: u64, edits: &[TextEdit],
+                    cx: &mut Context<Self>) -> Result<(), RemoteEditError>;
+
+pub struct TextEdit { pub range: Range<usize>, pub text: String }
+pub struct BufferEdit {
+    pub edit: TextEdit,
+    pub selection: Range<usize>,
+    pub selection_reversed: bool,
+    pub origin: EditOrigin, // Local | Load
+    pub generation: u64,   // AFTER this splice; base = generation - 1
+}
+// Added to EditorEvent:
+Edited(BufferEdit),
+HistoryRequested { action: HistoryAction, generation: u64 }, // Undo | Redo
+```
+
+Subscribe to `Edited` and `HistoryRequested`, call `set_hosted(true)` **before**
+`with_text`/`set_text`, and keep the subscription scoped to the opened note.
+The buffer is the authority's projection; there is no second document store or
+retained edit queue. `with_text` initializes a new value (no event); `set_text`
+is a load and emits one `Edited` with `origin: Load`. Loads preserve bytes in
+hosted mode, including BOMs, CRLF and inline `$$` fences. A host observes Load
+without submitting it as an edit to the session. Attaching/detaching clears
+local snapshots, and neither transition changes text.
+
+Each local splice emits exactly one `Edited`, after establishing its selection.
+Typing followed by auto-replacement, or a command with multiple splices, emits
+one event per splice in order. Apply each range to the **old text for that
+splice**, then take its post-edit selection; do not infer edits from `text()`
+when handling a deferred event, since later splices may already have landed.
+`Changed` remains the legacy coarse notification; do not feed both events to
+the authority. `Edited` also covers IME composition, load and standalone undo.
+All ranges are UTF-8 bytes, end exclusive; selection direction is separate.
+
+On a Local event, advance the host's current note through `Vault::edit` (its
+current API accepts whole text plus revision/operation identity). For session
+operations that take scalar positions, use `frame_notes::Offsets` on
+the **pre-edit** text: `byte_range_to_scalar`; use an Offsets for the resulting
+text for the selection. Reverse session ranges with `scalar_range_to_byte`.
+Mac input in the editor uses `str_indices::utf16::from_byte_idx` and
+`to_byte_idx` (0.4.4), the same indexing library used by the host's ropey-backed
+Offsets. A single `Cell<(generation, byte, utf16)>` retains the last normalized
+boundary in EditorState. For a matching generation and a target at/after it,
+str_indices converts only the suffix from the anchor; backward targets count
+from the start. Every splice, load and remote edit advances the generation,
+so queries cannot reuse an anchor for old text. Partial scalars/surrogates
+round down and past-end requests clamp before the normalized boundary is saved.
+The editor has no normal dependency on the application core.
+Host ranges convert with `byte_range_to_utf16`/`utf16_range_to_byte`.
+Combining characters and ZWJ components count as separate
+scalars, never as graphemes; graphemes remain the editor's cursor-step unit.
+
+Hosted keys and commands emit `HistoryRequested` instead of using snapshots.
+The host calls `Vault::undo`/`redo` and answers with `apply_remote` using the
+request's generation. A host may produce a full-range replacement from the
+returned document when it has no incremental changes. Authority failure must
+be surfaced by the host; do not call `set_text` or silently use local history.
+No host attached means the original snapshot/coalescing behavior, including
+composition bypassing snapshot capture, remains available.
+
+Remote batch ranges are sequential: edit N addresses the text after N-1.
+A stale generation or any invalid (reversed, out-of-bounds, mid-scalar) range
+returns an error and leaves all state untouched. Successful batches shift
+selection and IME endpoints with right affinity, preserve selection direction,
+drop an empty marked range, shift unaffected diagnostics and drop overlapping
+ones. They advance the generation once per edit, notify the view, emit **no**
+`Edited`/`Changed`, and do not alter either history stack. Reconcile/reload/reading
+view changes use this route, never `set_text`. Entity identity plus generation
+is the host's stale-result guard; do not replay an old response onto another note.
+
+
 ## Public API at a glance
 
 Everything below is the complete public surface — if it isn't listed here, it
@@ -84,7 +160,7 @@ crate root; nothing from `zorite-markdown` is re-exported.)
 | [`EditorState::copy_table`](#copy_table) | method | `fn copy_table(&mut self, cx: &mut Context<Self>)` | Whole table to the clipboard (markdown) |
 | [`EditorState::set_table_style`](#set_table_style) | method | `fn set_table_style(&mut self, name: Option<&'static str>, cx: &mut Context<Self>)` | Rewrite the table's style marker |
 | [`EditorState::color_selection`](#inline-color) | method | `fn color_selection(&mut self, kind: ColorKind, rgba: Option<u32>, cx: &mut Context<Self>)` | Color / highlight the selection (or clear it) |
-| [`EditorEvent`](#enum-editorevent) | enum | 10 variants | Everything the editor asks the host to do |
+| [`EditorEvent`](#enum-editorevent) | enum | 12 variants | Everything the editor asks the host to do |
 | [`SyntaxStyle`](#struct-syntaxstyle) | struct | 25 public fields | Colors + fonts + icon hooks for WYSIWYG — incl. `block_label: Option<Rc<dyn Fn(&str, &str) -> Option<String>>>` (block-link display resolver) + `block_label_gen: u64` (bumped when labels change, re-keys the line cache) + `block_ref_count: Option<BlockRefCountFn>` (id → referencing-page count; >0 paints a superscript badge over the hidden ` ^id` anchor whose click emits `OpenWikiLink("refs:^id")`) |
 | [`AlertIcons`](#struct-alerticons) | struct | 5 public fields | SVG asset paths for alert title icons |
 | [`Diagnostic`](#struct-diagnostic) | struct | `pub range: Range<usize>` | A flagged (underlined) span |

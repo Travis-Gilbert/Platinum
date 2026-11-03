@@ -1305,7 +1305,19 @@ merged. Step 2's headless vault core is merged, and its index matches Obsidian
 1.14.5 on all 537 recorded calls over the fixture vault
 ([evidence](evidence/notes-parity-2026-10-26.md)). Step 3's Servo WebGL2 work
 is 27 commits on `81d8e29` on `feat/webgl2-cosmos` in the Servo fork, which
-`script/bootstrap-media` now pins; that branch is pushed to the fork. The first end-to-end proof is step 4's slice. Remote
+`script/bootstrap-media` now pins; that branch is pushed to the fork.
+Step 4's slice, the first end-to-end proof, is built and in review as
+[PR #20](https://github.com/Travis-Gilbert/Platinum/pull/20) into `main`, from
+`claude/theorems-harness-parallel-spec-3bed71`; it is not merged. Its tests
+cover the editor tab, the reading panel, saving and autosave, closing and
+reopening, a change made outside Frame, and a write killed part way, which
+leaves either the old bytes or the new ones (about one run in four also leaves
+a `.tmpXXXXXX` file beside the note). `notes_check` settles all 68 fixture
+notes. compare-dom matches 58 of them, matches 7 as far as their recording
+goes, and differs on 3 (Nested Callouts, Footnotes, Raw HTML). The integrated
+window has not been checked on screen. The
+[handoff on #13](https://github.com/Travis-Gilbert/Platinum/issues/13#issuecomment-6551687405)
+says what is left. Remote
 vaults (step 12) wait for SDK+ S1 to S3, G0, G1 and a deployed Files API
 server. The requester chose cosmos.gl for the graph on 2026-10-26. One reading
 is open for the requester: whether the foundation's G0 and G1 hold the local

@@ -1,0 +1,7 @@
+prismjs 1.30.0 (MIT)
+Tarball:   https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz
+Integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==
+Copied unmodified from the tarball:
+  package/components/*.min.js                         -> components/ (the core and every language)
+  package/plugins/autoloader/prism-autoloader.min.js  -> plugins/prism-autoloader.min.js
+  package/LICENSE                                     -> LICENSE
