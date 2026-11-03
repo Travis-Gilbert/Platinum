@@ -58,6 +58,8 @@ pub(super) struct Walk<'d> {
     origin: usize,
     /// A blockquote a list passes down to the last item that has no list at its end.
     tail: Option<String>,
+    /// Which of the note's block ids (`doc.note.blocks`) an element already carries.
+    claimed: Vec<bool>,
 }
 
 /// Where a block sits decides which attributes Obsidian gives it.
@@ -78,6 +80,7 @@ pub(super) fn blocks(doc: &Doc) -> String {
         notes: Notes::default(),
         origin: 0,
         tail: None,
+        claimed: vec![false; doc.note.blocks.len()],
     };
     let last = doc.offsets.line_of(doc.offsets.len()) as usize;
     let (mut out, mut covered) = (Vec::new(), 0);
@@ -201,7 +204,33 @@ impl<'d> Walk<'d> {
         } else {
             String::new()
         };
-        format!(r#"<div class="{class}"{extra}{sourcepos}>{inner}</div>"#)
+        let span = self.doc.offsets.sourcepos(
+            (pos.start.line, pos.start.column),
+            (pos.end.line, pos.end.column),
+        );
+        let ids = self.block_ids(span.start..span.end.max(span.start + 1));
+        format!(r#"<div class="{class}"{extra}{sourcepos}{ids}>{inner}</div>"#)
+    }
+
+    /// ` data-frame-block="a b"`: the ids of the page's blocks (`^a`) that start in `range` and
+    /// no element inside has taken, which is where a block link scrolls to. Obsidian keeps block
+    /// ids off the DOM; an embed's are not the page's.
+    fn block_ids(&mut self, range: std::ops::Range<usize>) -> String {
+        if self.doc.depth != 0 {
+            return String::new();
+        }
+        let mut ids = Vec::new();
+        for (block, claimed) in self.doc.note.blocks.iter().zip(&mut self.claimed) {
+            if !*claimed && range.contains(&block.span.start) {
+                *claimed = true;
+                ids.push(html::attr(&block.id));
+            }
+        }
+        if ids.is_empty() {
+            String::new()
+        } else {
+            format!(r#" data-frame-block="{}""#, ids.join(" "))
+        }
     }
 
     /// A block's own element, without a wrapper.
@@ -322,11 +351,19 @@ impl<'d> Walk<'d> {
         place: Place,
         tail: Option<String>,
     ) -> String {
-        let line = node.data().sourcepos.start.line.saturating_sub(self.origin);
+        let start = node.data().sourcepos.start;
+        let line = start.line.saturating_sub(self.origin);
         let task = task_of(node);
         let ordered = list.list_type == ListType::Ordered;
+        // `- item ^id` names the item; it is written before the block around it takes the rest.
+        let at = self
+            .doc
+            .offsets
+            .sourcepos((start.line, start.column), (start.line, start.column))
+            .start;
+        let ids = self.block_ids(at..at + 1);
         format!(
-            "<li{}>{}{}</li>",
+            "<li{}{ids}>{}{}</li>",
             item_attrs(line, task),
             item_marks(node, ordered, line, task),
             self.item_body(node, place, tail)

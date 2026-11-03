@@ -285,3 +285,31 @@ fn a_markdown_link_says_how_it_was_written_and_a_wiki_link_does_not() {
     );
 }
 
+#[test]
+fn a_block_id_marks_the_element_a_block_link_scrolls_to() {
+    let f = fixture(&[
+        (
+            "Page.md",
+            "Para ^pid\n\n- one ^li1\n  - child ^li2\n- two\n\n> quote\n\n^qid\n\n![[Other]]\n",
+        ),
+        ("Other.md", "embedded ^oid\n"),
+    ]);
+    let html = f.html("Page.md");
+    for (id, element) in [
+        ("pid", r#"<div class="el-p""#),
+        ("li1", "<li"),
+        ("li2", "<li"),
+        ("qid", r#"<div class="el-blockquote""#),
+    ] {
+        let at = html
+            .find(&format!(r#"data-frame-block="{id}""#))
+            .unwrap_or_else(|| panic!("{id}: {html}"));
+        let open = html[..at].rfind('<').unwrap();
+        assert!(html[open..].starts_with(element), "{id}: {html}");
+    }
+    assert_eq!(html.matches("data-frame-block").count(), 4, "{html}");
+    assert!(
+        !html.contains("oid\""),
+        "an embed's ids are not the page's: {html}"
+    );
+}

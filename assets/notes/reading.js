@@ -407,7 +407,7 @@
   const headingTarget = (hash) => {
     if (!hash) return null;
     const text = decodeURIComponent(hash.replace(/^#/, ""));
-    if (text.startsWith("^")) return document.getElementById(text) ?? document.querySelector(`[id="${CSS.escape(text)}"]`);
+    if (text.startsWith("^")) return sizer.querySelector(`[data-frame-block~="${CSS.escape(text.slice(1))}"]`);
     for (const heading of document.querySelectorAll("[data-heading]")) {
       if (heading.dataset.heading.toLowerCase() === text.toLowerCase()) return heading;
     }
