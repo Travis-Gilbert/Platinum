@@ -2,7 +2,7 @@
 //! and results need the network, so these cover what is Platinum's own: the
 //! right-click search, the palette, tab shortcuts, dragging tabs, the Ask
 //! button, the appearance button, the downloads list, compact mode, the
-//! sidebar's tree, pinned sites and restoring the session.
+//! sidebar's tree, pinned sites, restoring the session and the Agent place.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -66,6 +66,33 @@ fn open_with_tab(cx: &mut TestAppContext) -> (Entity<Browser>, &mut VisualTestCo
     let (browser, cx) = open(cx);
     keys(cx, "cmd-t");
     (browser, cx)
+}
+
+#[gpui_kit::test]
+fn board_keeps_sleeping_pages_and_their_saved_placement(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            let url = Url::parse("https://example.org/saved").unwrap();
+            b.tabs[0].asleep = Some(Content::Page {
+                url: url.clone(),
+                title: "Saved source".into(),
+            });
+            assert_eq!(b.tabs[0].url(cx), Some(url));
+            let id = b.tabs[0].id;
+            b.board_state.cards = vec![crate::session::format::CardPlacement {
+                tab: id,
+                rect: [230., 450., 900., 600.],
+            }];
+            b.toggle_canvas(window, cx);
+            let state = b.canvas.as_ref().unwrap().read(cx).state(cx);
+            assert_eq!(state.cards, b.board_state.cards);
+            assert!(
+                b.tabs[0].page.is_none(),
+                "overview must not wake sleeping pages"
+            );
+        });
+    });
 }
 
 fn workspace(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> bool {
@@ -1482,27 +1509,189 @@ fn a_search_in_the_workspace_shows_results_with_their_own_history(cx: &mut TestA
     assert_eq!(route(&browser, cx), "tides and the moon");
 }
 
-#[gpui_kit::test]
-fn places_open_from_the_palette_and_back_returns(cx: &mut TestAppContext) {
-    let (browser, cx) = open(cx);
-    keys(cx, "cmd-k");
-    cx.simulate_input("mail");
-    cx.run_until_parked();
-    keys(cx, "enter");
-    assert_eq!(route(&browser, cx), "Mail");
-    keys(cx, "cmd-[");
-    assert_eq!(route(&browser, cx), "Home");
+/// The place the window shows, if one is.
+fn place(browser: &Entity<Browser>, cx: &mut VisualTestContext) -> Option<NativePlace> {
+    cx.update(|_, cx| browser.read(cx).place)
+}
 
-    // In a tab, a place opens over the tab's Home, and Back returns to it.
-    keys(cx, "cmd-t");
+/// Open a place from the palette.
+fn open_from_palette(cx: &mut VisualTestContext, name: &str) {
     keys(cx, "cmd-k");
-    cx.simulate_input("library");
+    cx.simulate_input(name);
     cx.run_until_parked();
     keys(cx, "enter");
-    assert!(showing(&browser, cx) == Showing::Place(NativePlace::Library));
-    assert_eq!(tabs(&browser, cx), (1, 0), "in the same tab");
+}
+
+/// Open the Agent place from the palette.
+fn open_agent(cx: &mut VisualTestContext) {
+    open_from_palette(cx, "agent");
+}
+
+#[gpui_kit::test]
+fn a_place_shows_over_the_workspace_and_its_bump_moves_between_places(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    assert!(
+        !drawn(cx, "places-bump".into()),
+        "Home lists the places itself"
+    );
+    open_from_palette(cx, "mail");
+    assert_eq!(place(&browser, cx), Some(NativePlace::Mail));
+    assert!(workspace(&browser, cx), "the workspace stays beneath");
+    assert!(cx.debug_bounds("underlay").is_none());
+    assert!(drawn(cx, "places-bump".into()));
+
+    // The bump moves between the places and back out.
+    let at = center_of(cx, "bump-library".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Library));
+    let at = center_of(cx, "bump-exit".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(in_workspace_field(&browser, cx));
+
+    // Back leaves a place for what is beneath it, as it was.
+    cx.simulate_input("tides and the moon");
+    keys(cx, "enter");
+    assert_eq!(route(&browser, cx), "tides and the moon");
+    open_from_palette(cx, "library");
     keys(cx, "cmd-[");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(route(&browser, cx), "tides and the moon");
+    // The bump's way out goes Home.
+    open_from_palette(cx, "library");
+    let at = center_of(cx, "bump-exit".into());
+    click(cx, at);
+    assert_eq!(route(&browser, cx), "Home");
+}
+
+#[gpui_kit::test]
+fn a_place_shows_over_the_tabs_without_their_chrome(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    let [tab] = ids(&browser, cx)[..] else {
+        panic!("one tab")
+    };
+    assert!(drawn(cx, format!("tab-{tab}")));
+    assert!(cx.debug_bounds("address-bar").is_some(), "Home searches");
+    open_agent(cx);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Agent));
+    assert!(drawn(cx, "theorem-card".into()));
+    assert!(drawn(cx, "places-bump".into()));
+    assert!(!drawn(cx, format!("tab-{tab}")), "no tab row over a place");
+    assert!(
+        cx.debug_bounds("address-bar").is_none(),
+        "the agent is the application's, not a page"
+    );
+
+    // ⌘W closes the place, not the tab beneath it.
+    keys(cx, "cmd-w");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(tabs(&browser, cx), (1, 0));
     assert!(showing(&browser, cx) == Showing::Start);
+
+    // An address leaves the place for the tab's address bar.
+    open_agent(cx);
+    keys(cx, "cmd-l");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(tabs(&browser, cx), (1, 0));
+    assert!(in_address_bar(&browser, cx));
+
+    // Over the tabs, the bump's way out shows them.
+    open_from_palette(cx, "notes");
+    let at = center_of(cx, "bump-exit".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), None);
+    assert!(drawn(cx, format!("tab-{tab}")));
+    assert!(!workspace(&browser, cx));
+}
+
+#[gpui_kit::test]
+fn the_agent_place_is_theorem_with_the_keyboard_in_it(cx: &mut TestAppContext) {
+    let (browser, cx) = open(cx);
+    open_agent(cx);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Agent));
+    assert!(drawn(cx, "theorem-navigator".into()));
+    assert!(drawn(cx, "theorem-card".into()));
+    let bump = bounds_of(cx, "places-bump".into());
+    let card = bounds_of(cx, "theorem-card".into());
+    let navigator = bounds_of(cx, "theorem-navigator".into());
+    assert!(
+        bump.left() == navigator.left() && bump.right() <= card.left(),
+        "the bump stands on the window's leading edge, clear of the card: \
+         {bump:?} beside {card:?}"
+    );
+    let in_theorem = |cx: &mut VisualTestContext| {
+        cx.update(|window, cx| {
+            let (workbench, _) = browser
+                .read(cx)
+                .theorem
+                .as_ref()
+                .expect("made as it opened");
+            workbench.focus_handle(cx).contains_focused(window, cx)
+        })
+    };
+    assert!(in_theorem(cx), "the keyboard goes to Theorem");
+
+    // Back reaches the browser from inside the workbench.
+    keys(cx, "cmd-[");
+    assert_eq!(place(&browser, cx), None);
+    assert_eq!(route(&browser, cx), "Home");
+    assert!(!drawn(cx, "theorem-navigator".into()));
+    open_agent(cx);
+    assert!(in_theorem(cx));
+}
+
+#[gpui_kit::test]
+fn the_crm_place_is_the_record_workspace(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    open_from_palette(cx, "index");
+    assert_eq!(place(&browser, cx), Some(NativePlace::Crm));
+    assert!(drawn(cx, "crm-shell".into()));
+    assert!(drawn(cx, "crm-card".into()));
+    assert!(drawn(cx, "crm-nav".into()));
+    assert!(drawn(cx, "places-bump".into()));
+    assert!(
+        cx.debug_bounds("address-bar").is_none(),
+        "the CRM is the application's, not a page"
+    );
+    let bump = bounds_of(cx, "places-bump".into());
+    let card = bounds_of(cx, "crm-card".into());
+    let navigator = bounds_of(cx, "crm-nav".into());
+    assert!(
+        bump.left() == navigator.left() && bump.right() <= card.left(),
+        "the bump stands on the window's leading edge, clear of the card: \
+         {bump:?} beside {card:?}"
+    );
+}
+
+#[gpui_kit::test]
+fn always_show_places_stands_the_bump_over_home_and_tabs_and_is_saved(cx: &mut TestAppContext) {
+    let dir = data_dir("places-pinned");
+    cx.update(|cx| session::init(&dir, cx));
+    let (browser, cx) = open(cx);
+    assert!(!drawn(cx, "places-bump".into()));
+    keys(cx, "cmd-k");
+    cx.simulate_input("always show places");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    assert!(cx.update(|_, cx| browser.read(cx).places_pinned));
+    assert!(drawn(cx, "places-bump".into()), "over Home");
+    assert!(!drawn(cx, "bump-exit".into()), "nothing to leave");
+    keys(cx, "cmd-t");
+    assert!(drawn(cx, "places-bump".into()), "over the tabs");
+
+    // A bump opens a place; there it leads with its way out.
+    let at = center_of(cx, "bump-notes".into());
+    click(cx, at);
+    assert_eq!(place(&browser, cx), Some(NativePlace::Notes));
+    assert!(drawn(cx, "bump-exit".into()));
+
+    cx.executor().advance_clock(Duration::from_secs(2));
+    cx.run_until_parked();
+    let saved = std::fs::read_to_string(dir.join("session.json")).unwrap();
+    let saved = session::parse_session(&saved).expect("Platinum's session");
+    assert!(saved.places_pinned);
+    let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[gpui_kit::test]
@@ -1747,4 +1936,305 @@ fn new_tab_invalidates_address_results_even_when_input_keeps_focus(cx: &mut Test
         cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
         ""
     );
+}
+
+#[gpui_kit::test]
+fn tab_shortcut_leaves_place_and_restores_board_composer(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-t");
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            b.toggle_canvas(window, cx);
+            b.open_place(NativePlace::Agent, window, cx);
+            assert!(b.canvas_shown);
+            assert!(
+                b.theorem
+                    .as_ref()
+                    .unwrap()
+                    .0
+                    .read(cx)
+                    .board_slot()
+                    .is_none()
+            );
+        })
+    });
+    keys(cx, "cmd-1");
+    cx.update(|_, cx| {
+        let b = browser.read(cx);
+        assert!(b.place.is_none());
+        assert!(b.canvas_shown);
+        assert!(
+            b.theorem
+                .as_ref()
+                .unwrap()
+                .0
+                .read(cx)
+                .board_slot()
+                .is_some()
+        );
+    });
+    assert!(!drawn(cx, "theorem-card".into()));
+    assert!(drawn(cx, "theorem-board-composer".into()));
+}
+
+#[gpui_kit::test]
+fn closed_tab_ids_are_not_reused_after_restart(cx: &mut TestAppContext) {
+    let root = tempfile::tempdir().unwrap();
+    cx.update(|cx| session::init(root.path(), cx));
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-t");
+    let closed = *ids(&browser, cx).last().unwrap();
+    keys(cx, "cmd-w");
+    let saved = cx.update(|_, cx| {
+        browser.update(cx, |b, cx| {
+            b.save(cx);
+            b.written.clone().unwrap().0
+        })
+    });
+    assert!(saved.next_tab_id.unwrap() > closed);
+    // Load the actual persisted allocator in a fresh browser entity.
+    let replacement = cx.update(|window, cx| cx.new(|cx| Browser::new(window, cx)));
+    cx.update(|window, cx| {
+        replacement.update(cx, |b, cx| {
+            assert_eq!(b.visit_session, saved.visit_session);
+            b.new_tab_beside(b.active, window, cx);
+            assert!(b.tabs[b.active].id > closed);
+        })
+    });
+}
+
+#[gpui_kit::test]
+fn promoting_from_expanded_notes_restores_the_board_composer(cx: &mut TestAppContext) {
+    let root = tempfile::tempdir().unwrap();
+    let profile = frame_profile::ProfileStore::open(root.path()).unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(profile)));
+    let (browser, cx) = open_with_tab(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            b.toggle_canvas(window, cx);
+            b.open_place(NativePlace::Agent, window, cx);
+            b.open_place(NativePlace::Notes, window, cx);
+            b.notebook
+                .as_ref()
+                .unwrap()
+                .update(cx, |notes, cx| notes.create(None, window, cx));
+        })
+    });
+    cx.run_until_parked();
+    let note = cx.update(|_, cx| {
+        browser
+            .read(cx)
+            .notebook
+            .as_ref()
+            .unwrap()
+            .read(cx)
+            .selected()
+            .unwrap()
+    });
+    cx.update(|_, cx| {
+        browser
+            .read(cx)
+            .notebook
+            .as_ref()
+            .unwrap()
+            .clone()
+            .update(cx, |_, cx| {
+                cx.emit(crate::notes::NotesEvent::Promote(note.clone()));
+            });
+    });
+    cx.run_until_parked();
+    cx.update(|_, cx| {
+        let b = browser.read(cx);
+        assert!(b.place.is_none());
+        assert!(b.canvas_shown);
+        assert!(
+            b.theorem
+                .as_ref()
+                .unwrap()
+                .0
+                .read(cx)
+                .board_slot()
+                .is_some()
+        );
+        let placement = &b.canvas.as_ref().unwrap().read(cx).state(cx).notes[0];
+        assert_eq!(
+            b.canvas
+                .as_ref()
+                .unwrap()
+                .read(cx)
+                .note(placement.id)
+                .unwrap()
+                .entity_id(),
+            note.entity_id()
+        );
+    });
+    assert!(!drawn(cx, "theorem-card".into()));
+    assert!(drawn(cx, "theorem-board-composer".into()));
+}
+
+mod dictation_shortcuts {
+    use super::*;
+    use gpui_kit::component::speech::SpeechState;
+    use gpui_kit::{Context, KeyDownEvent, KeyUpEvent, Keystroke};
+
+    use crate::voice::fixture::{Input, Recognizer};
+    fn fixture(b: &mut Browser, window: &mut gpui_kit::Window, cx: &mut Context<Browser>) -> Input {
+        let input = Input::default();
+        b.speech = cx.new(|cx| {
+            SpeechState::new(cx)
+                .recognizer(Recognizer)
+                .input(input.clone())
+                .system_fallback(false)
+        });
+        b._speech_events = cx.subscribe_in(&b.speech, window, |b, _, event, window, cx| {
+            b.speech_event(event, window, cx)
+        });
+        input
+    }
+    fn modifiers(browser: &Entity<Browser>, cx: &mut VisualTestContext, left: bool, right: bool) {
+        cx.update(|window, cx| {
+            browser.update(cx, |b, cx| {
+                b.voice_modifiers(
+                    Modifiers {
+                        platform: left || right,
+                        ..Modifiers::none()
+                    },
+                    left,
+                    right,
+                    window,
+                    cx,
+                )
+            })
+        });
+        cx.run_until_parked();
+    }
+    fn held(cx: &mut VisualTestContext) {
+        cx.executor().advance_clock(Duration::from_millis(400));
+        cx.run_until_parked();
+    }
+
+    #[gpui_kit::test]
+    fn left_command_hold_releases_capture_and_inserts_once(cx: &mut TestAppContext) {
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| browser.update(cx, |b, cx| fixture(b, window, cx)));
+        modifiers(&browser, cx, false, true);
+        held(cx);
+        assert_eq!(input.starts.get(), 0, "right Command must not capture");
+        modifiers(&browser, cx, false, false);
+        modifiers(&browser, cx, true, false);
+        modifiers(&browser, cx, false, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 0, "a quick tap must not start later");
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        modifiers(&browser, cx, false, false);
+        assert_eq!(input.stops.get(), 1);
+        let text = cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string());
+        assert_eq!(text, "spoken words");
+        modifiers(&browser, cx, false, false);
+        assert_eq!(
+            cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+            text
+        );
+        assert_eq!(input.starts.get(), 1);
+    }
+
+    #[gpui_kit::test]
+    fn modifier_release_finishes_through_gpui_dispatch(cx: &mut TestAppContext) {
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| browser.update(cx, |b, cx| fixture(b, window, cx)));
+        // Supply the side information separately: headless events cannot press
+        // a physical macOS key. The release still uses GPUI's real dispatch,
+        // including its synthesized modifier-only keystroke.
+        cx.simulate_event(gpui_kit::ModifiersChangedEvent {
+            modifiers: Modifiers {
+                platform: true,
+                ..Modifiers::none()
+            },
+            ..Default::default()
+        });
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        cx.simulate_event(gpui_kit::ModifiersChangedEvent::default());
+        cx.run_until_parked();
+        assert_eq!(input.stops.get(), 1);
+        assert_eq!(
+            cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+            "spoken words"
+        );
+    }
+
+    #[gpui_kit::test]
+    fn command_shortcuts_and_escape_cancel_hold_without_delayed_restart(cx: &mut TestAppContext) {
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| browser.update(cx, |b, cx| fixture(b, window, cx)));
+        modifiers(&browser, cx, true, false);
+        keys(cx, "cmd-l");
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 0);
+        modifiers(&browser, cx, false, false);
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        keys(cx, "escape");
+        modifiers(&browser, cx, false, false);
+        assert_eq!(input.stops.get(), 1);
+        assert!(cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().is_empty()));
+        modifiers(&browser, cx, true, false);
+        held(cx);
+        assert_eq!(input.starts.get(), 2);
+        cx.deactivate_window();
+        cx.run_until_parked();
+        assert_eq!(input.stops.get(), 2, "losing the window must stop capture");
+    }
+
+    #[gpui_kit::test]
+    fn edited_hotkey_holds_through_key_events_and_persists(cx: &mut TestAppContext) {
+        let root = tempfile::tempdir().unwrap();
+        cx.update(|cx| session::init(root.path(), cx));
+        let (browser, cx) = open_with_tab(cx);
+        let input = cx.update(|window, cx| {
+            browser.update(cx, |b, cx| {
+                b.set_voice_shortcut("cmd-l", window, cx);
+                assert_eq!(b.speaker.preferences.dictation_hotkey, "left-cmd");
+                b.set_voice_shortcut("ctrl-shift-space", window, cx);
+                b.save(cx);
+                fixture(b, window, cx)
+            })
+        });
+        let key = Keystroke::parse("ctrl-shift-space").unwrap();
+        cx.simulate_event(KeyDownEvent {
+            keystroke: key.clone(),
+            is_held: false,
+            prefer_character_input: false,
+        });
+        held(cx);
+        assert_eq!(input.starts.get(), 1);
+        cx.simulate_event(KeyDownEvent {
+            keystroke: key.clone(),
+            is_held: true,
+            prefer_character_input: false,
+        });
+        assert_eq!(input.starts.get(), 1);
+        cx.simulate_event(KeyUpEvent { keystroke: key });
+        cx.run_until_parked();
+        assert_eq!(input.stops.get(), 1);
+        assert_eq!(
+            cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+            "spoken words"
+        );
+        let replacement = cx.update(|window, cx| cx.new(|cx| Browser::new(window, cx)));
+        assert_eq!(
+            cx.update(|_, cx| replacement
+                .read(cx)
+                .speaker
+                .preferences
+                .dictation_hotkey
+                .clone()),
+            "ctrl-shift-space"
+        );
+    }
 }

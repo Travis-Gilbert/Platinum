@@ -1,10 +1,15 @@
 //! One-way SQLite migration. Sources are snapshotted with SQLite's backup API,
 //! including committed WAL data. The completion marker shares the graph commit.
-use crate::{Session, migration::snapshot, storage::node};
+use crate::{
+    Session, Visit,
+    migration::snapshot,
+    storage::{VisitRange, node, profile_directory, save_visit_preview, visit_node, visit_tail},
+};
 use anyhow::{Context, Result, ensure};
 use rusqlite::{Connection, OptionalExtension, types::ValueRef};
 use rustyred::{Database, GraphMutation, GraphMutationBatch, NodeRecord};
 use serde_json::{Map, Value, json};
+use std::collections::BTreeMap;
 use std::path::Path;
 
 struct LegacyProfile {
@@ -96,7 +101,8 @@ fn profile_records(root: &Path, profile: LegacyProfile) -> Result<Vec<NodeRecord
         ["Profile"],
         json!({"id":id,"name":name,"email":email,"source":source}),
     )];
-    let path = super::storage::profile_directory(root, id).join("browser.sqlite3");
+    let directory = profile_directory(root, id);
+    let path = directory.join("browser.sqlite3");
     if !path.exists() {
         return Ok(nodes);
     }
@@ -112,7 +118,51 @@ fn profile_records(root: &Path, profile: LegacyProfile) -> Result<Vec<NodeRecord
     ] {
         nodes.extend(table_records(&old, id, table, label, keys)?);
     }
+    nodes.extend(visit_records(&old, id, &directory)?);
     Ok(nodes)
+}
+
+/// Previews are written before the graph commit: a failed migration retries and
+/// writes the same files again.
+fn visit_records(old: &Connection, profile: i64, directory: &Path) -> Result<Vec<NodeRecord>> {
+    if !has_table(old, "visits")? {
+        return Ok(Vec::new());
+    }
+    let mut statement =
+        old.prepare("SELECT id,tab,predecessor,url,title,visited,preview FROM visits ORDER BY id")?;
+    let mut rows = statement.query([])?;
+    let mut nodes = Vec::new();
+    let mut tails = BTreeMap::new();
+    let mut last = 0;
+    while let Some(row) = rows.next()? {
+        let visit = Visit {
+            id: row.get(0)?,
+            tab: row.get(1)?,
+            predecessor: row.get(2)?,
+            url: row.get(3)?,
+            title: row.get(4)?,
+            visited: row.get(5)?,
+            preview: None,
+        };
+        let preview: Option<Vec<u8>> = row.get(6)?;
+        if let Some(preview) = &preview {
+            save_visit_preview(directory, visit.id, preview)?;
+        }
+        nodes.push(visit_node(profile, &visit, preview.is_some())?);
+        tails.insert(visit.tab, visit.id);
+        last = visit.id;
+    }
+    nodes.extend(tails.iter().map(|(tab, id)| visit_tail(profile, tab, *id)));
+    nodes.push(VisitRange { floor: 0, last }.record(profile));
+    Ok(nodes)
+}
+
+fn has_table(db: &Connection, table: &str) -> Result<bool> {
+    Ok(db.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
+        [table],
+        |r| r.get(0),
+    )?)
 }
 
 fn table_records(
@@ -122,12 +172,7 @@ fn table_records(
     label: &str,
     keys: &[&str],
 ) -> Result<Vec<NodeRecord>> {
-    let exists: bool = old.query_row(
-        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
-        [table],
-        |r| r.get(0),
-    )?;
-    if !exists {
+    if !has_table(old, table)? {
         return Ok(Vec::new());
     }
     let mut statement = old.prepare(&format!("SELECT * FROM {table}"))?;
@@ -189,13 +234,18 @@ pub fn clear_history(directory: &Path) -> Result<()> {
     }
     let db = Connection::open(path)?;
     db.busy_timeout(std::time::Duration::from_secs(3))?;
-    let exists: bool = db.query_row(
-        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='history')",
-        [],
-        |r| r.get(0),
-    )?;
-    if exists {
-        db.execute_batch("PRAGMA secure_delete=ON; DELETE FROM history; PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpoint(TRUNCATE);")?;
+    db.execute_batch("PRAGMA secure_delete=ON;")?;
+    let mut cleared = false;
+    for table in ["history", "visits"] {
+        if has_table(&db, table)? {
+            db.execute_batch(&format!("DELETE FROM {table};"))?;
+            cleared = true;
+        }
+    }
+    if cleared {
+        db.execute_batch(
+            "PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpoint(TRUNCATE);",
+        )?;
     }
     Ok(())
 }

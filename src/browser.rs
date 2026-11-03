@@ -30,13 +30,23 @@
 //! `Button`, `Input`, `Spinner`, `Popover` and `Progress`; the navigator is
 //! GPUI Kit's `Command` (`navigator.rs`); Home is `home.rs`.
 
+mod board;
 mod dock;
 #[cfg(feature = "performance-check")]
 pub mod performance;
+mod place;
 mod sidebar;
+#[cfg(feature = "snapshot")]
+pub mod spatial_check;
+#[cfg(feature = "snapshot")]
+pub mod theorem_live_check;
 mod underlay;
+mod voice;
 #[cfg(feature = "snapshot")]
 pub mod workspace_check;
+
+/// The frame of chrome around each card, for the places that inset their own.
+pub(crate) use dock::FRAME;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -69,14 +79,16 @@ use gpui_kit::{
 };
 use url::Url;
 
-use self::dock::{DRAG_PREVIEW, FRAME, FrameDock, Group, TabPanel, TabPreview};
+use self::dock::{DRAG_PREVIEW, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
-    GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
-    SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
-    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    GoForward, ImportBrowserData, LeavePlace, NewTab, NextTab, OpenPalette, OpenPlace, PinTab,
+    PreviousTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole,
+    ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces,
+    ToggleSidebar,
 };
 use crate::address::{Suggestion, SuggestionAction, Target, append_library, classify};
+use crate::crm::Crm;
 use crate::delegate::{self, Verdict};
 use crate::downloads::{self, Download, DownloadState, Downloads, Request};
 use crate::engine::Engine;
@@ -86,7 +98,7 @@ use crate::icons;
 use crate::inspector::Inspector;
 use crate::navigator::{self, Navigator, Pick, Placement, TabEntry};
 use crate::page::{Page, PageEvent, PageMenu};
-use crate::places::{Place, PlaceView};
+use crate::places::Place;
 use crate::profile_ui::{ActiveProfile, ProfileEvent, ProfilePanel, Section};
 use crate::recents::{self, Recents};
 use crate::serp::{Serp, SerpEvent, SerpMode};
@@ -94,12 +106,13 @@ use crate::session::{Content, Layout, Pin, SavedTab, Session, Snapshot, Store};
 use crate::share;
 use crate::tabtree::TabTree;
 use crate::theme::{self, Appearance};
+use crate::theorem::Workbench;
 use frame_profile::credentials::{self, Keychain};
 
 use self::underlay::Underlay;
 
 /// The height of a row of tabs, the same as the title bar's.
-const TAB_ROW: f32 = 36.;
+pub(crate) const TAB_ROW: f32 = 36.;
 /// How wide a tab in the rows is, as Dia's are, and the narrowest it gets
 /// when they are full.
 const TAB_WIDTH: f32 = 160.;
@@ -126,6 +139,7 @@ struct Restored {
     active: Option<u64>,
     sidebar: bool,
     sidebar_width: Option<f32>,
+    places_pinned: bool,
 }
 
 /// The chrome's icon buttons, for 28px glyphs: twice GPUI Kit's small ones.
@@ -143,15 +157,13 @@ enum Showing {
     Start,
     Page,
     Serp,
-    /// One of the places beneath the pages, opened from Home.
-    Place(Place),
 }
 
 /// The page commands may use, or none when the tab is not showing a webpage.
 fn displayed_page_id(showing: Showing, page_id: Option<String>) -> Option<String> {
     match showing {
         Showing::Page => page_id,
-        Showing::Start | Showing::Serp | Showing::Place(_) => None,
+        Showing::Start | Showing::Serp => None,
     }
 }
 
@@ -215,13 +227,15 @@ impl Tab {
                 .serp
                 .as_ref()
                 .map_or("Search".into(), |serp| serp.read(cx).title()),
-            Showing::Place(place) => place.label().into(),
         }
     }
 
     /// Where the page is, or is going: the address being loaded until it
     /// arrives.
     fn url(&self, cx: &App) -> Option<Url> {
+        if let Some(content) = &self.asleep {
+            return content.url().cloned();
+        }
         let page = self.page.as_ref()?.read(cx);
         match (&self.requested, page.is_loading()) {
             (Some(requested), true) => Some(requested.clone()),
@@ -237,7 +251,7 @@ impl Tab {
             Some(Content::Start) | None => {}
         }
         match self.showing {
-            Showing::Start | Showing::Place(_) => SharedString::default(),
+            Showing::Start => SharedString::default(),
             Showing::Page => self
                 .url(cx)
                 .map_or(SharedString::default(), |url| url.to_string().into()),
@@ -285,7 +299,7 @@ impl Tab {
                 }
                 None => Content::Start,
             },
-            Showing::Start | Showing::Place(_) => Content::Start,
+            Showing::Start => Content::Start,
         }
     }
 
@@ -314,9 +328,9 @@ impl Tab {
         self.page.as_ref()?.read(cx).tint()
     }
 
-    /// Whether the tab shows one of Frame's own surfaces, Home or a place.
+    /// Whether the tab shows one of Frame's own surfaces: Home.
     fn native(&self) -> bool {
-        matches!(self.showing, Showing::Start | Showing::Place(_))
+        self.showing == Showing::Start
     }
 
     /// The site's icon, while the tab shows the site.
@@ -337,7 +351,6 @@ impl Tab {
             Showing::Start => icons::page(),
             Showing::Page => Icon::new(IconName::Globe),
             Showing::Serp => Icon::new(IconName::Search),
-            Showing::Place(place) => place.icon(),
         }
     }
 }
@@ -358,6 +371,35 @@ fn site_summary(url: &Url, title: &str, loading: bool) -> SharedString {
 
 pub struct Browser {
     canvas: Option<Entity<crate::canvas::SpatialCanvas>>,
+    canvas_shown: bool,
+    board_state: crate::session::format::BoardState,
+    board_events: Option<Subscription>,
+    notebook: Option<Entity<crate::notes::Notebook>>,
+    notes_sidebar: bool,
+    notes_events: Option<Subscription>,
+    visits: Option<crate::trail::Writer>,
+    visit_session: i64,
+    speaker: crate::spoken::Speaker,
+    speech: Entity<gpui_kit::component::speech::SpeechState>,
+    dictation_target: Option<crate::voice::Target>,
+    dictation_generation: u64,
+    voice_prepare: Option<Task<()>>,
+    voice_hold: crate::voice::shortcut::Hold,
+    voice_hold_timer: Option<Task<()>>,
+    _voice_activation: Subscription,
+    _voice_keystrokes: Subscription,
+    _speech_events: Subscription,
+    /// Theorem's workbench, made the first time the Agent place opens, and
+    /// the subscription that opens the pages it asks for.
+    theorem: Option<(Entity<Workbench>, Subscription)>,
+    /// The CRM, made the first time its place opens.
+    crm: Option<Entity<Crm>>,
+    /// The place the window shows, over the tabs or the workspace, which it
+    /// leaves as they were (`place.rs`).
+    place: Option<Place>,
+    /// Always Show Places: the places bump stands over the tabs and the
+    /// workspace too.
+    places_pinned: bool,
     focus_handle: FocusHandle,
     /// In the dock's order: group by group, left to right, top to bottom.
     tabs: Vec<Tab>,
@@ -394,7 +436,6 @@ pub struct Browser {
     /// Where each tab's Share button was last drawn, for the share sheet.
     share_anchors: Rc<RefCell<HashMap<u64, Bounds<Pixels>>>>,
     window_title: SharedString,
-    pending_history: Option<gpui_kit::Task<()>>,
     /// The workspace shown while no tab is open.
     underlay: Underlay,
     /// The sidebar is open, with the tabs as a tree under the pinned sites;
@@ -451,9 +492,24 @@ impl Browser {
         let store = Store::global(cx);
         let pins = store.as_ref().map(Store::load_pins).unwrap_or_default();
         let session = store.as_ref().and_then(Store::load_session);
+        let visit_session = session
+            .as_ref()
+            .filter(|s| s.next_tab_id.is_some())
+            .map(|s| s.visit_session)
+            .filter(|s| *s > 0)
+            .unwrap_or_else(frame_profile::now);
+        let voice_preferences = session
+            .as_ref()
+            .map(|s| s.voice.clone())
+            .unwrap_or_default();
+        let board_state = session
+            .as_ref()
+            .map(|s| s.board.clone())
+            .unwrap_or_default();
         let workspace = session
             .as_ref()
             .is_none_or(|session| session.tabs.is_empty());
+        let saved_next_id = session.as_ref().and_then(|s| s.next_tab_id).unwrap_or(0);
         let restored = Self::restore(session.unwrap_or_default(), &pins, &dock, window, cx);
         let dock_events = cx.subscribe_in(&dock, window, Self::dock_event);
         let downloads = cx.new(|_| Downloads::new(Downloads::default_folder()));
@@ -465,18 +521,21 @@ impl Browser {
         // Changes reach the file a second later; quitting writes at once.
         let quit = cx.on_app_quit(|browser, cx| {
             browser.save(cx);
-            browser.flush_history(cx);
-            async {}
+            let visits = browser
+                .visits
+                .as_mut()
+                .and_then(crate::trail::Writer::drain);
+            cx.background_spawn(async move {
+                if let Some(worker) = visits {
+                    let _ = worker.join();
+                }
+            })
         });
         // Home lists them.
         let recents_events = cx.observe_global::<Recents>(|_, cx| cx.notify());
         let mut underlay = Underlay::new(window, cx);
         underlay.shown = workspace;
-        cx.on_release(|browser, cx| {
-            browser.save(cx);
-            browser.flush_history(cx);
-        })
-        .detach();
+        cx.on_release(|browser, cx| browser.save(cx)).detach();
         let mut icons = HashMap::new();
         if let Some(store) = &store {
             let urls = pins.iter().map(|pin| &pin.url).chain(
@@ -498,10 +557,72 @@ impl Browser {
             .iter()
             .map(|tab| tab.id + 1)
             .max()
-            .unwrap_or(0);
+            .unwrap_or(0)
+            .max(saved_next_id);
         let next_pin = pins.iter().map(|pin| pin.id + 1).max().unwrap_or(0);
+        let speech = cx.new(|cx| {
+            gpui_kit::component::speech::SpeechState::new(cx)
+                .recognizer(crate::voice::Recognizer)
+                .system_fallback(false)
+                .require_final_result(true)
+                .stop_timeout(std::time::Duration::from_secs(30))
+        });
+        let speech_events = cx.subscribe_in(&speech, window, |this, _, event, window, cx| {
+            this.speech_event(event, window, cx)
+        });
+        let voice_activation = cx.observe_window_activation(window, |this, window, cx| {
+            this.cancel_dictation(window, cx);
+            this.voice_hold
+                .focus_changed(crate::voice::shortcut::command_keys().0);
+        });
+        let voice_window = window.window_handle();
+        let voice_browser = cx.weak_entity();
+        let voice_keystrokes = cx.intercept_keystrokes(move |event, window, cx| {
+            if window.window_handle() != voice_window {
+                return;
+            }
+            let _ = voice_browser.update(cx, |this, cx| {
+                if matches!(
+                    event.keystroke.key.as_str(),
+                    "platform" | "control" | "shift" | "alt" | "function"
+                ) {
+                    // GPUI emits this before a focused Page can consume the
+                    // modifier-release keystroke and suppress bubble listeners.
+                    this.voice_modifiers(event.keystroke.modifiers, false, false, window, cx);
+                } else if !this.voice_shortcut().matches(&event.keystroke) {
+                    this.cancel_dictation(window, cx);
+                }
+            });
+        });
         let mut browser = Self {
             canvas: None,
+            canvas_shown: false,
+            speaker: crate::spoken::Speaker::new(voice_preferences),
+            board_state,
+            board_events: None,
+            notebook: None,
+            notes_sidebar: false,
+            notes_events: None,
+            visits: cx
+                .try_global::<ActiveProfile>()
+                .map(|p| p.0.clone())
+                .and_then(|p| {
+                    crate::trail::Writer::new(p, window.window_handle(), cx)
+                        .map_err(|e| log::error!("visit writer: {e}"))
+                        .ok()
+                }),
+            visit_session,
+            speech,
+            dictation_target: None,
+            dictation_generation: 0,
+            voice_hold: Default::default(),
+            voice_hold_timer: None,
+            _voice_activation: voice_activation,
+            _voice_keystrokes: voice_keystrokes,
+            voice_prepare: None,
+            _speech_events: speech_events,
+            theorem: None,
+            crm: None,
             focus_handle: cx.focus_handle(),
             tabs: restored.tabs,
             active: 0,
@@ -528,8 +649,9 @@ impl Browser {
             inspector,
             share_anchors: Rc::default(),
             window_title: SharedString::default(),
-            pending_history: None,
             underlay,
+            place: None,
+            places_pinned: restored.places_pinned,
             sidebar: restored.sidebar,
             sidebar_width: sidebar::fit_width(restored.sidebar_width.unwrap_or(sidebar::WIDTH)),
             tree: restored.tree,
@@ -566,12 +688,6 @@ impl Browser {
             });
         }
         browser
-    }
-
-    fn flush_history(&mut self, cx: &App) {
-        if let Some(history) = self.pending_history.take() {
-            cx.foreground_executor().block_on(history);
-        }
     }
 
     /// The tabs `session` saved, asleep, laid out as the dock held them and
@@ -629,6 +745,7 @@ impl Browser {
             active: session.active,
             sidebar: session.sidebar,
             sidebar_width: session.sidebar_width,
+            places_pinned: session.places_pinned,
         }
     }
 
@@ -953,6 +1070,7 @@ impl Browser {
 
     /// From the workspace, the tab behind it; else a new one.
     fn new_tab(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             self.reveal_tab(window, cx);
         } else {
@@ -978,10 +1096,12 @@ impl Browser {
     }
 
     fn activate(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+        self.cancel_dictation(window, cx);
         let Some(tab) = self.tabs.get(index) else {
             return;
         };
         let (id, panel) = (tab.id, tab.panel_id());
+        self.leave_place(window, cx);
         self.dismiss_suggestions();
         self.close_navigator(window, cx);
         self.dock
@@ -1157,8 +1277,15 @@ impl Browser {
     /// Only the pages on screen, one per group, run at full rate; the rest
     /// are hidden from Servo.
     fn apply_visibility(&mut self, cx: &mut Context<Self>) {
+        let active = self.tabs[self.active].id;
         for tab in &mut self.tabs {
-            let shown = tab.showing == Showing::Page && self.displayed.contains(&tab.panel_id());
+            let shown = self.place.is_none()
+                && tab.showing == Showing::Page
+                && if self.canvas_shown {
+                    tab.id == active
+                } else {
+                    self.displayed.contains(&tab.panel_id())
+                };
             if let Some(page) = &tab.page
                 && shown != tab.page_shown
             {
@@ -1168,7 +1295,11 @@ impl Browser {
         }
     }
 
-    fn focus_content(&self, window: &mut Window, cx: &mut Context<Self>) {
+    fn focus_content(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(place) = self.place {
+            self.focus_place(place, window, cx);
+            return;
+        }
         if self.underlay.shown {
             self.focus_underlay(window, cx);
             return;
@@ -1181,8 +1312,6 @@ impl Browser {
             Showing::Serp if let Some(serp) = &tab.serp => {
                 window.focus(&serp.focus_handle(cx), cx);
             }
-            // The window keeps focus, so that Back reaches the browser.
-            Showing::Place(_) => window.focus(&self.focus_handle, cx),
             // With the chrome hidden the address bar is not drawn; the window
             // keeps focus so that shortcuts still reach the browser.
             _ if self.compact && !self.revealed => window.focus(&self.focus_handle, cx),
@@ -1208,6 +1337,7 @@ impl Browser {
             self.download(url, None, window, cx);
             return;
         }
+        self.leave_place(window, cx);
         // Workspace has no open tab; its backing tab becomes the destination.
         let new_tab = if self.underlay.shown {
             if let underlay::Route::Results(serp, _) = self.underlay.route.clone() {
@@ -1272,6 +1402,7 @@ impl Browser {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             if new_tab {
                 self.reveal_tab(window, cx);
@@ -1355,34 +1486,16 @@ impl Browser {
         );
     }
 
-    /// A place, in the workspace, in this tab if it shows Home or a place,
-    /// or else in a new one.
-    fn open_place(&mut self, place: Place, window: &mut Window, cx: &mut Context<Self>) {
-        if self.underlay.shown {
-            self.underlay_go(underlay::Route::Place(place), window, cx);
-            return;
-        }
-        let index = match self.tabs[self.active].showing {
-            Showing::Start | Showing::Place(_) => self.active,
-            Showing::Page | Showing::Serp => self.insert_tab_after_active(Origin::Root, window, cx),
-        };
-        self.tabs[index].showing = Showing::Place(place);
-        self.activate(index, window, cx);
-    }
-
-    /// Home: the workspace's, or this tab's if it shows a place, or a new
-    /// tab's.
+    /// Home: the workspace's, or this tab's if it shows Home, or a new
+    /// tab's. A place showing closes.
     fn open_home(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             self.underlay_go(underlay::Route::Home, window, cx);
             return;
         }
         match self.tabs[self.active].showing {
             Showing::Start => self.focus_content(window, cx),
-            Showing::Place(_) => {
-                self.tabs[self.active].showing = Showing::Start;
-                self.after_switch(window, cx);
-            }
             Showing::Page | Showing::Serp => self.new_tab(window, cx),
         }
     }
@@ -1523,24 +1636,17 @@ impl Browser {
                 window.push_notification(Notification::info("Enter a password in a visible login form, then choose Save or Update Password"),cx);
             }
             PageEvent::Visited => {
+                self.cancel_dictation(window, cx);
                 if let Some(url) = page.read(cx).url() {
                     let title = page.read(cx).title();
                     recents::record_page(&url, &title, cx);
                 }
-                if let Some(store) = cx.try_global::<ActiveProfile>() {
-                    if let Some(url) = page.read(cx).url() {
-                        let store = store.0.clone();
-                        let title = page.read(cx).title().to_string();
-                        let visited = frame_profile::now();
-                        let previous = self.pending_history.take();
-                        self.pending_history = Some(cx.background_spawn(async move {
-                            if let Some(previous) = previous {
-                                previous.await;
-                            }
-                            if store.visit_at(url.as_str(), &title, visited).is_err() {
-                                log::warn!("Could not save browsing history");
-                            }
-                        }));
+                if let Some(visits) = &self.visits {
+                    if let Err(error) = visits.record(
+                        format!("{}:{}", self.visit_session, self.tabs[index].id),
+                        page.read(cx),
+                    ) {
+                        window.push_notification(Notification::error(error.to_string()), cx);
                     }
                 }
             }
@@ -1683,6 +1789,10 @@ impl Browser {
     }
 
     fn back(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.place.is_some() {
+            self.close_place(window, cx);
+            return;
+        }
         if self.underlay.shown {
             self.underlay_back(window, cx);
             return;
@@ -1698,16 +1808,14 @@ impl Browser {
                     self.after_switch(window, cx);
                 }
             }
-            // A place opened from the tab's Home.
-            Showing::Place(_) => {
-                tab.showing = Showing::Start;
-                self.after_switch(window, cx);
-            }
             Showing::Serp | Showing::Start => {}
         }
     }
 
     fn forward(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.place.is_some() {
+            return;
+        }
         if self.underlay.shown {
             self.underlay_forward(window, cx);
             return;
@@ -1723,11 +1831,14 @@ impl Browser {
                 tab.showing = Showing::Page;
                 self.after_switch(window, cx);
             }
-            Showing::Serp | Showing::Start | Showing::Place(_) => {}
+            Showing::Serp | Showing::Start => {}
         }
     }
 
     fn reload(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.place.is_some() {
+            return;
+        }
         if self.underlay.shown {
             self.underlay_reload(window, cx);
             return;
@@ -1912,6 +2023,7 @@ impl Browser {
     }
 
     fn focus_address_bar(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.leave_place(window, cx);
         if self.underlay.shown {
             self.focus_underlay_field(window, cx);
             return;
@@ -1969,7 +2081,9 @@ impl Browser {
                     .update(cx, |input, cx| input.set_value(summary, window, cx));
             }
         }
-        let title = if self.underlay.shown {
+        let title = if let Some(place) = self.place {
+            place.label().into()
+        } else if self.underlay.shown {
             self.underlay.title(cx)
         } else {
             tab.title(cx)
@@ -1983,27 +2097,112 @@ impl Browser {
         cx.notify();
     }
 
-    /// Close the canvas once the active tab no longer shows its page: another
-    /// tab became the active one, or its own closed or let the page go.
+    /// Tab activation changes the live card, never the identity of the board.
     fn close_stale_canvas(&mut self, cx: &mut Context<Self>) {
-        let active = self.tabs[self.active].page.as_ref().map(Entity::entity_id);
-        let Some(board) = self
-            .canvas
-            .take_if(|board| Some(board.read(cx).page().entity_id()) != active)
-        else {
+        let Some(board) = self.canvas.clone() else {
             return;
         };
-        let page = board.read(cx).page().entity_id();
-        board.update(cx, |board, cx| board.detach(cx));
-        // Detaching shows the page; it stays shown only where its tab is.
-        if let Some(tab) = self
+        let pages = self
             .tabs
-            .iter_mut()
-            .find(|tab| tab.page.as_ref().map(Entity::entity_id) == Some(page))
+            .iter()
+            .filter(|tab| tab.url(cx).is_some())
+            .map(|tab| crate::canvas::BoardPage {
+                id: tab.id,
+                opener: self.tree.node(tab.id).and_then(|n| n.opener),
+                title: tab.title(cx).to_string(),
+                page: tab.page.clone(),
+            })
+            .collect();
+        board.update(cx, |board, cx| {
+            board.sync(pages, self.tabs[self.active].id, cx)
+        });
+    }
+
+    fn toggle_canvas(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.canvas_shown
+            && let Some(board) = self.canvas.clone()
         {
-            tab.page_shown = true;
+            board.update(cx, |board, cx| board.focus_current(true, cx));
+            return;
+        }
+        let first_open = self.canvas.is_none();
+        let restore_camera = first_open && self.board_state.camera.is_some();
+        self.canvas_shown = true;
+        if self.theorem.is_none() {
+            self.open_theorem(window, cx);
+        }
+        if let Some((w, _)) = &self.theorem {
+            w.update(cx, |w, cx| w.set_board(true, cx));
+        }
+        if self.canvas.is_none() {
+            let board = cx.new(|cx| crate::canvas::SpatialCanvas::with_page(None, cx));
+            self.board_events = Some(cx.subscribe_in(
+                &board,
+                window,
+                |browser, _, event, window, cx| match event {
+                    crate::canvas::BoardEvent::Changed => browser.schedule_save(cx),
+                    crate::canvas::BoardEvent::Focused => {
+                        browser.canvas_shown = false;
+                        if let Some(board) = browser.canvas.clone() {
+                            board.update(cx, |board, cx| board.set_shown(false, cx));
+                        }
+                        browser.apply_visibility(cx);
+                        browser.focus_content(window, cx);
+                        cx.notify();
+                    }
+                    crate::canvas::BoardEvent::PageOperation(id, operation) => {
+                        browser.board_operation(*id, *operation, window, cx)
+                    }
+                    crate::canvas::BoardEvent::Paste(text) => {
+                        browser.paste_on_board(text, window, cx)
+                    }
+                    crate::canvas::BoardEvent::EditNote(note) => {
+                        browser.ensure_notes(window, cx);
+                        if let Some(notebook) = &browser.notebook {
+                            notebook.update(cx, |n, cx| n.select(note, cx));
+                        }
+                        browser.open_place(crate::places::Place::Notes, window, cx);
+                    }
+                    crate::canvas::BoardEvent::Open(id) => {
+                        browser.activate_id(*id, window, cx);
+                        if let Some(board) = browser.canvas.clone() {
+                            board.update(cx, |board, cx| {
+                                board.focus_current(false, cx);
+                            });
+                        }
+                    }
+                },
+            ));
+            self.canvas = Some(board.clone());
+            self.close_stale_canvas(cx);
+            let state = self.board_state.clone();
+            board.update(cx, |board, cx| board.restore(state, cx));
+            if let Some(notebook) = &self.notebook {
+                for saved in &self.board_state.notes {
+                    if let Some(note) = notebook.read(cx).note(&saved.path) {
+                        board.update(cx, |b, cx| b.add_note(note, Some(saved.clone()), cx));
+                    }
+                }
+            }
+        }
+        if let Some(board) = self.canvas.clone() {
+            board.update(cx, |board, cx| {
+                board.set_shown(self.canvas_shown, cx);
+                if self.canvas_shown && !restore_camera {
+                    board.overview(cx);
+                }
+            });
+            if self.canvas_shown {
+                window.focus(&board.focus_handle(cx), cx);
+            } else {
+                self.focus_content(window, cx);
+            }
         }
         self.apply_visibility(cx);
+        if self.canvas_shown && !self.board_state.notes.is_empty() {
+            self.ensure_notes(window, cx);
+        }
+        cx.notify();
     }
 
     // Keeping the session.
@@ -2042,6 +2241,22 @@ impl Browser {
     /// The tabs, their tree, the pins and the icons of the sites those name,
     /// as the store keeps them. None when nothing changed since the last
     /// snapshot, unless `always`.
+    fn saved_board(&self, cx: &App) -> crate::session::format::BoardState {
+        let Some(board) = &self.canvas else {
+            return self.board_state.clone();
+        };
+        let mut state = board.read(cx).state(cx);
+        // Loading a document is asynchronous. Keep not-yet-mounted references
+        // in early session saves; only an explicit removal drops them.
+        for note in &self.board_state.notes {
+            if !state.hidden.contains(&note.id) && !state.notes.iter().any(|n| n.path == note.path)
+            {
+                state.notes.push(note.clone());
+            }
+        }
+        state
+    }
+
     fn snapshot(&mut self, always: bool, cx: &App) -> Option<(Store, Snapshot)> {
         let store = self.store.clone()?;
         // Parents before children, then the pinned tabs.
@@ -2093,8 +2308,13 @@ impl Browser {
             .filter_map(|host| Some((host.clone(), self.icons.get(host)?.clone())))
             .collect();
         let session = Session {
+            visit_session: self.visit_session,
+            next_tab_id: Some(self.next_id),
+            voice: self.speaker.preferences.clone(),
+            board: self.saved_board(cx),
             sidebar: self.sidebar,
             sidebar_width: Some(f32::from(self.sidebar_width)),
+            places_pinned: self.places_pinned,
             active: (!empty_workspace).then(|| self.tabs[self.active].id),
             tabs,
             dock: if empty_workspace {
@@ -2263,6 +2483,7 @@ impl Browser {
             ask: self.ask,
             shareable: self.share_url(self.active, cx).is_some(),
             sidebar: self.sidebar,
+            places_pinned: self.places_pinned,
             pinnable: self.pinnable_url(self.active, cx).is_some(),
         }
     }
@@ -2559,8 +2780,9 @@ impl Browser {
     }
 
     /// The window-drag area in a row of tabs: over the traffic lights at the
-    /// start of the top-left row, and the rest of every top row.
-    fn drag_strip() -> TitleBar {
+    /// start of the top-left row, and the rest of every top row. A place's
+    /// navigator stands under one too.
+    pub(crate) fn drag_strip() -> TitleBar {
         TitleBar::new().border_b_0().bg(transparent_black())
     }
 
@@ -2799,7 +3021,6 @@ impl Browser {
                 )
             }
             (Showing::Serp, page) => (false, page.is_some()),
-            (Showing::Place(_), _) => (true, false),
             _ => (false, false),
         };
         let can_reload = matches!(tab.showing, Showing::Page | Showing::Serp);
@@ -3313,7 +3534,6 @@ impl Browser {
                 page.clone().into_any_element()
             }
             Showing::Serp if let Some(serp) = &tab.serp => serp.clone().into_any_element(),
-            Showing::Place(place) => PlaceView::new(place).into_any_element(),
             _ if tab.asleep.is_some() => self.asleep_surface(index, cx),
             _ => self.start_surface(tab.id, cx),
         }
@@ -3555,7 +3775,11 @@ impl Render for Browser {
             }))
             .on_action(cx.listener(|browser, _: &NewTab, window, cx| browser.new_tab(window, cx)))
             .on_action(cx.listener(|browser, _: &CloseTab, window, cx| {
-                browser.close_tab(browser.active, window, cx)
+                if browser.place.is_some() {
+                    browser.close_place(window, cx);
+                } else {
+                    browser.close_tab(browser.active, window, cx);
+                }
             }))
             .on_action(cx.listener(|browser, _: &NextTab, window, cx| browser.cycle(1, window, cx)))
             .on_action(
@@ -3576,6 +3800,13 @@ impl Render for Browser {
             .on_action(cx.listener(|browser, _: &ToggleCompact, window, cx| {
                 browser.toggle_compact(window, cx)
             }))
+            .on_action(cx.listener(|browser, action: &OpenPlace, window, cx| {
+                browser.open_place(action.place, window, cx)
+            }))
+            .on_action(
+                cx.listener(|browser, _: &LeavePlace, window, cx| browser.exit_place(window, cx)),
+            )
+            .on_action(cx.listener(|browser, _: &TogglePlaces, _, cx| browser.toggle_places(cx)))
             .on_action(cx.listener(|browser, _: &ToggleSidebar, window, cx| {
                 browser.toggle_sidebar(window, cx)
             }))
@@ -3594,20 +3825,154 @@ impl Render for Browser {
             }))
             .on_action(
                 cx.listener(|browser, _: &crate::actions::ShowCanvas, window, cx| {
-                    if let Some(board) = browser.canvas.take() {
-                        board.update(cx, |board, cx| board.detach(cx));
-                        browser.focus_content(window, cx);
-                    } else if let Some(page) = browser.tabs[browser.active].page.clone() {
-                        let board = cx.new(|cx| crate::canvas::SpatialCanvas::new(page, cx));
-                        window.focus(&board.focus_handle(cx), cx);
-                        browser.canvas = Some(board);
+                    browser.toggle_canvas(window, cx);
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::ShowVisitTrail, window, cx| {
+                    this.show_profile_panel(crate::profile_ui::Section::Trail, window, cx)
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::NewCanvasNote, window, cx| {
+                    this.ensure_notes(window, cx);
+                    this.notes_sidebar = true;
+                    let source = this.tabs[this.active].url(cx).map(|u| u.to_string());
+                    if let Some(notes) = this.notebook.clone() {
+                        notes.update(cx, |notes, cx| notes.create(source, window, cx));
                     }
                     cx.notify();
                 }),
             )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::OverviewCanvas, _, cx| {
+                    if let Some(board) = this.canvas.clone() {
+                        board.update(cx, |board, cx| board.overview(cx));
+                    }
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::ArrangeCanvas, _, cx| {
+                    if let Some(board) = this.canvas.clone() {
+                        board.update(cx, |board, cx| board.arrange(cx));
+                    }
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::ToggleNotes, window, cx| {
+                    this.ensure_notes(window, cx);
+                    this.notes_sidebar = !this.notes_sidebar;
+                    cx.notify();
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::ReadSelection, window, cx| {
+                    this.read_selection(window, cx)
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::StopSpeaking, _, _| this.speaker.stop()),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::PauseSpeaking, _, _| this.speaker.pause()),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::ResumeSpeaking, _, _| this.speaker.resume()),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::VoiceSettings, window, cx| {
+                    this.voice_settings(window, cx)
+                }),
+            )
+            .on_action(
+                cx.listener(|this, action: &crate::actions::ChooseVoice, window, cx| {
+                    this.speaker.preferences.voice = action.id.clone();
+                    this.schedule_save(cx);
+                    this.voice_settings(window, cx);
+                }),
+            )
+            .on_action(
+                cx.listener(|this, action: &crate::actions::SpeechRate, window, cx| {
+                    this.speaker.preferences.words_per_minute =
+                        action.words_per_minute.clamp(80, 320);
+                    this.schedule_save(cx);
+                    this.voice_settings(window, cx);
+                }),
+            )
+            .on_action(
+                cx.listener(|this, _: &crate::actions::ToggleDictation, window, cx| {
+                    this.toggle_dictation(window, cx)
+                }),
+            )
+            .capture_any_mouse_down(
+                cx.listener(|this, _, window, cx| this.cancel_dictation(window, cx)),
+            )
+            .on_modifiers_changed(cx.listener(
+                |this, event: &gpui_kit::ModifiersChangedEvent, window, cx| {
+                    let (left, right) = crate::voice::shortcut::command_keys();
+                    this.voice_modifiers(event.modifiers, left, right, window, cx);
+                },
+            ))
+            .capture_key_up(
+                cx.listener(|this, event: &gpui_kit::KeyUpEvent, window, cx| {
+                    let shortcut = this.voice_shortcut();
+                    let effect = this.voice_hold.key_up(&shortcut, &event.keystroke);
+                    this.voice_hold_effect(effect, window, cx);
+                }),
+            )
             .on_action(cx.listener(|_, _: &Quit, _, cx| cx.quit()))
+            .when(
+                self.speech.read(cx).status().is_active() || self.voice_prepare.is_some(),
+                |root| {
+                    root.child(
+                        gpui_kit::deferred(
+                            div()
+                                .absolute()
+                                .bottom_2()
+                                .right_2()
+                                .px_3()
+                                .py_2()
+                                .rounded_md()
+                                .bg(cx.theme().popover)
+                                .text_color(cx.theme().foreground)
+                                .text_sm()
+                                .child(if self.voice_prepare.is_some() {
+                                    "Preparing local voice…".to_owned()
+                                } else if self.speech.read(cx).status()
+                                    == gpui_kit::component::speech::SpeechStatus::Stopping
+                                {
+                                    "Finishing dictation…".to_owned()
+                                } else if self.voice_hold.active {
+                                    format!(
+                                        "Dictating · Release {} to finish · Esc to cancel",
+                                        self.voice_shortcut().label()
+                                    )
+                                } else {
+                                    "Dictating · Edit menu to finish · Esc to cancel".to_owned()
+                                })
+                                .child(
+                                    div()
+                                        .max_w(px(520.))
+                                        .text_sm()
+                                        .child(self.speech.read(cx).transcript()),
+                                ),
+                        )
+                        .with_priority(2),
+                    )
+                },
+            )
             .capture_key_down(
                 cx.listener(|this, event: &gpui_kit::KeyDownEvent, window, cx| {
+                    let shortcut = this.voice_shortcut();
+                    let (handled, effect) =
+                        this.voice_hold
+                            .key_down(&shortcut, &event.keystroke, event.is_held);
+                    this.voice_hold_effect(effect, window, cx);
+                    if handled {
+                        cx.stop_propagation();
+                        return;
+                    }
+                    this.cancel_dictation(window, cx);
                     if event.keystroke.key == "down"
                         && !this.suggestions.is_empty()
                         && this.omnibox.focus_handle(cx).is_focused(window)
@@ -3632,36 +3997,79 @@ impl Render for Browser {
                     .flex_1()
                     .min_h_0()
                     .when(
-                        self.sidebar && !self.compact && !self.underlay.shown,
+                        self.sidebar
+                            && !self.compact
+                            && !self.underlay.shown
+                            && self.place.is_none(),
                         |row| row.child(self.render_sidebar(window, cx)),
                     )
-                    .child(div().flex_1().min_w_0().h_full().child(match &self.canvas {
-                        Some(board) => board.clone().into_any_element(),
-                        None if self.underlay.shown => self.render_underlay(window, cx),
-                        None => self.dock.clone().into_any_element(),
-                    })),
+                    .when(self.notes_sidebar && self.place.is_none(), |row| {
+                        row.child(div().w(px(360.)).h_full().children(self.notebook.clone()))
+                    })
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .h_full()
+                            .relative()
+                            .child(match (self.place, &self.canvas) {
+                                (Some(place), _) => self.render_place(place, cx),
+                                (None, Some(board)) if self.canvas_shown => {
+                                    board.update(cx, |board, _| {
+                                        board.notes_inline = !self.notes_sidebar
+                                    });
+                                    let mut surface =
+                                        div().relative().size_full().child(board.clone());
+                                    if let Some((w, _)) = &self.theorem {
+                                        if let Some(slot) = w.read(cx).board_slot() {
+                                            surface =
+                                                surface.child(crate::bump::board_foot(slot, cx));
+                                        }
+                                        surface = surface.child(
+                                            div()
+                                                .absolute()
+                                                .bottom_0()
+                                                .left_0()
+                                                .right_0()
+                                                .flex()
+                                                .justify_center()
+                                                .child(w.clone()),
+                                        );
+                                    }
+                                    surface.child(self.board_toolbar(cx)).into_any_element()
+                                }
+                                (None, _) if self.underlay.shown => {
+                                    self.render_underlay(window, cx)
+                                }
+                                (None, _) => self.dock.clone().into_any_element(),
+                            })
+                            .children(self.render_pinned_places(cx)),
+                    ),
             )
-            .when(self.compact && !self.underlay.shown, |this| {
-                this.child(
-                    // Pointing at the top edge brings the chrome back over the page.
-                    div()
-                        .id("reveal")
-                        .absolute()
-                        .top_0()
-                        .left_0()
-                        .right_0()
-                        .h(px(FRAME * 2.))
-                        .on_hover(cx.listener(|browser, hovered: &bool, _, cx| {
-                            if *hovered && !browser.revealed {
-                                browser.revealed = true;
-                                cx.notify();
-                            }
-                        })),
-                )
-                .when(self.revealed, |this| {
-                    this.child(self.compact_chrome(window, cx))
-                })
-            })
+            .when(
+                self.compact && !self.underlay.shown && self.place.is_none(),
+                |this| {
+                    this.child(
+                        // Pointing at the top edge brings the chrome back over the page.
+                        div()
+                            .id("reveal")
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .right_0()
+                            .h(px(FRAME * 2.))
+                            .on_hover(cx.listener(|browser, hovered: &bool, _, cx| {
+                                if *hovered && !browser.revealed {
+                                    browser.revealed = true;
+                                    cx.notify();
+                                }
+                            })),
+                    )
+                    .when(self.revealed, |this| {
+                        this.child(self.compact_chrome(window, cx))
+                    })
+                },
+            )
             .children(navigator)
             .children(suggestions)
     }

@@ -60,6 +60,20 @@ const OUTPUT: &str = "sentence_embedding";
 
 static MODEL: OnceLock<Arc<EmbeddingGemma>> = OnceLock::new();
 
+/// ONNX allows one environment per process. Search and local dictation share
+/// its lifetime even when their models initialize concurrently.
+pub(crate) fn environment() -> anyhow::Result<Environment> {
+    static ENV: OnceLock<Result<Environment, String>> = OnceLock::new();
+    ENV.get_or_init(|| {
+        ort::init()
+            .with_name("platinum")
+            .build()
+            .map_err(|e| e.to_string())
+    })
+    .clone()
+    .map_err(|e| anyhow!(e))
+}
+
 /// The loaded model, once [`load`] has finished.
 pub fn shared() -> Option<Arc<EmbeddingGemma>> {
     MODEL.get().cloned()
@@ -116,10 +130,7 @@ impl EmbeddingGemma {
             }))
             .map_err(|error| anyhow!("could not set the embedding tokenizer up: {error}"))?;
 
-        let environment = ort::init()
-            .with_name("frame")
-            .build()
-            .map_err(|error| anyhow!("could not start ONNX Runtime: {error}"))?;
+        let environment = environment()?;
         let (session, device) = match open_session(&environment, &model_path, true) {
             Ok(session) => (session, "the GPU"),
             Err(error) => {

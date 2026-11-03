@@ -17,7 +17,7 @@ pub fn run() -> anyhow::Result<()> {
     }
     let _ = rustls::crypto::ring::default_provider().install_default();
     gpui_kit::application()
-        .with_assets(gpui_kit::assets::Assets)
+        .with_assets(gpui_kit::assets::AllAssets)
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);

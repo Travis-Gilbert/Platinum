@@ -49,6 +49,8 @@ use mechanics::ZOrder;
 use paint::*;
 // THEOREM PATCH: hosted guests paint between board content and these overlays.
 pub use paint::{paint_marquee, paint_selection};
+// FRAME PATCH: Frame's cards draw the board's dot grid.
+pub use paint::paint_board;
 use render_perf::WorldViewport;
 pub use scene::*;
 

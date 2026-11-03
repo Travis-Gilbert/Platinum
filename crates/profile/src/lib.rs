@@ -59,6 +59,22 @@ pub struct LibraryEntry {
     pub folder: String,
 }
 
+/// One navigation, even when its URL repeats. Previews own their encoded
+/// pixels; they never refer to a recyclable engine surface. Records are
+/// durable user history and are paged, not silently cache-evicted.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Visit {
+    pub id: i64,
+    pub tab: String,
+    pub predecessor: Option<i64>,
+    pub url: String,
+    pub title: String,
+    pub visited: i64,
+    /// Kept beside the database as a file, so the graph holds only records.
+    #[serde(skip)]
+    pub preview: Option<Vec<u8>>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SessionTab {
     pub url: Option<String>,

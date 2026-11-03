@@ -11,7 +11,8 @@
 //!
 //! Without the `Store` global (the UI tests) nothing is read or written.
 
-mod format;
+#[path = "session/format.rs"]
+pub(crate) mod format;
 
 use std::collections::HashSet;
 use std::fs;
@@ -120,6 +121,11 @@ impl Store {
 
     pub fn global(cx: &App) -> Option<Self> {
         cx.try_global::<Self>().cloned()
+    }
+
+    /// The directory this profile keeps its files in.
+    pub fn root(&self) -> &Path {
+        &self.dir
     }
 
     /// The pins kept, or none.
@@ -281,8 +287,13 @@ mod tests {
 
     fn session(sidebar_width: f32) -> Session {
         Session {
+            visit_session: 0,
+            next_tab_id: None,
+            voice: Default::default(),
+            board: format::BoardState::default(),
             sidebar: false,
             sidebar_width: Some(sidebar_width),
+            places_pinned: false,
             active: None,
             tabs: Vec::new(),
             dock: Layout::default(),

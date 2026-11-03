@@ -16,6 +16,10 @@ filters, source details and visible notices when search coverage is incomplete.
 Continue is kept in each profile’s `recents.json`; Clear removes that list.
 
 
+- **Voice input**: focus a text field and hold **Left Command** to dictate.
+  Capture begins after a brief hold; release to finish, or press Escape to
+  cancel. Change the hold-to-talk shortcut in **Edit > Voice Settings**.
+  Normal Command shortcuts cancel the pending hold. Audio stays on this Mac.
 - **Right-click** anywhere: a menu opens at the pointer with its search field
   first and already focused, over the page's own entries and Platinum's tools.
   Type to filter those and find your tabs and every command, or to open an

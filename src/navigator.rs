@@ -29,7 +29,8 @@ use url::Url;
 use crate::actions::{
     BookmarkPage, CloseTab, FillPassword, FocusAddressBar, GoBack, GoForward, ImportBrowserData,
     NewTab, PinTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks,
-    ShowConsole, ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    ShowConsole, ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces,
+    ToggleSidebar,
 };
 use crate::address::{Target, classify};
 use crate::icons;
@@ -126,6 +127,8 @@ pub struct BrowserState<'a> {
     /// The active tab shows a web page that can be shared.
     pub shareable: bool,
     pub sidebar: bool,
+    /// The places bump stands over the tabs and the workspace too.
+    pub places_pinned: bool,
     /// The active tab shows a site that can be pinned.
     pub pinnable: bool,
 }
@@ -252,6 +255,18 @@ impl Navigator {
                 .into(),
                 Icon::new(IconName::PanelLeft),
                 Box::new(ToggleSidebar),
+                true,
+                false,
+            ),
+            (
+                if browser.places_pinned {
+                    "Show Places Only in Places"
+                } else {
+                    "Always Show Places"
+                }
+                .into(),
+                icons::apps(),
+                Box::new(TogglePlaces),
                 true,
                 false,
             ),

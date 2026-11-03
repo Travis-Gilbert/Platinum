@@ -1994,6 +1994,13 @@ pub struct PlatformInputHandler {
     allow(dead_code)
 )]
 impl PlatformInputHandler {
+    // THEOREM PATCH: use the mounted input handler for native dictation,
+    // without re-entering AsyncWindowContext while its window is borrowed.
+    pub(crate) fn edit<R>(&mut self, window: &mut Window, cx: &mut App,
+        edit: impl FnOnce(&mut dyn InputHandler, &mut Window, &mut App) -> R) -> R {
+        edit(self.handler.as_mut(), window, cx)
+    }
+
     pub fn new(cx: AsyncWindowContext, handler: Box<dyn InputHandler>) -> Self {
         Self { cx, handler }
     }

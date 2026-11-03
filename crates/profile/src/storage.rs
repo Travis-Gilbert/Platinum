@@ -1,6 +1,7 @@
 //! One writer per installation, shared by profile clones and background tasks.
 //! RustyRed owns transactions, durability and full-text indexing; this adapter
-//! defines browser record identities and ranking only.
+//! defines browser record identities and ranking only. Visit previews are
+//! encoded images and stay in files, outside the graph's records.
 use super::*;
 use anyhow::{Context, Result, ensure};
 use rustyred::engine::NodeQuery;
@@ -29,6 +30,47 @@ fn records(db: &Database, profile: i64, label: &str) -> Result<Vec<NodeRecord>> 
 }
 fn value(db: &Database, id: &str) -> Result<Option<Value>> {
     Ok(db.engine().get_node(id)?.map(|n| n.properties))
+}
+
+/// The ids in use, so a page of visits reads its own records and no others.
+/// `floor` rises when history is cleared; ids are never reused.
+#[derive(Clone, Copy, Default)]
+pub(super) struct VisitRange {
+    pub floor: i64,
+    pub last: i64,
+}
+impl VisitRange {
+    pub fn read(db: &Database, profile: i64) -> Result<Self> {
+        let id = node(profile, "VisitRange", "current", json!({})).id;
+        Ok(value(db, &id)?.map_or(Self::default(), |v| Self {
+            floor: v["floor"].as_i64().unwrap_or(0),
+            last: v["last"].as_i64().unwrap_or(0),
+        }))
+    }
+    pub fn record(self, profile: i64) -> NodeRecord {
+        node(
+            profile,
+            "VisitRange",
+            "current",
+            json!({"floor":self.floor,"last":self.last}),
+        )
+    }
+}
+pub(super) fn visit_node(profile: i64, visit: &Visit, has_preview: bool) -> Result<NodeRecord> {
+    let mut properties = serde_json::to_value(visit)?;
+    properties["has_preview"] = json!(has_preview);
+    Ok(node(profile, "Visit", &visit.id.to_string(), properties))
+}
+/// A tab's newest visit, which the next visit in that tab follows.
+pub(super) fn visit_tail(profile: i64, tab: &str, id: i64) -> NodeRecord {
+    node(profile, "VisitTail", tab, json!({"id":id}))
+}
+const VISIT_PREVIEWS: &str = "visit-previews";
+pub(super) fn save_visit_preview(directory: &Path, id: i64, preview: &[u8]) -> Result<()> {
+    let folder = directory.join(VISIT_PREVIEWS);
+    std::fs::create_dir_all(&folder)?;
+    std::fs::write(folder.join(format!("{id}.png")), preview)?;
+    Ok(())
 }
 
 fn shared_database(root: &Path) -> Result<Arc<Mutex<Database>>> {
@@ -263,26 +305,127 @@ impl ProfileStore {
             return Ok(());
         };
         let mut db = self.db()?;
-        let cleared = node(self.profile.id, "HistoryCleared", "current", json!({})).id;
-        if value(&db, &cleared)?
-            .and_then(|v| v["at"].as_i64())
-            .is_some_and(|at| visited <= at)
-        {
+        if self.cleared_since(&db, visited)? {
             return Ok(());
         }
-
+        let record = self.history_record(&db, &url, title, visited)?;
+        db.upsert_node(record)?;
+        Ok(())
+    }
+    fn cleared_since(&self, db: &Database, visited: i64) -> Result<bool> {
+        let cleared = node(self.profile.id, "HistoryCleared", "current", json!({})).id;
+        Ok(value(db, &cleared)?
+            .and_then(|v| v["at"].as_i64())
+            .is_some_and(|at| visited <= at))
+    }
+    fn history_record(
+        &self,
+        db: &Database,
+        url: &Url,
+        title: &str,
+        visited: i64,
+    ) -> Result<NodeRecord> {
         let mut record = node(
             self.profile.id,
             "History",
             url.as_str(),
             json!({"url":url.as_str(),"title":title,"visited":visited,"visits":1}),
         );
-        if let Some(old) = value(&db, &record.id)? {
+        if let Some(old) = value(db, &record.id)? {
             record.properties["visits"] =
                 json!(old["visits"].as_i64().unwrap_or(0).saturating_add(1));
         }
-        db.upsert_node(record)?;
-        Ok(())
+        Ok(record)
+    }
+    pub fn record_visit(
+        &self,
+        tab: &str,
+        url: &str,
+        title: &str,
+        preview: Option<&[u8]>,
+    ) -> Result<Option<i64>> {
+        self.record_visit_at(tab, url, title, preview, now())
+    }
+    /// `visited` is captured when navigation finishes, before thumbnail encoding
+    /// or storage queues can delay the write. A visit from before the last
+    /// Clear History is refused, and returns `None`.
+    pub fn record_visit_at(
+        &self,
+        tab: &str,
+        url: &str,
+        title: &str,
+        preview: Option<&[u8]>,
+        visited: i64,
+    ) -> Result<Option<i64>> {
+        let url = web_url(url).context("Only web addresses can enter a trail")?;
+        ensure!(
+            preview.is_none_or(|p| p.len() <= 512 * 1024),
+            "visit preview exceeds 512 KiB"
+        );
+        let mut db = self.db()?;
+        if self.cleared_since(&db, visited)? {
+            return Ok(None);
+        }
+        let profile = self.profile.id;
+        let mut range = VisitRange::read(&db, profile)?;
+        range.last += 1;
+        let id = range.last;
+        let tail = visit_tail(profile, tab, id);
+        let predecessor = value(&db, &tail.id)?.and_then(|v| v["id"].as_i64());
+        let history = self.history_record(&db, &url, title, visited)?;
+        // Before the commit: a crash leaves an unreferenced file, never a
+        // record promising a preview it lacks. Clear History removes the folder.
+        if let Some(preview) = preview {
+            save_visit_preview(&self.directory(), id, preview)?;
+        }
+        let visit = Visit {
+            id,
+            tab: tab.into(),
+            predecessor,
+            url: url.as_str().into(),
+            title: title.into(),
+            visited,
+            preview: None,
+        };
+        db.mutate(GraphMutationBatch::new(
+            [
+                visit_node(profile, &visit, preview.is_some())?,
+                tail,
+                range.record(profile),
+                history,
+            ]
+            .map(GraphMutation::NodeUpsert),
+        ))?;
+        Ok(Some(id))
+    }
+    /// Newest first, from just before `before`. Each page reads only its own
+    /// records, so memory stays independent of total profile history.
+    pub fn visits(&self, before: Option<i64>, limit: usize) -> Result<Vec<Visit>> {
+        let profile = self.profile.id;
+        let mut visits = Vec::new();
+        {
+            let db = self.db()?;
+            let range = VisitRange::read(&db, profile)?;
+            let newest = before.map_or(range.last, |b| b.saturating_sub(1).min(range.last));
+            for id in ((range.floor + 1)..=newest).rev().take(limit.min(100)) {
+                let key = node(profile, "Visit", &id.to_string(), json!({})).id;
+                if let Some(properties) = value(&db, &key)? {
+                    let has_preview = properties["has_preview"] == true;
+                    visits.push((serde_json::from_value::<Visit>(properties)?, has_preview));
+                }
+            }
+        }
+        // A preview that cannot be read still leaves its visit in the trail.
+        let folder = self.directory().join(VISIT_PREVIEWS);
+        Ok(visits
+            .into_iter()
+            .map(|(mut visit, has_preview)| {
+                if has_preview {
+                    visit.preview = std::fs::read(folder.join(format!("{}.png", visit.id))).ok();
+                }
+                visit
+            })
+            .collect())
     }
     pub fn suggestions(
         &self,
@@ -368,24 +511,31 @@ impl ProfileStore {
         // Remove the legacy rollback copy first. If this fails, report failure
         // rather than promising that the migration copy was forgotten.
         super::legacy::clear_history(&self.directory())?;
-        let deletes = records(&db, self.profile.id, "History")?
-            .into_iter()
-            .map(|n| {
+        match std::fs::remove_dir_all(self.directory().join(VISIT_PREVIEWS)) {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error.into()),
+            _ => {}
+        }
+        let mut deletes = Vec::new();
+        for label in ["History", "Visit", "VisitTail"] {
+            deletes.extend(records(&db, self.profile.id, label)?.into_iter().map(|n| {
                 // A normal logical delete retains the old payload in its
                 // tombstone. Replace it with an empty tombstone so even the
                 // engine's diagnostic read cannot recover the title or URL.
                 let mut forgotten = NodeRecord::new(n.id, Vec::<String>::new(), json!({}));
                 forgotten.tombstone = true;
                 GraphMutation::NodeUpsert(forgotten)
-            });
-        db.mutate(GraphMutationBatch::new(deletes.chain(std::iter::once(
-            GraphMutation::NodeUpsert(node(
-                self.profile.id,
-                "HistoryCleared",
-                "current",
-                json!({"at":now()}),
-            )),
-        ))))?;
+            }));
+        }
+        let last = VisitRange::read(&db, self.profile.id)?.last;
+        let range = VisitRange { floor: last, last };
+        deletes.push(GraphMutation::NodeUpsert(range.record(self.profile.id)));
+        deletes.push(GraphMutation::NodeUpsert(node(
+            self.profile.id,
+            "HistoryCleared",
+            "current",
+            json!({"at":now()}),
+        )));
+        db.mutate(GraphMutationBatch::new(deletes))?;
         db.compact()?;
         Ok(())
     }

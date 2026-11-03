@@ -22,6 +22,14 @@ The changes:
 
 The renderer draws them with `vendor/gpui-pre-apple`'s matching patch.
 
+Local dictation additionally uses `Window::with_focused_text_input` and the
+private `PlatformInputHandler::edit` bridge. They validate the captured focus
+before calling the mounted input's existing IME methods. This avoids synthetic
+keystrokes, clipboard mutation, and a separate insertion implementation per
+native editor. The caller owns destination invalidation on navigation and
+user input; no method submits the field. Carry these marked methods forward
+when updating GPUI and test stale focus and selection with dictation.
+
 Re-applying it on a GPUI Kit upgrade: copy the new `gpui-pre` from the
 registry without `examples/`, drop its `[[example]]` targets, carry the
 marked changes, and run:
