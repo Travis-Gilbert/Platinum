@@ -181,8 +181,17 @@
     for (const element of pending) {
       if (!element.isConnected) continue;
       const tex = element.textContent;
+      // The promise form waits for the TeX extensions a formula needs, which the plain form
+      // throws for. A formula that fails stays as its source; the rest are still typeset.
+      let output;
+      try {
+        output = await MathJax.tex2chtmlPromise(tex, { display: element.classList.contains("math-block") });
+      } catch (error) {
+        console.error(error.message);
+        continue;
+      }
+      if (!element.isConnected) continue;
       sources.set(element, tex);
-      const output = MathJax.tex2chtml(tex, { display: element.classList.contains("math-block") });
       element.replaceChildren(output);
       element.classList.add("is-loaded");
     }
