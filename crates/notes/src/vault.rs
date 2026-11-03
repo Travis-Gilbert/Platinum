@@ -321,7 +321,9 @@ impl Vault {
         self.check_document(path)?;
         let was_open = self.runtime.sessions().snapshot(&key(path)).is_ok();
         let mut arguments = args(path);
-        arguments["keep"] = json!("disk");
+        // `merge` folds the disk's edits into unsaved ones and conflicts where
+        // they overlap; `disk` would replace the note with the disk text.
+        arguments["keep"] = json!("merge");
         let result: ReconcileResult =
             serde_json::from_value(self.runtime.call("documents.reconcile", arguments)?)?;
         if matches!(result, ReconcileResult::Applied { .. }) {

@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Travis-Gilbert/Theorem
-          ref: 1cfe2adc177ceacbc7592a9a822ba2e690e8391a
+          ref: 07f6a82e09021bac2e1fd97278286e63c0c7ff0c
           token: ${{ secrets.THEOREM_READONLY_TOKEN }}
           path: deps/theorem-search
 

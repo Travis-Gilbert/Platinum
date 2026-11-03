@@ -26,6 +26,7 @@
 //! `NativeMenu`; the session, the transports and the terminal attachment are
 //! `theorem_ide_host::client`.
 
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::time::{Duration, Instant};
@@ -48,9 +49,10 @@ use gpui_kit::component::{
 use gpui_kit::{
     App, AppContext as _, Context, Entity, EntityInputHandler as _, FocusHandle, Focusable,
     InteractiveElement as _, IntoElement, KeyBinding, ParentElement as _, PathPromptOptions,
-    Render, SharedString, Styled as _, Subscription, Task, WeakEntity, Window, actions, div,
-    prelude::FluentBuilder as _, px,
+    Render, Role, SharedString, StatefulInteractiveElement as _, Styled as _, Subscription, Task,
+    WeakEntity, Window, actions, div, prelude::FluentBuilder as _, px,
 };
+use rustyred_thg_text_model::{Operation, Stickiness, TextEdit};
 use serde_json::{Value, json};
 use theorem_ide_host::client::document::{DocumentSession, Keep, Output, Purpose, TextChange};
 use theorem_ide_host::client::terminal::{TerminalAttachment, TerminalPurpose};
@@ -198,22 +200,33 @@ pub fn remote_from_env() -> Option<anyhow::Result<Link>> {
 
 /// The loopback credential: 32 random bytes as hex, kept in a file only its
 /// owner reads, made once and reused so a web client's setting survives a
-/// relaunch. Never printed.
+/// relaunch. A file whose mode is not 0600 is not reused: anyone it let in
+/// may have read it, so a new credential replaces it. Never printed.
 fn credential(path: &Path) -> anyhow::Result<String> {
     use std::io::Write as _;
-    use std::os::unix::fs::OpenOptionsExt as _;
-    if let Ok(token) = std::fs::read_to_string(path)
-        && token.trim().len() >= 64
-    {
-        return Ok(token.trim().to_owned());
+    use std::os::unix::fs::{OpenOptionsExt as _, PermissionsExt as _};
+    match std::fs::symlink_metadata(path) {
+        Ok(meta) if !meta.file_type().is_file() => {
+            anyhow::bail!("{} is not a regular file", path.display())
+        }
+        Ok(meta) => {
+            if meta.permissions().mode() & 0o777 == 0o600
+                && let Ok(token) = std::fs::read_to_string(path)
+                && token.trim().len() >= 64
+            {
+                return Ok(token.trim().to_owned());
+            }
+            std::fs::remove_file(path)?;
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
     }
     let mut bytes = [0u8; 32];
     getrandom::fill(&mut bytes).map_err(|error| anyhow::anyhow!("no randomness: {error}"))?;
     let token: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
     let mut file = std::fs::OpenOptions::new()
         .write(true)
-        .create(true)
-        .truncate(true)
+        .create_new(true)
         .mode(0o600)
         .open(path)?;
     file.write_all(token.as_bytes())?;
@@ -242,10 +255,6 @@ fn workspace_id(checkout: &Path) -> String {
         if name.is_empty() { "folder" } else { &name }
     )
 }
-
-/// The notice when keeping the disk's text would overwrite lines the editor
-/// also changed.
-pub const UNMERGED: &str = "The disk and the editor changed the same lines, so nothing was merged.";
 
 /// One open document and what the place shows of it.
 struct Open {
@@ -664,15 +673,6 @@ impl Code {
                         open.conflict = Some(conflict);
                     }
                 }
-                Output::Unreconciled(mut conflict) => {
-                    // The host merges the disk change from the saved base and
-                    // refuses lines both sides changed: keep the bar up.
-                    self.notice = Some(UNMERGED.into());
-                    if let Some(open) = self.open.as_mut() {
-                        conflict["resource_id"] = json!(open.session.resource_id());
-                        open.conflict = Some(conflict);
-                    }
-                }
                 Output::Dropped(error) => {
                     self.refused("documents.edit", &error, cx);
                     self.notice =
@@ -730,15 +730,16 @@ impl Code {
         self.applying = true;
         self.editor.update(cx, |editor, cx| {
             let selection = editor.selected_range();
+            let before = editor.value().to_string();
             for change in changes.iter().rev() {
                 editor.set_selected_range(change.start..change.end, cx);
                 editor.replace(change.insert.clone(), window, cx);
             }
+            let mapped = map_selection(selection, &before, &expected, changes);
             if editor.value().as_ref() != expected.as_str() {
                 // Never leave the editor showing other text than the session.
                 editor.set_value(expected, window, cx);
             }
-            let mapped = map_offset(selection.start, changes)..map_offset(selection.end, changes);
             editor.set_selected_range(mapped, cx);
         });
         self.applying = false;
@@ -1166,6 +1167,8 @@ impl Code {
                 .child(
                     div()
                         .id("code-terminal-screen")
+                        .role(Role::Log)
+                        .aria_label(format!("Terminal {} output", terminal.session()))
                         .debug_selector(|| "code-terminal-screen".into())
                         .flex_1()
                         .min_h_0()
@@ -1193,21 +1196,65 @@ impl Code {
     }
 }
 
-/// Where a byte offset lands once `changes` (ascending, in the old text's
-/// offsets) are applied. An insertion exactly at the offset lands after it;
-/// an offset inside removed text moves to the end of that change's insert.
-fn map_offset(offset: usize, changes: &[TextChange]) -> usize {
-    let mut shift: isize = 0;
-    for change in changes {
-        if change.end <= offset && change.start < offset || change.end < offset {
-            shift += change.insert.len() as isize - (change.end - change.start) as isize;
-        } else if change.start < offset {
-            return (change.start as isize + shift) as usize + change.insert.len();
-        } else {
-            break;
-        }
+/// Map a selection in `before` (UTF-8 byte offsets) through another writer's
+/// `changes` into `after` the way ide-cm's editor maps its own selection
+/// (CodeMirror `SelectionRange::map`): a caret, and a selection's end, map with
+/// `assoc` -1, a non-empty selection's start with `assoc` 1 (`ChangeSet::mapPos`).
+/// With -1 a point stays before an insertion at it; with 1 it moves past it.
+/// At the start of a replacement both land at its start, strictly inside one
+/// -1 lands at its start and 1 at its end, and at the end of replaced text both
+/// move past the replacement. The text model counts characters, so the offsets
+/// are converted on the way in and out.
+fn map_selection(
+    selection: Range<usize>,
+    before: &str,
+    after: &str,
+    changes: &[TextChange],
+) -> Range<usize> {
+    let to_char = |byte: usize| before[..byte.min(before.len())].chars().count();
+    let to_byte = |char: usize| {
+        after
+            .char_indices()
+            .nth(char)
+            .map_or(after.len(), |(byte, _)| byte)
+    };
+    let edits = changes
+        .iter()
+        .map(|change| {
+            TextEdit::new(
+                to_char(change.start)..to_char(change.end),
+                change.insert.clone(),
+            )
+        })
+        .collect();
+    let Ok(operation) = Operation::new(before.chars().count(), edits) else {
+        return after.len()..after.len();
+    };
+    let map = |byte: usize, forward: bool| {
+        let at = to_char(byte);
+        let edit = operation
+            .edits()
+            .iter()
+            .find(|edit| edit.range.start <= at && at <= edit.range.end);
+        let (stickiness, past) = match edit {
+            Some(edit) if edit.range.is_empty() && forward => (Stickiness::Right, 0),
+            Some(edit) if !edit.range.is_empty() && edit.range.end == at => (Stickiness::Right, 0),
+            // `transform_offset` puts a point strictly inside a replacement at
+            // its start; `assoc` 1 puts it at the replacement's end.
+            Some(edit) if forward && edit.range.start < at => {
+                (Stickiness::Left, edit.insert.chars().count())
+            }
+            _ => (Stickiness::Left, 0),
+        };
+        operation
+            .transform_offset(at, stickiness)
+            .map_or(after.len(), |char| to_byte(char + past))
+    };
+    if selection.is_empty() {
+        let caret = map(selection.start, false);
+        return caret..caret;
     }
-    (offset as isize + shift).max(0) as usize
+    map(selection.start, true)..map(selection.end, false)
 }
 
 fn severity(name: Option<&str>) -> DiagnosticSeverity {
@@ -1317,6 +1364,8 @@ impl Render for Code {
                     .child(
                         div()
                             .id("code-files")
+                            .role(Role::Group)
+                            .aria_label("Workspace files")
                             .w(px(240.))
                             .border_r_1()
                             .border_color(cx.theme().border)
@@ -1437,19 +1486,90 @@ mod tests {
     }
 
     #[test]
-    fn a_selection_follows_its_text_through_another_writers_changes() {
-        let changes = [change(0, 0, "ab"), change(4, 6, "")];
+    fn a_credential_is_reused_only_from_an_owner_only_file() {
+        use std::os::unix::fs::PermissionsExt as _;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("token");
+        let mode = |path: &Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
+        let first = credential(&path).unwrap();
+        assert_eq!(mode(&path), 0o600);
         assert_eq!(
-            map_offset(0, &changes),
+            credential(&path).unwrap(),
+            first,
+            "an owner-only file is reused"
+        );
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        let second = credential(&path).unwrap();
+        assert_ne!(second, first, "a file others could read is replaced");
+        assert_eq!(mode(&path), 0o600);
+        std::fs::write(&path, "short").unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert_eq!(credential(&path).unwrap().len(), 64);
+        let link = dir.path().join("link");
+        std::os::unix::fs::symlink(&path, &link).unwrap();
+        assert!(credential(&link).is_err(), "a symlink is refused");
+    }
+
+    #[test]
+    fn a_selection_follows_its_text_through_another_writers_changes() {
+        let before = "0123456789";
+        let changes = [change(0, 0, "ab"), change(4, 6, "")];
+        let after = "ab01236789";
+        let map = |at: usize| map_selection(at..at, before, after, &changes).start;
+        assert_eq!(
+            map(0),
             0,
             "another writer's insertion at the caret lands after it"
         );
-        assert_eq!(map_offset(3, &changes), 5);
+        assert_eq!(map(3), 5);
+        assert_eq!(map(5), 6, "inside removed text lands at the removal");
+        assert_eq!(map(8), 8);
+        let replaced = [change(4, 6, "xyz")];
+        let map = |at: usize| map_selection(at..at, before, "0123xyz6789", &replaced).start;
         assert_eq!(
-            map_offset(5, &changes),
-            6,
-            "inside removed text lands at the removal"
+            map(4),
+            4,
+            "at the start of a replacement stays at its start"
         );
-        assert_eq!(map_offset(8, &changes), 8);
+        assert_eq!(map(5), 4, "inside a replacement lands at its start");
+        assert_eq!(
+            map(6),
+            7,
+            "at the end of replaced text moves past the replacement"
+        );
+        assert_eq!(
+            map_selection(2.."éx".len(), "éx", "üéx", &[change(0, 0, "ü")]),
+            4..5,
+            "byte offsets survive characters wider than a byte"
+        );
+        // A non-empty selection's start maps forward (CodeMirror `assoc` 1).
+        let select = |range: Range<usize>, changes: &[TextChange], after: &str| {
+            map_selection(range, before, after, changes)
+        };
+        assert_eq!(
+            select(2..5, &[change(2, 2, "ab")], "01ab23456789"),
+            4..7,
+            "an insertion at the selection's start stays outside it"
+        );
+        assert_eq!(
+            select(5..8, &replaced, "0123xyz6789"),
+            7..9,
+            "a start inside a replacement lands at its end"
+        );
+        assert_eq!(
+            select(4..8, &replaced, "0123xyz6789"),
+            4..9,
+            "a start at a replacement's start stays at its start"
+        );
+        assert_eq!(
+            select(6..8, &replaced, "0123xyz6789"),
+            7..9,
+            "a start at the end of replaced text moves past the replacement"
+        );
+        assert_eq!(
+            select(1..4, &[change(4, 4, "ab")], "0123ab456789"),
+            1..4,
+            "an insertion at the selection's end stays outside it"
+        );
     }
 }

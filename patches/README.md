@@ -3,7 +3,7 @@
 ## Spatial workspace companions
 
 `theorem-model-routing.patch` applies to Theorem
-`1cfe2adc177ceacbc7592a9a822ba2e690e8391a` through `script/bootstrap`.
+`07f6a82e09021bac2e1fd97278286e63c0c7ff0c` through `script/bootstrap`.
 It carries the shared model-role contract, HTTP client/authority routing and
 receipts, compatible specialist bindings, and the `typed_decision` graph tool.
 The authority catalog owns model endpoints and credential references; clients

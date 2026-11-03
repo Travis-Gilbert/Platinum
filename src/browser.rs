@@ -674,6 +674,11 @@ impl Browser {
                 browser.activate(index, window, cx)
             });
         }
+        if let Some(place) = Place::at_launch() {
+            cx.defer_in(window, move |browser, window, cx| {
+                browser.open_place(place, window, cx)
+            });
+        }
         browser
     }
 

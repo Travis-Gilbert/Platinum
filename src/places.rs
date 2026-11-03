@@ -97,6 +97,16 @@ impl Place {
         }
     }
 
+    /// The place to show when the window opens: Code when the launch names a
+    /// checkout (`FRAME_CODE_CHECKOUT`) or a remote host
+    /// (`FRAME_CODE_REMOTE_URL`) for it, otherwise none.
+    pub fn at_launch() -> Option<Place> {
+        ["FRAME_CODE_CHECKOUT", "FRAME_CODE_REMOTE_URL"]
+            .iter()
+            .any(|name| std::env::var_os(name).is_some())
+            .then_some(Place::Code)
+    }
+
     /// Whether the place has its own surface; the others show `PlaceView`.
     pub fn is_built(self) -> bool {
         matches!(self, Place::Agent | Place::Crm | Place::Code)

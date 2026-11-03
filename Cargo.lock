@@ -4380,6 +4380,7 @@ dependencies = [
  "rusqlite",
  "rust-embed",
  "rustls",
+ "rustyred-thg-text-model",
  "rustyred-web",
  "sanitize-filename",
  "serde",
