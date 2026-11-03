@@ -215,9 +215,15 @@ async fn dispatch(service: &Service, route: Route, chrome: Option<Chrome>) -> Re
                 .read(move |vault| Ok(ops::preview(vault, &from, &link)))
                 .await
             {
-                Ok(Some(html)) => {
-                    Reply::found(Kind::Vault, "text/html; charset=utf-8", html.into_bytes())
-                }
+                // The page needs the note the link resolved to as well: the
+                // links and tasks in the preview are that note's.
+                Ok(Some(preview)) => Reply::found(
+                    Kind::Vault,
+                    "application/json",
+                    serde_json::json!({ "note": preview.note, "html": preview.view.html })
+                        .to_string()
+                        .into_bytes(),
+                ),
                 Ok(None) => Reply::refused(404, "Nothing to preview."),
                 Err(error) => unavailable("", error),
             }

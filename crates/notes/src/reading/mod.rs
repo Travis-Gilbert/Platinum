@@ -29,6 +29,14 @@ pub struct ReadingView {
     pub cssclasses: Vec<String>,
 }
 
+/// A page preview: what it shows, and the note that is from.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Preview {
+    /// The note the link resolved to. The links and tasks in the preview are its.
+    pub note: String,
+    pub view: ReadingView,
+}
+
 /// Obsidian stops nesting embeds of embeds at this depth and shows a plain file embed instead.
 const MAX_EMBED_DEPTH: usize = 5;
 
@@ -104,7 +112,7 @@ pub fn render_preview(
     from: &str,
     link: &str,
     read: &dyn Fn(&str) -> Option<String>,
-) -> Option<ReadingView> {
+) -> Option<Preview> {
     let cx = Cx {
         index,
         settings,

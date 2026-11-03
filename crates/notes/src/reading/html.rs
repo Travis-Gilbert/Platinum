@@ -22,6 +22,16 @@ pub(super) fn attr(s: &str) -> String {
     text(s).replace('"', "&quot;")
 }
 
+/// ` data-frame-syntax="markdown"` on an internal link written the Markdown way, whose target
+/// the page's host resolves, and makes when it is missing, beside the note that links to it.
+/// Obsidian keeps the syntax off the DOM.
+pub(super) fn syntax(syntax: LinkSyntax) -> &'static str {
+    match syntax {
+        LinkSyntax::Markdown => r#" data-frame-syntax="markdown""#,
+        LinkSyntax::Wiki | LinkSyntax::Path => "",
+    }
+}
+
 const SEGMENT: &AsciiSet = &NON_ALPHANUMERIC
     .remove(b'-')
     .remove(b'_')

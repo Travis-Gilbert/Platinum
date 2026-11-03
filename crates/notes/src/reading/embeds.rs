@@ -3,9 +3,10 @@
 //! A note, heading or block embed is the reading view of that text inside the embedding page, made
 //! by the same renderer as the page itself. What needs a script in the page (pdf.js, the Bases
 //! and Canvas viewers) is left as the container those scripts fill, with the vault path of the
-//! file in `data-frame-file`.
+//! file in `data-frame-file`. An embedded note carries its path in `data-frame-note`: the links
+//! and tasks inside it are that note's, not the page's.
 use super::{
-    Cx, Doc, MAX_EMBED_DEPTH, ReadingView, blocks, header,
+    Cx, Doc, MAX_EMBED_DEPTH, Preview, ReadingView, blocks, header,
     html::{self, file_url},
     icons::icon,
     inlines::{label_of, wiki_target},
@@ -235,14 +236,15 @@ fn note_embed(doc: &Doc, ex: &Excerpt, alt: &str, src: &str) -> String {
         .map(|c| format!(" {}", html::attr(c)))
         .collect();
     format!(
-        r#"<span alt="{alt}" src="{src}" class="internal-embed markdown-embed inline-embed"{data_type}><div class="embed-title markdown-embed-title">{title}</div><div class="markdown-embed-content node-insert-event"><div class="markdown-preview-view markdown-rendered node-insert-event show-indentation-guide allow-fold-headings allow-fold-lists show-properties{classes}"><div class="markdown-preview-sizer markdown-preview-section" style="padding-bottom: 0px; min-height: 0px;"><div class="markdown-preview-pusher" style="width: 1px; height: 0.1px; margin-bottom: 0px;"></div>{}</div></div></div><div class="markdown-embed-content node-insert-event" style="display: none;"></div><div class="markdown-embed-link" aria-label="Open link">{}</div></span>"#,
+        r#"<span alt="{alt}" src="{src}" class="internal-embed markdown-embed inline-embed"{data_type} data-frame-note="{note}"><div class="embed-title markdown-embed-title">{title}</div><div class="markdown-embed-content node-insert-event"><div class="markdown-preview-view markdown-rendered node-insert-event show-indentation-guide allow-fold-headings allow-fold-lists show-properties{classes}"><div class="markdown-preview-sizer markdown-preview-section" style="padding-bottom: 0px; min-height: 0px;"><div class="markdown-preview-pusher" style="width: 1px; height: 0.1px; margin-bottom: 0px;"></div>{}</div></div></div><div class="markdown-embed-content node-insert-event" style="display: none;"></div><div class="markdown-embed-link" aria-label="Open link">{}</div></span>"#,
         view(doc.cx, ex, doc.depth + 1),
         icon("lucide-maximize-2"),
+        note = html::attr(&ex.path),
     )
 }
 
 /// What a page preview of `link` (the text of a link written in the note `from`) shows.
-pub(super) fn preview(cx: &Cx, from: &str, link: &str) -> Option<ReadingView> {
+pub(super) fn preview(cx: &Cx, from: &str, link: &str) -> Option<Preview> {
     let inner = link.trim();
     let inner = inner
         .strip_prefix("[[")
@@ -268,8 +270,11 @@ pub(super) fn preview(cx: &Cx, from: &str, link: &str) -> Option<ReadingView> {
     let ex = excerpt(cx, &path, wiki.fragment.as_ref())?;
     // A whole note is the page itself; a section or block is drawn like an embed of it.
     let depth = if matches!(ex.kind, Kind::Note) { 0 } else { 1 };
-    Some(ReadingView {
-        html: view(cx, &ex, depth),
-        cssclasses: ex.cssclasses.clone(),
+    Some(Preview {
+        view: ReadingView {
+            html: view(cx, &ex, depth),
+            cssclasses: ex.cssclasses.clone(),
+        },
+        note: ex.path,
     })
 }

@@ -11,8 +11,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail, ensure};
 use frame_notes::{
-    FileKind, LinkSyntax, ReconcileResult, Vault, is_hidden, normalize, parse_note, render_note,
-    render_preview, stem,
+    FileKind, LinkSyntax, Preview, ReconcileResult, Vault, is_hidden, normalize, parse_note,
+    render_note, render_preview, stem,
 };
 use palette::{FromColor as _, Hsl, Srgb};
 use percent_encoding::percent_decode_str;
@@ -267,11 +267,10 @@ pub fn allow_mermaid(vault: &mut Vault) -> Result<()> {
 }
 
 /// What a page preview of `link`, written in `from`, shows.
-pub fn preview(vault: &Vault, from: &str, link: &str) -> Option<String> {
+pub fn preview(vault: &Vault, from: &str, link: &str) -> Option<Preview> {
     render_preview(vault.index(), vault.settings(), from, link, &|other| {
         current_text(vault, other)
     })
-    .map(|view| view.html)
 }
 
 /// A vault file that can be served.
@@ -350,7 +349,7 @@ pub enum Opened {
 
 /// Resolves a link followed in the note `from`. A link to a note that does
 /// not exist makes the note, where the vault keeps new notes.
-pub fn open_link(vault: &mut Vault, from: &str, link: &str) -> Result<Opened> {
+pub fn open_link(vault: &mut Vault, from: &str, link: &str, syntax: LinkSyntax) -> Result<Opened> {
     let (target, fragment) = match link.split_once('#') {
         Some((target, fragment)) => (target, Some(fragment.to_owned())),
         None => (link, None),
@@ -362,11 +361,9 @@ pub fn open_link(vault: &mut Vault, from: &str, link: &str) -> Result<Opened> {
     );
     let decoded = percent_decode_str(target).decode_utf8_lossy().into_owned();
     let names = vault.index().names();
-    let resolved = [target, decoded.as_str()].into_iter().find_map(|name| {
-        names
-            .resolve(name, from, LinkSyntax::Wiki)
-            .map(str::to_owned)
-    });
+    let resolved = [target, decoded.as_str()]
+        .into_iter()
+        .find_map(|name| names.resolve(name, from, syntax).map(str::to_owned));
     if let Some(path) = resolved {
         return Ok(if FileKind::of(&path) == FileKind::Note {
             Opened::Note {
@@ -380,7 +377,7 @@ pub fn open_link(vault: &mut Vault, from: &str, link: &str) -> Result<Opened> {
     }
     let path = vault
         .settings()
-        .new_note_path(&decoded, from, LinkSyntax::Wiki)
+        .new_note_path(&decoded, from, syntax)
         .with_context(|| format!("no note can be made for the link {target:?}"))?;
     create_note(vault, &path)?;
     Ok(Opened::Note {
@@ -707,7 +704,7 @@ pub(crate) mod tests {
             ("pic.png", "x"),
         ]);
         assert_eq!(
-            open_link(&mut f.vault, "Home.md", "Other#Heading").unwrap(),
+            open_link(&mut f.vault, "Home.md", "Other#Heading", LinkSyntax::Wiki).unwrap(),
             Opened::Note {
                 path: "folder/Other.md".into(),
                 fragment: Some("Heading".into()),
@@ -715,10 +712,10 @@ pub(crate) mod tests {
             }
         );
         assert_eq!(
-            open_link(&mut f.vault, "Home.md", "pic.png").unwrap(),
+            open_link(&mut f.vault, "Home.md", "pic.png", LinkSyntax::Wiki).unwrap(),
             Opened::Other("pic.png".into())
         );
-        let made = open_link(&mut f.vault, "Home.md", "Missing").unwrap();
+        let made = open_link(&mut f.vault, "Home.md", "Missing", LinkSyntax::Wiki).unwrap();
         assert_eq!(
             made,
             Opened::Note {
@@ -733,7 +730,7 @@ pub(crate) mod tests {
         );
         // Now it exists, so the same link just opens it.
         assert_eq!(
-            open_link(&mut f.vault, "Home.md", "Missing").unwrap(),
+            open_link(&mut f.vault, "Home.md", "Missing", LinkSyntax::Wiki).unwrap(),
             Opened::Note {
                 path: "Missing.md".into(),
                 fragment: None,
@@ -742,18 +739,54 @@ pub(crate) mod tests {
         );
         // A path makes its folders; a name that is not a file name makes nothing.
         assert!(matches!(
-            open_link(&mut f.vault, "Home.md", "new/deep/Note").unwrap(),
+            open_link(&mut f.vault, "Home.md", "new/deep/Note", LinkSyntax::Wiki).unwrap(),
             Opened::Note { created: true, .. }
         ));
         assert!(f.root.path().join("new/deep/Note.md").is_file());
         for refused in ["../outside", ".obsidian/x", "a:b", "#"] {
             assert!(
-                open_link(&mut f.vault, "Home.md", refused).is_err(),
+                open_link(&mut f.vault, "Home.md", refused, LinkSyntax::Wiki).is_err(),
                 "{refused}"
             );
         }
         assert!(!f.root.path().parent().unwrap().join("outside.md").exists());
     }
+
+    /// A Markdown link names its file from the folder of the note it is in;
+    /// a wiki link's new note goes where the vault's settings say.
+    #[test]
+    fn a_markdown_link_makes_its_note_beside_the_note_it_is_in() {
+        let mut f = fixture(&[("Folder/Parent.md", "[new](Child.md) [[Wiki Child]]")]);
+        assert_eq!(
+            open_link(
+                &mut f.vault,
+                "Folder/Parent.md",
+                "Child.md",
+                LinkSyntax::Markdown
+            )
+            .unwrap(),
+            Opened::Note {
+                path: "Folder/Child.md".into(),
+                fragment: None,
+                created: true
+            }
+        );
+        assert_eq!(
+            open_link(
+                &mut f.vault,
+                "Folder/Parent.md",
+                "Wiki Child",
+                LinkSyntax::Wiki
+            )
+            .unwrap(),
+            Opened::Note {
+                path: "Wiki Child.md".into(),
+                fragment: None,
+                created: true
+            }
+        );
+    }
+
 
     #[test]
     fn mermaid_is_allowed_once_per_vault_in_its_data_folder() {

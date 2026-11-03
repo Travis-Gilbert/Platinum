@@ -26,6 +26,7 @@ use std::collections::{HashMap, VecDeque};
 use std::path::Path;
 use std::rc::Rc;
 
+use frame_notes::LinkSyntax;
 use futures::StreamExt as _;
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender, unbounded};
 use gpui_kit::{AppContext, ClipboardItem, Context, Entity, EventEmitter, Task};
@@ -423,9 +424,9 @@ impl Session {
     }
 
     /// Follows a link clicked beside the page (in the editor of the note on
-    /// screen) as a click on the page would: a target note through the vault,
-    /// `#heading` or `#^block` within the note.
-    pub fn follow(&mut self, link: String, cx: &mut Context<Self>) {
+    /// screen, written the `syntax` way) as a click on the page would: a
+    /// target note through the vault, `#heading` or `#^block` within the note.
+    pub fn follow(&mut self, link: String, syntax: LinkSyntax, cx: &mut Context<Self>) {
         if let Some(fragment) = link.strip_prefix('#') {
             if let Some(path) = self.path().map(str::to_owned) {
                 self.navigate(path, Some(fragment.to_owned()), cx);
@@ -435,8 +436,8 @@ impl Session {
                 "The notes that refer to a block cannot be listed yet.".into(),
                 cx,
             );
-        } else {
-            self.act(Act::Open { link }, cx);
+        } else if let Some(from) = self.path().map(str::to_owned) {
+            self.act(Act::Open { link, from, syntax }, cx);
         }
     }
 
@@ -510,11 +511,11 @@ impl Session {
                 }
                 self.refresh(cx);
             }
-            Act::Open { link } => {
+            Act::Open { link, from, syntax } => {
                 let vault = self.vault.clone();
                 cx.spawn(async move |this, cx| {
                     let opened = vault
-                        .write(move |vault| ops::open_link(vault, &path, &link))
+                        .write(move |vault| ops::open_link(vault, &from, &link, syntax))
                         .await;
                     let _ = this.update(cx, |session, cx| session.opened(opened, epoch, cx));
                 })
@@ -705,12 +706,14 @@ mod tests {
     fn a_script_navigation_with_the_token_is_the_pages_message() {
         assert_eq!(
             classified(
-                "frame-notes://abc/act/open?t=tok&link=Other%23Head",
+                "frame-notes://abc/act/open?t=tok&link=Other%23Head&from=A.md&syntax=wiki",
                 true,
                 NavigationType::Other
             ),
             Disposition::Act(Act::Open {
-                link: "Other#Head".into()
+                link: "Other#Head".into(),
+                from: "A.md".into(),
+                syntax: LinkSyntax::Wiki
             })
         );
     }

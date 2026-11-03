@@ -221,9 +221,10 @@ fn widget(doc: &Doc, key: &str, ty: PropertyType, value: &Value) -> String {
             let text = scalar(value);
             match (link_of(&text), external_url(&text)) {
                 (Some(link), _) => format!(
-                    r#"<div class="metadata-link"><div class="metadata-link-inner internal-link{}" data-href="{}" draggable="true">{}</div><div class="metadata-link-flair">{}</div></div>"#,
+                    r#"<div class="metadata-link"><div class="metadata-link-inner internal-link{}" data-href="{}" draggable="true"{}>{}</div><div class="metadata-link-flair">{}</div></div>"#,
                     unresolved(doc, &link),
                     html::attr(&href(&link)),
+                    html::syntax(link.syntax),
                     html::text(&label(&link)),
                     icon("lucide-pencil"),
                 ),

@@ -425,6 +425,9 @@
   const LINK = "a, .metadata-link-inner[data-href]";
   const INTERNAL_LINK = "a.internal-link, .metadata-link-inner.internal-link";
 
+  // The note an element of the page belongs to: an embedded note, a preview's note, or the page's.
+  const noteOf = (element) => element.closest("[data-frame-note]")?.dataset.frameNote ?? config.path;
+
   const followLink = (link) => {
     const anchor = link.localName === "a";
     const href = (anchor ? link.getAttribute("href") : link.dataset.href) ?? "";
@@ -432,7 +435,13 @@
     if (link.classList.contains("internal-link")) {
       const target = link.dataset.href ?? href;
       if (target.startsWith("#")) scrollToHash(target);
-      else post("open", { link: target, from: config.path, unresolved: link.classList.contains("is-unresolved") ? 1 : 0 });
+      else
+        post("open", {
+          link: target,
+          from: noteOf(link),
+          syntax: link.dataset.frameSyntax ?? "wiki",
+          unresolved: link.classList.contains("is-unresolved") ? 1 : 0,
+        });
     } else if (href.startsWith("#")) {
       scrollToHash(href);
     } else if (/^(https?|mailto):/i.test(absolute)) {
@@ -443,6 +452,12 @@
   document.addEventListener(
     "click",
     (event) => {
+      // A task in an embedded note or a preview is that note's, and the host is told only of the
+      // page's own tasks, in the revision the page shows: the box does not change.
+      if (event.target.matches?.("input.task-list-item-checkbox") && event.target.closest("[data-frame-note]")) {
+        event.preventDefault();
+        return;
+      }
       const link = event.target.closest(LINK);
       if (link) {
         event.preventDefault();
@@ -500,13 +515,13 @@
     const target = link.dataset.href ?? "";
     if (!target || target.startsWith("#") || link.classList.contains("is-unresolved")) return;
     const url = new URL("/preview", location.href);
-    url.searchParams.set("from", config.path);
+    url.searchParams.set("from", noteOf(link));
     url.searchParams.set("link", target);
-    let html;
+    let note, html;
     try {
       const response = await fetch(url);
       if (!response.ok) return;
-      html = await response.text();
+      ({ note, html } = await response.json());
     } catch {
       return;
     }
@@ -514,6 +529,7 @@
     hidePopover();
     popover = document.createElement("div");
     popover.className = "popover hover-popover";
+    popover.dataset.frameNote = note;
     popover.innerHTML =
       '<div class="markdown-embed is-loaded"><div class="markdown-embed-content"><div class="markdown-preview-view markdown-rendered"><div class="markdown-preview-sizer markdown-preview-section"></div></div></div></div>';
     const body = popover.querySelector(".markdown-preview-sizer");

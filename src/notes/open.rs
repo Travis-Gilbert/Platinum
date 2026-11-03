@@ -13,6 +13,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, bail};
+use frame_notes::LinkSyntax;
 use gpui_kit::component::{ActiveTheme as _, Root, TitleBar};
 use gpui_kit::{
     App, AppContext as _, Context, Entity, InteractiveElement as _, IntoElement,
@@ -171,7 +172,7 @@ impl NotesWindow {
 /// goes: a web address to the system's browser, anything else through the
 /// reading pane's session, which resolves it in the vault.
 fn follow_link(event: &NoteEditorEvent, session: &Entity<Session>, cx: &mut App) {
-    let link = match event {
+    let (link, syntax) = match event {
         NoteEditorEvent::OpenLink(link) => {
             if let Ok(url) = Url::parse(link)
                 && matches!(url.scheme(), "http" | "https" | "mailto")
@@ -179,13 +180,13 @@ fn follow_link(event: &NoteEditorEvent, session: &Entity<Session>, cx: &mut App)
                 cx.open_url(url.as_str());
                 return;
             }
-            link
+            (link, LinkSyntax::Markdown)
         }
-        NoteEditorEvent::OpenWikiLink(link) => link,
+        NoteEditorEvent::OpenWikiLink(link) => (link, LinkSyntax::Wiki),
         NoteEditorEvent::Synced { .. } => return,
     };
     let link = link.to_string();
-    session.update(cx, |session, cx| session.follow(link, cx));
+    session.update(cx, |session, cx| session.follow(link, syntax, cx));
 }
 
 impl Render for NotesWindow {

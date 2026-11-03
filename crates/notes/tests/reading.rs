@@ -60,7 +60,7 @@ impl Fixture {
             link,
             &|p| self.read(p),
         )
-        .map(|view| view.html)
+        .map(|preview| preview.view.html)
     }
 }
 
@@ -243,3 +243,45 @@ fn cssclasses_are_the_notes_own() {
     });
     assert_eq!(view.cssclasses, ["wide", "dashboard"]);
 }
+
+#[test]
+fn a_preview_names_the_note_its_link_resolved_to() {
+    let f = fixture(&[
+        ("Page.md", "[[Other]]\n"),
+        ("folder/Other.md", "# Other\n\nbody\n"),
+    ]);
+    let preview = render_preview(
+        f.vault.index(),
+        f.vault.settings(),
+        "Page.md",
+        "Other#Other",
+        &|p| f.read(p),
+    )
+    .unwrap();
+    assert_eq!(preview.note, "folder/Other.md");
+}
+
+#[test]
+fn an_embedded_note_says_which_note_it_is() {
+    let f = fixture(&[
+        ("Page.md", "![[Other]]\n"),
+        ("folder/Other.md", "[[Sibling]] and - [ ] a task\n"),
+    ]);
+    let html = f.html("Page.md");
+    assert!(
+        html.contains(r#"data-frame-note="folder/Other.md""#),
+        "{html}"
+    );
+}
+
+#[test]
+fn a_markdown_link_says_how_it_was_written_and_a_wiki_link_does_not() {
+    let f = fixture(&[("Page.md", "[md](Other.md) [[Other]]\n"), ("Other.md", "")]);
+    let html = f.html("Page.md");
+    assert_eq!(
+        html.matches(r#"data-frame-syntax="markdown""#).count(),
+        1,
+        "{html}"
+    );
+}
+

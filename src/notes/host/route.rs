@@ -6,6 +6,7 @@
 //! names, so no later step has to defend against `..`, hidden folders or
 //! separators smuggled in through percent-encoding.
 
+use frame_notes::LinkSyntax;
 use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, percent_decode_str, utf8_percent_encode};
 use url::Url;
 
@@ -88,12 +89,7 @@ fn path(segments: &[&str]) -> Result<String, Refusal> {
         let part = percent_decode_str(raw)
             .decode_utf8()
             .map_err(|_| Refusal::Invalid)?;
-        // A leading dot covers `.`, `..` and hidden names alike.
-        if part.is_empty()
-            || part.starts_with('.')
-            || part.contains(['/', '\\'])
-            || part.chars().any(char::is_control)
-        {
+        if !visible_name(&part) {
             return Err(Refusal::Invalid);
         }
         if !path.is_empty() {
@@ -105,6 +101,15 @@ fn path(segments: &[&str]) -> Result<String, Refusal> {
         return Err(Refusal::Invalid);
     }
     Ok(path)
+}
+
+/// A name of a visible file or folder of the vault, not a way out of it. A
+/// leading dot covers `.`, `..` and hidden names alike.
+fn visible_name(part: &str) -> bool {
+    !(part.is_empty()
+        || part.starts_with('.')
+        || part.contains(['/', '\\'])
+        || part.chars().any(char::is_control))
 }
 
 /// Everything a fragment keeps escaped but the characters a heading or a block
@@ -138,8 +143,13 @@ pub enum Act {
     /// The page's script is running and shows the rendering of `revision`
     /// that `digest` identifies.
     Ready { revision: u64, digest: String },
-    /// An internal link was followed.
-    Open { link: String },
+    /// An internal link, written the `syntax` way in the note `from` (the
+    /// page's, or one embedded in it or previewed on it), was followed.
+    Open {
+        link: String,
+        from: String,
+        syntax: LinkSyntax,
+    },
     /// A link to the web was followed.
     Web { url: Url },
     /// The copy button of a code block was pressed.
@@ -220,6 +230,14 @@ impl Act {
             },
             "open" => Self::Open {
                 link: bounded("link", MAX_LINK)?,
+                from: Some(bounded("from", MAX_PATH)?)
+                    .filter(|from| from.split('/').all(visible_name))
+                    .ok_or(ActError::Param("from"))?,
+                syntax: match param("syntax")?.as_str() {
+                    "wiki" => LinkSyntax::Wiki,
+                    "markdown" => LinkSyntax::Markdown,
+                    _ => return Err(ActError::Param("syntax")),
+                },
             },
             "web" => {
                 let url =
@@ -407,9 +425,19 @@ mod tests {
             })
         );
         assert_eq!(
-            act("open?t=tok&link=Note%23Head&from=x.md&unresolved=0"),
+            act("open?t=tok&link=Note%23Head&from=a%2Fx.md&syntax=wiki&unresolved=0"),
             Ok(Act::Open {
-                link: "Note#Head".into()
+                link: "Note#Head".into(),
+                from: "a/x.md".into(),
+                syntax: LinkSyntax::Wiki
+            })
+        );
+        assert_eq!(
+            act("open?t=tok&link=b.md&from=x.md&syntax=markdown&unresolved=1"),
+            Ok(Act::Open {
+                link: "b.md".into(),
+                from: "x.md".into(),
+                syntax: LinkSyntax::Markdown
             })
         );
         assert_eq!(
@@ -499,6 +527,19 @@ mod tests {
         assert_eq!(
             act("task?t=tok&line=1&checked=yes&revision=1"),
             Err(ActError::Param("checked"))
+        );
+        // A link is followed from a visible note of the vault, in a syntax
+        // the page has.
+        for from in ["..%2Fx.md", ".obsidian%2Fx.md", "a%2F%2Fb.md", ""] {
+            assert_eq!(
+                act(&format!("open?t=tok&link=b&from={from}&syntax=wiki")),
+                Err(ActError::Param("from")),
+                "{from}"
+            );
+        }
+        assert_eq!(
+            act("open?t=tok&link=b&from=a.md&syntax=path"),
+            Err(ActError::Param("syntax"))
         );
         // The web verb opens http(s) and mail only.
         for scheme in [

@@ -327,8 +327,9 @@ impl<'d> Walk<'d> {
         }
         let (link, written) = markdown_target(url, false);
         out.push_str(&format!(
-            r#"<a class="internal-link{}" data-href="{w}" href="{w}"{title_attr} target="_blank" rel="noopener nofollow">{children}</a>"#,
+            r#"<a class="internal-link{}" data-href="{w}" href="{w}"{title_attr} target="_blank" rel="noopener nofollow"{}>{children}</a>"#,
             self.unresolved(&link),
+            html::syntax(link.syntax),
             w = html::attr(&written),
         ));
     }
