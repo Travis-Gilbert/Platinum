@@ -368,6 +368,41 @@ fn a_tab_closed_while_a_push_is_still_out_saves_everything_typed(cx: &mut TestAp
     vault.file_becomes(SCRATCH, "first\ntyped just before closing");
 }
 
+/// The vault's queue is full when the tab closes. The closing save is the
+/// one request nothing would make again, so the queue takes it anyway.
+#[gpui_kit::test]
+fn a_tab_closed_while_the_vaults_queue_is_full_saves_everything_typed(cx: &mut TestAppContext) {
+    let vault = Vault::new("first\n");
+    let mut tab = Tab::open(cx, &vault, SCRATCH);
+    tab.settled();
+    let release = vault.hold();
+    while vault.service.read(|_| Ok(())).now_or_never().is_none() {}
+    tab.type_at_end("typed into a full queue");
+    tab.cx.run_until_parked();
+    tab.close();
+    drop(release);
+    vault.file_becomes(SCRATCH, "first\ntyped into a full queue");
+}
+
+/// The vault is still busy when the app quits, for longer than a quit waits
+/// for what its handlers return. The tab's text is on disk when quit returns.
+#[gpui_kit::test]
+fn quitting_waits_for_the_closing_save(cx: &mut TestAppContext) {
+    let vault = Vault::new("first\n");
+    let mut tab = Tab::open(cx, &vault, SCRATCH);
+    tab.settled();
+    let release = vault.hold();
+    tab.type_at_end("typed just before quitting");
+    tab.cx.run_until_parked();
+    let releasing = std::thread::spawn(move || {
+        std::thread::sleep(gpui_kit::SHUTDOWN_TIMEOUT * 3);
+        drop(release);
+    });
+    cx.quit();
+    assert_eq!(vault.text(SCRATCH), "first\ntyped just before quitting");
+    releasing.join().unwrap();
+}
+
 #[gpui_kit::test]
 fn an_outside_write_reaches_the_buffer_and_an_undo_does_not_revert_it(cx: &mut TestAppContext) {
     let vault = Vault::new("alpha\nbeta\ngamma\n");

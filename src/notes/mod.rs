@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use gpui_kit::{App, Global};
 
 use crate::engine::Engine;
-use host::service::{Service, Vaults, host_of};
+use host::service::{QUIT_WAIT, Service, Vaults, host_of};
 
 /// The vaults that are open, and where their derived data lives.
 pub struct Notes {
@@ -55,6 +55,16 @@ impl Notes {
 pub fn start(profile_dir: &Path, cx: &mut App) {
     let vaults = Vaults::default();
     Engine::start_with_protocols(profile_dir, host::protocols(&vaults), cx);
+    // A tab closed with the last window saved on its way out, before the
+    // quit; the process must not end before its vault has written that.
+    cx.on_app_quit({
+        let vaults = vaults.clone();
+        move |_| {
+            vaults.finish(QUIT_WAIT);
+            async {}
+        }
+    })
+    .detach();
     cx.set_global(Notes {
         vaults,
         data: profile_dir.join("notes"),

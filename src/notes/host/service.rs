@@ -4,12 +4,14 @@
 //! index and the VFS journal. Servo asks for pages from its own threads and the
 //! panel from the UI thread, and neither may block on disk or on a render, so
 //! the vault lives on a worker thread of its own and both send it closures.
-//! A request is a closure on a bounded queue and an answer is a oneshot, so no
-//! lock is shared and the UI thread never waits: it awaits.
+//! A request is a closure on a queue and an answer is a oneshot, so no lock is
+//! shared and the UI thread never waits: it awaits.
 //!
 //! The queue is bounded. A request that finds it full is refused as `Busy`
 //! rather than held back, and a vault that failed to open answers every
-//! request with the reason: callers show an honest unavailable state.
+//! request with the reason: callers show an honest unavailable state. The
+//! last save of a closing view is the exception: nothing would retry it, so it
+//! is never refused (`write_final`), and quitting waits for it (`finish`).
 //!
 //! SOURCING: `notify` is the watcher the VFS builds. The VFS keeps its events
 //! to itself and offers no wake-up, so this watches only to know when to call
@@ -19,11 +21,10 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::path::Path;
-#[cfg(test)]
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, SyncSender, TrySendError, sync_channel};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, PoisonError, RwLock, Weak};
+use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use frame_notes::{Vault, is_hidden};
@@ -35,6 +36,10 @@ use super::shell::Chrome;
 
 /// How many requests may wait for the vault.
 const QUEUE: usize = 32;
+/// How long quitting waits for the vaults to finish what they were asked. A
+/// save takes milliseconds; a vault still opening, or a render ahead of it in
+/// the queue, can take seconds.
+pub const QUIT_WAIT: Duration = Duration::from_secs(5);
 
 /// What a request finds: the vault, or why there is none.
 pub enum Slot<'a> {
@@ -48,6 +53,9 @@ enum Job {
     Run {
         work: Box<dyn FnOnce(Slot) + Send>,
         write: bool,
+        /// Counted against `QUEUE`. A final write and a barrier are not, so
+        /// they are never refused.
+        bounded: bool,
     },
     /// Files changed on disk: reconcile.
     Refresh,
@@ -79,7 +87,9 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 struct Inner {
-    jobs: SyncSender<Job>,
+    jobs: Sender<Job>,
+    /// How many bounded requests are waiting for the vault's thread.
+    waiting: AtomicUsize,
     /// A refresh is queued, so more file events do not queue another.
     refresh_queued: AtomicBool,
     /// Counts the changes the vault has made or seen.
@@ -110,10 +120,11 @@ impl Service {
     /// `data`. This returns at once; requests wait in the queue until the
     /// vault is open.
     pub fn start(root: &Path, data: &Path) -> Self {
-        let (jobs, queue) = sync_channel(QUEUE);
+        let (jobs, queue) = channel();
         let (changed, changes) = watch::channel(0u64);
         let inner = Arc::new(Inner {
             jobs,
+            waiting: AtomicUsize::new(0),
             refresh_queued: AtomicBool::new(false),
             changes,
             host: host_of(root),
@@ -168,6 +179,44 @@ impl Service {
         self.enqueue(work, true)?.await.map_err(|_| Error::Closed)?
     }
 
+    /// Queues `work` as a write that a full queue does not refuse, and does
+    /// not wait for it: the last save of a view that is closing, which nothing
+    /// would make again. It runs after everything asked of the vault before it.
+    pub fn write_final(
+        &self,
+        work: impl FnOnce(&mut Vault) -> Result<()> + Send + 'static,
+    ) -> Result<(), Error> {
+        let job = Job::Run {
+            work: Box::new(move |slot| {
+                let result = match slot {
+                    Slot::Ready(vault) => work(vault),
+                    Slot::Unavailable(reason) => Err(anyhow::anyhow!("{reason}")),
+                };
+                if let Err(error) = result {
+                    log::warn!("notes: a closing save failed: {error:#}");
+                }
+            }),
+            write: true,
+            bounded: false,
+        };
+        self.inner.jobs.send(job).map_err(|_| Error::Closed)
+    }
+
+    /// Waits, up to `within`, for the vault's thread to finish everything
+    /// asked of it so far. True when it did. Quitting calls this so that the
+    /// process does not end with a closing save still in the queue.
+    pub fn finish(&self, within: Duration) -> bool {
+        let (done, finished) = channel();
+        let barrier = Job::Run {
+            work: Box::new(move |_| {
+                let _ = done.send(());
+            }),
+            write: false,
+            bounded: false,
+        };
+        self.inner.jobs.send(barrier).is_ok() && finished.recv_timeout(within).is_ok()
+    }
+
     fn enqueue<T: Send + 'static>(
         &self,
         work: impl FnOnce(&mut Vault) -> Result<T> + Send + 'static,
@@ -175,6 +224,10 @@ impl Service {
     ) -> Result<oneshot::Receiver<Result<T, Error>>, Error> {
         #[cfg(test)]
         self.inner.submitted.fetch_add(1, Ordering::AcqRel);
+        if self.inner.waiting.fetch_add(1, Ordering::AcqRel) >= QUEUE {
+            self.inner.waiting.fetch_sub(1, Ordering::AcqRel);
+            return Err(Error::Busy);
+        }
         let (reply, answer) = oneshot::channel();
         let job = Job::Run {
             work: Box::new(move |slot| {
@@ -187,12 +240,12 @@ impl Service {
                 let _ = reply.send(result);
             }),
             write,
+            bounded: true,
         };
-        match self.inner.jobs.try_send(job) {
-            Ok(()) => Ok(answer),
-            Err(TrySendError::Full(_)) => Err(Error::Busy),
-            Err(TrySendError::Disconnected(_)) => Err(Error::Closed),
-        }
+        self.inner.jobs.send(job).map(|()| answer).map_err(|_| {
+            self.inner.waiting.fetch_sub(1, Ordering::AcqRel);
+            Error::Closed
+        })
     }
 }
 
@@ -233,6 +286,24 @@ impl Vaults {
     pub fn chrome(&self) -> Option<Chrome> {
         *self.chrome.read().unwrap_or_else(PoisonError::into_inner)
     }
+
+    /// Waits, up to `within` in all, for every open vault to finish what it
+    /// was asked (`Service::finish`).
+    pub fn finish(&self, within: Duration) {
+        let deadline = Instant::now() + within;
+        let services: Vec<Service> = self
+            .services
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .values()
+            .cloned()
+            .collect();
+        for service in services {
+            if !service.finish(deadline.saturating_duration_since(Instant::now())) {
+                log::warn!("notes: quitting before vault {} finished", service.host());
+            }
+        }
+    }
 }
 
 /// Watches the vault's folder and asks for a refresh when something other
@@ -256,7 +327,7 @@ fn watch_root(root: &Path, inner: Weak<Inner>) -> Option<notify::RecommendedWatc
                 return;
             };
             if !inner.refresh_queued.swap(true, Ordering::AcqRel)
-                && inner.jobs.try_send(Job::Refresh).is_err()
+                && inner.jobs.send(Job::Refresh).is_err()
             {
                 inner.refresh_queued.store(false, Ordering::Release);
             }
@@ -289,7 +360,14 @@ fn run(
     let bump = || changed.send_modify(|count| *count += 1);
     for job in queue {
         match job {
-            Job::Run { work, write } => {
+            Job::Run {
+                work,
+                write,
+                bounded,
+            } => {
+                if let Some(inner) = inner.upgrade().filter(|_| bounded) {
+                    inner.waiting.fetch_sub(1, Ordering::AcqRel);
+                }
                 work(match &mut vault {
                     Ok(vault) => Slot::Ready(vault),
                     Err(reason) => Slot::Unavailable(reason),
@@ -389,6 +467,37 @@ mod tests {
         assert!(accepted >= QUEUE - 1, "{accepted}");
         drop(hold);
         assert_eq!(block_on(blocker), Ok(Ok(false)));
+    }
+
+    #[test]
+    fn a_final_write_is_taken_by_a_full_queue_and_finish_waits_for_it() {
+        let (_root, _data, service) = vault(&[]);
+        let (hold, held) = std::sync::mpsc::channel::<()>();
+        let _blocker = service
+            .enqueue(move |_| Ok(held.recv().is_ok()), false)
+            .unwrap();
+        while service.enqueue(|_| Ok(()), false).is_ok() {}
+        let (wrote, written) = std::sync::mpsc::channel();
+        service
+            .write_final(move |_| {
+                wrote.send(()).unwrap();
+                Ok(())
+            })
+            .unwrap();
+        assert!(
+            !service.finish(Duration::from_millis(20)),
+            "the thread is held"
+        );
+        drop(hold);
+        assert!(service.finish(Duration::from_secs(60)));
+        assert!(
+            written.try_recv().is_ok(),
+            "the final write ran before finish returned"
+        );
+        assert!(
+            block_on(service.read(|_| Ok(()))).is_ok(),
+            "the queue has room again"
+        );
     }
 
     #[test]

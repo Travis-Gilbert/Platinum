@@ -37,7 +37,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context as _, Result};
 use frame_notes::{ReconcileResult, Vault, stem};
-use futures::FutureExt as _;
 use gpui_kit::component::{ActiveTheme as _, h_flex, v_flex};
 use gpui_kit::{
     App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
@@ -47,7 +46,7 @@ use gpui_kit::{
 };
 use zorite_editor::{EditOrigin, EditorEvent, EditorState, HistoryAction};
 
-use super::host::service::{Error as ServiceError, Service};
+use super::host::service::{Error as ServiceError, QUIT_WAIT, Service};
 use rebase::{edits_between, merge3};
 
 actions!(notes_editor, [Save]);
@@ -184,6 +183,7 @@ pub struct NoteEditor {
     retry: Option<Task<()>>,
     _watching: Task<()>,
     _editor_events: Subscription,
+    _quitting: Subscription,
 }
 
 impl EventEmitter<NoteEditorEvent> for NoteEditor {}
@@ -229,6 +229,15 @@ impl NoteEditor {
         let synced_generation = editor.read(cx).generation();
         editor.update(cx, |editor, cx| editor.focus(window, cx));
         cx.on_release(|this, cx| this.flush(cx)).detach();
+        // A quit runs this before it releases the tab, and then waits only a
+        // fraction of a second for what its handlers return, which a save
+        // behind a slow request can outlast. So the tab saves here, and waits
+        // for the vault itself.
+        let _quitting = cx.on_app_quit(|this, cx| {
+            this.flush(cx);
+            this.service.finish(QUIT_WAIT);
+            async {}
+        });
         let mut tab = Self {
             service,
             path,
@@ -253,6 +262,7 @@ impl NoteEditor {
             retry: None,
             _watching,
             _editor_events,
+            _quitting,
         };
         tab.pump(cx);
         tab
@@ -533,8 +543,9 @@ impl NoteEditor {
     }
 
     /// The tab is closing: leave the vault with everything typed, saved.
-    /// Fire and forget: the request is queued before this returns, and the
-    /// vault's thread works through its queue in order.
+    /// Fire and forget: the request is queued before this returns, a full
+    /// queue does not refuse it, and the vault's thread works through its
+    /// queue in order.
     fn flush(&mut self, cx: &mut App) {
         let Some(head) = &self.head else {
             return;
@@ -552,28 +563,26 @@ impl NoteEditor {
             self.path.clone(),
             format!("note-editor-{:x}-close", self.session),
         );
-        drop(
-            self.service
-                .write(move |vault| {
-                    let current = head_of(vault, &path)?;
-                    // What came in meanwhile stays: the typed text is merged
-                    // onto it, never put over it. A head that is only this
-                    // tab's push of an earlier state of its text came from
-                    // nowhere else, and the text now supersedes it.
-                    let merged =
-                        if *current.text == *ours || Some(&current.text) == pushing.as_ref() {
-                            ours
-                        } else {
-                            merge3(&base, &ours, &current.text).unwrap_or_else(|marked| marked)
-                        };
-                    if merged != *current.text {
-                        vault.edit(&path, current.revision, &operation, &merged)?;
-                    }
-                    vault.save(&path)?;
-                    Ok(())
-                })
-                .now_or_never(),
-        );
+        let queued = self.service.write_final(move |vault| {
+            let current = head_of(vault, &path)?;
+            // What came in meanwhile stays: the typed text is merged onto it,
+            // never put over it. A head that is only this tab's push of an
+            // earlier state of its text came from nowhere else, and the text
+            // now supersedes it.
+            let merged = if *current.text == *ours || Some(&current.text) == pushing.as_ref() {
+                ours
+            } else {
+                merge3(&base, &ours, &current.text).unwrap_or_else(|marked| marked)
+            };
+            if merged != *current.text {
+                vault.edit(&path, current.revision, &operation, &merged)?;
+            }
+            vault.save(&path)?;
+            Ok(())
+        });
+        if let Err(error) = queued {
+            log::warn!("notes: {} was not saved on closing: {error}", self.path);
+        }
     }
 }
 
