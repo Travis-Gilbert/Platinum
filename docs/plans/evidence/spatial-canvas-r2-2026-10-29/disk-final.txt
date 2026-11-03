@@ -1,0 +1,2 @@
+Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk5s1   927Gi   875Gi    52Gi    95%     11M  542M    2%   /Volumes/SSD Samsung

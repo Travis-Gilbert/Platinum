@@ -1,0 +1,167 @@
+W0 ready: http://127.0.0.1:8765/?stack=gpui-pre&browser=firefox
+127.0.0.1 - - [27/Oct/2026 11:23:41] "GET / HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/run.py", line 143, in <module>
+    if __name__ == "__main__":
+        ^^^^^^
+  File "/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/run.py", line 139, in main
+    print(f"W0 ready: http://127.0.0.1:{args.port}/?stack=gpui-pre&browser=firefox", flush=True)
+    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/socketserver.py", line 232, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt
+W0 ready: http://127.0.0.1:8765/?stack=gpui-pre&browser=firefox
+127.0.0.1 - - [27/Oct/2026 11:37:17] "GET /?stack=gpui-pre&browser=firefox&autoclose=1 HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:17] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:17] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:17] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:37:17] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:37:17] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:17] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:37:18] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:37:46] "GET /?stack=gpui-pre&browser=firefox&autoclose=1&attempt=diagnostic HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:46] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:46] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:46] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:37:46] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:37:46] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:37:46] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:42:30] "GET /?stack=gpui-pre&browser=firefox&autoclose=1&attempt=bootstrap HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:42:30] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:42:30] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:42:30] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:42:30] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:42:30] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:42:47] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:45:43] "GET /?stack=gpui-pre&browser=firefox&autoclose=1&attempt=baseline-capture HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:45:43] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:45:43] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:45:43] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:45:43] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:45:43] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:46:00] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:46:00] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:46:00] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:47:48] "GET /?stack=gpui-pre&browser=firefox&autoclose=1&attempt=final HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:47:48] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:47:48] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:47:48] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:47:48] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:47:48] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:47:48] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:48:04] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:48:04] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:48:34] "GET /?stack=gpui-pre&browser=safari&autoclose=1&attempt=final HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:48:34] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:48:34] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:48:34] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:48:35] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:48:35] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:48:35] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:51:14] "GET /?stack=gpui-pre&browser=arc&autoclose=1&attempt=final HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:51:14] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:51:14] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:51:14] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:51:14] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:51:14] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:51:14] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:51:31] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:51:32] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:52:29] "GET /?stack=gpui-pre&browser=arc&autoclose=1&attempt=coordinates HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:52:29] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:52:29] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:52:29] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:52:29] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:52:45] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:52:45] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:55:13] "GET /?stack=gpui-pre&browser=arc&autoclose=1&attempt=normalized-final HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:13] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:13] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:13] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:13] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:29] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:55:29] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:55:54] "GET /?stack=gpui-pre&browser=safari&autoclose=1&attempt=watchdog HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:55] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:55] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:55] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:55:55] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:28] "GET /?stack=gpui-pre&browser=firefox&autoclose=1&attempt=verified HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:28] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:28] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:28] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:56:28] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:56:28] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:28] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:44] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:56:45] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:56:47] "GET /?stack=gpui-pre&browser=arc&autoclose=1&attempt=verified HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:47] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:47] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:47] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:56:48] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:03] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:57:04] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:57:06] "GET /?stack=zed&browser=firefox&autoclose=1&attempt=verified HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:06] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:06] "GET /bundles/zed/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:06] code 404, message File not found
+127.0.0.1 - - [27/Oct/2026 11:57:06] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [27/Oct/2026 11:57:06] "GET /bundles/zed/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:07] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:23] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:57:24] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:57:26] "GET /?stack=zed&browser=arc&autoclose=1&attempt=verified HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:26] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:26] "GET /bundles/zed/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:26] "GET /bundles/zed/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:26] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:57:42] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:57:43] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:59:33] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:59:34] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:59:39] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 11:59:42] "GET /?stack=gpui-pre&browser=safari&autoclose=1&attempt=verified HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:42] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:42] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:42] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:42] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:43] "GET /?stack=zed&browser=safari&autoclose=1&attempt=verified HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:43] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:43] "GET /bundles/zed/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:43] "GET /bundles/zed/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 11:59:43] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:00:43] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:00:43] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:00:44] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:00:44] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:01:11] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:02:06] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:02:09] "GET /?stack=gpui-pre&browser=safari&autoclose=1&attempt=visibility-diagnostic HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:02:09] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:02:09] "GET /bundles/gpui-pre/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:02:09] "GET /bundles/gpui-pre/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:02:09] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:02:09] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:02:10] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:02:10] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:03:10] "GET /?stack=zed&browser=safari&autoclose=1&attempt=visibility-diagnostic HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:03:10] "GET /checks.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:03:10] "GET /bundles/zed/viewer.js HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:03:10] "GET /bundles/zed/viewer_bg.wasm HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:03:10] "GET /assets/NotoSansJP.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [27/Oct/2026 12:03:10] "POST /result HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:03:11] "POST /lifecycle HTTP/1.1" 201 -
+127.0.0.1 - - [27/Oct/2026 12:03:11] "POST /lifecycle HTTP/1.1" 201 -
+Traceback (most recent call last):
+  File "/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/run.py", line 144, in <module>
+    parser.add_argument("action", choices=["build", "sizes", "serve"])
+    ^^^^^^
+  File "/Volumes/SSD Samsung/frame-worktrees/web-viewer-spike/spikes/web-viewer/run.py", line 140, in main
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/socketserver.py", line 232, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

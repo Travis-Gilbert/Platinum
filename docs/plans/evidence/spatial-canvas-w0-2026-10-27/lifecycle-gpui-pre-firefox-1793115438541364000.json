@@ -1,0 +1,7 @@
+{
+  "stack": "gpui-pre",
+  "browser": "firefox",
+  "event": "pagehide-after-close-attempt",
+  "timestamp": "2026-10-27T15:37:18.525Z",
+  "url": "http://127.0.0.1:8765/?stack=gpui-pre&browser=firefox&autoclose=1"
+}

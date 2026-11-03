@@ -1,0 +1,33 @@
+{
+  "name": "repeat3-request_activity-test_fetch_network_error",
+  "cwd": "/Volumes/SSD Samsung/frame-deps/servo-r2",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "servo",
+    "--test",
+    "request_activity",
+    "test_fetch_network_error",
+    "--",
+    "--exact"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.8684858749911655,
+  "started": "2026-10-29T17:59:03-0400",
+  "free_gib_before": 51.79,
+  "free_gib_after": 51.78,
+  "df_before": [
+    "Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on",
+    "/dev/disk5s1   927Gi   875Gi    52Gi    95%     11M  543M    2%   /Volumes/SSD Samsung"
+  ],
+  "environment": {
+    "TMPDIR": "/Volumes/SSD Samsung/tmp",
+    "CARGO_TARGET_DIR": "/Volumes/SSD Samsung/cargo-targets/servo-r1",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_STRIP": "none",
+    "CARGO_PROFILE_TEST_STRIP": "none"
+  }
+}

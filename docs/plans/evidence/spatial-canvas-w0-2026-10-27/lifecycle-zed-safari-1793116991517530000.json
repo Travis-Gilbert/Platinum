@@ -1,0 +1,6 @@
+{
+  "stack": "zed",
+  "browser": "safari",
+  "event": "close-attempt",
+  "url": "http://127.0.0.1:8765/?stack=zed&browser=safari&autoclose=1&attempt=visibility-diagnostic"
+}

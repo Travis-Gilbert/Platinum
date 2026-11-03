@@ -1,0 +1,548 @@
+{
+  "date": "2026-10-27",
+  "status": "blocked",
+  "browser_tests_executed": false,
+  "branch": "spike/web-viewer",
+  "base": "b4695cf",
+  "blockers": [
+    {
+      "phase": "build",
+      "error": "failed to create directory `/Volumes/SSD Samsung/cargo-targets/frame/release`: Operation not permitted (os error 1)",
+      "stacks": [
+        "gpui-pre",
+        "zed"
+      ]
+    },
+    {
+      "phase": "serve",
+      "error": "127.0.0.1:8765 bind: PermissionError [Errno 1] Operation not permitted"
+    },
+    {
+      "phase": "registry_online",
+      "error": "Could not resolve host: index.crates.io",
+      "resolved_offline": true,
+      "missing_packages": []
+    }
+  ],
+  "browsers": [
+    {
+      "name": "Firefox",
+      "version": "158.0.1"
+    },
+    {
+      "name": "Safari",
+      "version": "27.0.1"
+    },
+    {
+      "name": "Arc",
+      "version": "1.171.0",
+      "chromium_version": "156.0.8078.48",
+      "version_source": "ArcCore.framework/Versions/A/Resources/Info.plist"
+    }
+  ],
+  "stacks": [
+    {
+      "stack": "gpui-pre",
+      "dependency_resolution": "pass_offline",
+      "space_enabled": true,
+      "wasm_bindgen": "0.2.127",
+      "wasm_compilation": "blocked_before_compilation",
+      "frame_times": null,
+      "bundle_sizes": null,
+      "screenshots": [],
+      "results": [
+        {
+          "browser": "Firefox",
+          "observed": false,
+          "items": {
+            "webgl2": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "200_elements": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "pan": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "zoom": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "select": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "drag": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "typing": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_composition": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "click_focus": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_tab_escape": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "frame_times": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            }
+          },
+          "manual": {
+            "japanese_candidate_window": {
+              "status": "manual",
+              "executed": false
+            },
+            "trackpad_pinch": {
+              "status": "manual",
+              "executed": false
+            },
+            "real_tab_escape": {
+              "status": "manual",
+              "executed": false
+            },
+            "text_quality": {
+              "status": "manual",
+              "executed": false
+            }
+          }
+        },
+        {
+          "browser": "Safari",
+          "observed": false,
+          "items": {
+            "webgl2": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "200_elements": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "pan": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "zoom": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "select": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "drag": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "typing": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_composition": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "click_focus": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_tab_escape": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "frame_times": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            }
+          },
+          "manual": {
+            "japanese_candidate_window": {
+              "status": "manual",
+              "executed": false
+            },
+            "trackpad_pinch": {
+              "status": "manual",
+              "executed": false
+            },
+            "real_tab_escape": {
+              "status": "manual",
+              "executed": false
+            },
+            "text_quality": {
+              "status": "manual",
+              "executed": false
+            }
+          }
+        },
+        {
+          "browser": "Arc",
+          "observed": false,
+          "items": {
+            "webgl2": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "200_elements": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "pan": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "zoom": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "select": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "drag": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "typing": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_composition": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "click_focus": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_tab_escape": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "frame_times": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            }
+          },
+          "manual": {
+            "japanese_candidate_window": {
+              "status": "manual",
+              "executed": false
+            },
+            "trackpad_pinch": {
+              "status": "manual",
+              "executed": false
+            },
+            "real_tab_escape": {
+              "status": "manual",
+              "executed": false
+            },
+            "text_quality": {
+              "status": "manual",
+              "executed": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stack": "zed",
+      "dependency_resolution": "pass_offline",
+      "space_enabled": true,
+      "wasm_bindgen": "0.2.127",
+      "wasm_compilation": "blocked_before_compilation",
+      "frame_times": null,
+      "bundle_sizes": null,
+      "screenshots": [],
+      "results": [
+        {
+          "browser": "Firefox",
+          "observed": false,
+          "items": {
+            "webgl2": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "200_elements": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "pan": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "zoom": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "select": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "drag": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "typing": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_composition": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "click_focus": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_tab_escape": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "frame_times": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            }
+          },
+          "manual": {
+            "japanese_candidate_window": {
+              "status": "manual",
+              "executed": false
+            },
+            "trackpad_pinch": {
+              "status": "manual",
+              "executed": false
+            },
+            "real_tab_escape": {
+              "status": "manual",
+              "executed": false
+            },
+            "text_quality": {
+              "status": "manual",
+              "executed": false
+            }
+          }
+        },
+        {
+          "browser": "Safari",
+          "observed": false,
+          "items": {
+            "webgl2": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "200_elements": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "pan": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "zoom": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "select": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "drag": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "typing": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_composition": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "click_focus": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_tab_escape": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "frame_times": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            }
+          },
+          "manual": {
+            "japanese_candidate_window": {
+              "status": "manual",
+              "executed": false
+            },
+            "trackpad_pinch": {
+              "status": "manual",
+              "executed": false
+            },
+            "real_tab_escape": {
+              "status": "manual",
+              "executed": false
+            },
+            "text_quality": {
+              "status": "manual",
+              "executed": false
+            }
+          }
+        },
+        {
+          "browser": "Arc",
+          "observed": false,
+          "items": {
+            "webgl2": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "200_elements": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "pan": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "zoom": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "select": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "drag": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "typing": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_composition": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "click_focus": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "synthetic_tab_escape": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            },
+            "frame_times": {
+              "status": "fail",
+              "mode": "automated",
+              "reason": "acceptance unavailable: environment blocked; no observed browser failure"
+            }
+          },
+          "manual": {
+            "japanese_candidate_window": {
+              "status": "manual",
+              "executed": false
+            },
+            "trackpad_pinch": {
+              "status": "manual",
+              "executed": false
+            },
+            "real_tab_escape": {
+              "status": "manual",
+              "executed": false
+            },
+            "text_quality": {
+              "status": "manual",
+              "executed": false
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "recommendation": {
+    "preferred_candidate": "gpui-pre-web 0.3.9",
+    "decision_3": "unresolved",
+    "reason": "Neither stack could compile or run in the permitted environment. A final stack selection would lack the W0 evidence."
+  }
+}
