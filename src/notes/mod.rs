@@ -6,6 +6,8 @@
 //!   note.
 //! - `open` is the entry point: launch arguments, and the window that opens
 //!   a vault.
+//! - `notebook` is the workspace's own notes: the sidebar, board and expanded
+//!   views of a note. It opens its vault directly, apart from `host`.
 //!
 //! An `editor` submodule (the text editor for a note) belongs beside `panel`;
 //! it shares `host::service::Service`, which is how every view reaches a
@@ -13,8 +15,11 @@
 
 pub mod editor;
 pub mod host;
+mod notebook;
 pub mod open;
 pub mod panel;
+
+pub use notebook::{Note, Notebook, NotesEvent};
 
 use std::path::{Path, PathBuf};
 

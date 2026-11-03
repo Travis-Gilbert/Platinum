@@ -1,0 +1,266 @@
+diff --git a/components/script/native_accessibility.rs b/components/script/native_accessibility.rs
+index 4457bc99e44..6a5175e7219 100644
+--- a/components/script/native_accessibility.rs
++++ b/components/script/native_accessibility.rs
+@@ -514,7 +514,7 @@ pub(crate) fn dispatch(
+             }
+             if !matches!(action, NativeAccessibilityAction::Focus) {
+                 let context =
+-                    crate::native_text::snapshot(window)?.ok_or(NativeTextError::EditRefused)?;
++                    crate::native_text::snapshot(window, cx)?.ok_or(NativeTextError::EditRefused)?;
+                 if context.element != expected.id
+                     || expected.text_digest.as_deref() != Some(digest(&context.text).as_str())
+                 {
+diff --git a/components/script/native_text.rs b/components/script/native_text.rs
+index bb7a1aeea80..fb35adf90d6 100644
+--- a/components/script/native_text.rs
++++ b/components/script/native_text.rs
+@@ -4,12 +4,18 @@
+ //! Native text admission re-reads actual focused-document state. Cached embedder
+ //! InputMethodControl notifications are never an edit authority.
+ use crate::dom::bindings::inheritance::Castable;
++use crate::dom::bindings::root::DomRoot;
++use crate::dom::iterators::ShadowIncluding;
+ use crate::dom::node::Node;
+-use crate::dom::types::{HTMLInputElement, HTMLTextAreaElement, Window};
++use crate::dom::range::Range;
++use crate::dom::types::{CharacterData, HTMLInputElement, HTMLTextAreaElement, Text, Window};
+ use embedder_traits::{ImeEvent, InputEventResult};
+ use js::context::JSContext;
+ use keyboard_types::{CompositionEvent, CompositionState};
+ use script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods;
++use script_bindings::codegen::GenericBindings::{
++    RangeBinding::RangeMethods, SelectionBinding::SelectionMethods,
++};
+ use servo_base::native_text::*;
+ use std::cell::RefCell;
+ 
+@@ -19,7 +25,7 @@ pub(crate) struct State {
+     #[ignore_malloc_size_of = "bounded native text context; no DOM refs"]
+     marked: RefCell<Option<NativeTextContext>>,
+ }
+-pub(crate) fn snapshot(window: &Window) -> NativeTextResult {
++pub(crate) fn snapshot(window: &Window, cx: &mut JSContext) -> NativeTextResult {
+     let document = window.Document();
+     if !document.is_fully_active() {
+         return Err(NativeTextError::DocumentUnavailable);
+@@ -33,7 +39,7 @@ pub(crate) fn snapshot(window: &Window) -> NativeTextResult {
+     } else if let Some(input) = element.downcast::<HTMLTextAreaElement>() {
+         input.native_text_snapshot()
+     } else {
+-        None
++        editable_snapshot(window, cx)
+     };
+     let Some((text, selection)) = buffer else {
+         return Ok(None);
+@@ -83,6 +89,88 @@ pub(crate) fn snapshot(window: &Window) -> NativeTextResult {
+     }
+     Ok(Some(context))
+ }
++// Use DOM Range's own text projection for offsets. No HTML parser or script
++// mutation: selection and composition remain with Servo's editing owner.
++fn editable_host(window: &Window) -> Option<DomRoot<Node>> {
++    let document = window.Document();
++    let area = document.focus_handler().focused_area();
++    let element = area.element()?;
++    if element.is::<HTMLInputElement>() || element.is::<HTMLTextAreaElement>() {
++        return None;
++    }
++    element.upcast::<Node>().editing_host_of()
++}
++fn editable_snapshot(window: &Window, cx: &mut JSContext) -> Option<(String, (u32, u32))> {
++    let host = editable_host(window)?;
++    let document = window.Document();
++    let selection = document.selection()?;
++    let range = selection.active_range(cx)?;
++    if range.start_container().editing_host_of().as_ref() != Some(&host)
++        || range.end_container().editing_host_of().as_ref() != Some(&host)
++    {
++        return None;
++    }
++    // Non-editable islands have a separate authority. Do not flatten offsets
++    // across them or a nested editing host.
++    let mut text = String::new();
++    for node in host.traverse_preorder(ShadowIncluding::No) {
++        if node.editing_host_of().as_ref() != Some(&host)
++            || node.is::<HTMLInputElement>()
++            || node.is::<HTMLTextAreaElement>()
++        {
++            return None;
++        }
++        if let Some(node) = node.downcast::<Text>() {
++            let data = node.upcast::<CharacterData>().data();
++            if text.len().saturating_add(data.len()) > 65536 {
++                return None;
++            }
++            text.push_str(&data);
++        }
++    }
++    let prefix = Range::new(
++        cx,
++        &document,
++        &host,
++        0,
++        &range.start_container(),
++        range.start_offset(),
++    );
++    let start = prefix.Stringifier(cx).len_utf16().0;
++    prefix
++        .SetEnd(cx, &range.end_container(), range.end_offset())
++        .ok()?;
++    let end = prefix.Stringifier(cx).len_utf16().0;
++    Some((text, (start, end)))
++}
++fn editable_select(
++    window: &Window,
++    range: (u32, u32),
++    cx: &mut JSContext,
++) -> Result<(), NativeTextError> {
++    let host = editable_host(window).ok_or(NativeTextError::Unsupported)?;
++    let position = |offset: u32| -> Option<(DomRoot<Node>, u32)> {
++        let mut remaining = offset;
++        for node in host.traverse_preorder(ShadowIncluding::No) {
++            if let Some(text) = node.downcast::<Text>() {
++                let len = text.upcast::<CharacterData>().data().encode_utf16().count() as u32;
++                if remaining <= len {
++                    return Some((node.clone(), remaining));
++                }
++                remaining -= len;
++            }
++        }
++        (offset == 0).then(|| (host.clone(), 0))
++    };
++    let (start, a) = position(range.0).ok_or(NativeTextError::InvalidRange)?;
++    let (end, b) = position(range.1).ok_or(NativeTextError::InvalidRange)?;
++    window
++        .Document()
++        .selection()
++        .ok_or(NativeTextError::StaleContext)?
++        .SetBaseAndExtent(cx, &start, a, &end, b)
++        .map_err(|_| NativeTextError::EditRefused)
++}
+ fn valid_range(text: &str, range: (u32, u32)) -> bool {
+     if range.0 > range.1 {
+         return false;
+@@ -97,7 +185,7 @@ fn valid_range(text: &str, range: (u32, u32)) -> bool {
+     }
+     start && end
+ }
+-fn select(window: &Window, range: (u32, u32)) -> Result<(), NativeTextError> {
++fn select(window: &Window, range: (u32, u32), cx: &mut JSContext) -> Result<(), NativeTextError> {
+     let document = window.Document();
+     let area = document.focus_handler().focused_area();
+     let element = area.element().ok_or(NativeTextError::StaleContext)?;
+@@ -106,7 +194,7 @@ fn select(window: &Window, range: (u32, u32)) -> Result<(), NativeTextError> {
+     } else if let Some(input) = element.downcast::<HTMLTextAreaElement>() {
+         input.native_text_select(range);
+     } else {
+-        return Err(NativeTextError::Unsupported);
++        editable_select(window, range, cx)?;
+     }
+     Ok(())
+ }
+@@ -126,7 +214,7 @@ pub(crate) fn dispatch(
+     request: NativeTextRequest,
+     cx: &mut JSContext,
+ ) -> NativeTextResult {
+-    let current = snapshot(window)?;
++    let current = snapshot(window, cx)?;
+     let NativeTextRequest::Edit { expected, action } = request else {
+         return Ok(current);
+     };
+@@ -141,12 +229,19 @@ pub(crate) fn dispatch(
+             if !valid_range(&expected.text, range) {
+                 return Err(NativeTextError::InvalidRange);
+             }
+-            select(window, range)?;
++            select(window, range, cx)?;
+             window.native_text().marked.borrow_mut().take();
+         },
+         NativeTextAction::Unmark => {
+-            if expected.marked.is_some() {
+-                composition(window, cx, CompositionState::End, String::new());
++            if let Some((start, end)) = expected.marked {
++                let data = if editable_host(window).is_some() {
++                    let text: Vec<u16> = expected.text.encode_utf16().collect();
++                    String::from_utf16(&text[start as usize..end as usize])
++                        .map_err(|_| NativeTextError::InvalidRange)?
++                } else {
++                    String::new()
++                };
++                composition(window, cx, CompositionState::End, data);
+             }
+             window.native_text().marked.borrow_mut().take();
+         },
+@@ -169,16 +264,22 @@ pub(crate) fn dispatch(
+             {
+                 return Err(NativeTextError::InvalidRange);
+             }
+-            if preedit && expected.marked.is_none() {
++            let rich = editable_host(window).is_some();
++            // Rich editors capture a live DOM range at compositionstart, so
++            // select the admitted replacement range before starting composition.
++            select(window, range, cx)?;
++            let mut selected_context = expected.clone();
++            selected_context.selection = range;
++            if (preedit || rich) && expected.marked.is_none() {
+                 if composition(window, cx, CompositionState::Start, String::new())
+                     .contains(InputEventResult::DefaultPrevented)
+                 {
+                     return Err(NativeTextError::EditRefused);
+                 }
+                 // Native callbacks can run author handlers; never apply to their replacement focus/value.
+-                if !snapshot(window)?
++                if !snapshot(window, cx)?
+                     .as_ref()
+-                    .is_some_and(|current| current.same_editor_state(&expected))
++                    .is_some_and(|current| current.same_editor_state(&selected_context))
+                 {
+                     return Err(NativeTextError::StaleContext);
+                 }
+@@ -187,7 +288,7 @@ pub(crate) fn dispatch(
+             expected_text.splice(range.0 as usize..range.1 as usize, text.encode_utf16());
+             let expected_text =
+                 String::from_utf16(&expected_text).map_err(|_| NativeTextError::InvalidRange)?;
+-            select(window, range)?;
++            select(window, range, cx)?;
+             if text.is_empty() && range.0 != range.1 {
+                 let document = window.Document();
+                 let area = document.focus_handler().focused_area();
+@@ -198,6 +299,9 @@ pub(crate) fn dispatch(
+                     input.native_text_delete_selection(cx, preedit);
+                 }
+             }
++            if rich && !preedit && expected.marked.is_none() {
++                composition(window, cx, CompositionState::Update, text.clone());
++            }
+             composition(
+                 window,
+                 cx,
+@@ -215,7 +319,7 @@ pub(crate) fn dispatch(
+                     .map(|r| (marked.0 + r.0, marked.0 + r.1))
+                     .unwrap_or(marked);
+                 // The event can navigate or focus another element. Do not mark that new element.
+-                let after = snapshot(window)?.ok_or(NativeTextError::StaleContext)?;
++                let after = snapshot(window, cx)?.ok_or(NativeTextError::StaleContext)?;
+                 if after.document != expected.document
+                     || after.element != expected.element
+                     || after.focus_sequence != expected.focus_sequence
+@@ -228,14 +332,14 @@ pub(crate) fn dispatch(
+                 {
+                     return Err(NativeTextError::EditRefused);
+                 }
+-                select(window, selected)?;
+-                let mut after = snapshot(window)?.ok_or(NativeTextError::StaleContext)?;
++                select(window, selected, cx)?;
++                let mut after = snapshot(window, cx)?.ok_or(NativeTextError::StaleContext)?;
+                 after.marked = Some(marked);
+                 *window.native_text().marked.borrow_mut() = Some(after);
+             }
+         },
+     }
+-    snapshot(window)
++    snapshot(window, cx)
+ }
+ #[cfg(test)]
+ mod tests {

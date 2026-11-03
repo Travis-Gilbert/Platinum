@@ -78,6 +78,7 @@ pub struct SpeechState {
     system_fallback: bool,
     system_recognizer: OnceCell<Option<Rc<dyn SpeechRecognizer>>>,
     stop_timeout: Duration,
+    require_final_result: bool,
     status: SpeechStatus,
     session: Option<Session>,
     next_session: usize,
@@ -97,6 +98,7 @@ impl SpeechState {
             system_fallback: true,
             system_recognizer: OnceCell::new(),
             stop_timeout: DEFAULT_STOP_TIMEOUT,
+            require_final_result: false,
             status: SpeechStatus::Idle,
             session: None,
             next_session: 0,
@@ -132,6 +134,12 @@ impl SpeechState {
     /// before ending the session with the transcript so far, default 3 seconds.
     pub fn stop_timeout(mut self, timeout: Duration) -> Self {
         self.stop_timeout = timeout;
+        self
+    }
+
+    // THEOREM PATCH: recognizers that require complete decoding fail closed.
+    pub fn require_final_result(mut self, required: bool) -> Self {
+        self.require_final_result = required;
         self
     }
 
@@ -250,7 +258,11 @@ impl SpeechState {
             cx.background_executor().timer(timeout).await;
             _ = this.update(cx, |this, cx| {
                 if this.is_session(id) {
-                    this.end(SpeechEvent::Final(this.transcript()), cx);
+                    if this.require_final_result {
+                        this.end(SpeechEvent::Error(SpeechError::recognizer(anyhow::anyhow!("Recognition did not finish before its deadline"))), cx);
+                    } else {
+                        this.end(SpeechEvent::Final(this.transcript()), cx);
+                    }
                 }
             });
         }));

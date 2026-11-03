@@ -220,6 +220,32 @@ synchronization or semantic ownership. Do not add clones, locks, or boxed trait
 objects merely to avoid understanding the lifetime or access pattern. Keep
 lint suppressions local and justified; do not suppress diagnostics wholesale.
 
+**RUST-006 — Apply BeautifulRust guidance.** For Rust implementation and
+refactoring, use BeautifulRust's `rust-best-practices` skill; use `rust-review`
+for requested Rust reviews and `rust-port` for ports from another language.
+Read the relevant bundled references when the reasoning needs clarification.
+The adopted reference is
+[BeautifulRust at `a9cdcfa`](https://github.com/morganlinton/BeautifulRust/tree/a9cdcfa94d1330c0d41c7f67764c5f7786fbb71d/skills),
+reviewed 2026-10-31. Install the three sibling skill directories together so
+review and porting can consult the shared best-practices guidance.
+
+Apply its ownership, typed-state, error, API, documentation, and safety guidance
+to the changed code. Keep application code simple and distinguish it from APIs
+with external consumers. Ports MUST preserve required observable behavior and
+map the original tests to the Rust tests; document any authorized differences.
+Review findings MUST follow `REV-002`, distinguishing defects from optional
+style improvements.
+
+These authored standards and the authorized task take precedence where the
+skill's generic advice differs. In particular, preserve GPUI's thread-affine
+entities and callbacks, intentional dependency pins, and existing engine/FFI
+contracts. Use Platinum's scoped formatting, media build wrapper, and relevant
+test targets under `AGENTS.md` and `PERF-003`; do not automatically reformat the
+workspace, expand to every feature/target, or repair unrelated warnings.
+BeautifulRust's optional lint bundle is a reference, not an adopted CI
+configuration. Installing the skills does not add lint enforcement or certify
+existing code.
+
 Verification: formatting and applicable lints, source review, and tests of the
 affected behavior. A clean formatter does not establish correctness.
 
@@ -420,6 +446,7 @@ they do not independently impose every rule above.
 | [NASA: writing a good requirement](https://www.nasa.gov/reference/appendix-c-how-to-write-a-good-requirement/) | Necessary, clear, traceable, verifiable requirements and defensible performance criteria |
 | [Richard Fabian: Data-Oriented Design](https://www.dataorienteddesign.com/dodbook/node2.html) and [optimization guidance](https://www.dataorienteddesign.com/dodbook/node9.html) | Design around data and transformations; choose layouts using access patterns and measurement |
 | [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) | Selective idiomatic API, type, naming, and documentation guidance |
+| [BeautifulRust skills](https://github.com/morganlinton/BeautifulRust/tree/a9cdcfa94d1330c0d41c7f67764c5f7786fbb71d/skills) (reviewed 2026-10-31) | Rust writing, review, and behavior-preserving porting workflows; adopted with the project-specific precedence in `RUST-006` |
 | [Claude Code: project instructions](https://code.claude.com/docs/en/memory) | A small `CLAUDE.md` importing shared instructions; instruction text is distinct from executable enforcement |
 
 Repository observations were checked against Platinum commit

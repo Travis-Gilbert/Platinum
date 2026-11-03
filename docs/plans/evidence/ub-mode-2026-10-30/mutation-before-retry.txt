@@ -1,0 +1,217 @@
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:13 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:20 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:25 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:25 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:29 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:32 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:35 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:44 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:44 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:50 delete !
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:66 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:68 delete !
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:93 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:99 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:99 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:100 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:103 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:112 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:121 delete !
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/legacy.rs:129 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-4c0df4b8-4224-4312-ac3a-8cc48bd2f78b/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:42 > -> >=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:42 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:49 false -> true
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:50 false -> true
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:77 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:121 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:128 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:129 + -> -
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:129 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:160 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:160 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:167 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:167 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:203 <= -> <
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:212 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:216 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:216 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:227 == -> !=
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:227 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:242 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:251 || -> &&
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:252 || -> &&
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:262 || -> &&
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:314 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:315 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:331 true -> false
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:431 || -> &&
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:432 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:435 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:458 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:459 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:460 <= -> <
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:460 && -> ||
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:460 <= -> <
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:461 0 -> 1
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:467 1 -> 0
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+crates/profile/src/storage.rs:486 delete !
++ (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/target/mutation-workers/run-a458f61f-191e-49a8-8f1e-30e040b44b5e/worker-0) cargo test --locked -p frame-profile
+Wrote /Users/travisgilbert/Tech Dev Local/Creative/Platinum/.metrics/mutate/frame_profile/legacy.edn
+Wrote /Users/travisgilbert/Tech Dev Local/Creative/Platinum/.metrics/mutate/frame_profile/legacy.edn
+Wrote /Users/travisgilbert/Tech Dev Local/Creative/Platinum/.metrics/mutate/frame_profile/storage.edn
+Wrote /Users/travisgilbert/Tech Dev Local/Creative/Platinum/.metrics/mutate/frame_profile/storage/ImportBatch.edn
+Wrote /Users/travisgilbert/Tech Dev Local/Creative/Platinum/.metrics/mutate/frame_profile/storage/ProfileStore.edn
+KILLED    crates/profile/src/legacy.rs:13 1 -> 0
+KILLED    crates/profile/src/legacy.rs:20 1 -> 0
+KILLED    crates/profile/src/legacy.rs:25 0 -> 1
+KILLED    crates/profile/src/legacy.rs:25 1 -> 0
+KILLED    crates/profile/src/legacy.rs:29 0 -> 1
+SURVIVED  crates/profile/src/legacy.rs:32 1 -> 0
+KILLED    crates/profile/src/legacy.rs:35 0 -> 1
+KILLED    crates/profile/src/legacy.rs:44 == -> !=
+SURVIVED  crates/profile/src/legacy.rs:44 1 -> 0
+KILLED    crates/profile/src/legacy.rs:50 delete !
+KILLED    crates/profile/src/legacy.rs:66 0 -> 1
+KILLED    crates/profile/src/legacy.rs:68 delete !
+KILLED    crates/profile/src/legacy.rs:93 == -> !=
+KILLED    crates/profile/src/legacy.rs:99 == -> !=
+KILLED    crates/profile/src/legacy.rs:99 1 -> 0
+KILLED    crates/profile/src/legacy.rs:100 0 -> 1
+KILLED    crates/profile/src/legacy.rs:103 0 -> 1
+KILLED    crates/profile/src/legacy.rs:112 1 -> 0
+KILLED    crates/profile/src/legacy.rs:121 delete !
+KILLED    crates/profile/src/legacy.rs:129 0 -> 1
+SURVIVED  crates/profile/src/storage.rs:42 > -> >=
+KILLED    crates/profile/src/storage.rs:42 0 -> 1
+SURVIVED  crates/profile/src/storage.rs:49 false -> true
+KILLED    crates/profile/src/storage.rs:50 false -> true
+SURVIVED  crates/profile/src/storage.rs:77 1 -> 0
+KILLED    crates/profile/src/storage.rs:121 == -> !=
+SURVIVED  crates/profile/src/storage.rs:128 0 -> 1
+KILLED    crates/profile/src/storage.rs:129 + -> -
+KILLED    crates/profile/src/storage.rs:129 1 -> 0
+KILLED    crates/profile/src/storage.rs:160 == -> !=
+KILLED    crates/profile/src/storage.rs:160 1 -> 0
+KILLED    crates/profile/src/storage.rs:167 == -> !=
+SURVIVED  crates/profile/src/storage.rs:167 1 -> 0
+SURVIVED  crates/profile/src/storage.rs:203 <= -> <
+KILLED    crates/profile/src/storage.rs:212 1 -> 0
+SURVIVED  crates/profile/src/storage.rs:216 0 -> 1
+KILLED    crates/profile/src/storage.rs:216 1 -> 0
+KILLED    crates/profile/src/storage.rs:227 == -> !=
+SURVIVED  crates/profile/src/storage.rs:227 0 -> 1
+SURVIVED  crates/profile/src/storage.rs:242 1 -> 0
+KILLED    crates/profile/src/storage.rs:251 || -> &&
+KILLED    crates/profile/src/storage.rs:252 || -> &&
+SURVIVED  crates/profile/src/storage.rs:262 || -> &&
+SURVIVED  crates/profile/src/storage.rs:314 0 -> 1
+SURVIVED  crates/profile/src/storage.rs:315 0 -> 1
+KILLED    crates/profile/src/storage.rs:331 true -> false
+KILLED    crates/profile/src/storage.rs:431 || -> &&
+KILLED    crates/profile/src/storage.rs:432 0 -> 1
+KILLED    crates/profile/src/storage.rs:435 1 -> 0
+SURVIVED  crates/profile/src/storage.rs:458 0 -> 1
+SURVIVED  crates/profile/src/storage.rs:459 0 -> 1
+KILLED    crates/profile/src/storage.rs:460 <= -> <
+SURVIVED  crates/profile/src/storage.rs:460 && -> ||
+KILLED    crates/profile/src/storage.rs:460 <= -> <
+KILLED    crates/profile/src/storage.rs:461 0 -> 1
+KILLED    crates/profile/src/storage.rs:467 1 -> 0
+KILLED    crates/profile/src/storage.rs:486 delete !
+Function                Namespace                             Killed  Survived  Uncovered  Sites   Score
+--------------------------------------------------------------------------------------------------------
+bookmark                frame_profile::storage::ProfileStore       0         0          0      0    n/a
+bookmark                frame_profile::storage::ImportBatch        0         0          0      0    n/a
+credential_labels       frame_profile::storage::ProfileStore       0         0          0      0    n/a
+db                      frame_profile::storage::ProfileStore       0         0          0      0    n/a
+delete_credential_label frame_profile::storage::ProfileStore       0         0          0      0    n/a
+ensure_directory        frame_profile::storage::ProfileStore       0         0          0      0    n/a
+extension               frame_profile::storage::ImportBatch        0         0          0      0    n/a
+extensions              frame_profile::storage::ProfileStore       0         0          0      0    n/a
+form                    frame_profile::storage::ImportBatch        0         0          0      0    n/a
+form_values             frame_profile::storage::ProfileStore       0         0          0      0    n/a
+import_batch            frame_profile::storage::ProfileStore       0         0          0      0    n/a
+import_count            frame_profile::storage::ProfileStore       0         0          0      0    n/a
+log_import              frame_profile::storage::ProfileStore       0         0          0      0    n/a
+node                    frame_profile::storage                     0         0          0      0    n/a
+pairs                   frame_profile::storage::ProfileStore       0         0          0      0    n/a
+profiles                frame_profile::storage::ProfileStore       0         0          0      0    n/a
+records                 frame_profile::storage                     0         0          0      0    n/a
+save_credential_label   frame_profile::storage::ProfileStore       0         0          0      0    n/a
+save_session            frame_profile::storage::ProfileStore       0         0          0      0    n/a
+select                  frame_profile::storage::ProfileStore       0         0          0      0    n/a
+session                 frame_profile::storage::ProfileStore       0         0          0      0    n/a
+value                   frame_profile::storage                     0         0          0      0    n/a
+visit                   frame_profile::storage::ProfileStore       0         0          0      0    n/a
+history_metadata        frame_profile::storage::ProfileStore       0         2          0      2   0.0%
+open                    frame_profile::storage::ProfileStore       2         3          0      5  40.0%
+suggestions             frame_profile::storage::ProfileStore       3         3          0      6  50.0%
+visit_at                frame_profile::storage::ProfileStore       2         2          0      4  50.0%
+search_directory        frame_profile::storage::ProfileStore       1         1          0      2  50.0%
+history                 frame_profile::storage::ImportBatch        4         3          0      7  57.1%
+imported_profile        frame_profile::storage::ProfileStore       3         1          0      4  75.0%
+migrate                 frame_profile::legacy                     16         2          0     18  88.9%
+clear_history           frame_profile::legacy                      2         0          0      2 100.0%
+clear_history           frame_profile::storage::ProfileStore       1         0          0      1 100.0%
+commit                  frame_profile::storage::ImportBatch        1         0          0      1 100.0%
+directory               frame_profile::storage::ProfileStore       2         0          0      2 100.0%
+insert                  frame_profile::storage::ImportBatch        3         0          0      3 100.0%
+--------------------------------------------------------------------------------------------------------
+Total                                                             40        17          0     57   70.2%

@@ -15,12 +15,31 @@ use gpui_kit::component::{
 use gpui_kit::{
     AppContext as _, Context, Entity, EventEmitter, Global, InteractiveElement as _, IntoElement,
     ParentElement as _, PathPromptOptions, Render, StatefulInteractiveElement as _, Styled as _,
-    Window, div, px,
+    StyledImage as _, Window, div, px,
 };
 
 #[derive(Clone)]
 pub struct ActiveProfile(pub ProfileStore);
 impl Global for ActiveProfile {}
+
+/// A successful clear acknowledges every browser-owned copy of visited data.
+pub(crate) fn clear_browsing_history(
+    store: ProfileStore,
+    cx: &mut gpui_kit::App,
+) -> gpui_kit::Task<anyhow::Result<()>> {
+    let recents = crate::recents::clear_and_flush(cx);
+    let search = crate::search::clear_history(cx);
+    cx.background_spawn(async move {
+        // Attempt every owner even if another fails.
+        let profile = store.clear_history();
+        let recents = recents.await;
+        let search = search.await;
+        profile?;
+        recents?;
+        search?;
+        anyhow::Ok(())
+    })
+}
 
 pub enum ProfileEvent {
     Open(url::Url),
@@ -31,6 +50,7 @@ pub enum Section {
     Profiles,
     Bookmarks,
     History,
+    Trail,
     Extensions,
 }
 
@@ -46,6 +66,12 @@ pub struct ProfilePanel {
     name: Entity<InputState>,
     filter: Entity<InputState>,
     entries: Vec<LibraryEntry>,
+    visits: Vec<(
+        frame_profile::Visit,
+        Option<std::sync::Arc<gpui_kit::RenderImage>>,
+    )>,
+    trail_before: Option<i64>,
+    trail_task: Option<gpui_kit::Task<()>>,
     profiles: Vec<frame_profile::Profile>,
     extensions: Vec<(String, String)>,
     _filter_events: gpui_kit::Subscription,
@@ -78,6 +104,9 @@ impl ProfilePanel {
             name,
             filter,
             entries: vec![],
+            visits: vec![],
+            trail_before: None,
+            trail_task: None,
             profiles: vec![],
             extensions: vec![],
             _filter_events: events,
@@ -89,16 +118,18 @@ impl ProfilePanel {
         panel
     }
     fn refresh(&mut self, cx: &mut Context<Self>) {
+        // Clearing holds the database lock through compaction. Ignore queued
+        // filter events too, not only new input from the disabled field.
+        if self.busy {
+            return;
+        }
+        if self.section == Section::Trail {
+            self.load_trail(cx);
+            return;
+        }
         self.profiles = self.store.profiles().unwrap_or_default();
         if self.section == Section::Extensions {
-            self.extensions = (|| -> anyhow::Result<Vec<(String, String)>> {
-                let db = self.store.connect()?;
-                Ok(db
-                    .prepare("SELECT name,version FROM extensions ORDER BY name")?
-                    .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
-                    .collect::<Result<_, _>>()?)
-            })()
-            .unwrap_or_default();
+            self.extensions = self.store.extensions().unwrap_or_default();
         }
         if matches!(self.section, Section::Bookmarks | Section::History) {
             match self.store.suggestions(
@@ -111,6 +142,50 @@ impl ProfilePanel {
             }
         }
         cx.notify();
+    }
+    fn load_trail(&mut self, cx: &mut Context<Self>) {
+        self.busy = true;
+        let store = self.store.clone();
+        let before = self.trail_before;
+        self.trail_task = Some(cx.spawn(async move |this, cx| {
+            let result = cx
+                .background_executor()
+                .spawn(async move {
+                    store.visits(before, 50).map(|visits| {
+                        visits
+                            .into_iter()
+                            .map(|visit| {
+                                let image = visit
+                                    .preview
+                                    .as_ref()
+                                    .and_then(|bytes| image::load_from_memory(bytes).ok())
+                                    .map(|image| {
+                                        let mut rgba = image.to_rgba8();
+                                        for pixel in rgba.chunks_exact_mut(4) {
+                                            pixel.swap(0, 2);
+                                        }
+                                        std::sync::Arc::new(gpui_kit::RenderImage::new(vec![
+                                            image::Frame::new(rgba),
+                                        ]))
+                                    });
+                                (visit, image)
+                            })
+                            .collect()
+                    })
+                })
+                .await;
+            let _ = this.update(cx, |this, cx| {
+                this.busy = false;
+                match result {
+                    Ok(visits) => {
+                        this.visits = visits;
+                        this.message.clear();
+                    }
+                    Err(error) => this.message = format!("Could not read the visit trail: {error}"),
+                }
+                cx.notify();
+            });
+        }));
     }
     fn discover(&mut self, cx: &mut Context<Self>) {
         self.busy = true;
@@ -239,6 +314,7 @@ impl Render for ProfilePanel {
             (Section::Profiles, "Profiles"),
             (Section::Bookmarks, "Bookmarks"),
             (Section::History, "History"),
+            (Section::Trail, "Visit trail"),
             (Section::Extensions, "Extensions"),
         ]
         .into_iter()
@@ -385,7 +461,29 @@ impl Render for ProfilePanel {
                 );
             }
             Section::Bookmarks | Section::History => {
-                content = content.child(Input::new(&self.filter));
+                content = content.child(Input::new(&self.filter).disabled(self.busy));
+                if self.section == Section::History {
+                    content = content.child(Button::new("clear-history")
+                        .label("Clear browsing history")
+                        .disabled(self.busy)
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.busy = true;
+                            let store = this.store.clone();
+                            let task = clear_browsing_history(store, cx);
+                            cx.spawn(async move |this, cx| {
+                                let result = task.await;
+                                let _ = this.update(cx, |this, cx| {
+                                    this.busy = false;
+                                    this.message = match result {
+                                        Ok(()) => "Browsing history cleared. Bookmarks and open tabs are kept.".into(),
+                                        Err(_) => "Could not fully clear browsing history. Please retry.".into(),
+                                    };
+                                    this.refresh(cx);
+                                });
+                            }).detach();
+                            cx.notify();
+                        })));
+                }
                 if self.entries.is_empty() {
                     content = content.child(
                         "No matching entries. Import browser data or visit a page to get started.",
@@ -419,6 +517,80 @@ impl Render for ProfilePanel {
                     content = content.child("Showing 100 entries. Type to narrow your search.");
                 }
             }
+            Section::Trail => {
+                content = content.child("Each card is a separate visit. Reopening loads the live address; the preview remains the captured visit.");
+                if self.visits.is_empty() && !self.busy {
+                    content = content.child("No visits on this page of the trail.");
+                }
+                for (visit, preview) in &self.visits {
+                    let url = visit.url.clone();
+                    let date = chrono::DateTime::from_timestamp_micros(visit.visited)
+                        .map(|t| {
+                            t.with_timezone(&chrono::Local)
+                                .format("%b %d · %H:%M:%S")
+                                .to_string()
+                        })
+                        .unwrap_or_default();
+                    let mut row = v_flex().gap_1().p_2().rounded_md().bg(theme.secondary);
+                    if let Some(preview) = preview {
+                        row = row.child(
+                            gpui_kit::img(preview.clone())
+                                .w_full()
+                                .h(px(160.))
+                                .object_fit(gpui_kit::ObjectFit::Contain),
+                        );
+                    }
+                    row = row
+                        .child(
+                            Button::new(gpui_kit::SharedString::from(format!(
+                                "visit:{}",
+                                visit.id
+                            )))
+                            .label(if visit.title.is_empty() {
+                                visit.url.clone()
+                            } else {
+                                visit.title.clone()
+                            })
+                            .on_click(cx.listener(
+                                move |_, _, _, cx| {
+                                    if let Ok(url) = url::Url::parse(&url) {
+                                        cx.emit(ProfileEvent::Open(url));
+                                    }
+                                },
+                            )),
+                        )
+                        .child(
+                            div()
+                                .text_xs()
+                                .text_color(theme.muted_foreground)
+                                .child(format!("{date} · {}", visit.url)),
+                        );
+                    content = content.child(row);
+                }
+                let before = self.visits.last().map(|(v, _)| v.id);
+                content = content.child(
+                    h_flex()
+                        .gap_2()
+                        .child(
+                            Button::new("trail-newest")
+                                .label("Latest visits")
+                                .disabled(self.busy)
+                                .on_click(cx.listener(|this, _, _, cx| {
+                                    this.trail_before = None;
+                                    this.load_trail(cx);
+                                })),
+                        )
+                        .child(
+                            Button::new("trail-older")
+                                .label("Older visits")
+                                .disabled(self.busy || self.visits.len() < 50)
+                                .on_click(cx.listener(move |this, _, _, cx| {
+                                    this.trail_before = before;
+                                    this.load_trail(cx);
+                                })),
+                        ),
+                );
+            }
             Section::Extensions => {
                 content=content.child("Imported extension inventory. These extensions need a compatible Platinum port before they can run.");
                 for (name, version) in &self.extensions {
@@ -448,6 +620,41 @@ mod tests {
     use super::*;
     use gpui_kit::component::Root;
     use gpui_kit::{Modifiers, TestAppContext, VisualTestContext, size};
+    #[gpui_kit::test]
+    fn queued_filter_changes_do_not_read_during_history_clear(cx: &mut TestAppContext) {
+        let temp = tempfile::tempdir().unwrap();
+        let store = ProfileStore::open(temp.path()).unwrap();
+        store.visit("https://old.test/", "Old").unwrap();
+        cx.update(gpui_kit::init);
+        let mut panel = None;
+        let window = cx.open_window(size(px(800.), px(700.)), |window, cx| {
+            let view = cx.new(|cx| ProfilePanel::new(store.clone(), Section::History, window, cx));
+            panel = Some(view.clone());
+            Root::new(view, window, cx)
+        });
+        let panel = panel.unwrap();
+        let cx = VisualTestContext::from_window(window.into(), cx).into_mut();
+        cx.run_until_parked();
+        store.visit("https://new.test/", "New").unwrap();
+        cx.update(|_, cx| {
+            panel.update(cx, |p, cx| {
+                p.busy = true;
+                p.filter.update(cx, |_, cx| {
+                    cx.emit(gpui_kit::component::input::InputEvent::Change)
+                });
+            })
+        });
+        cx.run_until_parked();
+        assert_eq!(cx.update(|_, cx| panel.read(cx).entries.len()), 1);
+        cx.update(|_, cx| {
+            panel.update(cx, |p, cx| {
+                p.busy = false;
+                p.refresh(cx);
+            })
+        });
+        assert_eq!(cx.update(|_, cx| panel.read(cx).entries.len()), 2);
+    }
+
     #[gpui_kit::test]
     fn selecting_a_source_and_importing_keeps_its_data_out_of_the_current_profile(
         cx: &mut TestAppContext,

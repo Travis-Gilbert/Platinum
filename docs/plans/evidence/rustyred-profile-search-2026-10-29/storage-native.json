@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "phases": [
+    {
+      "phase": "write",
+      "exit_code": 0,
+      "cache_requests": 1,
+      "passed": true,
+      "cache_reused_or_isolated": true
+    },
+    {
+      "phase": "read",
+      "exit_code": 0,
+      "cache_requests": 1,
+      "passed": true,
+      "cache_reused_or_isolated": true
+    },
+    {
+      "phase": "isolated",
+      "exit_code": 0,
+      "cache_requests": 2,
+      "passed": true,
+      "cache_reused_or_isolated": true
+    }
+  ]
+}

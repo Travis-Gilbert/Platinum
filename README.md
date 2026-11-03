@@ -16,6 +16,10 @@ filters, source details and visible notices when search coverage is incomplete.
 Continue is kept in each profile’s `recents.json`; Clear removes that list.
 
 
+- **Voice input**: focus a text field and hold **Left Command** to dictate.
+  Capture begins after a brief hold; release to finish, or press Escape to
+  cancel. Change the hold-to-talk shortcut in **Edit > Voice Settings**.
+  Normal Command shortcuts cancel the pending hold. Audio stays on this Mac.
 - **Right-click** anywhere: a menu opens at the pointer with its search field
   first and already focused, over the page's own entries and Platinum's tools.
   Type to filter those and find your tabs and every command, or to open an
@@ -154,6 +158,21 @@ provides `cargo run -p frame-profile --bin profile-import -- --browser dia`
 leaves the active profile unchanged, and prints aggregate counts only. Passwords
 use the same Keychain authorization as the native importer.
 `--verify-only` checks destination vault readability without decrypting source passwords.
+
+Profile records live in the installation's `browser.RR` database. The first
+launch migrates the old SQLite catalog and profile records atomically. Legacy
+files remain as rollback inputs, but later writes only reach RustyRed; an older
+binary cannot read those new writes. Passwords remain in macOS Keychain with
+the same installation/profile identity. The offline import CLI requires the
+browser to be closed, because the installation has one database writer.
+
+Address results distinguish Search, Visit, Bookmark, History and Switch to tab.
+History's **Clear browsing history** clears the retained legacy history,
+Home's Continue list, and captured pages and queries in local search. It waits
+for every store and cancels old pending search writes before reporting success.
+Bookmarks and open tabs remain. This does not erase external backups.
+Servo keeps its own website storage and per-profile HTTP disk cache, flushing
+completed cache entries on orderly shutdown.
 
 Each profile has its own Servo storage, history, bookmarks, form values, search
 store and restored session. Tabs, search queries, split layout and selection are

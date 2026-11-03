@@ -235,6 +235,22 @@ impl Vault {
         Ok(document(&self.head(path)?))
     }
 
+    /// Create a new Markdown note without replacing an existing disk file.
+    /// Subsequent edits use the same authority as every opened document.
+    pub fn create_note(&mut self, path: &str, text: &str) -> Result<Document> {
+        self.check_path(path)?;
+        ensure!(path.ends_with(".md"), "a note must have a Markdown path");
+        validate(path, text)?;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(self.root.join(path))?;
+        file.write_all(text.as_bytes())?;
+        file.sync_all()?;
+        self.refresh()?;
+        self.open_document(path)
+    }
+
     pub fn edit(
         &mut self,
         path: &str,

@@ -1,5 +1,41 @@
 # Experimental MSE integration
 
+## Spatial workspace companions
+
+`theorem-model-routing.patch` applies to Theorem
+`08495b15879a7bc2449d43c49530f549268d05fc` through `script/bootstrap`.
+It carries the shared model-role contract, HTTP client/authority routing and
+receipts, compatible specialist bindings, and the `typed_decision` graph tool.
+The authority catalog owns model endpoints and credential references; clients
+send only provider/model identities. A small baseline repair preserves the
+existing search `media` option when constructing `SearchOpts`.
+
+Typed decisions reuse `zephium-decision` (MPL-2.0), pinned to Zephium
+`96257cd3f67dd639eb5decb85b135f2674444603`. Jev uses the fixed TypeSafe endpoint
+and exact `jev-1.13.0` contract. The authority resolves `JEV_API_KEY`; builds
+with the existing `agent/keychain` feature first try the `theorem-cli` Keychain
+service, account `typesafe`. Settings can explicitly require Keychain or
+environment resolution instead of the authority default. Never put keys in profile JSON or model arguments.
+Compatible chat emulation and its fallback must name an authority catalog row.
+The graph tool requires an authenticated principal, `models:invoke`, graph
+read/write access and an existing observation node. Stable operation keys prevent
+repeated paid calls; an interrupted pending receipt remains unresolved instead
+of being retried. Fallback is permitted only for proven pre-dispatch failures.
+Each attempt and fallback reason is persisted before dispatch. Returned answers
+grant no operation authority. The small
+transport adapter is needed because Jev's wire protocol differs from chat;
+question validation and observation binding come from Zephium's library.
+
+`servo-native-dictation.patch` applies to the Servo revision below through
+`script/bootstrap-media`. It exposes Servo's existing DOM Range and IME
+composition owner to native dictation in rich editors. Non-editable islands,
+changed selection/focus, and oversized buffers are refused. This is an API
+bridge, not DOM rewriting from JavaScript. Original MPL-2.0 headers remain.
+
+Both bootstrap paths preserve shared or dirty dependencies. Validation and
+remaining live acceptance checks are recorded in
+`docs/plans/zephium-spatial-workspace.md`. These local companions are not deployed.
+
 `script/bootstrap-media` checks out Servo commit
 `efdf7370da024f467f7526798fe5c6e50e784b52` from `Travis-Gilbert/servo`
 (branch `main`)
@@ -77,3 +113,35 @@ the videoparsers plugin, and setup-media refreshes recognized development
 symlinks to use it while refusing to replace real files or arbitrary symlinks.
 The upstream GstCheck regression and native playback/smoothness evidence are in
 `docs/plans/evidence/browser-mp4-resize-2026-10-27/report.md`.
+
+## HTTP cache persistence at shutdown
+
+`servo-disk-cache-shutdown.patch` applies to Servo
+`efdf7370da024f467f7526798fe5c6e50e784b52` via `script/bootstrap-media`.
+The upstream cache writes evicted entries to disk but otherwise loses its hot
+memory entries on restart. The resource thread now flushes completed public
+entries with the existing disk-cache serializer before acknowledging shutdown.
+Busy/incomplete resources are skipped, private browsing has no disk cache, and
+normal no-store/authentication/cacheability rules still own admission. Platinum
+sets a separate cache filename for each profile. This adapter changes shutdown
+wiring only; it does not replace Servo's cache or website-storage engines.
+
+The synthetic native acceptance command is
+`script/media-env python3 tests/storage/check_native.py <storage_check binary>`.
+It checks cookies, localStorage, IndexedDB, cache reuse in a fresh process and
+absence of the same data in another profile.
+
+## Clearing local browser search history
+
+`theorem-browser-clear-history.patch` applies to Theorem
+`8c5d22bd6fea76dde197d0b9e73149d037d374d3` via `script/bootstrap`.
+The pinned substrate had no browser-history clearing operation. This patch uses
+RedCore's existing atomic deletion batch, retains rank-profile configuration,
+invalidates prepared-query ownership, and clears in-memory search state and
+only the derived `search-generations` directory. It does not delete the shared
+installation root. Platinum fences queued captures, searches, embeddings and
+crawl campaigns under the same store lock. Bootstrap checks both fresh and
+already-applied states without discarding dependency changes.
+The root application's regression opens durable stores, searches a captured
+page, clears through the profile UI's operation, and verifies after reopening
+that history, Home recents and local results are empty while bookmarks survive.

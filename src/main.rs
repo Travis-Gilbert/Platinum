@@ -8,8 +8,10 @@ mod actions;
 mod address;
 mod brand;
 mod browser;
+mod bump;
 mod canvas;
 mod controls;
+mod crm;
 mod delegate;
 mod downloads;
 mod embedder;
@@ -35,8 +37,12 @@ mod serp;
 mod session;
 mod share;
 mod site;
+mod spoken;
 mod tabtree;
 mod theme;
+mod theorem;
+mod trail;
+mod voice;
 
 use anyhow::Context as _;
 use clap::Parser as _;
@@ -51,11 +57,12 @@ use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
     GoForward, ImportBrowserData, NewTab, NextTab, OpenPalette, PinTab, PreviousTab, Quit, Reload,
     SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole, ShowDownloads, ShowHistory,
-    ShowProfiles, ToggleAsk, ToggleCompact, ToggleSidebar,
+    ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces, ToggleSidebar,
 };
 use crate::browser::Browser;
 use crate::engine::Engine;
 use crate::theme::Appearance;
+use crate::theorem::{NewConversation, NextConversation, PreviousConversation, StopRun};
 
 /// Platinum's launch arguments.
 #[derive(clap::Parser)]
@@ -68,8 +75,16 @@ fn main() -> anyhow::Result<()> {
     // Before anything starts, so a mistaken argument costs nothing.
     let notes = Cli::parse().notes.launch()?;
     #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_SPATIAL_CHECK") {
+        return browser::spatial_check::run(output.into());
+    }
+    #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
         return browser::workspace_check::run(output.into());
+    }
+    #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_THEOREM_LIVE_CHECK") {
+        return browser::theorem_live_check::run(output.into());
     }
     #[cfg(feature = "performance-check")]
     if std::env::var_os("FRAME_PERF_ROOT").is_some() {
@@ -90,8 +105,10 @@ fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
     let _ = dotenvy::from_path(data_dir.join(".env"));
 
+    // The whole Lucide catalog, not just the components' default icons:
+    // Theorem's workbench draws icons the default bundle leaves out.
     gpui_kit::application()
-        .with_assets(gpui_kit::assets::Assets)
+        .with_assets(gpui_kit::assets::AllAssets)
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);
@@ -113,6 +130,7 @@ fn main() -> anyhow::Result<()> {
                 Err(error) => log::error!("http client: {error:#}"),
             }
             recents::init(Some(profile_dir.join("recents.json")), cx);
+            theorem::init(Some(profile_dir.join("theorem.json")), cx);
             search::init(&search_dir, cx);
             session::init(&profile_dir, cx);
             session::open_imported_tabs(&profile, cx);
@@ -160,6 +178,8 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("ctrl-cmd-c", ToggleCompact, None),
         KeyBinding::new("ctrl-cmd-s", ToggleSidebar, None),
         KeyBinding::new("ctrl-cmd-b", crate::actions::ShowCanvas, None),
+        KeyBinding::new("ctrl-alt-space", crate::actions::ReadSelection, None),
+        KeyBinding::new("ctrl-cmd-n", crate::actions::ToggleNotes, None),
         KeyBinding::new("alt-cmd-l", ShowDownloads, None),
         KeyBinding::new("alt-cmd-j", ShowConsole, None),
         KeyBinding::new("cmd-q", Quit, None),
@@ -169,6 +189,11 @@ fn install_commands(cx: &mut App) {
         KeyBinding::new("cmd-c", Copy, Some(page::CONTEXT)),
         KeyBinding::new("cmd-v", Paste, Some(page::CONTEXT)),
         KeyBinding::new("cmd-a", SelectAll, Some(page::CONTEXT)),
+        // Escape stops a run through the composer's own Escape.
+        KeyBinding::new("cmd-n", NewConversation, Some(theorem::CONTEXT)),
+        KeyBinding::new("cmd-.", StopRun, Some(theorem::CONTEXT)),
+        KeyBinding::new("alt-up", PreviousConversation, Some(theorem::CONTEXT)),
+        KeyBinding::new("alt-down", NextConversation, Some(theorem::CONTEXT)),
     ];
     for index in 0..9 {
         bindings.push(KeyBinding::new(
@@ -177,6 +202,7 @@ fn install_commands(cx: &mut App) {
             None,
         ));
     }
+    zorite_editor::bind_keys(cx);
     cx.bind_keys(bindings);
     install_menus(cx);
 }
@@ -211,12 +237,20 @@ fn install_menus(cx: &mut App) {
             MenuItem::os_action("Select All", SelectAll, OsAction::SelectAll),
             MenuItem::separator(),
             MenuItem::action("Fill Form Information…", FillForm),
+            MenuItem::action("Start / Stop Dictation", crate::actions::ToggleDictation),
+            MenuItem::action("Read Selection Aloud", crate::actions::ReadSelection),
+            MenuItem::action("Stop Speaking", crate::actions::StopSpeaking),
+            MenuItem::action("Voice Settings", crate::actions::VoiceSettings),
         ]),
         Menu::new("View").items([
             MenuItem::action("Reload Page", Reload),
             MenuItem::separator(),
             MenuItem::action("Compact Mode", ToggleCompact),
             MenuItem::action("Sidebar", ToggleSidebar),
+            MenuItem::action("Notes Sidebar", crate::actions::ToggleNotes),
+            MenuItem::action("Page Board", crate::actions::ShowCanvas),
+            MenuItem::action("Visit Trail", crate::actions::ShowVisitTrail),
+            MenuItem::action("Always Show Places", TogglePlaces),
             MenuItem::submenu(Menu::new("Appearance").items(appearances)),
             MenuItem::separator(),
             MenuItem::action("Show Downloads", ShowDownloads),

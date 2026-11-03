@@ -293,8 +293,7 @@ impl FrameDock {
         })
     }
 
-    /// Whether a group shows one of Frame's own surfaces, Home or a place,
-    /// rather than a page.
+    /// Whether a group shows Frame's own Home rather than a page.
     fn native(&self, group: &TabGroupContext, cx: &App) -> bool {
         let Some(panel) = group.active_panel() else {
             return false;

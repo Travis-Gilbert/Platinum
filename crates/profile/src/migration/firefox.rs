@@ -3,7 +3,6 @@ use super::{Counts, SourceFormat, SourceProfile, credentials::Vault, import_logi
 use crate::{ProfileStore, SessionTab, web_url};
 use anyhow::{Context, Result, ensure};
 use configparser::ini::Ini;
-use rusqlite::params;
 use serde_json::Value;
 use std::path::Path;
 
@@ -83,8 +82,7 @@ pub(super) fn import_category(
 
 fn bookmarks(store: &ProfileStore, dir: &Path) -> Result<Counts> {
     let src = snapshot(&dir.join("places.sqlite"))?;
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     let mut stmt=src.prepare("WITH RECURSIVE folders(id,path,depth) AS (
         SELECT id,coalesce(title,''),0 FROM moz_bookmarks WHERE type=2 AND parent=0
@@ -104,10 +102,7 @@ fn bookmarks(store: &ProfileStore, dir: &Path) -> Result<Counts> {
             counts.skipped += 1;
             continue;
         };
-        let n = tx.execute(
-            "INSERT OR IGNORE INTO bookmarks VALUES(?1,?2,?3)",
-            params![url.as_str(), title, folder],
-        )?;
+        let n = tx.bookmark(url.as_str(), &title, &folder)?;
         counts.imported += n;
         counts.skipped += usize::from(n == 0);
     }
@@ -117,8 +112,7 @@ fn bookmarks(store: &ProfileStore, dir: &Path) -> Result<Counts> {
 
 fn history(store: &ProfileStore, dir: &Path) -> Result<Counts> {
     let src = snapshot(&dir.join("places.sqlite"))?;
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     let mut stmt=src.prepare("SELECT url,coalesce(title,''),coalesce(last_visit_date,0),visit_count FROM moz_places WHERE hidden=0 AND visit_count>0")?;
     for row in stmt.query_map([], |r| {
@@ -134,9 +128,7 @@ fn history(store: &ProfileStore, dir: &Path) -> Result<Counts> {
             counts.skipped += 1;
             continue;
         };
-        let n=tx.execute("INSERT INTO history VALUES(?1,?2,?3,?4)
-            ON CONFLICT(url) DO UPDATE SET title=excluded.title,visited=max(history.visited,excluded.visited),visits=max(history.visits,excluded.visits)
-            WHERE excluded.visited>history.visited OR excluded.visits>history.visits",params![url.as_str(),title,time.max(0),visits.max(1)])?;
+        let n = tx.history(url.as_str(), &title, time.max(0), visits.max(1))?;
         counts.imported += n;
         counts.skipped += usize::from(n == 0);
     }
@@ -192,8 +184,7 @@ fn passwords(store: &ProfileStore, dir: &Path, vault: &impl Vault) -> Result<Cou
 
 fn extensions(store: &ProfileStore, dir: &Path) -> Result<Counts> {
     let data: Value = serde_json::from_reader(std::fs::File::open(dir.join("extensions.json"))?)?;
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
+    let mut tx = store.import_batch()?;
     let mut counts = Counts::default();
     for addon in data["addons"]
         .as_array()
@@ -211,10 +202,7 @@ fn extensions(store: &ProfileStore, dir: &Path) -> Result<Counts> {
             .and_then(Value::as_str)
             .unwrap_or(id);
         let version = addon["version"].as_str().unwrap_or("");
-        let n = tx.execute(
-            "INSERT OR IGNORE INTO extensions VALUES(?1,?2,?3)",
-            params![id, name, version],
-        )?;
+        let n = tx.extension(id, name, version)?;
         counts.imported += n;
         counts.skipped += usize::from(n == 0);
     }
@@ -224,37 +212,10 @@ fn extensions(store: &ProfileStore, dir: &Path) -> Result<Counts> {
 
 fn forms(store: &ProfileStore, dir: &Path) -> Result<Counts> {
     let src = snapshot(&dir.join("formhistory.sqlite"))?;
-    let mut db = store.connect()?;
-    let tx = db.transaction()?;
-    let mut counts = Counts::default();
-    tx.execute_batch("CREATE TABLE IF NOT EXISTS form_information(name TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(name,value));")?;
-    for row in src
-        .prepare("SELECT fieldname,value FROM moz_formhistory")?
-        .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
-    {
-        let (name, value) = row?;
-        if ![
-            "email",
-            "name",
-            "first_name",
-            "last_name",
-            "city",
-            "country",
-        ]
-        .contains(&name.to_ascii_lowercase().as_str())
-        {
-            counts.skipped += 1;
-            continue;
-        }
-        let n = tx.execute(
-            "INSERT OR IGNORE INTO form_information VALUES(?1,?2)",
-            params![name, value],
-        )?;
-        counts.imported += n;
-        counts.skipped += usize::from(n == 0);
-    }
-    tx.commit()?;
-    Ok(counts)
+    super::import_forms(
+        store,
+        super::form_rows(&src, "SELECT fieldname,value FROM moz_formhistory")?,
+    )
 }
 
 fn tabs(store: &ProfileStore, dir: &Path) -> Result<Counts> {
@@ -392,10 +353,10 @@ mod tests {
         assert_eq!(saved[0].folder, "Toolbar/Work");
         assert_eq!(
             store
-                .connect()
+                .history_metadata("https://fixture.example.test/")
                 .unwrap()
-                .query_row("SELECT visited FROM history", [], |r| r.get::<_, i64>(0))
-                .unwrap(),
+                .unwrap()
+                .0,
             1720000000123456
         );
         assert_eq!(bookmarks(&store, source.path()).unwrap().imported, 0);

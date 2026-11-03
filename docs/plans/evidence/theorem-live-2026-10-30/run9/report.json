@@ -1,0 +1,336 @@
+{
+  "authority": "http://127.0.0.1:18083",
+  "steps": [
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "not running"
+    },
+    {
+      "step": "down-at-launch",
+      "passed": true,
+      "detail": {
+        "connection": "Native",
+        "settled_within_30s": true,
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Refused",
+          "notice": "Could not load this Theorem workspace: error sending request for url (http://127.0.0.1:18083/api/chat/v1/bootstrap)."
+        }
+      }
+    },
+    {
+      "store": "start",
+      "passed": true,
+      "said": "up (60077)"
+    },
+    {
+      "step": "retry-connects",
+      "passed": true,
+      "detail": {
+        "projects": 0,
+        "threads": 0,
+        "selected_project": null,
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "new-conversation",
+      "passed": true,
+      "detail": {
+        "projects": 1,
+        "selected_project": "chatproj_sha256:569c3a76dd4169f9e8d316e09",
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "live-answer",
+      "passed": true,
+      "detail": {
+        "first_part_ms": 4897,
+        "live_part_counts": 3,
+        "settled_ms": 24501,
+        "last": {
+          "messages": 2,
+          "parts": 3,
+          "answer_chars": 1518,
+          "answer_start": "Sunlight arrives as a mix of all visible wavelengths, and the molecules in air scatter short-wavelength blue light far more strongly than long-wavelength red li",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "stop-mid-answer",
+      "passed": true,
+      "detail": {
+        "streaming_before_stop": true,
+        "settled_within_30s": true,
+        "at_stop": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Streaming",
+          "can_cancel": true,
+          "phase": "Ready",
+          "notice": null
+        },
+        "after": {
+          "messages": 4,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Aborted",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start",
+      "passed": true,
+      "said": "up (60343)"
+    },
+    {
+      "step": "outage-mid-answer",
+      "passed": false,
+      "detail": {
+        "streaming_before_outage": true,
+        "during_outage": {
+          "messages": 6,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Streaming",
+          "can_cancel": true,
+          "phase": "Ready",
+          "notice": null
+        },
+        "settled_after_restart_ms": null,
+        "after": {
+          "messages": 6,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Streaming",
+          "can_cancel": true,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "stop-clears-orphaned-run",
+      "passed": true,
+      "detail": {
+        "settled_within_30s": true,
+        "after": {
+          "messages": 6,
+          "parts": 1,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Aborted",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "answers-after-outage",
+      "passed": false,
+      "detail": {
+        "settled_ms": null,
+        "after": {
+          "messages": 7,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Interrupted",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": "Theorem never closed this conversation's last run, so it refuses new messages here. Start a new conversation to continue."
+        }
+      }
+    },
+    {
+      "step": "stuck-conversation-is-explained",
+      "passed": true,
+      "detail": {
+        "explained_ms": 2122,
+        "after": {
+          "messages": 7,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Interrupted",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": "Theorem never closed this conversation's last run, so it refuses new messages here. Start a new conversation to continue."
+        }
+      }
+    },
+    {
+      "step": "new-conversation-after-outage",
+      "passed": true,
+      "detail": {
+        "card": {
+          "messages": 0,
+          "parts": 0,
+          "answer_chars": 0,
+          "answer_start": "",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "step": "second-window-follows-live-run",
+      "passed": true,
+      "detail": {
+        "streaming_in_first": true,
+        "second_saw_live_run": true,
+        "second_live_part_counts": 4,
+        "settled_ms": 64168,
+        "written_in_both": true,
+        "second": {
+          "messages": 2,
+          "parts": 5,
+          "answer_chars": 3573,
+          "answer_start": "Here are twelve well-known rivers, one sentence each. Per your request, the program below calls no tools — its return value is the answer.\n\nClaims JSON:\n[\n  {\"t",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        },
+        "first": {
+          "messages": 2,
+          "parts": 5,
+          "answer_chars": 3573,
+          "answer_start": "Here are twelve well-known rivers, one sentence each. Per your request, the program below calls no tools — its return value is the answer.\n\nClaims JSON:\n[\n  {\"t",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start-bad-provider",
+      "passed": true,
+      "said": "up (61661)"
+    },
+    {
+      "step": "provider-failure-is-shown",
+      "passed": false,
+      "detail": {
+        "first_part_ms": null,
+        "live_part_counts": 0,
+        "settled_ms": null,
+        "last": {
+          "messages": 2,
+          "parts": 5,
+          "answer_chars": 3573,
+          "answer_start": "Here are twelve well-known rivers, one sentence each. Per your request, the program below calls no tools — its return value is the answer.\n\nClaims JSON:\n[\n  {\"t",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": "Theorem refused that turn: The chat CSRF token is invalid or expired"
+        }
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start-refusing",
+      "passed": true,
+      "said": "up (61964)"
+    },
+    {
+      "step": "refused-credential-signs-out",
+      "passed": true,
+      "detail": {
+        "settled_within_30s": true,
+        "card": {
+          "messages": 2,
+          "parts": 5,
+          "answer_chars": 3573,
+          "answer_start": "Here are twelve well-known rivers, one sentence each. Per your request, the program below calls no tools — its return value is the answer.\n\nClaims JSON:\n[\n  {\"t",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Unauthenticated",
+          "notice": "Sign in to this Theorem workspace to continue; nothing has been lost. The sign-in page is at /v1/wiki/sign-in."
+        },
+        "sign_in": "http://127.0.0.1:18083/v1/wiki/sign-in"
+      }
+    },
+    {
+      "store": "stop",
+      "passed": true,
+      "said": "stopped"
+    },
+    {
+      "store": "start",
+      "passed": true,
+      "said": "up (61996)"
+    },
+    {
+      "step": "reconnects-after-sign-in",
+      "passed": true,
+      "detail": {
+        "card": {
+          "messages": 2,
+          "parts": 5,
+          "answer_chars": 3573,
+          "answer_start": "Here are twelve well-known rivers, one sentence each. Per your request, the program below calls no tools — its return value is the answer.\n\nClaims JSON:\n[\n  {\"t",
+          "run_state": "Idle",
+          "can_cancel": false,
+          "phase": "Ready",
+          "notice": null
+        }
+      }
+    }
+  ]
+}

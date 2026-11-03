@@ -98,13 +98,8 @@ pub(crate) fn to_screen(wx: f32, wy: f32, cam: Camera, origin: Point<Pixels>) ->
 }
 
 /// Paint the board background + the world-space dot grid into `bounds`.
-pub(crate) fn paint_board(
-    bounds: Bounds<Pixels>,
-    cam: Camera,
-    bg: Hsla,
-    grid: Hsla,
-    window: &mut Window,
-) {
+// FRAME PATCH: public, so Frame's cards draw the board's dot grid.
+pub fn paint_board(bounds: Bounds<Pixels>, cam: Camera, bg: Hsla, grid: Hsla, window: &mut Window) {
     window.paint_quad(fill(bounds, bg));
 
     let z = cam.zoom.max(MIN_ZOOM);

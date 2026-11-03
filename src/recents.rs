@@ -85,7 +85,7 @@ pub fn init(path: Option<PathBuf>, cx: &mut App) {
         let written = recents.written.clone();
         cx.background_spawn(async move {
             if let Some(path) = path {
-                persist(&path, &record, generation, &written);
+                log_persist(&path, &record, generation, &written);
             }
         })
     });
@@ -188,6 +188,27 @@ pub fn clear(cx: &mut App) {
     update(cx, |record| std::mem::take(record) != Record::default());
 }
 
+/// Clear the visible list immediately and await its ordered disk publication.
+/// Even an already-empty list is saved, so retrying a failed clear can succeed.
+pub fn clear_and_flush(cx: &mut App) -> Task<anyhow::Result<()>> {
+    let Some(recents) = cx.try_global::<Recents>() else {
+        return Task::ready(Ok(()));
+    };
+    let path = recents.path.clone();
+    let generation = recents.generation + 1;
+    let written = recents.written.clone();
+    let recents = cx.global_mut::<Recents>();
+    recents.record = Record::default();
+    recents.generation = generation;
+    recents._save = Task::ready(());
+    cx.background_spawn(async move {
+        match path {
+            Some(path) => persist(&path, &Record::default(), generation, &written),
+            None => Ok(()),
+        }
+    })
+}
+
 /// Put `item` first, dropping an earlier copy and anything past [`KEEP`].
 /// Whether the list changed.
 fn remember<T: PartialEq>(list: &mut Vec<T>, item: T, same: impl Fn(&T, &T) -> bool) -> bool {
@@ -217,7 +238,7 @@ fn update(cx: &mut App, change: impl FnOnce(&mut Record) -> bool) {
             let timer = cx.background_executor().timer(SAVE_AFTER);
             cx.background_spawn(async move {
                 timer.await;
-                persist(&path, &saved, generation, &written);
+                log_persist(&path, &saved, generation, &written);
             })
         }
         None => Task::ready(()),
@@ -231,16 +252,26 @@ fn update(cx: &mut App, change: impl FnOnce(&mut Record) -> bool) {
 }
 
 /// Serialize writes and reject a delayed snapshot older than the file.
-fn persist(path: &Path, record: &Record, generation: u64, written: &Mutex<u64>) {
+fn persist(
+    path: &Path,
+    record: &Record,
+    generation: u64,
+    written: &Mutex<u64>,
+) -> anyhow::Result<()> {
     let mut written = written
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     if generation <= *written {
-        return;
+        return Ok(());
     }
-    match save(path, record) {
-        Ok(()) => *written = generation,
-        Err(error) => log::warn!("recents: could not save {}: {error:#}", path.display()),
+    save(path, record)?;
+    *written = generation;
+    Ok(())
+}
+
+fn log_persist(path: &Path, record: &Record, generation: u64, written: &Mutex<u64>) {
+    if let Err(error) = persist(path, record, generation, written) {
+        log::warn!("recents: could not save {}: {error:#}", path.display());
     }
 }
 
@@ -308,9 +339,28 @@ mod tests {
             }],
             ..Record::default()
         };
-        persist(&path, &Record::default(), 2, &written);
-        persist(&path, &old, 1, &written);
+        persist(&path, &Record::default(), 2, &written).unwrap();
+        persist(&path, &old, 1, &written).unwrap();
         assert_eq!(load(&path), Record::default());
+    }
+
+    #[gpui_kit::test]
+    async fn a_failed_clear_can_be_retried_when_the_visible_list_is_empty(
+        cx: &mut gpui_kit::TestAppContext,
+    ) {
+        let folder = tempfile::tempdir().unwrap();
+        let parent = folder.path().join("missing");
+        let path = parent.join("recents.json");
+        let clear = cx.update(|cx| {
+            init(Some(path.clone()), cx);
+            record_search("old", false, cx);
+            clear_and_flush(cx)
+        });
+        assert!(clear.await.is_err());
+        std::fs::create_dir(&parent).unwrap();
+        cx.update(clear_and_flush).await.unwrap();
+        assert_eq!(load(&path), Record::default());
+        assert!(path.is_file());
     }
 
     #[test]

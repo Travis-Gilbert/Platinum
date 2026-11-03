@@ -1,0 +1,2 @@
+    Checking frame-profile v0.1.0 (/Users/travisgilbert/Tech Dev Local/Creative/Platinum/crates/profile)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.28s

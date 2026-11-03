@@ -1,0 +1,741 @@
+warning: methods `full_builds` and `index_bytes` are never used
+   --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core/src/graph/vector_index.rs:467:19
+    |
+180 | impl VectorIndex {
+    | ---------------- methods in this implementation
+...
+467 |     pub(crate) fn full_builds(&self) -> usize {
+    |                   ^^^^^^^^^^^
+...
+471 |     pub(crate) fn index_bytes(&self) -> Option<Vec<u8>> {
+    |                   ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `object_field` is never used
+   --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core/src/symbolic.rs:314:4
+    |
+314 | fn object_field<'a>(value: &'a Value, key: &str) -> &'a str {
+    |    ^^^^^^^^^^^^
+
+warning: function `hydrate_in_memory_graph_from_payload_index` is never used
+    --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core/src/versioned_graph.rs:5522:15
+     |
+5522 | pub(crate) fn hydrate_in_memory_graph_from_payload_index(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `rustyred-thg-core` (lib) generated 3 warnings
+warning: fields `labels`, `feature_map`, `emission_weights`, and `transition_weights` are never read
+  --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-nlp/src/model_registry.rs:11:9
+   |
+10 | pub(crate) struct ValidatedNerModel {
+   |                   ----------------- fields in this struct
+11 |     pub labels: Vec<String>,
+   |         ^^^^^^
+12 |     pub feature_map: HashMap<String, usize>,
+   |         ^^^^^^^^^^^
+13 |     pub emission_weights: Vec<f32>,
+   |         ^^^^^^^^^^^^^^^^
+14 |     pub transition_weights: Vec<f32>,
+   |         ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `ValidatedNerModel` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `validate_ner_model` is never used
+   --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-nlp/src/model_registry.rs:274:15
+    |
+274 | pub(crate) fn validate_ner_model(bytes: &[u8]) -> Result<ValidatedNerModel, String> {
+    |               ^^^^^^^^^^^^^^^^^^
+
+warning: `rustyred-thg-nlp` (lib) generated 2 warnings
+warning: unused import: `GlobalScope`
+  --> deps/servo-consolidated/components/script/dom/document/document_event_handler.rs:71:52
+   |
+71 |     CompositionEvent, Element, Event, EventTarget, GlobalScope, HTMLAnchorElement, HTMLElement,
+   |                                                    ^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods`
+  --> deps/servo-consolidated/components/script/dom/document/documentorshadowroot.rs:17:5
+   |
+17 | use script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused doc comment
+   --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlareaelement.rs:378:5
+    |
+378 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-coords>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+    = note: `#[warn(unused_doc_comments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused doc comment
+   --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlareaelement.rs:382:5
+    |
+382 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-shape>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+
+warning: unused import: `script_bindings::error::Fallible`
+  --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlvideoelement.rs:29:5
+   |
+29 | use script_bindings::error::Fallible;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UpgradeTransactionClearError`, `UpgradeTransactionClear`, and `classify_upgrade_transaction_clear`
+   --> deps/servo-consolidated/components/script/dom/indexeddb/idbdatabase.rs:530:9
+    |
+530 |         UpgradeTransactionClear, UpgradeTransactionClearError, classify_upgrade_transaction_clear,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `self::modelcontext::*`
+   --> deps/servo-consolidated/components/script/dom/mod.rs:291:16
+    |
+291 | pub(crate) use self::modelcontext::*;
+    |                ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Theme`
+  --> deps/servo-consolidated/components/script/event_loop/script_thread.rs:49:80
+   |
+49 |     JavaScriptEvaluationError, JavaScriptEvaluationId, MediaSessionActionType, Theme,
+   |                                                                                ^^^^^
+
+warning: unused variable: `cx`
+    --> deps/servo-consolidated/components/script/dom/document/document.rs:2523:41
+     |
+2523 |     fn queue_document_completion(&self, cx: &mut JSContext) {
+     |                                         ^^ help: if this is intentional, prefix it with an underscore: `_cx`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `gamepad_task_source` is never used
+   --> deps/servo-consolidated/components/script/tasks/task_manager.rs:145:34
+    |
+ 85 | impl TaskManager {
+    | ---------------- method in this implementation
+...
+145 |     task_source_functions!(self, gamepad_task_source, Gamepad);
+    |                                  ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+    = note: this warning originates in the macro `task_source_functions` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: method `advance_specific` is never used
+  --> deps/servo-consolidated/components/script/dom/animations/animationtimeline.rs:42:19
+   |
+26 | impl AnimationTimeline {
+   | ---------------------- method in this implementation
+...
+42 |     pub(crate) fn advance_specific(&self, by: Duration) {
+   |                   ^^^^^^^^^^^^^^^^
+
+warning: method `advance_specific` is never used
+  --> deps/servo-consolidated/components/script/dom/animations/documenttimeline.rs:80:19
+   |
+34 | impl DocumentTimeline {
+   | --------------------- method in this implementation
+...
+80 |     pub(crate) fn advance_specific(&self, by: Duration) {
+   |                   ^^^^^^^^^^^^^^^^
+
+warning: method `set` is never used
+  --> deps/servo-consolidated/components/script/dom/bindings/weakref.rs:33:19
+   |
+24 | impl<T: WeakReferenceable> MutableWeakRef<T> {
+   | -------------------------------------------- method in this implementation
+...
+33 |     pub(crate) fn set(&self, value: Option<&T>) {
+   |                   ^^^
+
+warning: method `get_snapshot` is never used
+   --> deps/servo-consolidated/components/script/dom/canvas/imagedata.rs:192:19
+    |
+ 48 | impl ImageData {
+    | -------------- method in this implementation
+...
+192 |     pub(crate) fn get_snapshot(&self, no_gc: &NoGC) -> Snapshot {
+    |                   ^^^^^^^^^^^^
+
+warning: method `advance_animation_timeline_for_testing` is never used
+    --> deps/servo-consolidated/components/script/dom/document/document.rs:5156:19
+     |
+4052 | impl Document {
+     | ------------- method in this implementation
+...
+5156 |     pub(crate) fn advance_animation_timeline_for_testing(&self, delta: TimeDuration) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `get_or_init_webgpu_context` and `is_valid` are never used
+   --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlcanvaselement.rs:346:8
+    |
+190 | impl HTMLCanvasElement {
+    | ---------------------- methods in this implementation
+...
+346 |     fn get_or_init_webgpu_context(&self) -> Option<DomRoot<GPUCanvasContext>> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+398 |     pub(crate) fn is_valid(&self) -> bool {
+    |                   ^^^^^^^^
+
+warning: method `run_iteration` is never used
+   --> deps/servo-consolidated/components/script/dom/indexeddb/idbcursor.rs:316:8
+    |
+ 98 | impl IDBCursor {
+    | -------------- method in this implementation
+...
+316 |     fn run_iteration(
+    |        ^^^^^^^^^^^^^
+
+warning: fields `requested` and `last_cleared` are never read
+  --> deps/servo-consolidated/components/script/dom/indexeddb/idbdatabase.rs:65:9
+   |
+64 |     Missing {
+   |     ------- fields in this variant
+65 |         requested: u64,
+   |         ^^^^^^^^^
+66 |         last_cleared: Option<u64>,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `requested` and `current` are never read
+  --> deps/servo-consolidated/components/script/dom/indexeddb/idbdatabase.rs:69:9
+   |
+68 |     Mismatch {
+   |     -------- fields in this variant
+69 |         requested: u64,
+   |         ^^^^^^^^^
+70 |         current: u64,
+   |         ^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: method `advance_animation_clock` is never used
+    --> deps/servo-consolidated/components/script/dom/window/window.rs:2639:19
+     |
+2434 | impl Window {
+     | ----------- method in this implementation
+...
+2639 |     pub(crate) fn advance_animation_clock(&self, no_gc: &NoGC, delta: TimeDuration) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `choose_browsing_context` is never used
+    --> deps/servo-consolidated/components/script/dom/window/windowproxy.rs:1173:19
+     |
+ 168 | impl WindowProxy {
+     | ---------------- method in this implementation
+...
+1173 |     pub(crate) fn choose_browsing_context(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `perform_a_worklet_task` is never used
+   --> deps/servo-consolidated/components/script/dom/worklet/worklet.rs:280:8
+    |
+250 | pub trait WorkletThreadPool: JSTraceable {
+    |           ----------------- method in this trait
+...
+280 |     fn perform_a_worklet_task(&self, worklet_id: WorkletId, worklet_task: WorkletTask);
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated functions `find_window_proxy_by_name` and `handle_tick_all_animations_for_testing` are never used
+    --> deps/servo-consolidated/components/script/event_loop/script_thread.rs:762:19
+     |
+ 532 | impl ScriptThread {
+     | ----------------- associated functions in this implementation
+...
+ 762 |     pub(crate) fn find_window_proxy_by_name(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+3464 |     pub(crate) fn handle_tick_all_animations_for_testing(no_gc: &NoGC, id: PipelineId) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: this lint expectation is unfulfilled
+   --> deps/servo-consolidated/components/script/dom/mod.rs:208:10
+    |
+208 | #[expect(unused)]
+    |          ^^^^^^
+    |
+    = note: `#[warn(unfulfilled_lint_expectations)]` on by default
+
+warning: this lint expectation is unfulfilled
+   --> deps/servo-consolidated/components/script/dom/bindings/mod.rs:179:14
+    |
+179 |     #[expect(non_camel_case_types)]
+    |              ^^^^^^^^^^^^^^^^^^^^
+
+warning: `servo-script` (lib) generated 25 warnings (run `cargo fix --lib -p servo-script` to apply 7 suggestions)
+warning: fields `stack_ptrs` and `count` are never read
+  --> deps/servo-consolidated/components/background_hang_monitor/sampler.rs:27:5
+   |
+25 | pub struct NativeStack {
+   |            ----------- fields in this struct
+26 |     instruction_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+27 |     stack_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+   |     ^^^^^^^^^^
+28 |     count: usize,
+   |     ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `process_register` is never used
+  --> deps/servo-consolidated/components/background_hang_monitor/sampler.rs:50:12
+   |
+41 | impl NativeStack {
+   | ---------------- method in this implementation
+...
+50 |     pub fn process_register(
+   |            ^^^^^^^^^^^^^^^^
+
+warning: `servo-background-hang-monitor` (lib) generated 2 warnings
+warning: unused import: `storage_traits::cache_storage::CacheStorageThreadMessage`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:172:5
+    |
+172 | use storage_traits::cache_storage::CacheStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `storage_traits::client_storage::ClientStorageThreadMessage`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:173:5
+    |
+173 | use storage_traits::client_storage::ClientStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `IndexedDBThreadMsg` and `SyncOperation`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:174:33
+    |
+174 | use storage_traits::indexeddb::{IndexedDBThreadMsg, SyncOperation};
+    |                                 ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+warning: unused import: `WebStorageThreadMsg`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:175:41
+    |
+175 | use storage_traits::webstorage_thread::{WebStorageThreadMsg, WebStorageType};
+    |                                         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `super::Process`
+  --> deps/servo-consolidated/components/constellation/process_manager.rs:99:9
+   |
+99 |     use super::Process;
+   |         ^^^^^^^^^^^^^^
+
+warning: associated function `sandboxed` is never used
+  --> deps/servo-consolidated/components/constellation/process_manager.rs:20:19
+   |
+12 | impl Process {
+   | ------------ associated function in this implementation
+...
+20 |     pub(crate) fn sandboxed(pid: u32) -> Self {
+   |                   ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: variant `Sandboxed` is never constructed
+   --> deps/servo-consolidated/components/constellation/process_manager.rs:123:5
+    |
+121 | enum ProcessKind {
+    |      ----------- variant in this enum
+122 |     Unsandboxed(Child),
+123 |     Sandboxed(u32),
+    |     ^^^^^^^^^
+
+warning: `servo-constellation` (lib) generated 7 warnings (run `cargo fix --lib -p servo-constellation` to apply 5 suggestions)
+   Compiling frame v0.1.0 (/Users/travisgilbert/.codex/worktrees/pr16-integration/Platinum)
+warning: impl trait in impl method captures fewer lifetimes than in trait
+  --> src/favicon.rs:31:92
+   |
+31 |     fn load(root: Url, cx: &mut App) -> impl Future<Output = SharedUri> + Send + 'static + use<> {
+   |                                                                                            ^^^^^
+   |
+   = note: add `#[allow(refining_impl_trait)]` if it is intended for this to be part of the public API of this crate
+   = note: we are soliciting feedback, see issue #121718 <https://github.com/rust-lang/rust/issues/121718> for more information
+   = note: `#[warn(refining_impl_trait_reachable)]` (part of `#[warn(refining_impl_trait)]`) on by default
+help: modify the `use<..>` bound to capture the same lifetimes that the trait does
+   |
+31 |     fn load(root: Url, cx: &mut App) -> impl Future<Output = SharedUri> + Send + 'static + use<'_> {
+   |                                                                                                ++
+
+warning: impl trait in impl method captures fewer lifetimes than in trait
+  --> src/favicon.rs:70:64
+   |
+70 |     ) -> impl Future<Output = Self::Output> + Send + 'static + use<> {
+   |                                                                ^^^^^
+   |
+   = note: add `#[allow(refining_impl_trait)]` if it is intended for this to be part of the public API of this crate
+   = note: we are soliciting feedback, see issue #121718 <https://github.com/rust-lang/rust/issues/121718> for more information
+help: modify the `use<..>` bound to capture the same lifetimes that the trait does
+   |
+70 |     ) -> impl Future<Output = Self::Output> + Send + 'static + use<'_> {
+   |                                                                    ++
+
+warning: method `probe_state` is never used
+   --> src/canvas/mod.rs:130:12
+    |
+ 44 | impl SpatialCanvas {
+    | ------------------ method in this implementation
+...
+130 |     pub fn probe_state(&self) -> serde_json::Value {
+    |            ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `native_picker_visible` is never used
+   --> src/controls.rs:316:19
+    |
+117 | impl Page {
+    | --------- method in this implementation
+...
+316 |     pub(crate) fn native_picker_visible(&self, kind: &str) -> bool {
+    |                   ^^^^^^^^^^^^^^^^^^^^^
+
+warning: variant `Site` is never constructed
+  --> src/delegate.rs:47:5
+   |
+29 | pub enum ServoEvent {
+   |          ---------- variant in this enum
+...
+47 |     Site(SiteInfo),
+   |     ^^^^
+
+warning: method `site` is never used
+   --> src/delegate.rs:109:12
+    |
+ 76 | impl Delegate {
+    | ------------- method in this implementation
+...
+109 |     pub fn site(&self, info: SiteInfo) {
+    |            ^^^^
+
+warning: constant `CANVAS_SELECT` is never used
+  --> src/icons.rs:37:7
+   |
+37 | const CANVAS_SELECT: &[u8] = include_bytes!("../assets/icons/canvas-select.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_PAN` is never used
+  --> src/icons.rs:38:7
+   |
+38 | const CANVAS_PAN: &[u8] = include_bytes!("../assets/icons/canvas-pan.svg");
+   |       ^^^^^^^^^^
+
+warning: constant `CANVAS_LINK` is never used
+  --> src/icons.rs:39:7
+   |
+39 | const CANVAS_LINK: &[u8] = include_bytes!("../assets/icons/canvas-link.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_NOTE` is never used
+  --> src/icons.rs:40:7
+   |
+40 | const CANVAS_NOTE: &[u8] = include_bytes!("../assets/icons/canvas-note.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_INSERT` is never used
+  --> src/icons.rs:41:7
+   |
+41 | const CANVAS_INSERT: &[u8] = include_bytes!("../assets/icons/canvas-insert.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_FIND` is never used
+  --> src/icons.rs:42:7
+   |
+42 | const CANVAS_FIND: &[u8] = include_bytes!("../assets/icons/canvas-find.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_FIT_ALL` is never used
+  --> src/icons.rs:43:7
+   |
+43 | const CANVAS_FIT_ALL: &[u8] = include_bytes!("../assets/icons/canvas-fit-all.svg");
+   |       ^^^^^^^^^^^^^^
+
+warning: constant `CANVAS_EXPAND` is never used
+  --> src/icons.rs:44:7
+   |
+44 | const CANVAS_EXPAND: &[u8] = include_bytes!("../assets/icons/canvas-expand.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_SPLIT` is never used
+  --> src/icons.rs:45:7
+   |
+45 | const CANVAS_SPLIT: &[u8] = include_bytes!("../assets/icons/canvas-split.svg");
+   |       ^^^^^^^^^^^^
+
+warning: constant `CANVAS_GRID` is never used
+  --> src/icons.rs:46:7
+   |
+46 | const CANVAS_GRID: &[u8] = include_bytes!("../assets/icons/canvas-grid.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_PILE` is never used
+  --> src/icons.rs:47:7
+   |
+47 | const CANVAS_PILE: &[u8] = include_bytes!("../assets/icons/canvas-pile.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_ANNOTATE` is never used
+  --> src/icons.rs:48:7
+   |
+48 | const CANVAS_ANNOTATE: &[u8] = include_bytes!("../assets/icons/canvas-annotate.svg");
+   |       ^^^^^^^^^^^^^^^
+
+warning: constant `CANVAS_RELATED` is never used
+  --> src/icons.rs:49:7
+   |
+49 | const CANVAS_RELATED: &[u8] = include_bytes!("../assets/icons/canvas-related.svg");
+   |       ^^^^^^^^^^^^^^
+
+warning: constant `CANVAS_REMOVE` is never used
+  --> src/icons.rs:50:7
+   |
+50 | const CANVAS_REMOVE: &[u8] = include_bytes!("../assets/icons/canvas-remove.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_LAYERS` is never used
+  --> src/icons.rs:51:7
+   |
+51 | const CANVAS_LAYERS: &[u8] = include_bytes!("../assets/icons/canvas-layers.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_APP` is never used
+  --> src/icons.rs:52:7
+   |
+52 | const CANVAS_APP: &[u8] = include_bytes!("../assets/icons/canvas-app.svg");
+   |       ^^^^^^^^^^
+
+warning: constant `CANVAS_FILE_IMAGE` is never used
+  --> src/icons.rs:53:7
+   |
+53 | const CANVAS_FILE_IMAGE: &[u8] = include_bytes!("../assets/icons/canvas-file-image.svg");
+   |       ^^^^^^^^^^^^^^^^^
+
+warning: function `canvas_select` is never used
+   --> src/icons.rs:129:8
+    |
+129 | pub fn canvas_select() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_pan` is never used
+   --> src/icons.rs:134:8
+    |
+134 | pub fn canvas_pan() -> Icon {
+    |        ^^^^^^^^^^
+
+warning: function `canvas_link` is never used
+   --> src/icons.rs:139:8
+    |
+139 | pub fn canvas_link() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_note` is never used
+   --> src/icons.rs:144:8
+    |
+144 | pub fn canvas_note() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_insert` is never used
+   --> src/icons.rs:149:8
+    |
+149 | pub fn canvas_insert() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_find` is never used
+   --> src/icons.rs:154:8
+    |
+154 | pub fn canvas_find() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_fit_all` is never used
+   --> src/icons.rs:159:8
+    |
+159 | pub fn canvas_fit_all() -> Icon {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `canvas_expand` is never used
+   --> src/icons.rs:164:8
+    |
+164 | pub fn canvas_expand() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_split` is never used
+   --> src/icons.rs:169:8
+    |
+169 | pub fn canvas_split() -> Icon {
+    |        ^^^^^^^^^^^^
+
+warning: function `canvas_grid` is never used
+   --> src/icons.rs:174:8
+    |
+174 | pub fn canvas_grid() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_pile` is never used
+   --> src/icons.rs:179:8
+    |
+179 | pub fn canvas_pile() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_annotate` is never used
+   --> src/icons.rs:184:8
+    |
+184 | pub fn canvas_annotate() -> Icon {
+    |        ^^^^^^^^^^^^^^^
+
+warning: function `canvas_related` is never used
+   --> src/icons.rs:189:8
+    |
+189 | pub fn canvas_related() -> Icon {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `canvas_remove` is never used
+   --> src/icons.rs:194:8
+    |
+194 | pub fn canvas_remove() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_layers` is never used
+   --> src/icons.rs:199:8
+    |
+199 | pub fn canvas_layers() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_app` is never used
+   --> src/icons.rs:204:8
+    |
+204 | pub fn canvas_app() -> Icon {
+    |        ^^^^^^^^^^
+
+warning: function `canvas_file_image` is never used
+   --> src/icons.rs:209:8
+    |
+209 | pub fn canvas_file_image() -> Icon {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: constant `SITE_PANEL` is never used
+  --> src/page.rs:63:7
+   |
+63 | const SITE_PANEL: &str = include_str!("scripts/site-panel.js");
+   |       ^^^^^^^^^^
+
+warning: methods `site` and `read_site` are never used
+   --> src/page.rs:327:12
+    |
+192 | impl Page {
+    | --------- methods in this implementation
+...
+327 |     pub fn site(&self) -> Option<&SiteInfo> {
+    |            ^^^^
+...
+547 |     pub fn read_site(&self) {
+    |            ^^^^^^^^^
+
+warning: method `with_pixels` is never used
+   --> src/scene.rs:190:12
+    |
+ 65 | impl SceneRenderingContext {
+    | -------------------------- method in this implementation
+...
+190 |     pub fn with_pixels<R>(&self, read: impl FnOnce(&[u8], usize, usize, usize) -> R) -> Option<R> {
+    |            ^^^^^^^^^^^
+
+warning: constant `MAX_SAMPLES` is never used
+  --> src/site.rs:19:7
+   |
+19 | const MAX_SAMPLES: usize = 8192;
+   |       ^^^^^^^^^^^
+
+warning: constant `COLORS` is never used
+  --> src/site.rs:21:7
+   |
+21 | const COLORS: usize = 6;
+   |       ^^^^^^
+
+warning: constant `RUNS` is never used
+  --> src/site.rs:23:7
+   |
+23 | const RUNS: u64 = 3;
+   |       ^^^^
+
+warning: constant `MAX_ITERATIONS` is never used
+  --> src/site.rs:24:7
+   |
+24 | const MAX_ITERATIONS: usize = 20;
+   |       ^^^^^^^^^^^^^^
+
+warning: constant `CONVERGED` is never used
+  --> src/site.rs:26:7
+   |
+26 | const CONVERGED: f32 = 5.0;
+   |       ^^^^^^^^^
+
+warning: variants `Headings`, `Body`, and `Code` are never constructed
+  --> src/site.rs:49:5
+   |
+48 | pub enum FontRole {
+   |          -------- variants in this enum
+49 |     Headings,
+   |     ^^^^^^^^
+50 |     Body,
+   |     ^^^^
+51 |     Code,
+   |     ^^^^
+   |
+   = note: `FontRole` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: associated items `label` and `named` are never used
+  --> src/site.rs:55:12
+   |
+54 | impl FontRole {
+   | ------------- associated items in this implementation
+55 |     pub fn label(self) -> &'static str {
+   |            ^^^^^
+...
+63 |     fn named(name: &str) -> Option<Self> {
+   |        ^^^^^
+
+warning: function `hex` is never used
+  --> src/site.rs:81:8
+   |
+81 | pub fn hex([r, g, b]: Rgb) -> String {
+   |        ^^^
+
+warning: associated function `from_answer` is never used
+  --> src/site.rs:89:12
+   |
+85 | impl SiteInfo {
+   | ------------- associated function in this implementation
+...
+89 |     pub fn from_answer(answer: &str, palette: Vec<Swatch>) -> Option<Self> {
+   |            ^^^^^^^^^^^
+
+warning: function `color` is never used
+   --> src/site.rs:115:4
+    |
+115 | fn color(value: &Value) -> Option<Rgb> {
+    |    ^^^^^
+
+warning: function `font` is never used
+   --> src/site.rs:123:4
+    |
+123 | fn font(value: &Value) -> Option<SiteFont> {
+    |    ^^^^
+
+warning: function `palette` is never used
+   --> src/site.rs:140:8
+    |
+140 | pub fn palette(bgra: &[u8], width: usize, height: usize, stride: usize) -> Vec<Swatch> {
+    |        ^^^^^^^
+
+warning: function `sample` is never used
+   --> src/site.rs:176:4
+    |
+176 | fn sample(bgra: &[u8], width: usize, height: usize, stride: usize) -> Vec<Rgb> {
+    |    ^^^^^^
+
+warning: `frame` (bin "frame") generated 56 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 29.12s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
