@@ -393,11 +393,17 @@ fn create_note(vault: &mut Vault, path: &str) -> Result<()> {
     let root = vault.root().canonicalize()?;
     let file = root.join(path);
     if let Some(folder) = file.parent() {
-        std::fs::create_dir_all(folder)?;
+        // A folder of the vault can be a link to one outside it: what is
+        // there already is checked before anything is made beneath it.
+        let existing = folder
+            .ancestors()
+            .find(|folder| folder.symlink_metadata().is_ok())
+            .unwrap_or(&root);
         ensure!(
-            folder.canonicalize()?.starts_with(&root),
+            existing.canonicalize()?.starts_with(&root),
             "{path} is outside the vault"
         );
+        std::fs::create_dir_all(folder)?;
     }
     std::fs::OpenOptions::new()
         .write(true)
@@ -787,6 +793,16 @@ pub(crate) mod tests {
         );
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_new_note_makes_no_folder_through_a_link_out_of_the_vault() {
+        let outside = tempfile::tempdir().unwrap();
+        let mut f = fixture(&[("Home.md", "hi")]);
+        std::os::unix::fs::symlink(outside.path(), f.root.path().join("Out")).unwrap();
+        f.vault.refresh().unwrap();
+        assert!(open_link(&mut f.vault, "Home.md", "Out/New/Note", LinkSyntax::Wiki).is_err());
+        assert!(!outside.path().join("New").exists(), "nothing made outside");
+    }
 
     #[test]
     fn mermaid_is_allowed_once_per_vault_in_its_data_folder() {
