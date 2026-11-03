@@ -42,6 +42,13 @@ rustyred-web = { path = "deps/theorem-search/rustyredcore_THG/crates/rustyred-we
 theoremweb-agent-runtime = { path = "deps/theorem-search/apps/theoremweb/crates/agent-runtime", default-features = false }
 # The documents that host projects and the intents the workbench hands it.
 theorem-surface-contracts = { path = "deps/theorem-search/rustyredcore_THG/crates/theorem-surface-contracts" }
+# Theorem's IDE host, which the Code place (`src/ide/`) embeds and calls in
+# process, serving its authenticated routes on loopback for web clients; and
+# the IDE runtime, for its content hash. From the same checkout.
+theorem-ide-host = { path = "deps/theorem-search/apps/theorem-ide-host" }
+theorem-ide-runtime = { path = "deps/theorem-search/rustyredcore_THG/crates/theorem-ide-runtime" }
+# The Code place's loopback credential.
+getrandom = "0.3"
 # The runtime's reqwest client needs Tokio's reactor wherever its futures are
 # polled, and GPUI polls them on the main thread.
 async-compat = "0.2.5"

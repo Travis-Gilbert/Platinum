@@ -13,6 +13,7 @@
 //! SOURCING: GPUI Kit's `Empty`, `Button` and `Separator`; the icons are
 //! `icons.rs`; the bump's shape is `bump.rs`.
 
+use gpui_kit::assets::IconName as Lucide;
 use gpui_kit::component::{
     ActiveTheme as _, Icon, IconName, Selectable as _,
     button::{Button, ButtonVariants as _},
@@ -40,17 +41,19 @@ pub enum Place {
     Terminal,
     Crm,
     Agent,
+    Code,
     Apps,
 }
 
 impl Place {
-    pub const ALL: [Place; 7] = [
+    pub const ALL: [Place; 8] = [
         Place::Mail,
         Place::Library,
         Place::Notes,
         Place::Terminal,
         Place::Crm,
         Place::Agent,
+        Place::Code,
         Place::Apps,
     ];
 
@@ -62,6 +65,7 @@ impl Place {
             Place::Terminal => "Terminal",
             Place::Crm => "Index",
             Place::Agent => "Agent",
+            Place::Code => "Code",
             Place::Apps => "All apps",
         }
     }
@@ -75,6 +79,7 @@ impl Place {
             Place::Terminal => "terminal",
             Place::Crm => "index",
             Place::Agent => "agent",
+            Place::Code => "code",
             Place::Apps => "apps",
         }
     }
@@ -87,13 +92,14 @@ impl Place {
             Place::Terminal => icons::terminal(),
             Place::Crm => icons::index(),
             Place::Agent => icons::agent(),
+            Place::Code => Icon::new(Lucide::CodeXml),
             Place::Apps => icons::apps(),
         }
     }
 
     /// Whether the place has its own surface; the others show `PlaceView`.
     pub fn is_built(self) -> bool {
-        matches!(self, Place::Agent | Place::Crm)
+        matches!(self, Place::Agent | Place::Crm | Place::Code)
     }
 
     /// What the place will hold, in a sentence.
@@ -112,6 +118,9 @@ impl Place {
             Place::Crm => "What needs attention, and the records it comes from.",
             Place::Agent => {
                 "Theorem: conversation, ongoing tasks and memory, working with the pages and places beside it."
+            }
+            Place::Code => {
+                "A folder's files, edited with Theorem's IDE host: shared documents, refactors, diagnostics and its terminal."
             }
             Place::Apps => "Apps installed through App Host.",
         }

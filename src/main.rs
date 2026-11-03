@@ -20,6 +20,7 @@ mod favicon;
 mod glass;
 mod home;
 mod icons;
+mod ide;
 mod inspector;
 mod keys;
 mod markup;
@@ -71,6 +72,10 @@ fn main() -> anyhow::Result<()> {
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_WORKSPACE_CHECK") {
         return browser::workspace_check::run(output.into());
+    }
+    #[cfg(feature = "snapshot")]
+    if let Some(output) = std::env::var_os("FRAME_CODE_CHECK") {
+        return browser::code_check::run(output.into());
     }
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_THEOREM_LIVE_CHECK") {
@@ -178,6 +183,7 @@ fn install_commands(cx: &mut App) {
         ));
     }
     zorite_editor::bind_keys(cx);
+    bindings.extend(ide::bindings());
     cx.bind_keys(bindings);
     install_menus(cx);
 }

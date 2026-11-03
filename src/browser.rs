@@ -34,6 +34,8 @@ mod board;
 mod dock;
 #[cfg(feature = "performance-check")]
 pub mod performance;
+#[cfg(feature = "snapshot")]
+pub mod code_check;
 mod place;
 mod sidebar;
 #[cfg(feature = "snapshot")]
@@ -394,6 +396,8 @@ pub struct Browser {
     theorem: Option<(Entity<Workbench>, Subscription)>,
     /// The CRM, made the first time its place opens.
     crm: Option<Entity<Crm>>,
+    /// The Code place, made when first opened.
+    code: Option<Entity<crate::ide::Code>>,
     /// The place the window shows, over the tabs or the workspace, which it
     /// leaves as they were (`place.rs`).
     place: Option<Place>,
@@ -610,6 +614,7 @@ impl Browser {
             _speech_events: speech_events,
             theorem: None,
             crm: None,
+            code: None,
             focus_handle: cx.focus_handle(),
             tabs: restored.tabs,
             active: 0,

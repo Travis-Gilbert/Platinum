@@ -90,6 +90,9 @@ impl Browser {
         if place == Place::Crm && self.crm.is_none() {
             self.crm = Some(cx.new(|cx| crate::crm::Crm::new(window, cx)));
         }
+        if place == Place::Code && self.code.is_none() {
+            self.code = Some(cx.new(|cx| crate::ide::Code::new(window, cx)));
+        }
         let exit = self.exit();
         if let Some((workbench, _)) = &self.theorem {
             workbench.update(cx, |workbench, cx| {
@@ -173,6 +176,12 @@ impl Browser {
                     window.focus(&handle, cx);
                 }
             }
+            Place::Code => {
+                if let Some(code) = &self.code {
+                    let handle = code.focus_handle(cx);
+                    window.focus(&handle, cx);
+                }
+            }
             _ => window.focus(&self.focus_handle, cx),
         }
     }
@@ -234,6 +243,11 @@ impl Browser {
                         self.notebook
                             .clone()
                             .map(|n| div().pl(px(48.)).size_full().child(n).into_any_element())
+                            .unwrap_or_else(|| PlaceView::new(place).into_any_element())
+                    } else if place == Place::Code {
+                        self.code
+                            .clone()
+                            .map(|c| div().pl(px(48.)).size_full().child(c).into_any_element())
                             .unwrap_or_else(|| PlaceView::new(place).into_any_element())
                     } else {
                         PlaceView::new(place).into_any_element()

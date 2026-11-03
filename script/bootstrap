@@ -2,9 +2,10 @@
 # Prepares a Platinum checkout to build.
 #
 # Platinum's RustyWeb and notes crates are path dependencies under deps/, a
-# read-only checkout of Theorem at a pinned commit of
-# claude/agent-runtime-record-view. That branch puts the chat runtime's
-# record_view module behind a feature, on claude/browser-search-concurrency,
+# read-only checkout of Theorem at a pinned commit of claude/pm-ide-native-pin.
+# That branch carries the IDE host client and runtime for the Code place, on
+# claude/agent-runtime-record-view, which puts the chat runtime's record_view
+# module behind a feature, on claude/browser-search-concurrency,
 # which adds detached browser searches to claude/notes-foundations, which builds on
 # claude/rustyweb-synthesis-on-request and codex/rustyweb-programmable-web-2.
 # deps/ and the Cargo target directory can live on another disk: a Servo build
@@ -16,8 +17,8 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-theorem_rev="08495b15879a7bc2449d43c49530f549268d05fc"
-theorem_branch="claude/agent-runtime-record-view"
+theorem_rev="1cfe2adc177ceacbc7592a9a822ba2e690e8391a"
+theorem_branch="claude/pm-ide-native-pin"
 theorem_url="https://github.com/Travis-Gilbert/Theorem.git"
 
 deps_dir="${FRAME_DEPS_DIR:-$root/deps}"
