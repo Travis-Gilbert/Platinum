@@ -107,7 +107,7 @@ def parse_bootstrap_scripts(refusals: list[str]) -> dict:
         # A new Servo pin takes a new deps/ name (cargo-targets share artifacts by path).
         servo = re.search(rf'checkout\(\s*"(servo-[^"]+)"\s*,\s*"([^"]+)"\s*,\s*"({SHA})"', media)
         gst = re.search(
-            rf'checkout\(\s*"gstreamer-mse"\s*,\s*"([^"]+)"\s*,\s*"({SHA})"\s*,\s*"([^"]+)"',
+            rf'checkout\(\s*"gstreamer-mse"\s*,\s*"([^"]+)"\s*,\s*"({SHA})"\s*,\s*\(\s*"([^"]+)"',
             media,
         )
         if servo:

@@ -9,13 +9,19 @@ pub fn run() -> anyhow::Result<()> {
     let root = std::path::PathBuf::from(std::env::var_os("FRAME_PERF_ROOT").unwrap());
     let url = Url::parse(&std::env::var("FRAME_PERF_URL")?)?;
     let output = std::path::PathBuf::from(std::env::var_os("FRAME_PERF_OUTPUT").unwrap());
+    let address_output = (url.query() == Some("address")).then(|| output.clone());
     let store = frame_profile::ProfileStore::open(&root)?;
+    if url.query() == Some("address") {
+        store.bookmark("https://servo.org/", "Servo browser engine")?;
+        store.visit("https://github.com/servo/servo", "Servo source repository")?;
+    }
     let _ = rustls::crypto::ring::default_provider().install_default();
     gpui_kit::application()
         .with_assets(gpui_kit::assets::AllAssets)
         .run(move |cx| {
             gpui_kit::init(cx);
             theme::init(cx);
+            crate::recents::init(None, cx);
             crate::install_commands(cx);
             if url.query() == Some("search") {
                 crate::search::init(&root.join("search"), cx);
@@ -31,7 +37,7 @@ pub fn run() -> anyhow::Result<()> {
             Engine::start(&root, cx);
             cx.set_global(ActiveProfile(store.clone()));
             let mut view = None;
-            let window_handle = cx
+            let window_handle: gpui_kit::AnyWindowHandle = cx
                 .open_window(
                     WindowOptions {
                         window_bounds: Some(WindowBounds::Windowed(Bounds::new(
@@ -44,16 +50,42 @@ pub fn run() -> anyhow::Result<()> {
                         let browser = cx.new(|cx| Browser::new(window, cx));
                         view = Some(browser.clone());
                         browser.update(cx, |browser, cx| {
-                            browser.go(url.clone(), None, false, window, cx)
+                            if url.query() == Some("address") {
+                                browser.new_tab(window, cx);
+                                browser.search("Servo browser".into(), crate::serp::SerpMode::Search, false, window, cx);
+                                browser.new_tab(window, cx);
+                            } else { browser.go(url.clone(), None, false, window, cx); }
                         });
                         window.activate_window();
                         cx.new(|cx| Root::new(browser, window, cx))
                     },
                 )
-                .unwrap();
+                .unwrap().into();
             cx.activate(true);
             let browser = view.unwrap();
             cx.spawn(async move |cx| {
+                if url.query() == Some("address") {
+                    cx.background_executor().timer(Duration::from_millis(200)).await;
+                    window_handle.update(cx, |_, window, cx| browser.update(cx, |b,cx|b.focus_address_bar(window,cx))).unwrap();
+                    cx.background_executor().timer(Duration::from_millis(100)).await;
+                    window_handle.update(cx, |_, window, cx| {
+                        for key in ["s", "e", "r", "v", "o"] {
+                            window.dispatch_keystroke(gpui_kit::Keystroke::parse(key).unwrap(), cx);
+                        }
+                    }).unwrap();
+                    cx.background_executor().timer(Duration::from_millis(500)).await;
+                    let rows=browser.read_with(cx, |b,_| b.suggestions.iter().map(|e|e.title.clone()).collect::<Vec<_>>());
+                    let captured = window_handle.update(cx, |_, window, cx| {
+                        // Capture the current model even when macOS throttles an
+                        // occluded development window's presentation callbacks.
+                        window.refresh();
+                        window.draw(cx).clear(cx);
+                        window.render_to_image().and_then(|image| image.save(output.with_extension("png")).map_err(Into::into))
+                    }).unwrap();
+                    std::fs::write(&output,serde_json::to_vec_pretty(&serde_json::json!({"rows":rows,"captured":captured.is_ok()})).unwrap()).unwrap();
+                    cx.update(|cx|cx.quit());
+                    return;
+                }
                 let mut video_ready_after_ms = None;
                 if matches!(url.query(), Some("video-only-hd" | "video-hd")) {
                     let started = Instant::now();
@@ -141,6 +173,16 @@ pub fn run() -> anyhow::Result<()> {
             })
             .detach();
         });
+    if let Some(output) = address_output {
+        let report: serde_json::Value = serde_json::from_slice(&std::fs::read(output)?)?;
+        anyhow::ensure!(
+            report["captured"] == true
+                && report["rows"]
+                    .as_array()
+                    .is_some_and(|rows| rows.len() == 4),
+            "address preview did not render all four result kinds"
+        );
+    }
     Ok(())
 }
 

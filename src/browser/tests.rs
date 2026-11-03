@@ -1332,15 +1332,18 @@ fn imported_history_appears_when_typing_in_address_bar_and_has_a_keyboard_path(
     keys(cx, "cmd-l");
     cx.simulate_input("Familiar");
     cx.run_until_parked();
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(150));
+    cx.run_until_parked();
     let suggestions = cx.update(|_, cx| {
         browser
             .read(cx)
             .suggestions
             .iter()
-            .map(|e| e.url.clone())
+            .map(|e| e.detail.clone())
             .collect::<Vec<_>>()
     });
-    assert_eq!(suggestions.len(), 2);
+    assert_eq!(suggestions.len(), 3);
     assert!(suggestions.contains(&"https://docs.example.test/".into()));
     keys(cx, "down");
     assert!(cx.update(|window, cx| {
@@ -1778,6 +1781,161 @@ fn workspace_results_keep_the_query_in_the_saved_session(cx: &mut TestAppContext
         }
     );
     assert_eq!(saved.active, Some(saved.tabs[0].id));
+}
+
+#[gpui_kit::test]
+fn suggestions_cancel_stale_queries_and_freeze_keyboard_selection(cx: &mut TestAppContext) {
+    use crate::address::SuggestionAction;
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    store
+        .bookmark("https://alpha.test/", "Alpha project")
+        .unwrap();
+    store
+        .bookmark("https://beta.test/", "Beta project")
+        .unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-l");
+    cx.simulate_input("Alpha");
+    cx.run_until_parked();
+    keys(cx, "cmd-a");
+    cx.simulate_input("Beta");
+    cx.run_until_parked();
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(150));
+    cx.run_until_parked();
+    cx.update(|_, cx| {
+        let entries = &browser.read(cx).suggestions;
+        assert!(matches!(&entries[0].action,SuggestionAction::Search(q) if q=="Beta"));
+        assert!(entries.iter().any(|e| e.detail == "https://beta.test/"));
+        assert!(!entries.iter().any(|e| e.detail == "https://alpha.test/"));
+    });
+    keys(cx, "cmd-a");
+    cx.simulate_input("Alpha");
+    cx.run_until_parked();
+    keys(cx, "down");
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(150));
+    cx.run_until_parked();
+    assert_eq!(cx.update(|_, cx| browser.read(cx).suggestions.len()), 1);
+    keys(cx, "escape");
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(150));
+    cx.run_until_parked();
+    assert!(cx.update(|_, cx| browser.read(cx).suggestions.is_empty()));
+}
+
+#[gpui_kit::test]
+fn suggestion_switches_to_existing_search_tab_and_plain_enter_searches(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    cx.update(|window, cx| {
+        browser.update(cx, |browser, cx| {
+            browser.search(
+                "Servo browser".into(),
+                crate::serp::SerpMode::Search,
+                false,
+                window,
+                cx,
+            )
+        })
+    });
+    cx.run_until_parked();
+    keys(cx, "cmd-t cmd-l");
+    cx.simulate_input("Servo");
+    cx.run_until_parked();
+    assert_eq!(tabs(&browser, cx), (2, 1));
+    keys(cx, "down down enter");
+    assert_eq!(tabs(&browser, cx), (2, 0));
+    keys(cx, "cmd-t cmd-l");
+    cx.simulate_input("a different question");
+    cx.run_until_parked();
+    keys(cx, "enter");
+    cx.update(|_, cx| {
+        let b = browser.read(cx);
+        assert!(b.tabs[b.active].showing == Showing::Serp);
+        assert!(!b.ask);
+        assert_eq!(
+            b.tabs[b.active]
+                .serp
+                .as_ref()
+                .unwrap()
+                .read(cx)
+                .query()
+                .as_ref(),
+            "a different question"
+        );
+    });
+}
+
+#[gpui_kit::test]
+fn ask_mode_cancels_pending_ordinary_suggestions(cx: &mut TestAppContext) {
+    let temp = tempfile::tempdir().unwrap();
+    let store = frame_profile::ProfileStore::open(temp.path()).unwrap();
+    store.bookmark("https://servo.org/", "Servo").unwrap();
+    cx.update(|cx| cx.set_global(crate::profile_ui::ActiveProfile(store)));
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-l");
+    cx.simulate_input("Servo");
+    cx.run_until_parked();
+    cx.update(|window, cx| browser.update(cx, |b, cx| b.toggle_ask(window, cx)));
+    cx.executor()
+        .advance_clock(std::time::Duration::from_millis(150));
+    cx.run_until_parked();
+    assert!(cx.update(|_, cx| browser.read(cx).suggestions.is_empty()));
+}
+
+#[gpui_kit::test]
+fn leaving_address_results_restores_the_active_tab_address(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    // A search tab has an authoritative address without requiring a live engine.
+    cx.update(|window, cx| {
+        browser.update(cx, |b, cx| {
+            b.search(
+                "Original query".into(),
+                crate::serp::SerpMode::Search,
+                false,
+                window,
+                cx,
+            );
+        })
+    });
+    cx.run_until_parked();
+    keys(cx, "cmd-l");
+    cx.simulate_input("Abandoned query");
+    keys(cx, "down");
+    assert!(cx.update(|window, cx| {
+        browser
+            .read(cx)
+            .suggestion_state
+            .focus_handle(cx)
+            .is_focused(window)
+    }));
+    // This does not switch tabs: it is the review's failing focus path.
+    cx.update(|window, cx| browser.update(cx, |b, cx| b.focus_content(window, cx)));
+    cx.run_until_parked();
+    cx.update(|_, cx| {
+        let b = browser.read(cx);
+        assert!(!b.editing);
+        assert!(b.suggestions.is_empty());
+        assert_eq!(b.omnibox.read(cx).value().as_ref(), "Original query");
+    });
+}
+
+#[gpui_kit::test]
+fn new_tab_invalidates_address_results_even_when_input_keeps_focus(cx: &mut TestAppContext) {
+    let (browser, cx) = open_with_tab(cx);
+    keys(cx, "cmd-l");
+    cx.simulate_input("Abandoned query");
+    cx.run_until_parked();
+    assert!(!cx.update(|_, cx| browser.read(cx).suggestions.is_empty()));
+    keys(cx, "cmd-t");
+    assert!(in_address_bar(&browser, cx));
+    assert!(cx.update(|_, cx| browser.read(cx).suggestions.is_empty()));
+    assert_eq!(
+        cx.update(|_, cx| browser.read(cx).omnibox.read(cx).value().to_string()),
+        ""
+    );
 }
 
 #[gpui_kit::test]

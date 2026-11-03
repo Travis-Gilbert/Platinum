@@ -37,7 +37,11 @@
 
 use std::{
     collections::HashSet,
-    sync::{Arc, LazyLock, Mutex, mpsc},
+    sync::{
+        Arc, LazyLock, Mutex,
+        atomic::{AtomicU64, Ordering},
+        mpsc,
+    },
     time::Instant,
 };
 
@@ -188,6 +192,8 @@ pub struct SerpResult {
 #[derive(Clone)]
 struct SearchService {
     store: Arc<Mutex<RedCoreBrowserSessionStore>>,
+    /// Incremented under the store lock; work captures it before being queued.
+    generation: Arc<AtomicU64>,
     /// The providers every search queries.
     providers: Arc<[Arc<dyn SearchProvider>]>,
     /// Set when the durable store could not be opened and search runs in memory.
@@ -197,7 +203,7 @@ struct SearchService {
     /// Tells the embedding worker a page was captured.
     embed_wake: Option<mpsc::Sender<()>>,
     /// Hands finished searches to the crawl campaign worker.
-    campaigns: Option<mpsc::SyncSender<SearchSession>>,
+    campaigns: Option<mpsc::SyncSender<(u64, SearchSession)>>,
     /// The turns of the searches that run at once.
     running: Arc<tokio::sync::Semaphore>,
 }
@@ -250,22 +256,25 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
         Err(error) => log::warn!("search: results are not reranked: {error:#}"),
     }
     let store = Arc::new(Mutex::new(store));
+    let generation = Arc::new(AtomicU64::new(0));
 
     let (embed_wake, woken) = mpsc::channel();
     let worker_store = store.clone();
+    let worker_generation = generation.clone();
     let embed_wake = std::thread::Builder::new()
         .name("frame-embedder".into())
-        .spawn(move || embedding_worker(worker_store, woken))
+        .spawn(move || embedding_worker(worker_store, worker_generation, woken))
         .map_err(|error| log::warn!("search: semantic ranking is off: {error}"))
         .ok()
         .map(|_| embed_wake);
 
     let (campaigns, searches) = mpsc::sync_channel(CAMPAIGN_QUEUE);
     let crawler_store = store.clone();
+    let crawler_generation = generation.clone();
     let crawler_wake = embed_wake.clone();
     let campaigns = std::thread::Builder::new()
         .name("frame-crawler".into())
-        .spawn(move || campaign_worker(crawler_store, searches, crawler_wake))
+        .spawn(move || campaign_worker(crawler_store, crawler_generation, searches, crawler_wake))
         .map_err(|error| log::warn!("search: results are not crawled: {error}"))
         .ok()
         .map(|_| campaigns);
@@ -277,6 +286,7 @@ pub fn init(data_dir: &std::path::Path, cx: &mut App) {
     );
     cx.set_global(SearchService {
         store,
+        generation,
         providers: providers.into(),
         store_note,
         profile,
@@ -352,7 +362,11 @@ fn keychain_secret(service: &str) -> anyhow::Result<Option<String>> {
 
 /// Load the shared embedding model, then keep visited pages embedded: the
 /// whole history first, then each capture as it is reported on `woken`.
-fn embedding_worker(store: Arc<Mutex<RedCoreBrowserSessionStore>>, woken: mpsc::Receiver<()>) {
+fn embedding_worker(
+    store: Arc<Mutex<RedCoreBrowserSessionStore>>,
+    generation: Arc<AtomicU64>,
+    woken: mpsc::Receiver<()>,
+) {
     let model = match crate::embedder::load() {
         Ok(model) => model,
         Err(error) => {
@@ -375,7 +389,7 @@ fn embedding_worker(store: Arc<Mutex<RedCoreBrowserSessionStore>>, woken: mpsc::
         Err(_) => return,
     }
     loop {
-        if let Err(error) = embed_pending_pages(&store, &model, &runtime) {
+        if let Err(error) = embed_pending_pages(&store, &generation, &model, &runtime) {
             log::warn!("search: could not embed visited pages: {error:#}");
         }
         // Several captures reported while embedding are one more pass.
@@ -390,6 +404,7 @@ fn embedding_worker(store: Arc<Mutex<RedCoreBrowserSessionStore>>, woken: mpsc::
 /// with the store unlocked while the model runs.
 fn embed_pending_pages(
     store: &Mutex<RedCoreBrowserSessionStore>,
+    generation: &AtomicU64,
     model: &crate::embedder::EmbeddingGemma,
     runtime: &tokio::runtime::Runtime,
 ) -> anyhow::Result<()> {
@@ -400,13 +415,23 @@ fn embed_pending_pages(
     };
     let mut embedded = 0;
     loop {
-        let pending = lock()?
-            .pending_page_embeddings(EMBED_BATCH)
-            .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+        let (pending, epoch) = {
+            let store = lock()?;
+            let epoch = generation.load(Ordering::SeqCst);
+            (
+                store
+                    .pending_page_embeddings(EMBED_BATCH)
+                    .map_err(|error| anyhow!("{} ({})", error.message, error.code))?,
+                epoch,
+            )
+        };
         let Some(pending) = pending else { break };
         let vectors = model.embed_background(pending.inputs())?;
         let published = {
             let mut store = lock()?;
+            if generation.load(Ordering::SeqCst) != epoch {
+                return Ok(());
+            }
             runtime.block_on(store.publish_page_embeddings(pending, vectors))
         }
         .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
@@ -427,7 +452,8 @@ fn embed_pending_pages(
 /// embedding worker for the pages it adds.
 fn campaign_worker(
     store: Arc<Mutex<RedCoreBrowserSessionStore>>,
-    searches: mpsc::Receiver<SearchSession>,
+    generation: Arc<AtomicU64>,
+    searches: mpsc::Receiver<(u64, SearchSession)>,
     embed_wake: Option<mpsc::Sender<()>>,
 ) {
     let runtime = match tokio::runtime::Builder::new_current_thread()
@@ -441,8 +467,8 @@ fn campaign_worker(
         }
     };
     let options = LiveFetchOptions::default();
-    for session in searches {
-        match run_campaign(&store, &session, &runtime, &options) {
+    for (epoch, session) in searches {
+        match run_campaign(&store, &generation, epoch, &session, &runtime, &options) {
             Ok(0) => {}
             Ok(added) => {
                 log::info!(
@@ -465,6 +491,8 @@ fn campaign_worker(
 /// pages download. Returns the pages added.
 fn run_campaign(
     store: &Mutex<RedCoreBrowserSessionStore>,
+    generation: &AtomicU64,
+    epoch: u64,
     session: &SearchSession,
     runtime: &tokio::runtime::Runtime,
     options: &LiveFetchOptions,
@@ -474,15 +502,25 @@ fn run_campaign(
             .lock()
             .map_err(|_| anyhow!("the search store stopped after an earlier failure"))
     };
-    let plan = lock()?
-        .plan_search_campaign(session)
-        .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
+    let plan = {
+        let store = lock()?;
+        if generation.load(Ordering::SeqCst) != epoch {
+            return Ok(0);
+        }
+        store
+            .plan_search_campaign(session)
+            .map_err(|error| anyhow!("{} ({})", error.message, error.code))?
+    };
     let Some(plan) = plan else { return Ok(0) };
     let fetch = runtime.block_on(fetch_campaign_pages(&plan, options));
     for (url, reason) in &fetch.failures {
         log::debug!("search: did not crawl {url}: {reason}");
     }
-    let receipt = lock()?
+    let mut store = lock()?;
+    if generation.load(Ordering::SeqCst) != epoch {
+        return Ok(0);
+    }
+    let receipt = store
         .ingest_campaign_pages(&plan, &fetch.pages, &options.guard_policy)
         .map_err(|error| anyhow!("{error}"))?;
     Ok(receipt.map_or(0, |receipt| receipt.page_count))
@@ -496,7 +534,8 @@ pub fn run(query: String, ask: bool, cx: &mut App) -> Task<anyhow::Result<SerpRe
             "Search is not ready yet. Restart Platinum and try again."
         )));
     };
-    cx.background_spawn(async move { service.search(&query, ask) })
+    let epoch = service.generation.load(Ordering::SeqCst);
+    cx.background_spawn(async move { service.search_at(&query, ask, epoch) })
 }
 
 /// A web page as the person saw it once it finished loading.
@@ -517,16 +556,46 @@ pub fn capture(page: VisitedPage, cx: &mut App) {
     let Some(service) = cx.try_global::<SearchService>().cloned() else {
         return;
     };
+    let epoch = service.generation.load(Ordering::SeqCst);
     cx.background_spawn(async move {
-        if let Err(error) = service.capture(page) {
+        if let Err(error) = service.capture_at(page, epoch) {
             log::warn!("search: {error:#}");
         }
     })
     .detach();
 }
 
+/// Fence old work and clear the dedicated local search store off the UI thread.
+pub fn clear_history(cx: &mut App) -> Task<anyhow::Result<()>> {
+    let Some(service) = cx.try_global::<SearchService>().cloned() else {
+        return Task::ready(Ok(()));
+    };
+    cx.background_spawn(async move { service.clear_history() })
+}
+
 impl SearchService {
+    fn clear_history(&self) -> anyhow::Result<()> {
+        let mut store = self
+            .store
+            .lock()
+            .map_err(|_| anyhow!("the search store stopped"))?;
+        self.generation.fetch_add(1, Ordering::SeqCst);
+        // A failed durable open must not pretend an in-memory clear erased disk.
+        anyhow::ensure!(
+            self.store_note.is_none(),
+            "the durable search store is unavailable"
+        );
+        store
+            .clear_browsing_history()
+            .map_err(|error| anyhow!("{error}"))
+    }
+
+    #[cfg(test)]
     fn capture(&self, page: VisitedPage) -> anyhow::Result<()> {
+        self.capture_at(page, self.generation.load(Ordering::SeqCst))
+    }
+
+    fn capture_at(&self, page: VisitedPage, epoch: u64) -> anyhow::Result<()> {
         if !capturable(&page.url) {
             return Ok(());
         }
@@ -534,6 +603,9 @@ impl SearchService {
             .store
             .lock()
             .map_err(|_| anyhow!("the search store stopped after an earlier failure"))?;
+        if self.generation.load(Ordering::SeqCst) != epoch {
+            return Ok(());
+        }
         // Servo does not report the response status; a page that finished
         // loading is kept as the person saw it.
         let loaded = LoadedPage::html(page.url.as_str(), page.html);
@@ -547,7 +619,12 @@ impl SearchService {
         Ok(())
     }
 
+    #[cfg(test)]
     fn search(&self, query: &str, ask: bool) -> anyhow::Result<SerpResult> {
+        self.search_at(query, ask, self.generation.load(Ordering::SeqCst))
+    }
+
+    fn search_at(&self, query: &str, ask: bool, epoch: u64) -> anyhow::Result<SerpResult> {
         let started = Instant::now();
         let searched_at = Local::now();
         let used: Vec<String> = self
@@ -567,6 +644,10 @@ impl SearchService {
                 .await
                 .context("the search service stopped")?;
             let mut store = self.store.lock().map_err(|_| stopped())?;
+            anyhow::ensure!(
+                self.generation.load(Ordering::SeqCst) == epoch,
+                "Search cancelled because browsing history was cleared"
+            );
             let locked = started.elapsed();
             let pending = store
                 .prepare_programmable_search(
@@ -584,10 +665,12 @@ impl SearchService {
                 .execute(&self.providers)
                 .await
                 .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
-            let session = self
-                .store
-                .lock()
-                .map_err(|_| stopped())?
+            let mut store = self.store.lock().map_err(|_| stopped())?;
+            anyhow::ensure!(
+                self.generation.load(Ordering::SeqCst) == epoch,
+                "Search cancelled because browsing history was cleared"
+            );
+            let session = store
                 .finish_programmable_search(completed)
                 .map_err(|error| anyhow!("{} ({})", error.message, error.code))?;
             anyhow::Ok((session, locked))
@@ -613,7 +696,7 @@ impl SearchService {
             .extend(self.store_note.iter().map(|n| n.to_string()));
         result.elapsed_ms = started.elapsed().as_millis() as u64;
         if let Some(campaigns) = &self.campaigns
-            && campaigns.try_send(session).is_err()
+            && campaigns.try_send((epoch, session)).is_err()
         {
             log::info!("search: the crawler is busy, so results for {query:?} are not crawled");
         }
@@ -1190,6 +1273,7 @@ mod tests {
             ..Default::default()
         });
         let service = SearchService {
+            generation: Arc::new(AtomicU64::new(0)),
             store: Arc::new(Mutex::new(store)),
             providers: vec![Arc::new(GatedProvider {
                 entered,
@@ -1254,9 +1338,149 @@ mod tests {
         );
     }
 
+    fn test_service(store: RedCoreBrowserSessionStore) -> SearchService {
+        SearchService {
+            store: Arc::new(Mutex::new(store)),
+            generation: Arc::new(AtomicU64::new(0)),
+            providers: Arc::from(Vec::new()),
+            store_note: None,
+            profile: None,
+            embed_wake: None,
+            campaigns: None,
+            running: Arc::new(tokio::sync::Semaphore::new(RUNNING_SEARCHES)),
+        }
+    }
+
+    #[gpui_kit::test]
+    async fn history_clear_removes_every_copy_after_reopen(cx: &mut gpui_kit::TestAppContext) {
+        let folder = tempfile::tempdir().unwrap();
+        let recents_path = folder.path().join("recents.json");
+        let profile = frame_profile::ProfileStore::open(folder.path()).unwrap();
+        let url = "https://example.test/tides";
+        profile.visit(url, "Tides").unwrap();
+        profile.bookmark(url, "Kept bookmark").unwrap();
+        let mut store = durable_browser_session(folder.path(), SESSION_ID).unwrap();
+        let ranking = store.adopt_rank_profile(&frame_profile()).unwrap();
+        let service = test_service(store);
+        service
+            .capture(VisitedPage {
+                url: Url::parse(url).unwrap(),
+                html: TIDES.into(),
+            })
+            .unwrap();
+        assert!(!service.search("moon tides", false).unwrap().hits.is_empty());
+        assert!(folder.path().join("search-generations").exists());
+        let old_epoch = service.generation.load(Ordering::SeqCst);
+        let clear = cx.update(|cx| {
+            crate::recents::init(Some(recents_path.clone()), cx);
+            crate::recents::record_page(&Url::parse(url).unwrap(), "Tides", cx);
+            crate::recents::record_search("moon tides", false, cx);
+            cx.set_global(service.clone());
+            crate::profile_ui::clear_browsing_history(profile.clone(), cx)
+        });
+        clear.await.unwrap();
+        // A capture queued before clear cannot resurrect a page afterwards.
+        service
+            .capture_at(
+                VisitedPage {
+                    url: Url::parse(url).unwrap(),
+                    html: TIDES.into(),
+                },
+                old_epoch,
+            )
+            .unwrap();
+        assert!(service.search_at("moon tides", false, old_epoch).is_err());
+        assert!(service.search("moon tides", false).unwrap().hits.is_empty());
+        cx.update(|cx| {
+            crate::recents::init(Some(recents_path), cx);
+            assert!(crate::recents::latest(8, cx).is_empty());
+            // Release the global store so its durable lock can be reopened.
+            cx.set_global(test_service(memory_browser_session(SESSION_ID)));
+        });
+        drop(service);
+        let mut reopened = durable_browser_session(folder.path(), SESSION_ID).unwrap();
+        assert_eq!(
+            reopened.adopt_rank_profile(&frame_profile()).unwrap(),
+            ranking
+        );
+        assert!(
+            test_service(reopened)
+                .search("moon tides", false)
+                .unwrap()
+                .hits
+                .is_empty()
+        );
+        assert!(profile.suggestions("tides", false, 8).unwrap().is_empty());
+        assert_eq!(profile.suggestions("tides", true, 8).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn history_clear_cancels_an_in_flight_search_and_queued_campaign() {
+        let (entered, calls) = mpsc::channel();
+        let (release, gate) = tokio::sync::watch::channel(false);
+        let mut service = test_service(memory_browser_session(SESSION_ID));
+        service.store.lock().unwrap().set_search_opts(SearchOpts {
+            provider_timeout_ms: 30_000,
+            ..Default::default()
+        });
+        service.providers = vec![Arc::new(GatedProvider {
+            entered,
+            release: gate,
+        }) as Arc<dyn SearchProvider>]
+        .into();
+        let search = {
+            let service = service.clone();
+            std::thread::spawn(move || service.search("ocean tides", false))
+        };
+        let started = calls
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .is_ok();
+        let cleared = service.clear_history();
+        release.send_replace(true);
+        assert!(search.join().unwrap().is_err());
+        assert!(started);
+        cleared.unwrap();
+        service.providers = Arc::from(Vec::new());
+        let session = {
+            let mut store = service.store.lock().unwrap();
+            let pending = store
+                .prepare_programmable_search("tides", Default::default())
+                .unwrap();
+            let completed = SEARCH_RUNTIME
+                .as_ref()
+                .unwrap()
+                .block_on(pending.execute(&[]))
+                .unwrap();
+            store.finish_programmable_search(completed).unwrap()
+        };
+        let old_epoch = service.generation.load(Ordering::SeqCst);
+        service.clear_history().unwrap();
+        assert_eq!(
+            run_campaign(
+                &service.store,
+                &service.generation,
+                old_epoch,
+                &session,
+                SEARCH_RUNTIME.as_ref().unwrap(),
+                &LiveFetchOptions::default()
+            )
+            .unwrap(),
+            0
+        );
+        assert!(service.search("tides", false).unwrap().hits.is_empty());
+    }
+
+    #[test]
+    fn history_clear_reports_unavailable_durable_storage() {
+        let mut service = test_service(memory_browser_session(SESSION_ID));
+        service.store_note = Some(Arc::from("durable storage unavailable"));
+        assert!(service.clear_history().is_err());
+    }
+
     #[test]
     fn a_visited_page_is_found_by_local_search() {
         let service = SearchService {
+            generation: Arc::new(AtomicU64::new(0)),
             store: Arc::new(Mutex::new(memory_browser_session(SESSION_ID))),
             providers: Arc::from(Vec::new()),
             store_note: None,

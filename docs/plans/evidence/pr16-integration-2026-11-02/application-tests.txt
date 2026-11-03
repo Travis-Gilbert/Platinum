@@ -1,0 +1,842 @@
+warning: methods `full_builds` and `index_bytes` are never used
+   --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core/src/graph/vector_index.rs:467:19
+    |
+180 | impl VectorIndex {
+    | ---------------- methods in this implementation
+...
+467 |     pub(crate) fn full_builds(&self) -> usize {
+    |                   ^^^^^^^^^^^
+...
+471 |     pub(crate) fn index_bytes(&self) -> Option<Vec<u8>> {
+    |                   ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `object_field` is never used
+   --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core/src/symbolic.rs:314:4
+    |
+314 | fn object_field<'a>(value: &'a Value, key: &str) -> &'a str {
+    |    ^^^^^^^^^^^^
+
+warning: function `hydrate_in_memory_graph_from_payload_index` is never used
+    --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-core/src/versioned_graph.rs:5522:15
+     |
+5522 | pub(crate) fn hydrate_in_memory_graph_from_payload_index(
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `rustyred-thg-core` (lib) generated 3 warnings
+warning: fields `labels`, `feature_map`, `emission_weights`, and `transition_weights` are never read
+  --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-nlp/src/model_registry.rs:11:9
+   |
+10 | pub(crate) struct ValidatedNerModel {
+   |                   ----------------- fields in this struct
+11 |     pub labels: Vec<String>,
+   |         ^^^^^^
+12 |     pub feature_map: HashMap<String, usize>,
+   |         ^^^^^^^^^^^
+13 |     pub emission_weights: Vec<f32>,
+   |         ^^^^^^^^^^^^^^^^
+14 |     pub transition_weights: Vec<f32>,
+   |         ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `ValidatedNerModel` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `validate_ner_model` is never used
+   --> deps/theorem-search/rustyredcore_THG/crates/rustyred-thg-nlp/src/model_registry.rs:274:15
+    |
+274 | pub(crate) fn validate_ner_model(bytes: &[u8]) -> Result<ValidatedNerModel, String> {
+    |               ^^^^^^^^^^^^^^^^^^
+
+warning: `rustyred-thg-nlp` (lib) generated 2 warnings
+warning: unused import: `GlobalScope`
+  --> deps/servo-consolidated/components/script/dom/document/document_event_handler.rs:71:52
+   |
+71 |     CompositionEvent, Element, Event, EventTarget, GlobalScope, HTMLAnchorElement, HTMLElement,
+   |                                                    ^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods`
+  --> deps/servo-consolidated/components/script/dom/document/documentorshadowroot.rs:17:5
+   |
+17 | use script_bindings::codegen::GenericBindings::WindowBinding::WindowMethods;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused doc comment
+   --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlareaelement.rs:378:5
+    |
+378 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-coords>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+    = note: `#[warn(unused_doc_comments)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused doc comment
+   --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlareaelement.rs:382:5
+    |
+382 |     /// <https://html.spec.whatwg.org/multipage/#dom-area-shape>
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ rustdoc does not generate documentation for macro invocations
+    |
+    = help: to document an item produced by a macro, the macro must produce the documentation as part of its expansion
+
+warning: unused import: `script_bindings::error::Fallible`
+  --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlvideoelement.rs:29:5
+   |
+29 | use script_bindings::error::Fallible;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UpgradeTransactionClearError`, `UpgradeTransactionClear`, and `classify_upgrade_transaction_clear`
+   --> deps/servo-consolidated/components/script/dom/indexeddb/idbdatabase.rs:530:9
+    |
+530 |         UpgradeTransactionClear, UpgradeTransactionClearError, classify_upgrade_transaction_clear,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `self::modelcontext::*`
+   --> deps/servo-consolidated/components/script/dom/mod.rs:291:16
+    |
+291 | pub(crate) use self::modelcontext::*;
+    |                ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Theme`
+  --> deps/servo-consolidated/components/script/event_loop/script_thread.rs:49:80
+   |
+49 |     JavaScriptEvaluationError, JavaScriptEvaluationId, MediaSessionActionType, Theme,
+   |                                                                                ^^^^^
+
+warning: unused variable: `cx`
+    --> deps/servo-consolidated/components/script/dom/document/document.rs:2523:41
+     |
+2523 |     fn queue_document_completion(&self, cx: &mut JSContext) {
+     |                                         ^^ help: if this is intentional, prefix it with an underscore: `_cx`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `gamepad_task_source` is never used
+   --> deps/servo-consolidated/components/script/tasks/task_manager.rs:145:34
+    |
+ 85 | impl TaskManager {
+    | ---------------- method in this implementation
+...
+145 |     task_source_functions!(self, gamepad_task_source, Gamepad);
+    |                                  ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+    = note: this warning originates in the macro `task_source_functions` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: method `advance_specific` is never used
+  --> deps/servo-consolidated/components/script/dom/animations/animationtimeline.rs:42:19
+   |
+26 | impl AnimationTimeline {
+   | ---------------------- method in this implementation
+...
+42 |     pub(crate) fn advance_specific(&self, by: Duration) {
+   |                   ^^^^^^^^^^^^^^^^
+
+warning: method `advance_specific` is never used
+  --> deps/servo-consolidated/components/script/dom/animations/documenttimeline.rs:80:19
+   |
+34 | impl DocumentTimeline {
+   | --------------------- method in this implementation
+...
+80 |     pub(crate) fn advance_specific(&self, by: Duration) {
+   |                   ^^^^^^^^^^^^^^^^
+
+warning: method `set` is never used
+  --> deps/servo-consolidated/components/script/dom/bindings/weakref.rs:33:19
+   |
+24 | impl<T: WeakReferenceable> MutableWeakRef<T> {
+   | -------------------------------------------- method in this implementation
+...
+33 |     pub(crate) fn set(&self, value: Option<&T>) {
+   |                   ^^^
+
+warning: method `get_snapshot` is never used
+   --> deps/servo-consolidated/components/script/dom/canvas/imagedata.rs:192:19
+    |
+ 48 | impl ImageData {
+    | -------------- method in this implementation
+...
+192 |     pub(crate) fn get_snapshot(&self, no_gc: &NoGC) -> Snapshot {
+    |                   ^^^^^^^^^^^^
+
+warning: method `advance_animation_timeline_for_testing` is never used
+    --> deps/servo-consolidated/components/script/dom/document/document.rs:5156:19
+     |
+4052 | impl Document {
+     | ------------- method in this implementation
+...
+5156 |     pub(crate) fn advance_animation_timeline_for_testing(&self, delta: TimeDuration) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `get_or_init_webgpu_context` and `is_valid` are never used
+   --> deps/servo-consolidated/components/script/dom/html/embedded_content/htmlcanvaselement.rs:346:8
+    |
+190 | impl HTMLCanvasElement {
+    | ---------------------- methods in this implementation
+...
+346 |     fn get_or_init_webgpu_context(&self) -> Option<DomRoot<GPUCanvasContext>> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+398 |     pub(crate) fn is_valid(&self) -> bool {
+    |                   ^^^^^^^^
+
+warning: method `run_iteration` is never used
+   --> deps/servo-consolidated/components/script/dom/indexeddb/idbcursor.rs:316:8
+    |
+ 98 | impl IDBCursor {
+    | -------------- method in this implementation
+...
+316 |     fn run_iteration(
+    |        ^^^^^^^^^^^^^
+
+warning: fields `requested` and `last_cleared` are never read
+  --> deps/servo-consolidated/components/script/dom/indexeddb/idbdatabase.rs:65:9
+   |
+64 |     Missing {
+   |     ------- fields in this variant
+65 |         requested: u64,
+   |         ^^^^^^^^^
+66 |         last_cleared: Option<u64>,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `requested` and `current` are never read
+  --> deps/servo-consolidated/components/script/dom/indexeddb/idbdatabase.rs:69:9
+   |
+68 |     Mismatch {
+   |     -------- fields in this variant
+69 |         requested: u64,
+   |         ^^^^^^^^^
+70 |         current: u64,
+   |         ^^^^^^^
+   |
+   = note: `UpgradeTransactionClearError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: method `advance_animation_clock` is never used
+    --> deps/servo-consolidated/components/script/dom/window/window.rs:2639:19
+     |
+2434 | impl Window {
+     | ----------- method in this implementation
+...
+2639 |     pub(crate) fn advance_animation_clock(&self, no_gc: &NoGC, delta: TimeDuration) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `choose_browsing_context` is never used
+    --> deps/servo-consolidated/components/script/dom/window/windowproxy.rs:1173:19
+     |
+ 168 | impl WindowProxy {
+     | ---------------- method in this implementation
+...
+1173 |     pub(crate) fn choose_browsing_context(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `perform_a_worklet_task` is never used
+   --> deps/servo-consolidated/components/script/dom/worklet/worklet.rs:280:8
+    |
+250 | pub trait WorkletThreadPool: JSTraceable {
+    |           ----------------- method in this trait
+...
+280 |     fn perform_a_worklet_task(&self, worklet_id: WorkletId, worklet_task: WorkletTask);
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated functions `find_window_proxy_by_name` and `handle_tick_all_animations_for_testing` are never used
+    --> deps/servo-consolidated/components/script/event_loop/script_thread.rs:762:19
+     |
+ 532 | impl ScriptThread {
+     | ----------------- associated functions in this implementation
+...
+ 762 |     pub(crate) fn find_window_proxy_by_name(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+3464 |     pub(crate) fn handle_tick_all_animations_for_testing(no_gc: &NoGC, id: PipelineId) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: this lint expectation is unfulfilled
+   --> deps/servo-consolidated/components/script/dom/mod.rs:208:10
+    |
+208 | #[expect(unused)]
+    |          ^^^^^^
+    |
+    = note: `#[warn(unfulfilled_lint_expectations)]` on by default
+
+warning: this lint expectation is unfulfilled
+   --> deps/servo-consolidated/components/script/dom/bindings/mod.rs:179:14
+    |
+179 |     #[expect(non_camel_case_types)]
+    |              ^^^^^^^^^^^^^^^^^^^^
+
+warning: `servo-script` (lib) generated 25 warnings (run `cargo fix --lib -p servo-script` to apply 7 suggestions)
+warning: fields `stack_ptrs` and `count` are never read
+  --> deps/servo-consolidated/components/background_hang_monitor/sampler.rs:27:5
+   |
+25 | pub struct NativeStack {
+   |            ----------- fields in this struct
+26 |     instruction_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+27 |     stack_ptrs: [*mut std::ffi::c_void; MAX_NATIVE_FRAMES],
+   |     ^^^^^^^^^^
+28 |     count: usize,
+   |     ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `process_register` is never used
+  --> deps/servo-consolidated/components/background_hang_monitor/sampler.rs:50:12
+   |
+41 | impl NativeStack {
+   | ---------------- method in this implementation
+...
+50 |     pub fn process_register(
+   |            ^^^^^^^^^^^^^^^^
+
+warning: `servo-background-hang-monitor` (lib) generated 2 warnings
+warning: unused import: `storage_traits::cache_storage::CacheStorageThreadMessage`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:172:5
+    |
+172 | use storage_traits::cache_storage::CacheStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `storage_traits::client_storage::ClientStorageThreadMessage`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:173:5
+    |
+173 | use storage_traits::client_storage::ClientStorageThreadMessage;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `IndexedDBThreadMsg` and `SyncOperation`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:174:33
+    |
+174 | use storage_traits::indexeddb::{IndexedDBThreadMsg, SyncOperation};
+    |                                 ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+warning: unused import: `WebStorageThreadMsg`
+   --> deps/servo-consolidated/components/constellation/constellation.rs:175:41
+    |
+175 | use storage_traits::webstorage_thread::{WebStorageThreadMsg, WebStorageType};
+    |                                         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `super::Process`
+  --> deps/servo-consolidated/components/constellation/process_manager.rs:99:9
+   |
+99 |     use super::Process;
+   |         ^^^^^^^^^^^^^^
+
+warning: associated function `sandboxed` is never used
+  --> deps/servo-consolidated/components/constellation/process_manager.rs:20:19
+   |
+12 | impl Process {
+   | ------------ associated function in this implementation
+...
+20 |     pub(crate) fn sandboxed(pid: u32) -> Self {
+   |                   ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: variant `Sandboxed` is never constructed
+   --> deps/servo-consolidated/components/constellation/process_manager.rs:123:5
+    |
+121 | enum ProcessKind {
+    |      ----------- variant in this enum
+122 |     Unsandboxed(Child),
+123 |     Sandboxed(u32),
+    |     ^^^^^^^^^
+
+warning: `servo-constellation` (lib) generated 7 warnings (run `cargo fix --lib -p servo-constellation` to apply 5 suggestions)
+   Compiling frame v0.1.0 (/Users/travisgilbert/.codex/worktrees/pr16-integration/Platinum)
+   Compiling theorem-browser-substrate v0.0.0 (/Users/travisgilbert/.codex/worktrees/pr16-integration/Platinum/deps/theorem-search/apps/browser-substrate)
+warning: impl trait in impl method captures fewer lifetimes than in trait
+  --> src/favicon.rs:31:92
+   |
+31 |     fn load(root: Url, cx: &mut App) -> impl Future<Output = SharedUri> + Send + 'static + use<> {
+   |                                                                                            ^^^^^
+   |
+   = note: add `#[allow(refining_impl_trait)]` if it is intended for this to be part of the public API of this crate
+   = note: we are soliciting feedback, see issue #121718 <https://github.com/rust-lang/rust/issues/121718> for more information
+   = note: `#[warn(refining_impl_trait_reachable)]` (part of `#[warn(refining_impl_trait)]`) on by default
+help: modify the `use<..>` bound to capture the same lifetimes that the trait does
+   |
+31 |     fn load(root: Url, cx: &mut App) -> impl Future<Output = SharedUri> + Send + 'static + use<'_> {
+   |                                                                                                ++
+
+warning: impl trait in impl method captures fewer lifetimes than in trait
+  --> src/favicon.rs:70:64
+   |
+70 |     ) -> impl Future<Output = Self::Output> + Send + 'static + use<> {
+   |                                                                ^^^^^
+   |
+   = note: add `#[allow(refining_impl_trait)]` if it is intended for this to be part of the public API of this crate
+   = note: we are soliciting feedback, see issue #121718 <https://github.com/rust-lang/rust/issues/121718> for more information
+help: modify the `use<..>` bound to capture the same lifetimes that the trait does
+   |
+70 |     ) -> impl Future<Output = Self::Output> + Send + 'static + use<'_> {
+   |                                                                    ++
+
+warning: method `probe_state` is never used
+   --> src/canvas/mod.rs:130:12
+    |
+ 44 | impl SpatialCanvas {
+    | ------------------ method in this implementation
+...
+130 |     pub fn probe_state(&self) -> serde_json::Value {
+    |            ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `native_picker_visible` is never used
+   --> src/controls.rs:316:19
+    |
+117 | impl Page {
+    | --------- method in this implementation
+...
+316 |     pub(crate) fn native_picker_visible(&self, kind: &str) -> bool {
+    |                   ^^^^^^^^^^^^^^^^^^^^^
+
+warning: variant `Site` is never constructed
+  --> src/delegate.rs:47:5
+   |
+29 | pub enum ServoEvent {
+   |          ---------- variant in this enum
+...
+47 |     Site(SiteInfo),
+   |     ^^^^
+
+warning: method `site` is never used
+   --> src/delegate.rs:109:12
+    |
+ 76 | impl Delegate {
+    | ------------- method in this implementation
+...
+109 |     pub fn site(&self, info: SiteInfo) {
+    |            ^^^^
+
+warning: constant `CANVAS_SELECT` is never used
+  --> src/icons.rs:37:7
+   |
+37 | const CANVAS_SELECT: &[u8] = include_bytes!("../assets/icons/canvas-select.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_PAN` is never used
+  --> src/icons.rs:38:7
+   |
+38 | const CANVAS_PAN: &[u8] = include_bytes!("../assets/icons/canvas-pan.svg");
+   |       ^^^^^^^^^^
+
+warning: constant `CANVAS_LINK` is never used
+  --> src/icons.rs:39:7
+   |
+39 | const CANVAS_LINK: &[u8] = include_bytes!("../assets/icons/canvas-link.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_NOTE` is never used
+  --> src/icons.rs:40:7
+   |
+40 | const CANVAS_NOTE: &[u8] = include_bytes!("../assets/icons/canvas-note.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_INSERT` is never used
+  --> src/icons.rs:41:7
+   |
+41 | const CANVAS_INSERT: &[u8] = include_bytes!("../assets/icons/canvas-insert.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_FIND` is never used
+  --> src/icons.rs:42:7
+   |
+42 | const CANVAS_FIND: &[u8] = include_bytes!("../assets/icons/canvas-find.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_FIT_ALL` is never used
+  --> src/icons.rs:43:7
+   |
+43 | const CANVAS_FIT_ALL: &[u8] = include_bytes!("../assets/icons/canvas-fit-all.svg");
+   |       ^^^^^^^^^^^^^^
+
+warning: constant `CANVAS_EXPAND` is never used
+  --> src/icons.rs:44:7
+   |
+44 | const CANVAS_EXPAND: &[u8] = include_bytes!("../assets/icons/canvas-expand.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_SPLIT` is never used
+  --> src/icons.rs:45:7
+   |
+45 | const CANVAS_SPLIT: &[u8] = include_bytes!("../assets/icons/canvas-split.svg");
+   |       ^^^^^^^^^^^^
+
+warning: constant `CANVAS_GRID` is never used
+  --> src/icons.rs:46:7
+   |
+46 | const CANVAS_GRID: &[u8] = include_bytes!("../assets/icons/canvas-grid.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_PILE` is never used
+  --> src/icons.rs:47:7
+   |
+47 | const CANVAS_PILE: &[u8] = include_bytes!("../assets/icons/canvas-pile.svg");
+   |       ^^^^^^^^^^^
+
+warning: constant `CANVAS_ANNOTATE` is never used
+  --> src/icons.rs:48:7
+   |
+48 | const CANVAS_ANNOTATE: &[u8] = include_bytes!("../assets/icons/canvas-annotate.svg");
+   |       ^^^^^^^^^^^^^^^
+
+warning: constant `CANVAS_RELATED` is never used
+  --> src/icons.rs:49:7
+   |
+49 | const CANVAS_RELATED: &[u8] = include_bytes!("../assets/icons/canvas-related.svg");
+   |       ^^^^^^^^^^^^^^
+
+warning: constant `CANVAS_REMOVE` is never used
+  --> src/icons.rs:50:7
+   |
+50 | const CANVAS_REMOVE: &[u8] = include_bytes!("../assets/icons/canvas-remove.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_LAYERS` is never used
+  --> src/icons.rs:51:7
+   |
+51 | const CANVAS_LAYERS: &[u8] = include_bytes!("../assets/icons/canvas-layers.svg");
+   |       ^^^^^^^^^^^^^
+
+warning: constant `CANVAS_APP` is never used
+  --> src/icons.rs:52:7
+   |
+52 | const CANVAS_APP: &[u8] = include_bytes!("../assets/icons/canvas-app.svg");
+   |       ^^^^^^^^^^
+
+warning: constant `CANVAS_FILE_IMAGE` is never used
+  --> src/icons.rs:53:7
+   |
+53 | const CANVAS_FILE_IMAGE: &[u8] = include_bytes!("../assets/icons/canvas-file-image.svg");
+   |       ^^^^^^^^^^^^^^^^^
+
+warning: function `canvas_select` is never used
+   --> src/icons.rs:129:8
+    |
+129 | pub fn canvas_select() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_pan` is never used
+   --> src/icons.rs:134:8
+    |
+134 | pub fn canvas_pan() -> Icon {
+    |        ^^^^^^^^^^
+
+warning: function `canvas_link` is never used
+   --> src/icons.rs:139:8
+    |
+139 | pub fn canvas_link() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_note` is never used
+   --> src/icons.rs:144:8
+    |
+144 | pub fn canvas_note() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_insert` is never used
+   --> src/icons.rs:149:8
+    |
+149 | pub fn canvas_insert() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_find` is never used
+   --> src/icons.rs:154:8
+    |
+154 | pub fn canvas_find() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_fit_all` is never used
+   --> src/icons.rs:159:8
+    |
+159 | pub fn canvas_fit_all() -> Icon {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `canvas_expand` is never used
+   --> src/icons.rs:164:8
+    |
+164 | pub fn canvas_expand() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_split` is never used
+   --> src/icons.rs:169:8
+    |
+169 | pub fn canvas_split() -> Icon {
+    |        ^^^^^^^^^^^^
+
+warning: function `canvas_grid` is never used
+   --> src/icons.rs:174:8
+    |
+174 | pub fn canvas_grid() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_pile` is never used
+   --> src/icons.rs:179:8
+    |
+179 | pub fn canvas_pile() -> Icon {
+    |        ^^^^^^^^^^^
+
+warning: function `canvas_annotate` is never used
+   --> src/icons.rs:184:8
+    |
+184 | pub fn canvas_annotate() -> Icon {
+    |        ^^^^^^^^^^^^^^^
+
+warning: function `canvas_related` is never used
+   --> src/icons.rs:189:8
+    |
+189 | pub fn canvas_related() -> Icon {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `canvas_remove` is never used
+   --> src/icons.rs:194:8
+    |
+194 | pub fn canvas_remove() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_layers` is never used
+   --> src/icons.rs:199:8
+    |
+199 | pub fn canvas_layers() -> Icon {
+    |        ^^^^^^^^^^^^^
+
+warning: function `canvas_app` is never used
+   --> src/icons.rs:204:8
+    |
+204 | pub fn canvas_app() -> Icon {
+    |        ^^^^^^^^^^
+
+warning: function `canvas_file_image` is never used
+   --> src/icons.rs:209:8
+    |
+209 | pub fn canvas_file_image() -> Icon {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: constant `SITE_PANEL` is never used
+  --> src/page.rs:63:7
+   |
+63 | const SITE_PANEL: &str = include_str!("scripts/site-panel.js");
+   |       ^^^^^^^^^^
+
+warning: methods `site` and `read_site` are never used
+   --> src/page.rs:327:12
+    |
+192 | impl Page {
+    | --------- methods in this implementation
+...
+327 |     pub fn site(&self) -> Option<&SiteInfo> {
+    |            ^^^^
+...
+547 |     pub fn read_site(&self) {
+    |            ^^^^^^^^^
+
+warning: `frame` (bin "frame" test) generated 42 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 38.48s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/main.rs (/Volumes/SSD Samsung/cargo-targets/frame-canvas/debug/deps/frame-a2e6176e2abae3b4)
+
+running 198 tests
+test address::tests::nothing_typed_is_nothing ... ok
+test address::tests::everything_else_searches ... ok
+test address::tests::addresses_open ... ok
+test address::suggestion_tests::exact_address_stays_first_and_visits_are_deduplicated ... ok
+test browser::tests::a_site_is_pinned_once ... ok
+test browser::tests::a_pinned_site_owns_a_tab_outside_the_tree ... ok
+test browser::tests::a_sidebar_row_dropped_on_a_pages_edge_splits_it ... ok
+test browser::tests::ask_in_the_address_bar_switches_it_between_searching_and_asking ... ok
+test browser::tests::a_split_survives_a_restart ... ok
+test browser::tests::a_stream_of_changes_cannot_put_the_save_off ... ok
+test browser::tests::closing_a_branch_closes_the_tabs_under_it ... ok
+test browser::tests::closing_a_branch_wakes_only_the_tab_left ... ok
+test browser::tests::closing_before_the_save_keeps_the_latest_tabs ... ok
+test browser::tests::command_click_recent_search_opens_a_results_tab ... ok
+test browser::tests::closing_the_last_tab_returns_to_the_workspace_at_home ... ok
+test browser::tests::closing_a_tab_moves_the_tabs_under_it_up ... ok
+test browser::tests::a_search_in_the_workspace_shows_results_with_their_own_history ... ok
+test browser::tests::a_tabs_right_click_menu_pins_that_tab ... ok
+test browser::tests::console_panel_opens_and_closes ... ok
+test browser::tests::compact_chrome_comes_back_at_the_top_edge ... ok
+test browser::tests::dragging_a_row_onto_another_nests_it ... ok
+test browser::tests::dragging_a_tab_onto_another_moves_it_there ... ok
+test browser::tests::command_return_searches_in_a_tab_from_workspace ... ok
+test browser::tests::cycling_from_a_folded_branch_goes_on_from_its_row ... ok
+test browser::tests::escape_closes_the_right_click_search ... ok
+test browser::tests::frame_opens_on_the_workspace_and_new_tab_leaves_it ... ok
+test browser::tests::appearance_button_switches_and_the_palette_matches_the_system ... ok
+test browser::tests::kept_site_icons_show_for_pins_and_unloaded_tabs ... ok
+test browser::tests::dropping_a_tab_on_a_pages_edge_puts_the_two_side_by_side ... ok
+test browser::tests::ask_mode_cancels_pending_ordinary_suggestions ... ok
+test browser::tests::history_command_opens_native_profile_library ... ok
+test browser::tests::palette_toggles_and_escape_closes_it ... ok
+test browser::tests::new_tab_invalidates_address_results_even_when_input_keeps_focus ... ok
+test browser::tests::search_results_do_not_keep_the_inspected_page ... ok
+test browser::tests::palette_works_with_the_toolbar_hidden ... ok
+test browser::tests::leaving_address_results_restores_the_active_tab_address ... ok
+test browser::tests::right_click_opens_search_at_the_pointer_ready_to_type ... ok
+test browser::tests::renaming_a_tab_in_a_folded_branch_shows_its_row ... ok
+test browser::tests::places_open_from_the_palette_and_back_returns ... ok
+test browser::tests::tab_shortcuts ... ok
+test browser::tests::tabs_sit_in_capsules_with_new_tab_after_them ... ok
+test browser::tests::the_right_click_menu_leads_with_tools_and_finds_tabs_once_typed ... ok
+test browser::tests::imported_history_appears_when_typing_in_address_bar_and_has_a_keyboard_path ... ok
+test browser::tests::the_sidebars_edge_drags_its_width ... ok
+test browser::tests::the_tray_pins_the_active_tab_and_tabs_dropped_on_it ... ok
+test browser::tests::without_a_saved_active_tab_each_group_keeps_its_tab ... ok
+test browser::tests::the_sidebar_draws_the_tabs_as_a_tree ... ok
+test browser::tests::visual_chrome_updates_do_not_write_the_session ... ok
+test canvas::surface::tests::cap_preserves_css_aspect_and_never_exceeds_window_pixels ... ok
+test canvas::surface::tests::cap_reduces_both_axes_when_only_one_dimension_reaches_the_limit ... ok
+test browser::tests::workspace_backing_tab_is_not_saved_as_an_open_tab ... ok
+test controls::anchor_tests::select_css_anchor_maps_through_tabs_and_canvas_at_page_zoom ... ok
+test canvas::surface::tests::input_and_controls_round_trip_while_raster_scale_lags_camera ... ok
+test delegate::tests::hidden_frame_notifications_do_not_paint_present_or_replace_the_live_frame ... ok
+test delegate::tests::files_are_downloads ... ok
+test delegate::tests::mail_goes_to_the_system ... ok
+test browser::tests::suggestion_switches_to_existing_search_tab_and_plain_enter_searches ... ok
+test delegate::tests::other_schemes_are_refused ... ok
+test delegate::tests::the_web_stays_in_the_browser ... ok
+test downloads::tests::a_missing_extension_comes_from_the_type ... ok
+test downloads::tests::a_taken_name_gets_a_number ... ok
+test downloads::tests::names_are_made_safe ... ok
+test browser::tests::the_tree_and_the_sidebar_survive_a_restart ... ok
+test downloads::tests::a_partial_file_holds_its_name_until_it_is_done ... ok
+test embedder::tests::the_red_planet_query_finds_mars ... ignored, downloads the 314 MB model on first run
+test downloads::tests::otherwise_the_address_names_it ... ok
+test embedder::tests::prompts_follow_the_model_card ... ok
+test engine::notes_protocol_tests::embedder_authority_is_limited_to_direct_top_level_notes_loads ... ok
+test engine::notes_protocol_tests::own_navigation_and_notes_subresources_are_allowed_without_a_referrer ... ok
+test downloads::tests::the_server_names_the_file_first ... ok
+test engine::notes_protocol_tests::web_and_opaque_initiators_cannot_probe_notes ... ok
+test favicon::tests::a_page_names_its_icon_in_its_head ... ok
+test favicon::tests::a_touch_icon_serves_only_where_no_icon_is_named ... ok
+test favicon::tests::a_stalled_server_falls_back_after_the_deadline ... ok
+test favicon::tests::an_icon_for_every_color_scheme_near_32_pixels_wins ... ok
+test favicon::tests::icon_fetch_has_its_own_deadline ... ok
+test favicon::tests::other_links_name_no_icon ... ok
+test favicon::tests::raster_dimensions_are_bounded_before_decode ... ok
+test inspector::tests::a_late_style_does_not_fill_a_different_node ... ok
+test favicon::tests::svg_output_is_bounded_and_nested_images_are_disabled ... ok
+test inspector::tests::clear_empties_the_log ... ok
+test inspector::tests::console_survives_navigation_and_ignores_the_runtime_duplicate ... ok
+test inspector::tests::document_tree_and_children ... ok
+test inspector::tests::evaluate_exception_is_an_error_line ... ok
+test inspector::tests::evaluate_value_is_a_result_line ... ok
+test inspector::tests::navigation_drops_the_tree_and_keeps_the_log ... ok
+test inspector::tests::network_failure_and_response ... ok
+test keys::tests::command_shortcuts_report_the_shifted_letter ... ok
+test inspector::tests::tools_are_added_and_removed ... ok
+test inspector::tests::response_bodies_follow_their_request_ids ... ok
+test keys::tests::letters_use_the_typed_character_and_the_physical_code ... ok
+test keys::tests::modifier_changes_become_key_presses ... ok
+test keys::tests::named_keys_map_to_dom_names ... ok
+test keys::tests::shifted_symbols_keep_their_physical_key ... ok
+test keys::tests::space_is_a_character_with_the_space_code ... ok
+test markup::tests::an_unclosed_tag_still_emphasizes_what_follows ... ok
+test markup::tests::multibyte_text_keeps_its_ranges_on_character_boundaries ... ok
+test markup::tests::escaped_markup_stays_text ... ok
+test markup::tests::neighbouring_emphasis_joins_across_a_space ... ok
+test markup::tests::scripts_styles_and_unknown_elements_leave_no_trace ... ok
+test markup::tests::strong_becomes_emphasis_and_entities_decode ... ok
+test markup::tests::whitespace_and_breaks_collapse_to_single_spaces ... ok
+test page::tests::an_html_document_is_read_as_a_visited_page ... ok
+test browser::tests::home_status_bar_pins_import_to_bottom_left_and_opens_importer ... ok
+test page::tests::other_documents_are_not_read ... ok
+test page::tests::servos_placeholder_for_a_file_is_a_download ... ok
+test browser::tests::workspace_results_keep_the_query_in_the_saved_session ... ok
+test recents::tests::a_delayed_snapshot_cannot_overwrite_a_newer_clear ... ok
+test recents::tests::a_failed_clear_can_be_retried_when_the_visible_list_is_empty ... ok
+test recents::tests::a_page_is_the_same_page_whatever_its_title ... ok
+test favicon::tests::icon_body_rejects_oversized_responses ... ok
+test recents::tests::a_record_from_before_times_still_reads ... ok
+test recents::tests::pages_and_searches_come_newest_first_together ... ok
+test recents::tests::remembering_keeps_only_the_newest ... ok
+test recents::tests::remembering_moves_a_repeat_to_the_front ... ok
+test recents::tests::title_changes_preserve_recency_and_do_not_restore_cleared_pages ... ok
+test recents::tests::the_record_survives_a_round_trip_and_a_missing_file ... ok
+test browser::tests::suggestions_cancel_stale_queries_and_freeze_keyboard_selection ... ok
+test page::tests::large_icons_are_scaled_down_with_clean_edges ... ok
+test profile_ui::tests::queued_filter_changes_do_not_read_during_history_clear ... ok
+test search::tests::answer_note_says_what_to_do ... ok
+test search::tests::dates_are_normalized_or_left_alone ... ok
+test search::tests::degradation_text_names_the_provider ... ok
+test search::tests::degradation_text_uses_the_receipt_error_when_there_is_one ... ok
+test search::tests::frame_profile_weighs_bluesky_down_and_keeps_the_default_otherwise ... ok
+test search::tests::gdelt_is_not_a_default_provider ... ok
+test profile_ui::tests::selecting_a_source_and_importing_keeps_its_data_out_of_the_current_profile ... ok
+test browser::tests::downloading_a_workspace_result_preserves_its_history ... ok
+test search::tests::history_clear_reports_unavailable_durable_storage ... ok
+test search::tests::hit_fields_are_cleaned ... ok
+test search::tests::lane_labels ... ok
+test search::tests::local_lanes_come_first_and_keep_their_order ... ok
+test search::tests::markup_in_titles_and_snippets_becomes_text ... ok
+test scene::tests::a_presented_frame_hands_its_pixels_over_for_a_palette ... ok
+test search::tests::rerank_and_embedding_degradations_read_as_sentences ... ok
+test search::tests::searches_stop_at_four_seconds_or_100_results ... ok
+test search::tests::sentence_adds_a_full_stop_once ... ok
+test search::tests::synthesis_codes_are_kept_out_of_the_footer ... ok
+test search::tests::unopenable_and_repeated_urls_are_dropped ... ok
+test search::tests::weak_web_note_depends_on_keyed_providers ... ok
+test serp::tests::a_result_is_named_by_its_site_and_led_to_by_a_breadcrumb ... ok
+test scene::tests::the_top_color_is_what_most_of_the_top_row_shows ... ok
+test scene::tests::a_presented_frame_is_a_bgra_buffer_bottom_row_first ... ok
+test serp::tests::a_web_result_looks_for_its_sites_icon_at_the_root ... ok
+test serp::tests::answer_sources_are_listed_once ... ok
+test serp::tests::element_keys_come_from_the_url ... ok
+test serp::tests::publication_and_retrieval_are_told_apart ... ok
+test serp::tests::about_this_result_opens_from_its_button_without_opening_the_page ... ok
+test serp::tests::summary_counts_lanes_and_says_when_it_searched ... ok
+test serp::tests::scopes_narrow_the_list_to_local_or_web ... ok
+test session::format::tests::a_layout_settles_on_the_tabs_there_are ... ok
+test serp::tests::search_notices_remain_visible_with_and_without_results ... ok
+test session::format::tests::a_tab_with_a_bad_address_comes_back_as_a_new_tab ... ok
+test serp::tests::the_keyboard_moves_through_results_and_opens_one ... ok
+test session::format::tests::a_tab_without_an_id_is_left_out_and_the_rest_kept ... ok
+test session::format::tests::an_older_files_dock_is_one_group ... ok
+test session::format::tests::hosts_become_safe_file_names ... ok
+test session::format::tests::icons_round_trip_and_reject_short_files ... ok
+test session::format::tests::pins_round_trip ... ok
+test session::format::tests::sessions_round_trip ... ok
+test session::format::tests::untitled_pages_are_called_by_their_host ... ok
+test markup::tests::deeply_nested_markup_uses_bounded_stack_and_keeps_emphasis ... ok
+test session::tests::a_broken_pins_file_is_set_aside_before_it_can_be_written_over ... ok
+test browser::tests::a_file_address_downloads_instead_of_opening ... ok
+test session::tests::a_broken_session_is_set_aside ... ok
+test session::tests::a_file_that_cannot_be_read_is_left_alone ... ok
+test session::tests::a_save_older_than_the_one_written_is_dropped ... ok
+test site::tests::a_frame_that_shows_nothing_has_no_palette ... ok
+test session::tests::a_kept_icon_follows_the_site_and_a_broken_one_is_rewritten ... ok
+test site::tests::a_theme_color_is_three_bytes ... ok
+test site::tests::a_whole_answer_is_read_field_by_field ... ok
+test site::tests::an_answer_that_is_not_an_object_is_refused ... ok
+test site::tests::colors_print_as_hex ... ok
+test site::tests::bytes_are_blue_green_red ... ok
+test session::tests::added_tabs_join_the_saved_session_once ... ok
+test session::tests::the_data_folders_own_files_move_into_the_default_profile ... ok
+test site::tests::malformed_fields_are_left_out_one_at_a_time ... ok
+test site::tests::missing_fields_are_left_out ... ok
+test site::tests::the_padding_of_a_row_is_not_a_color ... ok
+test tabtree::tests::a_tab_cannot_go_inside_its_own_branch ... ok
+test tabtree::tests::an_opener_outside_the_tree_leaves_the_tab_at_the_top ... ok
+test tabtree::tests::closing_a_tab_moves_all_its_children_up ... ok
+test tabtree::tests::closing_a_tab_without_children_removes_it ... ok
+test tabtree::tests::folded_branches_hide_their_rows ... ok
+test tabtree::tests::moving_keeps_the_branch_and_the_opener ... ok
+test tabtree::tests::names_are_trimmed_and_blank_ones_clear ... ok
+test tabtree::tests::removing_a_branch_takes_everything_under_it ... ok
+test tabtree::tests::removing_a_tab_moves_its_children_into_its_place ... ok
+test tabtree::tests::restoring_parent_first_rebuilds_the_tree ... ok
+test tabtree::tests::tabs_hang_under_the_tab_they_were_opened_from ... ok
+test site::tests::flat_blocks_come_back_exactly_with_their_shares ... ok
+test site::tests::many_colors_make_at_most_six_swatches_that_add_up ... ok
+test site::tests::a_bigger_frame_is_sampled_down_and_gives_the_same_answer_again ... ok
+test search::tests::history_clear_cancels_an_in_flight_search_and_queued_campaign ... ok
+test search::tests::a_visited_page_is_found_by_local_search ... ok
+test search::tests::network_searches_overlap_and_do_not_block_page_capture ... ok
+test search::tests::history_clear_removes_every_copy_after_reopen ... ok
+test favicon::tests::deeply_nested_links_do_not_recurse_and_local_files_are_rejected ... ok
+
+test result: ok. 197 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.81s

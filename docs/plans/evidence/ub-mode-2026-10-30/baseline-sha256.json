@@ -1,0 +1,11 @@
+{
+  "crates/profile/src/storage.rs": "3ec4f6b44fba2c8616c670b0ef1c98fa6a3904c25081916f3a29d24d5346084e",
+  "crates/profile/src/legacy.rs": "ad8a89f31a0497f6c1a1f709a6cae224cbc81d764a8becd1430ea004db989d0e",
+  "crates/profile/src/migration.rs": "87a138a0e6d73de9c670b73755f829c1dbfddd4eee8523745225d0ae3e6d02fc",
+  "crates/profile/src/migration/firefox.rs": "96f11abd0ca6f282d0954e1f80c8d6d985e43c42e80048c269d87d2ce04aea79",
+  "crates/profile/src/credentials.rs": "2b094b5824f770a109845d778c07a323f9f3058ebb2115bd5c67056e5805c52c",
+  "src/address.rs": "82cd0092c2f8f117f05fb5075e205f43759b606683d75786ae4b57907d7951b4",
+  "src/browser.rs": "dada0519d3275b3cdab52dd7e40e49b66fcf9d35fe40eb63b58c7541a87e4767",
+  "src/engine.rs": "afa5e30456ab972fa0dccc6754dd6b15a76e1bc2e58650d10a11a8ee5d3d9eb6",
+  "src/session.rs": "b978ac96166a8d4354f77ab735793aa8f4f5eb6386c3c8f488d6efd8d5f8b02f"
+}

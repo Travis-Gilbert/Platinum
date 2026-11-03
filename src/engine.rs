@@ -136,6 +136,10 @@ impl Engine {
         let preferences = Preferences {
             layout_css_has_selector_enabled: true,
             dom_media_source_enabled: true,
+            network_http_disk_cache: profile_dir
+                .join("http-cache.sqlite3")
+                .to_string_lossy()
+                .into_owned(),
             // Inspection stays in-process. A TCP listener is a separate
             // development option and stays off for ordinary browsing.
             cdp_builtin_enabled: true,

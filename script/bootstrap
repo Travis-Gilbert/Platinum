@@ -47,17 +47,24 @@ if [[ "$actual" != "$theorem_rev" ]]; then
   exit 1
 fi
 
-# Companion client/authority changes stay reviewable in Platinum until their
-# upstream revision is published. Never modify a shared or dirty dependency.
-patch="$root/patches/theorem-model-routing.patch"
-if ! git -C "$checkout" apply --reverse --check "$patch" >/dev/null 2>&1; then
-  if [[ -L "$checkout" || -n "$(git -C "$checkout" status --porcelain)" ]]; then
-    echo "Theorem routing patch needs a clean, isolated dependency checkout; preserving $checkout" >&2
+# Companion client/authority and browser-history changes stay reviewable in
+# Platinum until their upstream revision is published. Never modify a shared or
+# dirty dependency: once an earlier patch is in place, its own changes are expected.
+kept=0
+for patch in theorem-model-routing.patch theorem-browser-clear-history.patch; do
+  patch="$root/patches/$patch"
+  if git -C "$checkout" apply --reverse --check "$patch" >/dev/null 2>&1; then
+    kept=1
+    continue
+  fi
+  if [[ -L "$checkout" ]] || { [[ "$kept" == 0 ]] && [[ -n "$(git -C "$checkout" status --porcelain)" ]]; }; then
+    echo "$(basename "$patch") needs a clean, isolated dependency checkout; preserving $checkout" >&2
     exit 1
   fi
   git -C "$checkout" apply --check "$patch"
   git -C "$checkout" apply "$patch"
-fi
+  kept=1
+done
 
 if [[ -n "${FRAME_TARGET_DIR:-}" ]]; then
   mkdir -p "$root/.cargo"

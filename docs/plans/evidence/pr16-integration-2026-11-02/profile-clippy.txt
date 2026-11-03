@@ -1,0 +1,2 @@
+    Checking frame-profile v0.1.0 (/Users/travisgilbert/.codex/worktrees/pr16-integration/Platinum/crates/profile)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.78s

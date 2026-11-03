@@ -125,12 +125,9 @@ fn history_snapshot_includes_committed_wal_and_import_is_idempotent() {
     let hits = store.suggestions("familiar", false, 10).unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0].url, "https://docs.example.test/start");
-    let (visited, visits): (i64, i64) = store
-        .connect()
+    let (visited, visits) = store
+        .history_metadata("https://docs.example.test/start")
         .unwrap()
-        .query_row("SELECT visited,visits FROM history", [], |r| {
-            Ok((r.get(0)?, r.get(1)?))
-        })
         .unwrap();
     assert_eq!((visited, visits), (42, 8));
     assert_eq!(
@@ -179,18 +176,11 @@ fn broken_category_does_not_block_other_categories_and_batch_report_is_durable()
     let report = migration::import(&store, &source(src.path()), categories, &DeniedVault);
     assert!(report.categories[0].error.is_some());
     assert_eq!(report.categories[1].counts.imported, 1);
-    assert_eq!(
-        store
-            .connect()
-            .unwrap()
-            .query_row("SELECT count(*) FROM imports", [], |r| r.get::<_, i64>(0))
-            .unwrap(),
-        2
-    );
+    assert_eq!(store.import_count().unwrap(), 2);
 }
 
 #[test]
-fn password_csv_handles_quotes_unicode_newlines_and_keeps_secrets_out_of_sqlite() {
+fn password_csv_handles_quotes_unicode_newlines_and_keeps_secrets_out_of_rustyred() {
     let (_temp, store) = stores();
     let file = store.root.join("export.csv");
     let vault = TestVault::default();
@@ -211,23 +201,9 @@ fn password_csv_handles_quotes_unicode_newlines_and_keeps_secrets_out_of_sqlite(
     );
     assert!(credentials::password(&vault, "http://accounts.example.test/", &accounts[0]).is_err());
     migration::password_csv(&store, &file, &vault).unwrap();
-    assert_eq!(
-        store
-            .connect()
-            .unwrap()
-            .query_row("SELECT count(*) FROM credentials", [], |r| r
-                .get::<_, i64>(0))
-            .unwrap(),
-        1
-    );
-    // Flush and inspect the destination's pages. The export remains only where
-    // the user chose it; no import copy is written to browser application data.
-    store
-        .connect()
-        .unwrap()
-        .execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")
-        .unwrap();
-    let bytes = std::fs::read(store.directory().join("browser.sqlite3")).unwrap();
+    assert_eq!(store.credential_labels().unwrap().len(), 1);
+    // Commits are durable; the database must contain account labels only.
+    let bytes = std::fs::read(store.root.join("browser.RR")).unwrap();
     assert!(!String::from_utf8_lossy(&bytes).contains("secret,with"));
     assert!(file.exists());
 }
@@ -552,4 +528,50 @@ fn selective_form_import_excludes_payment_and_password_fields() {
     assert!(
         credentials::form_script("http://example.test/", "email", "work@example.test").is_err()
     );
+}
+
+#[test]
+fn chromium_and_firefox_share_form_policy_and_retry_counts() {
+    for format in [
+        migration::SourceFormat::Chromium,
+        migration::SourceFormat::Firefox,
+    ] {
+        let (_temp, store) = stores();
+        let src = TempDir::new().unwrap();
+        let (file, table, field) = match format {
+            migration::SourceFormat::Chromium => ("Web Data", "autofill", "name"),
+            migration::SourceFormat::Firefox => {
+                ("formhistory.sqlite", "moz_formhistory", "fieldname")
+            }
+        };
+        let db = Connection::open(src.path().join(file)).unwrap();
+        db.execute_batch(&format!("CREATE TABLE {table}({field} TEXT,value TEXT);
+            INSERT INTO {table} VALUES('EMAIL','work@example.test'),('city','Detroit'),('password','never-import'),('credit_card','never-import');")).unwrap();
+        let mut source = source(src.path());
+        source.format = format;
+        let selected = Categories {
+            bookmarks: false,
+            history: false,
+            extensions: false,
+            forms: true,
+            ..Default::default()
+        };
+        let report = migration::import(&store, &source, selected, &TestVault::default());
+        assert!(report.categories[0].error.is_none(), "{}", report.summary());
+        assert_eq!(report.categories[0].counts.imported, 2);
+        assert_eq!(report.categories[0].counts.skipped, 2);
+        assert_eq!(
+            store.form_values().unwrap(),
+            vec![
+                ("EMAIL".into(), "work@example.test".into()),
+                ("city".into(), "Detroit".into())
+            ]
+        );
+        let retry = migration::import(&store, &source, selected, &TestVault::default());
+        assert_eq!(retry.categories[0].counts.imported, 0);
+        assert_eq!(retry.categories[0].counts.skipped, 4);
+        assert!(
+            credentials::form_script("https://example.test/", "EMAIL", "work@example.test").is_ok()
+        );
+    }
 }
