@@ -501,6 +501,14 @@ impl SpatialCanvas {
         cx.notify();
     }
 
+    /// Take a card off the board as its context menu's Remove does; on a
+    /// preview card that is the explicit removal from the shared board.
+    #[cfg(feature = "snapshot")]
+    pub fn remove_card(&mut self, local: u64, cx: &mut Context<Self>) {
+        self.context_card = Some(local);
+        self.command(crate::actions::CanvasOperation::Remove, cx);
+    }
+
     /// Where a card is on this board.
     #[cfg(feature = "snapshot")]
     pub fn rect(&self, local: u64) -> Option<[f64; 4]> {

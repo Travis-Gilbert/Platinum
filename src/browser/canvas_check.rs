@@ -6,9 +6,12 @@
 //! the card becomes an object on the shared board; objects placed elsewhere
 //! (an agent's, through `canvas_mutate`) draw as typed preview cards; and a
 //! stale move of this board's card is refused with the newer placement shown
-//! and the conflict on screen. A second run with `FRAME_CANVAS_RESTORE=1` and
-//! the same directory checks that the card keeps its object across a
-//! restart. Each step leaves a native window capture beside `report.json`.
+//! and the conflict on screen; and Remove on a preview card takes its object
+//! off the shared board through one revision-checked delete, leaving this
+//! board's card where the newer placement put it. A second run with
+//! `FRAME_CANVAS_RESTORE=1` and the same directory checks that the card keeps
+//! its object across a restart. Each step leaves a native window capture
+//! beside `report.json`.
 use super::workspace_check::{capture, until_within};
 use super::*;
 use crate::canvas::authority::{Answer, Client};
@@ -268,6 +271,63 @@ async fn scenario(
         cx,
     )
     .await;
+
+    // Remove on a preview card, as its context menu does: the object placed
+    // elsewhere leaves the shared board, and nothing else does.
+    let (preview, preview_rect) = board
+        .read_with(cx, |b, _| b.previews().last().map(|p| (p.local, p.rect)))
+        .ok_or_else(|| anyhow::anyhow!("no preview card to remove"))?;
+    let listed = shared(&other).await?;
+    let removed = listed
+        .objects
+        .iter()
+        .find(|o| o.id != card.id && [o.rect.x, o.rect.y, o.rect.w, o.rect.h] == preview_rect)
+        .ok_or_else(|| anyhow::anyhow!("the preview card names no object on the shared board"))?
+        .clone();
+    report.insert("removed_object".into(), serde_json::to_value(&removed)?);
+    handle.update(cx, |_, _, cx| {
+        board.update(cx, |b, cx| b.remove_card(preview, cx))
+    })?;
+    let mut remaining = None;
+    for _ in 0..150 {
+        let now = shared(&other).await?;
+        if now.objects.iter().all(|o| o.id != removed.id) {
+            remaining = Some(now);
+            break;
+        }
+        cx.background_executor()
+            .timer(Duration::from_millis(100))
+            .await;
+    }
+    let remaining = remaining
+        .ok_or_else(|| anyhow::anyhow!("Remove did not take the object off the shared board"))?;
+    report.insert(
+        "objects_after_remove".into(),
+        remaining.objects.len().into(),
+    );
+    anyhow::ensure!(
+        remaining.objects.len() + 1 == listed.objects.len(),
+        "Remove took more than its one object off the shared board"
+    );
+    anyhow::ensure!(
+        remaining
+            .objects
+            .iter()
+            .find(|o| o.id == card.id)
+            .map(|o| o.rect)
+            == Some(newer),
+        "Remove moved or took this board's card"
+    );
+    anyhow::ensure!(
+        until_within(Duration::from_secs(15), cx, |cx| board.read_with(
+            cx,
+            |b, _| b.previews().iter().all(|p| p.local != preview)
+        ))
+        .await,
+        "the removed object still draws as a preview card"
+    );
+    handle.update(cx, |_, _, cx| board.update(cx, |b, cx| b.overview(cx)))?;
+    capture(handle, Appearance::Light, &output.join("removed.png"), cx).await;
     handle.update(cx, |_, _, cx| browser.update(cx, |b, cx| b.save(cx)))?;
     Ok(())
 }
