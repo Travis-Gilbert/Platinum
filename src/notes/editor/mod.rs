@@ -319,15 +319,7 @@ impl NoteEditor {
         match event {
             EditorEvent::Edited(edit) if edit.origin == EditOrigin::Local => {
                 self.error = None;
-                self.autosave = Some(cx.spawn(async move |this, cx| {
-                    cx.background_executor().timer(AUTOSAVE).await;
-                    this.update(cx, |this, cx| {
-                        if !matches!(this.status(cx), Status::Saved) {
-                            this.save(cx);
-                        }
-                    })
-                    .ok();
-                }));
+                self.schedule_autosave(cx);
                 self.reveal_caret(window);
                 self.pump(cx);
                 cx.notify();
@@ -345,6 +337,19 @@ impl NoteEditor {
             }
             _ => {}
         }
+    }
+
+    /// Saves `AUTOSAVE` from now, unless the wait is started over first.
+    fn schedule_autosave(&mut self, cx: &mut Context<Self>) {
+        self.autosave = Some(cx.spawn(async move |this, cx| {
+            cx.background_executor().timer(AUTOSAVE).await;
+            this.update(cx, |this, cx| {
+                if !matches!(this.status(cx), Status::Saved) {
+                    this.save(cx);
+                }
+            })
+            .ok();
+        }));
     }
 
     /// Scrolls so the caret stays clear of the tab's edges, once the editor
@@ -432,6 +437,11 @@ impl NoteEditor {
                 let base = self.base_of(&job, reply.refused.is_some());
                 if matches!(job, Job::Save) {
                     self.conflict = reply.conflict;
+                }
+                // An undo or redo is the vault's own edit, which the buffer
+                // takes as a remote one: it is saved as typing would be.
+                if matches!(job, Job::History(_)) && reply.refused.is_none() {
+                    self.schedule_autosave(cx);
                 }
                 let moved = self.absorb(base, reply.head, cx);
                 if let (Job::Push { .. }, Some(reason), false) = (&job, reply.refused, moved) {

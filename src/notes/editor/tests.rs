@@ -506,6 +506,32 @@ fn autosave_writes_two_seconds_after_the_last_edit(cx: &mut TestAppContext) {
     assert_eq!(tab.status(), Status::Saved);
 }
 
+#[gpui_kit::test]
+fn autosave_writes_two_seconds_after_an_undo(cx: &mut TestAppContext) {
+    let vault = Vault::new("first\n");
+    let mut tab = Tab::open(cx, &vault, SCRATCH);
+    tab.type_at_end("a");
+    tab.settled();
+    tab.cx.executor().advance_clock(Duration::from_millis(2100));
+    tab.until("the typing's autosave", |_| {
+        vault.text(SCRATCH) == "first\na"
+    });
+    tab.settled();
+
+    tab.keys("cmd-z");
+    tab.until("the undo", |tab| tab.text() == "first\n");
+    tab.settled();
+    assert_eq!(tab.status(), Status::Unsaved);
+    tab.cx.executor().advance_clock(Duration::from_millis(1900));
+    tab.settled();
+    assert_eq!(vault.text(SCRATCH), "first\na", "not yet");
+
+    tab.cx.executor().advance_clock(Duration::from_millis(200));
+    tab.settled();
+    assert_eq!(vault.text(SCRATCH), "first\n", "the undo is saved");
+    assert_eq!(tab.status(), Status::Saved);
+}
+
 /// Another writer moves the vault's head while the tab holds text it has not
 /// sent. The tab's text is merged onto the new head, not put over it.
 #[gpui_kit::test]
