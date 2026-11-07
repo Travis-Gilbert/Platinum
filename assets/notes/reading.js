@@ -431,8 +431,8 @@
 
   // What a click follows: a link in the text (`a`) or a link in the
   // properties, which the renderer draws as a `div` carrying `data-href`.
-  const LINK = "a, .metadata-link-inner[data-href]";
-  const INTERNAL_LINK = "a.internal-link, .metadata-link-inner.internal-link";
+  const LINK = "a, .metadata-link-inner[data-href], .multi-select-pill-content[data-href]";
+  const INTERNAL_LINK = "a.internal-link, .metadata-link-inner.internal-link, .multi-select-pill-content.internal-link";
 
   // The note an element of the page belongs to: an embedded note, a preview's note, or the page's.
   const noteOf = (element) => element.closest("[data-frame-note]")?.dataset.frameNote ?? config.path;

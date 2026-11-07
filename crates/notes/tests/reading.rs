@@ -363,3 +363,27 @@ fn a_chain_of_embeds_under_the_limits_still_stops_at_the_depth() {
     assert_eq!(html.matches("data-frame-note=").count(), 5);
     assert_eq!(html.matches("file-embed mod-generic").count(), 1);
 }
+
+#[test]
+fn a_link_in_a_list_property_says_how_it_was_written() {
+    let f = fixture(&[
+        (
+            "Page.md",
+            "---\nrelated:\n  - \"[[Other]]\"\n  - \"[written](Other.md)\"\n---\n",
+        ),
+        ("Other.md", ""),
+    ]);
+    let html = f.html("Page.md");
+    assert!(
+        html.contains(
+            r#"<div class="multi-select-pill-content internal-link" data-href="Other" draggable="true">"#
+        ),
+        "{html}"
+    );
+    assert!(
+        html.contains(
+            r#"<div class="multi-select-pill-content internal-link" data-href="Other.md" draggable="true" data-frame-syntax="markdown">"#
+        ),
+        "{html}"
+    );
+}

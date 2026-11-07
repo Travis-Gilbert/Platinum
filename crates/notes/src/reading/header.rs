@@ -313,9 +313,10 @@ fn pills(doc: &Doc, ty: PropertyType, value: &Value) -> String {
                 "",
                 "",
                 format!(
-                    r#"<div class="multi-select-pill-content internal-link{}" data-href="{}" draggable="true">{}</div>"#,
+                    r#"<div class="multi-select-pill-content internal-link{}" data-href="{}" draggable="true"{}>{}</div>"#,
                     unresolved(doc, &link),
                     html::attr(&href(&link)),
+                    html::syntax(link.syntax),
                     html::text(&label(&link)),
                 ),
             )
