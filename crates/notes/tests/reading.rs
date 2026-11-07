@@ -313,3 +313,53 @@ fn a_block_id_marks_the_element_a_block_link_scrolls_to() {
         "an embed's ids are not the page's: {html}"
     );
 }
+
+/// What `path` renders to, and how many notes the render read for embeds.
+fn render_counting(f: &Fixture, path: &str) -> (String, usize) {
+    let source = f.read(path).unwrap();
+    let reads = std::cell::Cell::new(0);
+    let view = render_note(
+        f.vault.index(),
+        f.vault.settings(),
+        path,
+        &source,
+        &|other| {
+            reads.set(reads.get() + 1);
+            f.read(other)
+        },
+    );
+    (view.html, reads.get())
+}
+
+#[test]
+fn a_note_embedding_itself_many_times_reads_a_bounded_number_of_notes() {
+    let f = fixture(&[("Self.md", &"![[Self]]\n\n".repeat(10))]);
+    let (html, reads) = render_counting(&f, "Self.md");
+    assert_eq!(reads, 1024);
+    assert!(
+        html.contains("file-embed mod-generic"),
+        "the rest show as files"
+    );
+}
+
+#[test]
+fn a_render_reads_a_bounded_amount_of_embedded_text() {
+    let big = format!("{}{}", "![[Big]]\n\n".repeat(10), "word ".repeat(1 << 20));
+    let f = fixture(&[("Big.md", &big)]);
+    let (html, reads) = render_counting(&f, "Big.md");
+    // Each read is over 5 MiB, so the fourth passes the 16 MiB limit.
+    assert_eq!(reads, 4);
+    assert!(
+        html.contains("file-embed mod-generic"),
+        "the rest show as files"
+    );
+}
+
+#[test]
+fn a_chain_of_embeds_under_the_limits_still_stops_at_the_depth() {
+    let f = fixture(&[("A.md", "![[B]]\n"), ("B.md", "![[A]]\n")]);
+    let (html, reads) = render_counting(&f, "A.md");
+    assert_eq!(reads, 5);
+    assert_eq!(html.matches("data-frame-note=").count(), 5);
+    assert_eq!(html.matches("file-embed mod-generic").count(), 1);
+}

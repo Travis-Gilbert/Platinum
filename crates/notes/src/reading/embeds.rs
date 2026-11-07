@@ -106,7 +106,7 @@ pub(super) fn embed(doc: &Doc, link: &Link, raw_alias: &str) -> String {
         FileKind::Base => format!(
             r#"<span alt="{alt}" src="{src}" class="internal-embed bases-embed interactive-child" data-frame-file="{file}"></span>"#
         ),
-        FileKind::Note if doc.depth < MAX_EMBED_DEPTH => {
+        FileKind::Note if doc.depth < MAX_EMBED_DEPTH && doc.cx.may_embed() => {
             match excerpt(doc.cx, &path, link.fragment.as_ref()) {
                 Some(ex) => note_embed(doc, &ex, &alt, &src),
                 None => format!(
@@ -115,7 +115,8 @@ pub(super) fn embed(doc: &Doc, link: &Link, raw_alias: &str) -> String {
                 ),
             }
         }
-        // A note too deep to embed, and files Obsidian has no viewer for, show as a file.
+        // A note too deep to embed or past what a render may read, and files Obsidian has no
+        // viewer for, show as a file.
         FileKind::Note | FileKind::Other => format!(
             r#"<span alt="{alt}" src="{src}" class="internal-embed file-embed mod-generic"><div class="file-embed-title"><span class="file-embed-icon">{}</span> {}</div></span>"#,
             icon("lucide-file"),
@@ -166,7 +167,7 @@ enum Kind {
 }
 
 fn excerpt(cx: &Cx, path: &str, fragment: Option<&Fragment>) -> Option<Excerpt> {
-    let full = (cx.read)(path)?;
+    let full = cx.read_note(path)?;
     let note = parse_note(&full);
     let cssclasses = note
         .frontmatter
