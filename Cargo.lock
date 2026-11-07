@@ -325,6 +325,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ammonia"
+version = "4.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f45dfa685e1ec33b1bf1a3b93b8047cbdbef41b6040deebbe6bea7720a45574"
+dependencies = [
+ "cssparser 0.38.0",
+ "html5ever 0.40.1",
+ "maplit",
+ "url",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2932,11 +2944,11 @@ checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
 name = "diffy"
-version = "0.4.2"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b545b8c50194bdd008283985ab0b31dba153cfd5b3066a92770634fbc0d7d291"
+checksum = "3e3dc2f773b6aaa63b1a7684b8589f670a8a0146a510b74d23a401c882364b49"
 dependencies = [
- "nu-ansi-term",
+ "hashbrown 0.17.1",
 ]
 
 [[package]]
@@ -4195,6 +4207,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-compat",
+ "blake3",
  "chrono",
  "clap",
  "content_disposition",
@@ -4208,6 +4221,7 @@ dependencies = [
  "frame-notes",
  "frame-profile",
  "futures",
+ "getrandom 0.3.4",
  "gleam",
  "glow",
  "gpui-kit",
@@ -4225,6 +4239,7 @@ dependencies = [
  "log",
  "markup5ever_rcdom",
  "mime_guess",
+ "notify",
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
  "objc2-core-foundation",
@@ -4265,11 +4280,13 @@ dependencies = [
 name = "frame-notes"
 version = "0.1.0"
 dependencies = [
+ "ammonia",
  "anyhow",
  "comrak",
  "granit-parser",
  "indexmap 2.14.2",
  "libc",
+ "notes-fixtures",
  "pathdiff",
  "percent-encoding",
  "pretty_assertions",
@@ -4285,6 +4302,7 @@ dependencies = [
  "theorem-ide-runtime",
  "typed-path",
  "ulid",
+ "unicode-bidi",
  "walkdir",
 ]
 
@@ -8130,6 +8148,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
+
+[[package]]
 name = "markdown"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8922,6 +8946,7 @@ dependencies = [
  "rand_chacha 0.9.0",
  "regex",
  "rustix 1.1.5",
+ "scraper",
  "serde",
  "serde_json",
  "serde_yaml_ng",
@@ -19282,8 +19307,11 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 name = "zorite-editor"
 version = "0.11.2"
 dependencies = [
+ "frame-notes",
  "gpui-bidi",
  "gpui-pre",
+ "str_indices",
+ "tempfile",
  "unicode-segmentation",
  "zorite-markdown",
 ]
