@@ -555,17 +555,20 @@ impl NoteEditor {
     /// The tab is closing: leave the vault with everything typed, saved.
     /// Fire and forget: the request is queued before this returns, a full
     /// queue does not refuse it, and the vault's thread works through its
-    /// queue in order.
+    /// queue in order. Text typed before the note opened has no head yet: it
+    /// grew from nothing and is merged onto the vault's text, as the load
+    /// would have done.
     fn flush(&mut self, cx: &mut App) {
-        let Some(head) = &self.head else {
-            return;
-        };
         let editor = self.editor.read(cx);
-        if head.saved && editor.generation() == self.synced_generation {
+        if editor.generation() == self.synced_generation
+            && self.head.as_ref().is_none_or(|head| head.saved)
+        {
             return;
         }
         let (base, ours, pushing) = (
-            head.text.clone(),
+            self.head
+                .as_ref()
+                .map_or_else(|| Arc::from(""), |head| head.text.clone()),
             editor.text().to_owned(),
             self.pushing.clone(),
         );

@@ -147,6 +147,13 @@ struct Tab {
 impl Tab {
     /// Opens `note` and waits for the vault to answer.
     fn open(cx: &mut TestAppContext, vault: &Vault, note: &str) -> Self {
+        let mut tab = Self::opening(cx, vault, note);
+        tab.until("the note to open", |tab| tab.status() != Status::Opening);
+        tab
+    }
+
+    /// Opens `note`, without waiting for the vault to answer.
+    fn opening(cx: &mut TestAppContext, vault: &Vault, note: &str) -> Self {
         // The vault answers from its own thread, which the deterministic
         // scheduler reports as non-determinism unless told to expect it.
         cx.executor().allow_parking();
@@ -170,7 +177,6 @@ impl Tab {
             window.activate_window();
             window.draw(cx).clear(cx);
         });
-        tab.until("the note to open", |tab| tab.status() != Status::Opening);
         tab
     }
 
@@ -382,6 +388,36 @@ fn a_tab_closed_while_the_vaults_queue_is_full_saves_everything_typed(cx: &mut T
     tab.close();
     drop(release);
     vault.file_becomes(SCRATCH, "first\ntyped into a full queue");
+}
+
+/// The tab closes before the vault has answered its load. What was typed has
+/// no head to be saved against, and is merged onto the vault's text regardless.
+#[gpui_kit::test]
+fn a_tab_closed_before_its_note_opened_saves_what_was_typed(cx: &mut TestAppContext) {
+    let vault = Vault::new("");
+    let release = vault.hold();
+    let mut tab = Tab::opening(cx, &vault, SCRATCH);
+    tab.type_text("typed while opening");
+    tab.cx.run_until_parked();
+    assert_eq!(tab.status(), Status::Opening);
+    tab.close();
+    drop(release);
+    vault.file_becomes(SCRATCH, "typed while opening");
+}
+
+/// The same, with text in the note: both are kept, as an open tab keeps them.
+#[gpui_kit::test]
+fn a_tab_closed_before_its_note_opened_keeps_the_notes_text(cx: &mut TestAppContext) {
+    let vault = Vault::new("first\n");
+    let release = vault.hold();
+    let mut tab = Tab::opening(cx, &vault, SCRATCH);
+    tab.type_text("typed while opening");
+    tab.cx.run_until_parked();
+    tab.close();
+    drop(release);
+    let marked = super::rebase::merge3("", "typed while opening", "first\n").unwrap_err();
+    assert!(marked.contains("first") && marked.contains("typed while opening"));
+    vault.file_becomes(SCRATCH, &marked);
 }
 
 /// The vault is still busy when the app quits, for longer than a quit waits
