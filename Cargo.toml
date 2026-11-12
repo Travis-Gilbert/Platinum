@@ -13,6 +13,7 @@ members = [
     "crates/profile",
     "crates/notes",
     "crates/notes-fixtures",
+    "crates/theo",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",

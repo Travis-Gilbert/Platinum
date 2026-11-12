@@ -15749,6 +15749,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "theo"
+version = "0.1.0"
+
+[[package]]
 name = "theorem-bayes"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,6 @@
+[package]
+name = "theo"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Theo's face without a renderer: programs, channels, matter and reactions, ported from web Theo and checked against it."
