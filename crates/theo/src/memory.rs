@@ -68,8 +68,16 @@ const STREAK_GAP: f64 = 2_600.0;
 const DAY: f64 = 86_400_000.0;
 /// How many events are remembered in order.
 pub const RECENT: usize = 24;
-/// How many kinds are counted at once. The web counts every kind it is ever told; a host that names kinds freely would grow that without end, so the one longest unseen makes room.
+/// How many kinds are counted at once, in each of the three places a kind is counted: lately, today, and
+/// what is usual. The web counts every kind it is ever told; a host that names kinds freely would grow
+/// that without end, in memory and on the shelf. So:
+/// - lately: the kind longest unseen makes room;
+/// - today: kinds past the bound are counted together under `OVERFLOW`, so no event goes uncounted;
+/// - usual: the most usual are kept, and the rest read as new;
+/// - a shelf that holds more, however it came to, is brought inside the same bounds when read.
 pub const KINDS: usize = 512;
+/// Where today's count goes for kinds past the bound. It is no kind a host names, so it is habit to nothing.
+pub const OVERFLOW: &str = "*";
 const SHELF_KEY: &str = "theorem-ui:theo:days";
 
 /// What each kind of event does to the mood: arousal, valence, focus. The first prefix that matches wins.
@@ -124,6 +132,47 @@ fn counts(value: Option<&Json>) -> Option<Ordered<f64>> {
     Some(out)
 }
 
+/// Today's counts inside the bound: the first `KINDS` kinds as they are, the rest together.
+fn bounded_today(counts: Ordered<f64>) -> Ordered<f64> {
+    if counts.len() <= KINDS {
+        return counts;
+    }
+    let mut out = Ordered::new();
+    let mut over = 0.0;
+    for (kind, count) in counts.iter() {
+        if kind != OVERFLOW && out.len() < KINDS {
+            out.set(kind, *count);
+        } else {
+            over += count;
+        }
+    }
+    out.set(OVERFLOW, over);
+    out
+}
+
+/// What is usual inside the bound: the `KINDS` most usual, in the order they were in.
+fn bounded_usual(counts: Ordered<f64>) -> Ordered<f64> {
+    if counts.len() <= KINDS {
+        return counts;
+    }
+    let mut values: Vec<f64> = counts.values().copied().collect();
+    values.sort_by(|a, b| b.total_cmp(a));
+    let least = values[KINDS - 1];
+    let mut out = Ordered::new();
+    // Those above the least kept go in whatever; those equal to it, first come.
+    let above = values.iter().filter(|value| **value > least).count();
+    let mut equal = KINDS - above;
+    for (kind, count) in counts.iter() {
+        if *count > least {
+            out.set(kind, *count);
+        } else if *count == least && equal > 0 {
+            equal -= 1;
+            out.set(kind, *count);
+        }
+    }
+    out
+}
+
 fn written(counts: &Ordered<f64>) -> Json {
     Json::Obj(
         counts
@@ -157,7 +206,11 @@ impl Memory {
                 counts(saved.get("today")),
                 counts(saved.get("usual")),
             ) {
-                days = Days { day, today, usual };
+                days = Days {
+                    day,
+                    today: bounded_today(today),
+                    usual: bounded_usual(usual),
+                };
             }
         }
         Self {
@@ -209,8 +262,13 @@ impl Memory {
 
         self.roll(event.at, &mut shelf);
         let habit = self.habit(&event.kind);
-        let today = self.days.today.get(&event.kind).copied().unwrap_or(0.0);
-        self.days.today.set(&event.kind, today + weight);
+        let counted = if self.days.today.has(&event.kind) || self.days.today.len() < KINDS {
+            event.kind.as_str()
+        } else {
+            OVERFLOW
+        };
+        let today = self.days.today.get(counted).copied().unwrap_or(0.0);
+        self.days.today.set(counted, today + weight);
         if event.at - self.saved_at > 30_000.0 {
             self.save(event.at, &mut shelf);
         }
@@ -292,7 +350,7 @@ impl Memory {
                 .keys()
                 .filter(|kind| !self.days.usual.has(kind)),
         );
-        for kind in kinds {
+        for kind in kinds.filter(|kind| *kind != OVERFLOW) {
             let value = self.days.usual.get(kind).copied().unwrap_or(0.0) * 0.7
                 + self.days.today.get(kind).copied().unwrap_or(0.0) * 0.3;
             if value >= 0.05 {
@@ -302,7 +360,7 @@ impl Memory {
         self.days = Days {
             day,
             today: Ordered::new(),
-            usual,
+            usual: bounded_usual(usual),
         };
         self.save(now, shelf);
     }

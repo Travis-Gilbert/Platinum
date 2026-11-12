@@ -165,3 +165,136 @@ fn the_kinds_counted_are_bounded() {
             .is_finite()
     );
 }
+
+const DAYS: &str = "theorem-ui:theo:days";
+
+fn saved_days(shelf: &Map) -> (usize, f64, usize) {
+    let saved = json(&shelf.get_item(DAYS).expect("days were saved"));
+    let today = saved.get("today").and_then(Json::obj).unwrap();
+    let usual = saved.get("usual").and_then(Json::obj).unwrap();
+    let counted = today.iter().map(|(_, count)| count.num().unwrap()).sum();
+    (today.len(), counted, usual.len())
+}
+
+#[test]
+fn what_is_saved_is_bounded_however_many_kinds_there_are() {
+    let mut shelf = Map::default();
+    let mut memory = Memory::new(None);
+    let start = 1_700_000_000_000.0;
+    let many = KINDS * 4;
+    for index in 0..many {
+        let event = FaceEvent {
+            kind: format!("env.kind{index}"),
+            at: start + index as f64 * 100.0,
+            weight: 1.0,
+        };
+        memory.note(&event, Some(&mut shelf));
+    }
+    // Every event is still counted, the ones past the bound together.
+    let (today, counted, _) = saved_days(&shelf);
+    assert_eq!(today, KINDS + 1);
+    assert!(
+        counted > (many - 400) as f64 && counted <= many as f64,
+        "{counted}"
+    );
+
+    // The next day, what is usual is bounded too, and the overflow is habit to nothing.
+    let tomorrow = FaceEvent {
+        kind: "env.kind0".to_owned(),
+        at: start + 86_400_000.0 * 1.5,
+        weight: 1.0,
+    };
+    memory.note(&tomorrow, Some(&mut shelf));
+    let (today, _, usual) = saved_days(&shelf);
+    assert!(today <= 1 && usual <= KINDS, "{today} {usual}");
+    assert_eq!(memory.habit(theo::memory::OVERFLOW), 0.0);
+    assert!(memory.habit("env.kind0") > 0.0);
+}
+
+#[test]
+fn a_shelf_that_holds_too_much_is_bounded_when_read() {
+    let counts = |most: usize| {
+        let fields: Vec<String> = (0..most)
+            .map(|index| format!("\"env.kind{index}\":{}", 1 + index % 7))
+            .collect();
+        format!("{{{}}}", fields.join(","))
+    };
+    let day = (1_700_000_000_000.0_f64 / 86_400_000.0).floor();
+    let mut shelf = Map::default();
+    let many = KINDS * 3;
+    shelf.set_item(
+        DAYS,
+        &format!(
+            "{{\"day\":{day},\"today\":{},\"usual\":{}}}",
+            counts(many),
+            counts(many)
+        ),
+    );
+    let before: f64 = (0..many).map(|index| (1 + index % 7) as f64).sum();
+    let mut memory = Memory::new(Some(&shelf));
+    // The most usual were kept.
+    assert!(memory.habit("env.kind6") > 0.0);
+    let event = FaceEvent {
+        kind: "env.new".to_owned(),
+        at: 1_700_000_000_000.0,
+        weight: 1.0,
+    };
+    memory.note(&event, Some(&mut shelf));
+    let (today, counted, usual) = saved_days(&shelf);
+    assert_eq!((today, usual), (KINDS + 1, KINDS));
+    assert_eq!(counted, before + 1.0);
+}
+
+#[test]
+fn a_stale_stop_ends_nothing_newer() {
+    let mut theo = Face::new(FaceOptions::default());
+    let first = theo
+        .perform_named("dizzy", How::by("agent"))
+        .unwrap()
+        .invocation;
+    let second = theo
+        .perform_named("scan", How::by("agent"))
+        .unwrap()
+        .invocation;
+    assert_ne!(first.id, second.id);
+    // The first was replaced on its layer; stopping it now is late and does nothing.
+    assert!(!theo.cancel(&first.id));
+    assert_eq!(theo.ending(&second.id), None);
+    assert!(theo.cancel(&second.id));
+    assert_eq!(theo.ending(&second.id), Some(theo::player::Ending::Stopped));
+    assert!(!theo.cancel(&second.id));
+    assert!(!theo.cancel("p999"));
+
+    // A form is let go of the same way, and only by its own id.
+    let form = theo.notice("run.work", 1.0).expect("the orb");
+    assert!(!theo.cancel(&second.id));
+    assert!(theo.state().get("form").is_some());
+    assert!(theo.cancel(&form.id));
+    assert!(theo.state().get("form").is_none());
+}
+
+#[test]
+fn on_the_desktop_sound_is_a_loudspeaker_and_never_a_mouth() {
+    use theo::engine::Profile;
+    let heard = |profile: Profile, seed: u32| {
+        let mut theo = Face::new(FaceOptions {
+            profile,
+            seed,
+            ..FaceOptions::default()
+        });
+        theo.notice("sound.start", 1.0).and_then(|form| form.name)
+    };
+    let mut mouths = 0;
+    for seed in 0..200 {
+        assert_eq!(
+            heard(Profile::Desktop, seed).as_deref(),
+            Some("boombox@1"),
+            "seed {seed}"
+        );
+        if heard(Profile::Web, seed).as_deref() == Some("speak@1") {
+            mouths += 1;
+        }
+    }
+    // The web's own choice is untouched: about one time in four it is a mouth.
+    assert!((20..90).contains(&mouths), "{mouths}");
+}

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Tests crates/theo on its own, without the rest of the workspace.
+#
+# The root workspace needs the pinned checkouts under deps/ before cargo will
+# load it at all. theo depends on nothing, so it is tested here in a
+# throwaway workspace that holds only it, with the repository's toolchain.
+# On a bootstrapped checkout, `script/media-env cargo test --locked -p theo`
+# tests the same crate inside the real workspace.
+#
+# Usage: script/test-theo [arguments for `cargo test`]
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+cp "$root/rust-toolchain.toml" "$work/"
+ln -s "$root/crates/theo" "$work/theo"
+printf '[workspace]\nmembers = ["theo"]\nresolver = "3"\n' >"$work/Cargo.toml"
+
+cd "$work"
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$root/target/theo-alone}" \
+    cargo test -p theo "$@"

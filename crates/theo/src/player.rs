@@ -276,6 +276,31 @@ impl Player {
         self.finish(scene, playing, ending, false);
     }
 
+    /// Stops one invocation and no other: one that has ended, or that a newer performance has since
+    /// replaced on its layer, is left alone. Says whether it stopped anything.
+    pub fn stop_one(&mut self, scene: &mut Scene<'_>, id: &str) -> bool {
+        if let Some(index) = self
+            .kept
+            .iter()
+            .position(|playing| playing.invocation.id == id)
+        {
+            let mut kept = self.kept.remove(index);
+            let layer = kept.invocation.layer;
+            self.let_go(scene, layer, &mut kept);
+            return true;
+        }
+        let Some(index) = self
+            .playing
+            .iter()
+            .position(|playing| playing.invocation.id == id)
+        else {
+            return false;
+        };
+        let playing = self.playing.remove(index);
+        self.finish(scene, playing, Ending::Stopped, false);
+        true
+    }
+
     fn let_go(&mut self, scene: &mut Scene<'_>, layer: Layer, playing: &mut Playing) {
         scene
             .rig

@@ -270,6 +270,12 @@ impl Reactions {
         }
     }
 
+    /// Takes one of the face's own rules out of force, for a host whose profile does without it.
+    /// An added rule of the same id is untouched.
+    pub fn without(&mut self, id: &str) {
+        self.defaults.retain(|rule| rule.id != id);
+    }
+
     /// Every rule in force: added ones replace built-in ones of the same id.
     pub fn rules(&self) -> impl Iterator<Item = &Rule> {
         self.defaults

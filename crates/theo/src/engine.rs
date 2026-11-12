@@ -199,7 +199,28 @@ pub struct Performed {
     pub notes: Vec<String>,
 }
 
+/// Which of the face's own rules are in force.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Profile {
+    /// As web Theo ships: sound is shown as a loudspeaker, and now and then as a mouth.
+    #[default]
+    Web,
+    /// On the desktop sound is a loudspeaker and never a mouth. Forms the agent or the person add still apply.
+    Desktop,
+}
+
+impl Profile {
+    /// The face's own rules this profile does without.
+    fn without(self) -> &'static [&'static str] {
+        match self {
+            Profile::Web => &[],
+            Profile::Desktop => &["sound-speak"],
+        }
+    }
+}
+
 pub struct FaceOptions {
+    pub profile: Profile,
     pub identity: Option<Identity>,
     pub seed: u32,
     /// Where definitions and the days baseline are kept.
@@ -211,6 +232,7 @@ pub struct FaceOptions {
 impl Default for FaceOptions {
     fn default() -> Self {
         Self {
+            profile: Profile::default(),
             identity: None,
             seed: 20_261_111,
             shelf: None,
@@ -404,7 +426,10 @@ impl Face {
         let shelf = options.shelf;
         let book = Book::new(shelf.as_deref());
         let memory = Memory::new(shelf.as_deref());
-        let reactions = Reactions::new(Random::new(seed ^ 0x9e37_79b9), shelf.as_deref());
+        let mut reactions = Reactions::new(Random::new(seed ^ 0x9e37_79b9), shelf.as_deref());
+        for rule in options.profile.without() {
+            reactions.without(rule);
+        }
         let player = Player::new(&rig);
         let place = |name: &str| param_index(name).expect("a param the face lays things over");
         let mut face = Self {
@@ -541,6 +566,21 @@ impl Face {
     /// How an invocation ended; `None` while it still plays.
     pub fn ending(&self, id: &str) -> Option<Ending> {
         self.player.ending(id)
+    }
+
+    /// Stops one performance, by the id it was given when it began, and nothing else: a stop that
+    /// arrives after it ended, or after a newer performance took its layer, does nothing. Says
+    /// whether it stopped anything. The form the face has taken is let go of this way too.
+    pub fn cancel(&mut self, id: &str) -> bool {
+        let form = self
+            .player
+            .holding(Layer::Form)
+            .is_some_and(|form| form.id == id);
+        if form {
+            self.unform();
+            return true;
+        }
+        with_scene!(self, |scene| self.player.stop_one(&mut scene, id))
     }
 
     fn next_seed(&mut self) -> u32 {
