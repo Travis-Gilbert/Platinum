@@ -341,3 +341,23 @@ fn a_feature_that_goes_takes_only_its_own_channels() {
     assert!(rig.channels.feature("brow.left").is_some());
     assert_eq!(rig.read("brow.left.w"), before);
 }
+
+#[test]
+fn a_shelf_holds_no_more_performances_than_could_be_defined() {
+    use theo::book::{Book, ENTRIES};
+    let entry = |index: usize, steps: &str| {
+        format!(
+            r#"{{"name":"saved-{index}","version":1,"about":"","by":"agent","program":{{"steps":{steps}}}}}"#
+        )
+    };
+    let small = r#"[{"op":"wait","ms":1}]"#;
+    let huge = format!("[{}]", vec![r#"{"op":"wait","ms":1}"#; 400].join(","));
+    let mut entries = vec![entry(0, &huge)];
+    entries.extend((1..ENTRIES * 2).map(|index| entry(index, small)));
+    let mut shelf = Map::default();
+    shelf.set_item("theorem-ui:theo:book", &format!("[{}]", entries.join(",")));
+    let book = Book::new(Some(&shelf));
+    assert_eq!(book.defined().count(), ENTRIES);
+    assert!(book.get("saved-0").is_none());
+    assert!(book.get("saved-1").is_some());
+}

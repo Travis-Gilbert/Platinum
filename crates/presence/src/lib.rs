@@ -213,11 +213,13 @@ impl Presence {
                     self.remember(ended.activity.id, update.generation);
                 } else if update.generation > known.generation {
                     // A new run under the same id begins now, and is shown as the latest begun.
+                    // It moves to the end, so a snapshot keeps the order they began in.
                     self.began += 1;
-                    self.live[at] = Held {
+                    self.live.remove(at);
+                    self.live.push(Held {
                         activity: update,
                         began: self.began,
-                    };
+                    });
                 } else {
                     self.live[at].activity = update;
                 }

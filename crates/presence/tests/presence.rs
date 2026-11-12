@@ -90,6 +90,12 @@ fn a_view_made_anew_shows_the_same_thing() {
     assert_eq!(again.restore(presence.snapshot()), 0);
     assert_eq!(again.primary(), shown);
     assert_eq!(again.snapshot(), presence.snapshot());
+    // A later run of the earlier activity is the latest begun, before and after.
+    presence.apply(activity("run", 5, "orb"));
+    assert_eq!(form(&presence).as_deref(), Some("orb"));
+    assert_eq!(again.restore(presence.snapshot()), 0);
+    assert_eq!(again.primary(), presence.primary());
+
     // An ended activity in a snapshot is not brought back.
     let mut done = activity("old", 1, "orb");
     done.phase = Phase::Failed;

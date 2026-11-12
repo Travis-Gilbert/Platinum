@@ -13,6 +13,9 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 target="${CARGO_TARGET_DIR:-$root/target/theo-alone}"
+# Made absolute: cargo runs from the workspace below, not from here.
+mkdir -p "$target"
+target="$(cd "$target" && pwd)"
 # The workspace is at a fixed place: the tests find their fixtures by the
 # crate's path as it was when they were compiled, so a new path each run
 # would leave a cached test looking where nothing is any more.

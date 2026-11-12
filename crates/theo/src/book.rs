@@ -194,6 +194,7 @@ impl Book {
         let saved = shelf
             .and_then(|shelf| shelf.get_item(SHELF_KEY))
             .and_then(|text| Json::parse(&text).ok());
+        let mut kept = 0;
         for entry in saved
             .as_ref()
             .and_then(Json::list)
@@ -204,6 +205,11 @@ impl Book {
             if !is_name(&entry.name, 1, 31, '-') {
                 continue;
             }
+            // A shelf holds no more than `define` would have let onto it.
+            if kept >= ENTRIES || length(&entry.program.to_string()) > SIZE {
+                continue;
+            }
+            kept += 1;
             match entries.get_mut(&entry.name) {
                 Some(versions) => versions.push(entry),
                 None => {
@@ -238,7 +244,8 @@ impl Book {
         self.entries.values().filter_map(|versions| versions.last())
     }
 
-    fn defined(&self) -> impl Iterator<Item = &Entry> {
+    /// The performances that were added, each version counted.
+    pub fn defined(&self) -> impl Iterator<Item = &Entry> {
         self.entries
             .values()
             .flatten()

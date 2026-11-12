@@ -247,7 +247,8 @@ impl Memory {
             if let Some(oldest) = self
                 .kinds
                 .iter()
-                .min_by(|a, b| a.1.last.total_cmp(&b.1.last))
+                // Kinds seen at the same moment go in the order of their names, so the same events always forget the same one.
+                .min_by(|a, b| a.1.last.total_cmp(&b.1.last).then_with(|| a.0.cmp(b.0)))
                 .map(|(kind, _)| kind.clone())
             {
                 self.kinds.remove(&oldest);
