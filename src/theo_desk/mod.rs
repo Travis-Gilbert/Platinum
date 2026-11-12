@@ -16,8 +16,8 @@
 //! around Theo: only the face, on a transparent window.
 //!
 //! The menu stays open while the person works in another application, and
-//! closes when they click away from it in the application Theo was called
-//! over, or press Escape.
+//! closes when they click away from it in the application Theo sits over
+//! (the one whose window is beneath it), or press Escape.
 //!
 //! Focus: shown by a key or a double right click, Theo floats over the
 //! application in front without taking focus from it. Only the menu takes
@@ -1152,7 +1152,8 @@ impl Body {
     }
 
     /// Working in another application keeps the menu open; clicking in the
-    /// application Theo was called over, away from the menu, closes it.
+    /// application Theo sits over, the one whose window is beneath it, closes
+    /// it.
     fn close_if_left_for(&mut self, window: &Window, cx: &mut Context<Self>) {
         let Some(left) = self.left_at else {
             return;
@@ -1164,8 +1165,7 @@ impl Body {
         if left.elapsed() < SETTLE {
             return;
         }
-        let over = self.desk.read(cx).front.as_ref().map(|front| front.pid);
-        if over.is_some() && mac::frontmost_pid() == over {
+        if mac::front_is_beneath(window) {
             self.left_at = None;
             self.was_active = false;
             self.desk.update(cx, |desk, cx| desk.close_composer(cx));

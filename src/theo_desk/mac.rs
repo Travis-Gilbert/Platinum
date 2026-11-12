@@ -26,7 +26,7 @@ use objc2_core_graphics::{
     CGEvent, CGEventField, CGEventSourceStateID, CGEventTapLocation, CGEventTapOptions,
     CGEventTapPlacement, CGEventTapProxy, CGEventType, CGPreflightListenEventAccess,
     CGRequestListenEventAccess, CGWindowListCopyWindowInfo, CGWindowListOption, kCGNullWindowID,
-    kCGWindowLayer, kCGWindowNumber, kCGWindowOwnerPID,
+    kCGWindowBounds, kCGWindowLayer, kCGWindowNumber, kCGWindowOwnerPID,
 };
 use objc2_foundation::{NSArray, NSDictionary, NSNumber, NSPoint, NSRect, NSSize, NSString};
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
@@ -56,37 +56,104 @@ pub fn frontmost() -> Option<Front> {
     })
 }
 
-/// The frontmost ordinary window (layer 0) of `pid`, as the window server
-/// lists them front to back. Reading numbers needs no permission; titles would.
-fn front_window(pid: i32) -> Option<u32> {
-    let list = CGWindowListCopyWindowInfo(
+/// A window as the window server lists it: its number, owner, layer and
+/// bounds (in its own global coordinates, y down).
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Listed {
+    number: i64,
+    pid: i64,
+    layer: i64,
+    bounds: Rect,
+}
+
+/// The windows on screen, front to back. Reading numbers and bounds needs no
+/// permission; titles would.
+fn on_screen() -> Vec<Listed> {
+    let Some(list) = CGWindowListCopyWindowInfo(
         CGWindowListOption::OptionOnScreenOnly | CGWindowListOption::ExcludeDesktopElements,
         kCGNullWindowID,
-    )?;
+    ) else {
+        return Vec::new();
+    };
     // SAFETY: CFArray and NSArray are toll-free bridged, and the window list
     // is an array of dictionaries keyed by strings.
     let windows: &NSArray<NSDictionary<NSString, AnyObject>> =
         unsafe { &*(CFRetained::as_ptr(&list).as_ptr() as *const _) };
-    let number = |window: &NSDictionary<NSString, AnyObject>, key: &NSString| {
-        window
-            .objectForKey(key)
-            .and_then(|value| value.downcast::<NSNumber>().ok())
-            .map(|value| value.as_i64())
-    };
     // SAFETY: the keys are Core Graphics' own constant strings, bridged.
-    let (owner, layer, id) = unsafe {
+    let (owner, layer, id, bounds) = unsafe {
         (
             &*(kCGWindowOwnerPID as *const _ as *const NSString),
             &*(kCGWindowLayer as *const _ as *const NSString),
             &*(kCGWindowNumber as *const _ as *const NSString),
+            &*(kCGWindowBounds as *const _ as *const NSString),
         )
     };
-    windows.iter().find_map(|window| {
-        (number(&window, owner) == Some(i64::from(pid)) && number(&window, layer) == Some(0))
-            .then(|| number(&window, id))
-            .flatten()
-            .and_then(|id| u32::try_from(id).ok())
-    })
+    let number = |dict: &NSDictionary<NSString, AnyObject>, key: &NSString| {
+        dict.objectForKey(key)
+            .and_then(|value| value.downcast::<NSNumber>().ok())
+            .map(|value| value.as_f64())
+    };
+    windows
+        .iter()
+        .filter_map(|window| {
+            let frame = window
+                .objectForKey(bounds)
+                .and_then(|value| value.downcast::<NSDictionary>().ok())?;
+            // SAFETY: a window's bounds are a dictionary of numbers keyed by
+            // the strings X, Y, Width and Height.
+            let frame: &NSDictionary<NSString, AnyObject> =
+                unsafe { &*(Retained::as_ptr(&frame) as *const _) };
+            let side = |key: &str| number(frame, &NSString::from_str(key));
+            Some(Listed {
+                number: number(&window, id)? as i64,
+                pid: number(&window, owner)? as i64,
+                layer: number(&window, layer)? as i64,
+                bounds: Rect {
+                    x: side("X")?,
+                    y: side("Y")?,
+                    w: side("Width")?,
+                    h: side("Height")?,
+                },
+            })
+        })
+        .collect()
+}
+
+/// The frontmost ordinary window (layer 0) of `pid`.
+fn front_window(pid: i32) -> Option<u32> {
+    on_screen()
+        .into_iter()
+        .find(|window| window.pid == i64::from(pid) && window.layer == 0)
+        .and_then(|window| u32::try_from(window.number).ok())
+}
+
+/// The owner of the ordinary window directly beneath window `ours`: the
+/// first one after it, front to back, that it overlaps.
+fn owner_beneath(ours: i64, windows: &[Listed]) -> Option<i64> {
+    let at = windows.iter().position(|window| window.number == ours)?;
+    let over = windows[at].bounds;
+    windows[at + 1..]
+        .iter()
+        .find(|window| window.layer == 0 && window.bounds.overlaps(over))
+        .map(|window| window.pid)
+}
+
+/// Whether the application in front now is the one Theo sits over: the
+/// owner of the window directly beneath Theo's, or the Finder where only the
+/// desktop is beneath.
+pub fn front_is_beneath(window: &Window) -> bool {
+    let (Some(ns), Some(front)) = (
+        ns_window(window),
+        NSWorkspace::sharedWorkspace().frontmostApplication(),
+    ) else {
+        return false;
+    };
+    match owner_beneath(ns.windowNumber() as i64, &on_screen()) {
+        Some(pid) => pid == i64::from(front.processIdentifier()),
+        None => front
+            .bundleIdentifier()
+            .is_some_and(|id| id.to_string() == "com.apple.finder"),
+    }
 }
 
 /// Hands focus back to the application Theo was called over.
@@ -94,13 +161,6 @@ pub fn return_to(pid: i32) {
     if let Some(app) = NSRunningApplication::runningApplicationWithProcessIdentifier(pid) {
         app.activateWithOptions(NSApplicationActivationOptions::empty());
     }
-}
-
-/// The process id of the application in front, this one included.
-pub fn frontmost_pid() -> Option<i32> {
-    NSWorkspace::sharedWorkspace()
-        .frontmostApplication()
-        .map(|app| app.processIdentifier())
 }
 
 /// Whether this process is the active application.
@@ -155,7 +215,11 @@ pub fn unframe(window: &Window, cx: &App) {
 /// size while GPUI is still updating that window; GPUI cannot take it then,
 /// the size is lost, and the window goes on drawing at the old one. GPUI's
 /// own `resize` waits the same way, on the foreground executor.
-fn after_update(window: &Window, cx: &App, change: impl FnOnce(&objc2_app_kit::NSWindow) + 'static) {
+fn after_update(
+    window: &Window,
+    cx: &App,
+    change: impl FnOnce(&objc2_app_kit::NSWindow) + 'static,
+) {
     if let Some(ns) = ns_window(window) {
         cx.foreground_executor()
             .spawn(async move { change(&ns) })
@@ -213,6 +277,16 @@ impl From<NSRect> for Rect {
     }
 }
 
+impl Rect {
+    /// Whether the two share any area; touching edges do not count.
+    fn overlaps(self, other: Rect) -> bool {
+        self.x < other.x + other.w
+            && other.x < self.x + self.w
+            && self.y < other.y + other.h
+            && other.y < self.y + self.h
+    }
+}
+
 impl From<Rect> for NSRect {
     fn from(rect: Rect) -> Self {
         NSRect::new(NSPoint::new(rect.x, rect.y), NSSize::new(rect.w, rect.h))
@@ -266,12 +340,7 @@ pub fn face_in(frame: Rect, form: MenuForm, face: (f64, f64)) -> Rect {
 /// Grows the face's window to hold the menu, `size` in all, and records in
 /// `form` how it was laid out. Decided where the window changes, after the
 /// GPUI update asking for it, so it reads the face where it really is.
-pub fn open_menu(
-    window: &Window,
-    size: (f64, f64),
-    form: Rc<Cell<Option<MenuForm>>>,
-    cx: &App,
-) {
+pub fn open_menu(window: &Window, size: (f64, f64), form: Rc<Cell<Option<MenuForm>>>, cx: &App) {
     after_update(window, cx, move |ns| {
         if form.get().is_some() {
             return;
@@ -286,12 +355,7 @@ pub fn open_menu(
 }
 
 /// Shrinks the window back to the face alone, where the face is now.
-pub fn close_menu(
-    window: &Window,
-    face: (f64, f64),
-    form: Rc<Cell<Option<MenuForm>>>,
-    cx: &App,
-) {
+pub fn close_menu(window: &Window, face: (f64, f64), form: Rc<Cell<Option<MenuForm>>>, cx: &App) {
     after_update(window, cx, move |ns| {
         let Some(laid) = form.take() else {
             return;
@@ -516,5 +580,50 @@ mod tests {
         let (frame, form) = menu_frame(face, SCREEN, OPEN);
         assert_eq!(frame.x + frame.w, SCREEN.w);
         assert_eq!(face_in(frame, form, FACE), face);
+    }
+
+    fn listed(number: i64, pid: i64, layer: i64, x: f64, y: f64, w: f64, h: f64) -> Listed {
+        Listed {
+            number,
+            pid,
+            layer,
+            bounds: Rect { x, y, w, h },
+        }
+    }
+
+    #[test]
+    fn the_app_beneath_is_the_first_ordinary_window_theo_overlaps() {
+        let theo = listed(9, 1, 101, 100.0, 100.0, 300.0, 300.0);
+        let windows = [
+            // In front of Theo: not beneath it.
+            listed(1, 50, 0, 0.0, 0.0, 800.0, 800.0),
+            theo,
+            // The menu bar and a window elsewhere on screen are passed over.
+            listed(2, 60, 24, 0.0, 0.0, 1440.0, 24.0),
+            listed(3, 70, 0, 900.0, 100.0, 200.0, 200.0),
+            listed(4, 80, 0, 50.0, 50.0, 600.0, 600.0),
+            listed(5, 90, 0, 0.0, 0.0, 1440.0, 900.0),
+        ];
+        assert_eq!(owner_beneath(9, &windows), Some(80));
+    }
+
+    #[test]
+    fn theo_over_its_own_app_is_over_that_app() {
+        let windows = [
+            listed(9, 1, 101, 100.0, 100.0, 300.0, 300.0),
+            listed(4, 1, 0, 0.0, 0.0, 1440.0, 900.0),
+        ];
+        assert_eq!(owner_beneath(9, &windows), Some(1));
+    }
+
+    #[test]
+    fn nothing_beneath_over_the_desktop_or_when_theo_is_not_listed() {
+        let windows = [
+            listed(9, 1, 101, 100.0, 100.0, 300.0, 300.0),
+            // Touching edges only.
+            listed(4, 80, 0, 400.0, 100.0, 300.0, 300.0),
+        ];
+        assert_eq!(owner_beneath(9, &windows), None);
+        assert_eq!(owner_beneath(7, &windows), None);
     }
 }

@@ -101,10 +101,15 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
      `submit_on_enter`: it wraps, Enter sends, Shift-Enter starts a new line.
    - Stop, New Conversation and the demo keep the menu open. **Dismissal**
      (owner's rule): working in another application keeps the menu open;
-     clicking in the application Theo was called over, away from the menu,
-     closes it (`Body::close_if_left_for`: once the menu has given up the
-     keyboard, the frontmost application is read after 150 ms, and the menu
-     closes when it is `Scope`'s application). Escape and a click on the
+     clicking in the application Theo sits over, away from the menu, closes
+     it (`Body::close_if_left_for`: once the menu has given up the keyboard,
+     the frontmost application is read after 150 ms, and the menu closes when
+     it owns the ordinary window directly beneath Theo's, or is the Finder
+     when only the desktop is beneath; `mac::front_is_beneath` reads the
+     window server's list, so Platinum's own windows count like any other
+     application's). The application captured when Theo was called is not
+     used for this: Theo can be moved, and it may be over a different
+     application, its own included, by the time of the click. Escape and a click on the
      menu's own window outside the menu also close it. Closing shrinks the
      window back to the face and hands the keyboard back to the application
      Theo was called over. A left click on the face only drags it. The window
@@ -226,10 +231,19 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
   led to the trail, the wrapping field, the dismissal rule, the run-terminal
   fix and the title's removal.
 
+- The owner, on the `run18` build: clicking the window behind the menu did
+  not close it; only a click on the menu's window did. `run18` compared the
+  frontmost application with the one captured when Theo was called, while
+  Theo sat over Platinum's own browser window. `run19` judges by the window
+  beneath Theo instead (three tests over the beneath choice).
+
 ### Not yet observed
 
-- **This round's changes in the running application** (`run18`, built and
-  launched): the trail, the wrapping field, the dismissal rule, and a run
+- **The beneath-window dismissal** (`run19`, built and launched): a click in
+  the application whose window is beneath Theo closes the menu, and a click
+  in another application's window elsewhere keeps it open.
+- **This round's changes in the running application** (`run18`): the trail,
+  the wrapping field, and a run
   ending (Stop and "working" going, the eyes returning) when the reply is
   done. The screen was locked when the check began, so nothing of it has been
   seen. Wheel scrolling over an answer inside the trail is also unchecked.
@@ -276,6 +290,17 @@ answer 403 `chat_scope_required`, and no token on this Mac carries the
 - **Equal standing.** Among activities of the same standing the latest begun
   has the face, so sound shows over a run. It is a one-line change in
   `Presence::primary` if the other order is wanted.
+
+## Direction: Theo stands alone
+
+The owner, 2026-11-12: Theo is slated to stand on its own and in time to
+replace or take in Platinum. So Theo's code treats Platinum as one more
+application it can sit over (the dismissal rule already does), and nothing
+new in `src/theo_desk` should reach into the browser. Today it reaches
+Platinum in two places only: `crate::theorem` (`TheoremDriver`, the
+connection to the local node) and `crate::install_menus` (the menu bar).
+Moving Theo into its own binary means lifting those two behind Theo's own
+seams; the `theo`, `presence` and `companion` crates already stand apart.
 
 ## Later stages
 
