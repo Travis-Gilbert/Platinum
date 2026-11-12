@@ -501,8 +501,10 @@ impl Desk {
     fn talk(&mut self, cx: &mut Context<Self>) {
         if self.companion.composer_open() {
             if let Some((handle, body)) = self.window.clone() {
-                let _ = handle.update(cx, |_, window, cx| {
-                    body.update(cx, |body, cx| body.focus(window, cx))
+                cx.defer(move |cx| {
+                    let _ = handle.update(cx, |_, window, cx| {
+                        body.update(cx, |body, cx| body.focus(window, cx))
+                    });
                 });
             }
             return;
@@ -564,19 +566,26 @@ impl Desk {
         let wanted = self.window_size();
         let keys = self.companion.composer_open();
         if let Some((handle, body)) = self.window.clone() {
-            let rest = self.settings.spot.unwrap_or(HOME);
-            let opened = handle.update(cx, |_, window, cx| {
-                mac::resize_at(
-                    window,
-                    (f64::from(wanted.width), f64::from(wanted.height)),
-                    rest,
-                );
-                if keys {
-                    window.activate_window();
-                    body.update(cx, |body, cx| body.focus(window, cx));
-                }
-            });
-            if opened.is_ok() {
+            // Asked from inside Theo's own window (a right click, Escape, the
+            // menu closing), the window cannot be updated until that update
+            // ends, so the fitting waits for it. Only a window that is gone
+            // is forgotten: taking a busy one for gone opened a second Theo.
+            if cx.windows().contains(&handle) {
+                let rest = self.settings.spot.unwrap_or(HOME);
+                cx.defer(move |cx| {
+                    let _ = handle.update(cx, |_, window, cx| {
+                        mac::resize_at(
+                            window,
+                            (f64::from(wanted.width), f64::from(wanted.height)),
+                            rest,
+                            cx,
+                        );
+                        if keys {
+                            window.activate_window();
+                            body.update(cx, |body, cx| body.focus(window, cx));
+                        }
+                    });
+                });
                 cx.notify();
                 return;
             }
@@ -673,7 +682,7 @@ impl Desk {
         self.settle_liveness(now, cx);
         let grains = self.companion.frame(now).to_vec();
         if let Some((spot, animate)) = self.stage.borrow_mut().go.take() {
-            mac::place(window, spot, animate);
+            mac::place(window, spot, animate, cx);
         }
         // Only the face and the menu take clicks: everywhere else on the
         // window lets them through to what is beneath.
@@ -769,7 +778,8 @@ fn open(desk: Entity<Desk>, cx: &mut App) {
     let owner = desk.clone();
     let opened = cx.open_window(options, |window, cx| {
         let body = cx.new(|cx| Body::new(owner, draft, window, cx));
-        mac::place(window, rest, false);
+        mac::unframe(window, cx);
+        mac::place(window, rest, false, cx);
         if keys {
             window.activate_window();
             body.update(cx, |body, cx| body.focus(window, cx));

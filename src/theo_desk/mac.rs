@@ -12,7 +12,7 @@ use std::ptr::NonNull;
 use std::sync::OnceLock;
 
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender, unbounded};
-use gpui_kit::Window;
+use gpui_kit::{App, Window};
 use objc2::MainThreadMarker;
 use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
@@ -117,6 +117,33 @@ fn ns_window(window: &Window) -> Option<Retained<objc2_app_kit::NSWindow>> {
     view.window()
 }
 
+/// Takes away the frame macOS draws around a window. With no titlebar GPUI
+/// still makes a titled window, so AppKit draws its rounded rim and a shadow
+/// around the whole rectangle even where nothing is painted. Borderless, the
+/// window is only what it paints; GPUI's panel class can still become key,
+/// so the menu still takes the keyboard.
+pub fn unframe(window: &Window, cx: &App) {
+    use objc2_app_kit::NSWindowStyleMask;
+    after_update(window, cx, |ns| {
+        let panel = ns.styleMask() & NSWindowStyleMask::NonactivatingPanel;
+        ns.setStyleMask(NSWindowStyleMask::Borderless | panel);
+        ns.setHasShadow(false);
+    });
+}
+
+/// Changes the native window once the GPUI update asking for it has ended.
+/// AppKit answers a new frame or style at once, telling GPUI the window's new
+/// size while GPUI is still updating that window; GPUI cannot take it then,
+/// the size is lost, and the window goes on drawing at the old one. GPUI's
+/// own `resize` waits the same way, on the foreground executor.
+fn after_update(window: &Window, cx: &App, change: impl FnOnce(&objc2_app_kit::NSWindow) + 'static) {
+    if let Some(ns) = ns_window(window) {
+        cx.foreground_executor()
+            .spawn(async move { change(&ns) })
+            .detach();
+    }
+}
+
 /// The pointer relative to the window's centre, in points, y down.
 pub fn pointer_from(window: &Window) -> Option<(f64, f64)> {
     let frame = ns_window(window)?.frame();
@@ -148,20 +175,18 @@ pub fn spot_of(window: &Window) -> Option<(f64, f64)> {
 
 /// Puts the window at a spot (as `spot_of` gives it), easing there over
 /// AppKit's own animation when `animate`.
-pub fn place(window: &Window, spot: (f64, f64), animate: bool) {
-    if let Some(ns) = ns_window(window) {
+pub fn place(window: &Window, spot: (f64, f64), animate: bool, cx: &App) {
+    after_update(window, cx, move |ns| {
         let size = ns.frame().size;
-        fit(&ns, (size.width, size.height), spot, animate);
-    }
+        fit(ns, (size.width, size.height), spot, animate);
+    });
 }
 
 /// Gives the window a new size and puts it at a spot, in one move, on the
 /// screen it is on now: resizing first could carry it onto a neighbouring
 /// screen before it is placed.
-pub fn resize_at(window: &Window, size: (f64, f64), spot: (f64, f64)) {
-    if let Some(ns) = ns_window(window) {
-        fit(&ns, size, spot, false);
-    }
+pub fn resize_at(window: &Window, size: (f64, f64), spot: (f64, f64), cx: &App) {
+    after_update(window, cx, move |ns| fit(ns, size, spot, false));
 }
 
 fn fit(ns: &objc2_app_kit::NSWindow, size: (f64, f64), spot: (f64, f64), animate: bool) {

@@ -35,8 +35,8 @@ do not babysit review bots unless asked.
 
 ## Stage B: where it stands (2026-11-12, Mac session)
 
-Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`
-and `202f503`). What each spec item became:
+Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
+`202f503` and the window fixes after them). What each spec item became:
 
 1. **Dependency.** `companion` is a path dependency and a workspace member.
    `global-hotkey = "0.8"` supplies keys that work while another application
@@ -45,9 +45,14 @@ and `202f503`). What each spec item became:
 2. **Renderer.** `body.rs` paints the grains as discs and the side arcs with
    GPUI's `canvas`, `paint_quad` and `PathBuilder`, at web Theo's measures
    (visor 120 pt, radius 21.6 pt, grains at 55% alpha, three arcs a side).
-   **No plate:** at the owner's asking the dark plate, ring and shadow are
-   gone; the face stands on a transparent window, and grains outside the
-   visor's rounded box are dropped by their centre.
+   The dark plate, its inset ring and its drop shadow are part of the
+   design and stay (they were removed once by misunderstanding and restored
+   at the owner's word). What the owner asked to remove was the macOS window
+   around Theo: GPUI makes a titled panel even with no titlebar, so AppKit
+   drew a rounded rim and shadow around the whole transparent rectangle.
+   `mac::unframe` makes the window borderless with no window shadow, keeping
+   GPUI's non-activating panel bit, so the window is only what Theo paints
+   and the menu can still take the keyboard.
 3. **Stage adapter.** `gaze_at` resolves against the real window and pointer
    (`mac::pointer_from`); the window is placed by a fraction of the screen's
    visible frame so a place survives resizing.
@@ -99,6 +104,18 @@ and `202f503`). What each spec item became:
 - Theo did not appear: resizing first could carry the window onto a
   neighbouring screen before it was placed. `mac::resize_at` sizes and places
   in one `setFrame` on the screen it is on.
+- Eight to ten Theos on screen at once: `mount` took a busy window (one
+  already being updated, as during a right click inside it) for a gone one
+  and opened another. A window is now forgotten only when `cx.windows()` no
+  longer holds it; a busy one is fitted once the update ends. This was also
+  why right-click seemed to do nothing: the menu opened in a newly leaked
+  window elsewhere.
+- After the menu opened and closed, Theo's window painted nothing and the log
+  said "RefCell already borrowed": a native `setFrame` or `setStyleMask`
+  inside a GPUI update makes AppKit report the new size at once, GPUI cannot
+  take it while it is updating, and the size is lost. `unframe`, `place` and
+  `resize_at` now apply their change on the foreground executor after the
+  update, as GPUI's own `resize` does.
 - Edition 2024 closures returning `impl IntoElement` capture lifetimes; the
   reply element returns a concrete `Stateful<Div>`.
 
@@ -118,26 +135,32 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
 ### Tested (macOS, this session)
 
 - `cargo test --locked -p theo -p presence -p companion`: 31 passed.
-- `cargo test --locked --bin frame theo_desk`: 6 passed (activity
+- `cargo test --locked --bin frame theo_desk`: 7 passed (activity
   generations, stale stops, snapshot, liveness, the Expression subset, the
-  visor's rounded corners).
+  plate's rounded corners and its outline).
 
 ### Observed in the running application
 
 - Before the redesign: Theo appeared over TextEdit and TextEdit stayed
   frontmost; hide and show repeated without a crash; after a remount, typing
   went to TextEdit; the old composer drew.
-- After the redesign: the face shows on the desktop with no plate (asleep,
-  two eyes on a dark desktop).
+- After the window fixes (`run9`, this build): `control+alt+KeyT` over
+  TextEdit shows exactly one Theo window, with the plate and no macOS frame.
+  Hovering the face and right-clicking opens the menu in place above it (New
+  chat, "Theorem isn't set up on this Mac.", the "Ask Theo" field focused,
+  "Use the Demo Authority"). Escape closes it, the window returns to 264 by
+  132 with the face drawn, and TextEdit is frontmost again. The log has no
+  borrow errors.
+- A right click that arrives with the pointer jumping straight onto the face
+  in the same instant goes through to the application beneath: click-through
+  is decided each frame from where the pointer is, and no frame had run yet.
+  A real pointer moves there first, so this only bites synthetic clicks.
 
 ### Not yet observed
 
-- The right-click menu opening, typing into it, and the reply in it.
+- Typing into the menu and the reply in it.
 - A demo conversation and Stop from the menu.
-- Escape and the focus give-back from the menu; the draft kept across a
-  remount; deactivation closing the menu; click-through around the face.
-- The grains' legibility on a light desktop with no plate (if faint, raise the
-  55% alpha for the desktop profile).
+- The draft kept across a remount; click-through around the face.
 - The double right-click and its Input Monitoring prompt.
 - **The gate**: invoke over Firefox and an editor, converse with the selected
   agent, dismiss and remount without losing state or stealing focus. The
