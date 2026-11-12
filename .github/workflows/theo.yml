@@ -1,0 +1,46 @@
+name: Theo core
+
+# Compiles and tests crates/theo and crates/presence, which need none of the
+# pinned checkouts, so they can be checked on every pull request that touches it.
+# It says nothing about the native application.
+
+on:
+  pull_request:
+    paths:
+      - "crates/theo/**"
+      - "crates/presence/**"
+      - "script/test-theo"
+      - "rust-toolchain.toml"
+      - ".github/workflows/theo.yml"
+  push:
+    branches: [main]
+    paths:
+      - "crates/theo/**"
+      - "crates/presence/**"
+      - "script/test-theo"
+      - "rust-toolchain.toml"
+      - ".github/workflows/theo.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: theo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux is where the fixtures were first matched; macOS is where it ships.
+        os: [ubuntu-latest, macos-latest]
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test crates/theo and crates/presence
+        run: script/test-theo

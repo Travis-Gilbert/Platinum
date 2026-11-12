@@ -1,0 +1,6 @@
+[package]
+name = "presence"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Which of the things going on Theo shows: the host's activity set, its primary form, and the refusal of stale updates."

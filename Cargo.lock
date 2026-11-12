@@ -10640,6 +10640,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "presence"
+version = "0.1.0"
+
+[[package]]
 name = "prettyplease"
 version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15747,6 +15751,10 @@ dependencies = [
  "thiserror 1.0.69",
  "url",
 ]
+
+[[package]]
+name = "theo"
+version = "0.1.0"
 
 [[package]]
 name = "theorem-bayes"
