@@ -1,5 +1,5 @@
 //! Theo on the desktop: the companion in a small window of its own that
-//! floats over every application, a composer to talk to the selected agent
+//! floats over every application, a menu to talk to the selected agent
 //! through, and the keys and clicks that call it.
 //!
 //! One `Desk` per process holds the `Companion`, the clock, and the Theorem
@@ -9,34 +9,41 @@
 //! face, the same run and the same draft. Hiding never touches the run; Stop
 //! is its own action, routed to the driver that owns the run.
 //!
+//! Talking: a right click on Theo, or the talk key, opens a menu over it
+//! with a field to type into straight away. The same menu then carries
+//! Theorem's reply, and Stop while a run goes on. There is no standing text
+//! box and no window around Theo: only the face, on a transparent window.
+//!
 //! Focus: shown by a key or a double right click, Theo floats over the
-//! application in front without taking focus from it. Only the composer
-//! takes the keyboard, as a panel that does not activate Platinum, and
-//! closing it hands the keyboard back to the application it was called over.
+//! application in front without taking focus from it. Only the menu takes
+//! the keyboard, and closing it hands the keyboard back to the application
+//! it was called over.
 //!
 //! SOURCING: `companion` and `theo` (this repository's port of web Theo);
-//! GPUI Kit's `Root` and `Textarea`; `global-hotkey` for keys that work while
-//! another application is in front; AppKit and Core Graphics in `mac.rs`.
+//! GPUI Kit's `Root`, `PopupMenu` and `Input`; `global-hotkey` for keys that
+//! work while another application is in front; AppKit and Core Graphics in
+//! `mac.rs`.
 
 pub mod activity;
 mod body;
 mod mac;
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::time::Instant;
 
 use companion::{Calling, Companion, Scope};
-use gpui_kit::component::input::{Escape, InputEvent, Textarea, TextareaState};
-use gpui_kit::component::{ActiveTheme as _, Root, h_flex, v_flex};
+use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
+use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
+use gpui_kit::component::{ActiveTheme as _, Root, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyWindowHandle, App, AppContext as _, Bounds, Context, Entity, FocusHandle, Focusable as _,
-    Global, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _, Render,
-    StatefulInteractiveElement as _, Styled as _, Subscription, Window, WindowAppearance,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, point, px,
-    size,
+    AnyWindowHandle, App, AppContext as _, Bounds, Context, DismissEvent, Entity, FocusHandle,
+    Focusable as _, Global, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _,
+    Pixels, Render, StatefulInteractiveElement as _, Styled as _, Subscription, Window,
+    WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions,
+    canvas, div, point, px, size,
 };
 use serde::{Deserialize, Serialize};
 use theo::engine::{Expression, FaceOptions, Liveness};
@@ -66,9 +73,13 @@ actions!(
     ]
 );
 
-/// The composer's width and the most of the window it may take, in points.
-const COMPOSER_WIDTH: f32 = 360.0;
-const COMPOSER_HEIGHT: f32 = 260.0;
+/// The menu's width, the room above Theo it may take, and the most of that
+/// a reply may fill before it scrolls, in points.
+const MENU_WIDTH: f32 = 320.0;
+const MENU_ROOM: f32 = 340.0;
+const REPLY_HEIGHT: f32 = 200.0;
+/// Clear space either side of the menu for its shadow, in points.
+const MENU_MARGIN: f32 = 12.0;
 /// How far from the plate the pointer is still followed, in points.
 const FOLLOW_WITHIN: f64 = 480.0;
 /// The pointer at this distance turns the gaze all the way, in points.
@@ -539,7 +550,10 @@ impl Desk {
 
     fn window_size(&self) -> gpui_kit::Size<gpui_kit::Pixels> {
         if self.companion.composer_open() {
-            size(px(COMPOSER_WIDTH), px(COMPOSER_HEIGHT + BODY_SIZE.1 as f32))
+            size(
+                px((MENU_WIDTH + 2.0 * MENU_MARGIN).max(BODY_SIZE.0 as f32)),
+                px(MENU_ROOM + BODY_SIZE.1 as f32),
+            )
         } else {
             size(px(BODY_SIZE.0 as f32), px(BODY_SIZE.1 as f32))
         }
@@ -641,7 +655,8 @@ impl Desk {
     }
 
     /// One frame: the clock, stillness, the pointer, the face's own moves.
-    fn frame(&mut self, window: &mut Window, cx: &App) -> BodyFrame {
+    /// `menu` is where the open menu was drawn last, in window points.
+    fn frame(&mut self, window: &mut Window, menu: Option<Bounds<Pixels>>, cx: &App) -> BodyFrame {
         let now = self.now();
         if now - self.still_read_at >= STILL_EVERY_MS {
             self.still_read_at = now;
@@ -660,17 +675,27 @@ impl Desk {
         if let Some((spot, animate)) = self.stage.borrow_mut().go.take() {
             mac::place(window, spot, animate);
         }
-        // The transparent margin lets clicks through to what is beneath,
-        // unless the composer is open.
-        let over_plate = pointer.is_some_and(|(x, y)| {
-            let centre_y = if self.companion.composer_open() {
-                f64::from(COMPOSER_HEIGHT) / 2.0
+        // Only the face and the menu take clicks: everywhere else on the
+        // window lets them through to what is beneath.
+        let open = self.companion.composer_open();
+        let over_face = pointer.is_some_and(|(x, y)| {
+            let centre_y = if open {
+                f64::from(MENU_ROOM) / 2.0
             } else {
                 0.0
             };
             x.abs() <= body::VISOR_PX / 2.0 + 8.0 && (y - centre_y).abs() <= 48.0
         });
-        mac::pass_clicks(window, !(over_plate || self.companion.composer_open()));
+        let over_menu = open
+            && pointer.zip(menu).is_some_and(|((x, y), menu)| {
+                let size = window.viewport_size();
+                let at = point(
+                    px((x + f64::from(size.width) / 2.0) as f32),
+                    px((y + f64::from(size.height) / 2.0) as f32),
+                );
+                menu.contains(&at)
+            });
+        mac::pass_clicks(window, !(over_face || over_menu));
         let face = &self.companion.face;
         BodyFrame {
             grains,
@@ -766,13 +791,43 @@ fn open(desk: Entity<Desk>, cx: &mut App) {
 
 // The window -----------------------------------------------------------------
 
-/// Theo's window: the body, and the composer above it while it is open.
+/// What the menu shows that changes its items. The reply is read as the
+/// menu draws, so a reply arriving word by word does not rebuild it.
+#[derive(Clone, Debug, PartialEq)]
+struct MenuContent {
+    title: String,
+    live: bool,
+    not_configured: bool,
+    notice: Option<String>,
+}
+
+/// What the menu's items act on.
+#[derive(Clone)]
+struct MenuParts {
+    desk: Entity<Desk>,
+    driver: Entity<TheoremDriver>,
+    ask: Entity<InputState>,
+    /// The menu's dismissal is for an item that keeps it open, or for a
+    /// right click that opens it again.
+    keep_open: Rc<Cell<bool>>,
+}
+
+/// Theo's window: the face, and the menu above it while it is open.
 pub struct Body {
     desk: Entity<Desk>,
-    composer: Entity<TextareaState>,
+    driver: Entity<TheoremDriver>,
+    ask: Entity<InputState>,
     focus_handle: FocusHandle,
     title: String,
-    /// Where a press on the body began, until it is a click or a drag.
+    /// The open menu, what it was built from, and its dismissal.
+    menu: Option<(Entity<PopupMenu>, MenuContent, Subscription)>,
+    /// Where the menu was drawn last, in window points.
+    menu_bounds: Rc<Cell<Option<Bounds<Pixels>>>>,
+    /// See `MenuParts::keep_open`.
+    keep_open: Rc<Cell<bool>>,
+    /// Whether the window was active while the menu was open.
+    was_active: bool,
+    /// Where a press on the face began, until it is a click or a drag.
     pressed: Option<gpui_kit::Point<gpui_kit::Pixels>>,
     /// The person is dragging Theo somewhere.
     dragging: bool,
@@ -781,26 +836,38 @@ pub struct Body {
 
 impl Body {
     fn new(desk: Entity<Desk>, draft: String, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let composer = cx.new(|cx| {
-            let mut state = TextareaState::new(window, cx)
-                .auto_grow(1, 5)
-                .submit_on_enter(true)
-                .placeholder("Ask Theo");
-            // A remounted composer starts from the draft the driver kept.
+        let ask = cx.new(|cx| {
+            let mut state = InputState::new(window, cx).placeholder("Ask Theo");
+            // A remounted menu starts from the draft the driver kept.
             state.set_value(draft, window, cx);
             state
         });
         let subscriptions = vec![
             cx.observe(&desk, |_, _, cx| cx.notify()),
-            cx.subscribe_in(&composer, window, |body, _, event, window, cx| {
-                body.composer_event(event, window, cx)
+            cx.subscribe_in(&ask, window, |body, _, event, window, cx| {
+                body.ask_event(event, window, cx)
+            }),
+            // Choosing another application closes the menu, as a menu does.
+            cx.observe_window_activation(window, |body, window, cx| {
+                let active = window.is_window_active();
+                if active {
+                    body.was_active = true;
+                } else if body.was_active && body.menu.is_some() {
+                    body.was_active = false;
+                    body.desk.update(cx, |desk, cx| desk.close_composer(cx));
+                }
             }),
         ];
         Self {
+            driver: desk.read(cx).driver.clone(),
             desk,
-            composer,
+            ask,
             focus_handle: cx.focus_handle(),
             title: String::new(),
+            menu: None,
+            menu_bounds: Rc::new(Cell::new(None)),
+            keep_open: Rc::new(Cell::new(false)),
+            was_active: false,
             pressed: None,
             dragging: false,
             _subscriptions: subscriptions,
@@ -808,19 +875,15 @@ impl Body {
     }
 
     fn focus(&self, window: &mut Window, cx: &mut App) {
-        let handle = self.composer.focus_handle(cx);
+        let handle = self.ask.focus_handle(cx);
         window.focus(&handle, cx);
     }
 
-    fn driver(&self, cx: &App) -> Entity<TheoremDriver> {
-        self.desk.read(cx).driver.clone()
-    }
-
-    fn composer_event(&mut self, event: &InputEvent, window: &mut Window, cx: &mut Context<Self>) {
+    fn ask_event(&mut self, event: &InputEvent, window: &mut Window, cx: &mut Context<Self>) {
         match event {
             InputEvent::Change => {
-                let text = self.composer.read(cx).value().to_string();
-                self.driver(cx).update(cx, |driver, cx| {
+                let text = self.ask.read(cx).value().to_string();
+                self.driver.update(cx, |driver, cx| {
                     driver.composer_intent(ComposerIntent::DraftChanged { text }, cx)
                 });
             }
@@ -829,18 +892,17 @@ impl Body {
         }
     }
 
-    /// Sends the composer's text to the selected agent, as the Agent place's
+    /// Sends what was typed to the selected agent, as the Agent place's
     /// composer does, when the composer says it can be sent.
     fn submit(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let text = self.composer.read(cx).value().to_string();
-        let driver = self.driver(cx);
+        let text = self.ask.read(cx).value().to_string();
+        let driver = self.driver.clone();
         let composer = &driver.read(cx).projection().composer;
         if !composer.affordance(&text).is_send() {
             return;
         }
         let quote = composer.quote.clone();
-        self.composer
-            .update(cx, |composer, cx| composer.set_value("", window, cx));
+        self.ask.update(cx, |ask, cx| ask.set_value("", window, cx));
         driver.update(cx, |driver, cx| {
             driver.composer_intent(
                 ComposerIntent::Submit {
@@ -854,115 +916,165 @@ impl Body {
         });
     }
 
-    fn render_composer(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.theme().clone();
+    fn menu_content(&self, cx: &App) -> MenuContent {
         let desk = self.desk.read(cx);
         let driver = desk.driver.read(cx);
         let projection = driver.projection();
-        let live = projection.thread.run_state.is_live();
-        let not_configured = driver.connection() == Connection::NotConfigured;
-        let answer = latest_answer(&projection.thread);
-        let notice = projection
-            .notice
-            .clone()
-            .or_else(|| desk.unheard.first().cloned());
-        let title = match projection.thread.title.as_str() {
-            "" => "New conversation".to_owned(),
-            title => title.to_owned(),
-        };
-        let desk_entity = self.desk.clone();
-        let driver_entity = desk.driver.clone();
-        v_flex()
-            .w(px(COMPOSER_WIDTH))
-            .h(px(COMPOSER_HEIGHT))
-            .p_3()
-            .gap_2()
-            .rounded(px(14.))
-            .bg(theme.popover)
-            .border_1()
-            .border_color(theme.border)
-            .text_color(theme.popover_foreground)
-            .text_sm()
-            .child(
-                h_flex()
-                    .justify_between()
-                    .child(
-                        div()
-                            .font_weight(gpui_kit::FontWeight::SEMIBOLD)
-                            .truncate()
-                            .child(title),
-                    )
-                    .when(live, |row| {
-                        row.child(
-                            div()
-                                .id("theo-stop")
-                                .px_2()
-                                .rounded(px(6.))
-                                .bg(theme.secondary)
-                                .cursor_pointer()
-                                .child("Stop")
-                                .on_click(move |_, _, cx| {
-                                    desk_entity.update(cx, |desk, cx| desk.stop(cx))
-                                }),
-                        )
-                    }),
-            )
-            .child(
-                div()
-                    .id("theo-answer")
-                    .flex_1()
-                    .overflow_y_scroll()
-                    .text_color(theme.muted_foreground)
-                    .child(answer.unwrap_or_else(|| {
-                        if not_configured {
-                            "Theorem isn't set up on this Mac.".to_owned()
-                        } else {
-                            "Say what you need.".to_owned()
-                        }
-                    })),
-            )
-            .when_some(notice, |panel, notice| {
-                panel.child(div().text_xs().text_color(theme.danger).child(notice))
-            })
-            .when(not_configured, |panel| {
-                panel.child(
-                    div()
-                        .id("theo-demo")
-                        .text_xs()
-                        .text_color(theme.link)
-                        .cursor_pointer()
-                        .child("Use the demo authority")
-                        .on_click(move |_, _, cx| {
-                            driver_entity.update(cx, |driver, cx| driver.use_demo(cx))
-                        }),
-                )
-            })
-            .child(
-                div()
-                    .rounded(px(8.))
-                    .border_1()
-                    .border_color(theme.input)
-                    .bg(theme.background)
-                    .px_2()
-                    .py_1()
-                    .child(
-                        Textarea::new(&self.composer)
-                            .appearance(false)
-                            .aria_label("Ask Theo"),
-                    ),
-            )
+        MenuContent {
+            title: match projection.thread.title.as_str() {
+                "" => "New conversation".to_owned(),
+                title => title.to_owned(),
+            },
+            live: projection.thread.run_state.is_live(),
+            not_configured: driver.connection() == Connection::NotConfigured,
+            notice: projection
+                .notice
+                .clone()
+                .or_else(|| desk.unheard.first().cloned()),
+        }
     }
+
+    fn parts(&self) -> MenuParts {
+        MenuParts {
+            desk: self.desk.clone(),
+            driver: self.driver.clone(),
+            ask: self.ask.clone(),
+            keep_open: self.keep_open.clone(),
+        }
+    }
+
+    /// Opens the menu, or builds it again when what it shows has changed.
+    fn sync_menu(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if !open {
+            if self.menu.take().is_some() {
+                self.menu_bounds.set(None);
+            }
+            return;
+        }
+        let content = self.menu_content(cx);
+        let parts = self.parts();
+        if let Some((menu, built, _)) = &mut self.menu {
+            if *built != content {
+                *built = content.clone();
+                menu.update(cx, |menu, cx| {
+                    menu.rebuild(window, cx, |menu, _, _| parts.fill(menu, &content))
+                });
+            }
+            return;
+        }
+        let menu = PopupMenu::build(window, cx, |menu, _, _| parts.fill(menu, &content));
+        let dismissed = cx.subscribe_in(&menu, window, |_, _, _: &DismissEvent, window, cx| {
+            // Settled after the click that dismissed it: an item or a right
+            // click on the face may keep it open.
+            cx.defer_in(window, |body, window, cx| body.dismissed(window, cx));
+        });
+        self.menu = Some((menu, content, dismissed));
+        self.focus(window, cx);
+    }
+
+    fn dismissed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.keep_open.replace(false) {
+            if self.menu.is_some() {
+                self.focus(window, cx);
+            }
+            return;
+        }
+        self.desk.update(cx, |desk, cx| desk.close_composer(cx));
+    }
+}
+
+impl MenuParts {
+    /// The menu's items for `content`: the conversation, Theorem's reply,
+    /// a notice if there is one, the field, then what can be done.
+    fn fill(&self, menu: PopupMenu, content: &MenuContent) -> PopupMenu {
+        let driver = self.driver.clone();
+        let mut menu = menu
+            .min_w(px(MENU_WIDTH))
+            .max_w(px(MENU_WIDTH))
+            .label(content.title.clone())
+            .item(
+                PopupMenuItem::element({
+                    let driver = driver.clone();
+                    move |_, cx| reply(&driver, cx)
+                })
+                .disabled(true),
+            );
+        if let Some(notice) = content.notice.clone() {
+            menu = menu.item(
+                PopupMenuItem::element(move |_, cx| {
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .text_xs()
+                        .text_color(cx.theme().danger)
+                        .child(notice.clone())
+                })
+                .disabled(true),
+            );
+        }
+        let ask = self.ask.clone();
+        menu = menu.separator().item(
+            // Disabled as a menu item, so a click in the field does not
+            // close the menu; the field itself takes the keys.
+            PopupMenuItem::element(move |_, _| div().flex_1().py_1().child(Input::new(&ask)))
+                .disabled(true),
+        );
+        if content.live || content.not_configured {
+            menu = menu.separator();
+        }
+        if content.live {
+            let desk = self.desk.clone();
+            let keep = self.keep_open.clone();
+            menu = menu.item(PopupMenuItem::new("Stop").on_click(move |_, _, cx| {
+                keep.set(true);
+                desk.update(cx, |desk, cx| desk.stop(cx));
+            }));
+        }
+        if content.not_configured {
+            let keep = self.keep_open.clone();
+            menu = menu.item(PopupMenuItem::new("Use the Demo Authority").on_click(
+                move |_, _, cx| {
+                    keep.set(true);
+                    driver.update(cx, |driver, cx| driver.use_demo(cx));
+                },
+            ));
+        }
+        menu
+    }
+}
+
+/// Theorem's latest words in the conversation, read as the menu draws.
+fn reply(driver: &Entity<TheoremDriver>, cx: &App) -> gpui_kit::Stateful<gpui_kit::Div> {
+    let driver = driver.read(cx);
+    let text = latest_answer(&driver.projection().thread).unwrap_or_else(|| {
+        if driver.connection() == Connection::NotConfigured {
+            "Theorem isn't set up on this Mac.".to_owned()
+        } else {
+            "Say what you need.".to_owned()
+        }
+    });
+    div()
+        .id("theo-reply")
+        .flex_1()
+        .min_w_0()
+        .max_h(px(REPLY_HEIGHT))
+        .overflow_y_scroll()
+        .py_1()
+        .text_color(cx.theme().popover_foreground)
+        .child(text)
 }
 
 impl Render for Body {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let (frame, words, composer) = self.desk.update(cx, |desk, cx| {
+        let menu_bounds = self.menu_bounds.get();
+        let (frame, words, open) = self.desk.update(cx, |desk, cx| {
             (
-                desk.frame(window, cx),
+                desk.frame(window, menu_bounds, cx),
                 desk.words(),
                 desk.companion.composer_open(),
             )
         });
+        self.sync_menu(open, window, cx);
         // Assistive technology reads the window's title: what Theo is doing.
         let title = format!("Theo is {words}");
         if title != self.title {
@@ -975,6 +1087,7 @@ impl Render for Body {
             self.dragging = false;
             self.desk.update(cx, |desk, _| desk.rest_here(window));
         }
+        let measured = self.menu_bounds.clone();
         v_flex()
             .id("theo")
             .track_focus(&self.focus_handle)
@@ -984,15 +1097,38 @@ impl Render for Body {
             .on_action(cx.listener(|body, _: &Escape, _, cx| {
                 body.desk.update(cx, |desk, cx| desk.close_composer(cx))
             }))
-            .when(composer, |column| column.child(self.render_composer(cx)))
+            .when_some(self.menu.as_ref(), |column, (menu, _, _)| {
+                column.child(
+                    div().relative().child(menu.clone()).child(
+                        canvas(
+                            move |bounds, _, _| measured.set(Some(bounds)),
+                            |_, _, _, _| {},
+                        )
+                        .absolute()
+                        .size_full(),
+                    ),
+                )
+            })
             .child(
                 div()
                     .id("theo-body")
                     .w(px(BODY_SIZE.0 as f32))
                     .h(px(BODY_SIZE.1 as f32))
                     .child(body::body(frame))
-                    // A press on the body opens the composer; dragging it
-                    // moves Theo, and where it is let go is where it rests.
+                    // A right click on the face opens the menu to talk in.
+                    .on_mouse_down(
+                        MouseButton::Right,
+                        cx.listener(|body, _: &gpui_kit::MouseDownEvent, _, cx| {
+                            // An open menu is dismissed by this very click
+                            // before it reaches the face: keep it open.
+                            if body.menu.is_some() {
+                                body.keep_open.set(true);
+                            }
+                            body.desk.update(cx, |desk, cx| desk.talk(cx));
+                        }),
+                    )
+                    // Dragging the face moves Theo, and where it is let go is
+                    // where it rests.
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(|body, event: &gpui_kit::MouseDownEvent, _, _| {
@@ -1016,10 +1152,8 @@ impl Render for Body {
                     ))
                     .on_mouse_up(
                         MouseButton::Left,
-                        cx.listener(|body, _: &gpui_kit::MouseUpEvent, _, cx| {
-                            if body.pressed.take().is_some() {
-                                body.desk.update(cx, |desk, cx| desk.talk(cx));
-                            }
+                        cx.listener(|body, _: &gpui_kit::MouseUpEvent, _, _| {
+                            body.pressed = None;
                         }),
                     ),
             )
