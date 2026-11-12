@@ -181,6 +181,14 @@ impl Browser {
     /// The pages it asks for, a sign-in page or a cited source, open in a
     /// tab.
     pub(super) fn open_theorem(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        // The place and Theo on the desktop talk through one driver, so both
+        // show the same conversation and the same run.
+        #[cfg(target_os = "macos")]
+        let workbench = {
+            let driver = crate::theo_desk::driver(cx);
+            cx.new(|cx| Workbench::with_driver(driver, window, cx))
+        };
+        #[cfg(not(target_os = "macos"))]
         let workbench = cx.new(|cx| Workbench::new(window, cx));
         let driver = workbench.read(cx).driver().clone();
         let events = cx.subscribe_in(

@@ -41,6 +41,8 @@ mod spoken;
 mod tabtree;
 mod theme;
 mod theorem;
+#[cfg(target_os = "macos")]
+mod theo_desk;
 mod trail;
 mod voice;
 
@@ -131,6 +133,8 @@ fn main() -> anyhow::Result<()> {
             }
             recents::init(Some(profile_dir.join("recents.json")), cx);
             theorem::init(Some(profile_dir.join("theorem.json")), cx);
+            #[cfg(target_os = "macos")]
+            theo_desk::init(profile_dir.join("theo.json"), cx);
             search::init(&search_dir, cx);
             session::init(&profile_dir, cx);
             session::open_imported_tabs(&profile, cx);
@@ -144,7 +148,7 @@ fn main() -> anyhow::Result<()> {
                 cx.quit();
                 return;
             }
-            // One window for now: closing it quits.
+            // One browser window for now: closing it quits, Theo or not.
             quit_with_last_window(cx);
         });
     Ok(())
@@ -207,7 +211,7 @@ fn install_commands(cx: &mut App) {
     install_menus(cx);
 }
 
-fn install_menus(cx: &mut App) {
+pub(crate) fn install_menus(cx: &mut App) {
     let current = theme::appearance(cx);
     let appearances = Appearance::ALL.map(|appearance| {
         MenuItem::action(appearance.label(), SetAppearance { appearance })
@@ -275,6 +279,8 @@ fn install_menus(cx: &mut App) {
             MenuItem::action("Next Tab", NextTab),
             MenuItem::action("Previous Tab", PreviousTab),
         ]),
+        #[cfg(target_os = "macos")]
+        theo_desk::menu(cx),
     ]);
 }
 
@@ -301,7 +307,14 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
 
 fn quit_with_last_window(cx: &mut App) {
     cx.on_window_closed(|cx, _| {
-        if cx.windows().is_empty() {
+        #[cfg(target_os = "macos")]
+        let left = cx
+            .windows()
+            .into_iter()
+            .any(|window| !theo_desk::is_theo(window, cx));
+        #[cfg(not(target_os = "macos"))]
+        let left = !cx.windows().is_empty();
+        if !left {
             cx.quit();
         }
     })
