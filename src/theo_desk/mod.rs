@@ -36,6 +36,10 @@
 pub mod activity;
 mod body;
 mod mac;
+mod meter;
+mod morph;
+mod screen;
+mod shape;
 mod trail;
 
 use std::cell::{Cell, OnceCell, RefCell};
@@ -56,9 +60,9 @@ use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyWindowHandle, App, AppContext as _, Bounds, Context, Entity, FocusHandle,
     Focusable as _, Global, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _,
-    Pixels, Render, Styled as _, Subscription, Window,
-    WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions,
-    canvas, div, point, px, size,
+    Pixels, Render, Styled as _, Subscription, Window, WindowAppearance,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, canvas, div,
+    point, px, size,
 };
 use serde::{Deserialize, Serialize};
 use theo::engine::{Expression, FaceOptions, Liveness};
@@ -227,6 +231,8 @@ pub struct Desk {
     /// Why a key or the double right click cannot call Theo, when one cannot.
     unheard: Vec<String>,
     right_clicks: bool,
+    /// Theo's screen and the page it holds (`screen.rs`).
+    screen: screen::Host,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -325,7 +331,10 @@ fn reply_content(parts: &[ThreadPart]) -> Option<InputContent> {
                 if words.is_empty() {
                     continue;
                 }
-                if !text.is_empty() && !text.ends_with('\n') && (after_token || !words.starts_with(char::is_whitespace)) {
+                if !text.is_empty()
+                    && !text.ends_with('\n')
+                    && (after_token || !words.starts_with(char::is_whitespace))
+                {
                     text.push('\n');
                 }
                 text.push_str(words);
@@ -382,7 +391,9 @@ fn reply_content(parts: &[ThreadPart]) -> Option<InputContent> {
 /// A token's text: one line with no control characters, never empty.
 fn token_text(name: &str, id: &str) -> String {
     let words = name
-        .split(|c: char| c.is_whitespace() || c.is_control() || matches!(c, '\u{2028}' | '\u{2029}'))
+        .split(|c: char| {
+            c.is_whitespace() || c.is_control() || matches!(c, '\u{2028}' | '\u{2029}')
+        })
         .filter(|word| !word.is_empty())
         .collect::<Vec<_>>()
         .join(" ");
@@ -462,6 +473,7 @@ impl Desk {
             hotkeys: None,
             unheard: Vec::new(),
             right_clicks: false,
+            screen: screen::Host::default(),
             _subscriptions: subscriptions,
         };
         desk.listen_for_keys(cx);
@@ -632,6 +644,9 @@ impl Desk {
     }
 
     fn talk(&mut self, cx: &mut Context<Self>) {
+        if self.screen_yields_to_talk(cx) {
+            return;
+        }
         if self.companion.composer_open() {
             if let Some((handle, body)) = self.window.clone() {
                 cx.defer(move |cx| {
@@ -650,9 +665,16 @@ impl Desk {
     }
 
     fn close_composer(&mut self, cx: &mut Context<Self>) {
+        self.give_back();
+        self.put_composer_away(cx);
+    }
+
+    /// Closes the composer and keeps the keyboard: the screen opening in its
+    /// place takes it, and handed back first, macOS would not let Platinum
+    /// take it again.
+    fn put_composer_away(&mut self, cx: &mut Context<Self>) {
         self.companion.close_composer();
         self.stage.borrow_mut().composer = false;
-        self.give_back();
         self.mount(cx);
     }
 
@@ -660,6 +682,7 @@ impl Desk {
         let had_keys = self.companion.composer_open();
         self.companion.hide();
         self.stage.borrow_mut().composer = false;
+        self.screen_hidden(cx);
         if let Some((handle, _)) = self.forget_window() {
             // Closed once this update has ended: closing a window runs the
             // app's window-closed callbacks, which read the desk.
@@ -704,13 +727,14 @@ impl Desk {
                 let shrink = !keys && self.menu_grown;
                 self.menu_grown = keys;
                 let form = self.menu_form.clone();
+                let screen = self.screen_shows();
                 cx.defer(move |cx| {
                     let _ = handle.update(cx, |_, window, cx| {
                         if grow {
                             mac::open_menu(window, OPEN_SIZE, form, cx);
                         } else if shrink {
                             mac::close_menu(window, BODY_SIZE, form, cx);
-                        } else if !keys {
+                        } else if !keys && !screen {
                             mac::resize_at(window, BODY_SIZE, rest, cx);
                         }
                         if keys {
@@ -835,7 +859,7 @@ impl Desk {
         self.settle_liveness(now, cx);
         let grains = self.companion.frame(now).to_vec();
         // The open menu holds Theo where it is; a move waits for it to close.
-        let go = if form.is_none() {
+        let go = if form.is_none() && !self.screen_shows() {
             self.stage.borrow_mut().go.take()
         } else {
             None
@@ -852,7 +876,10 @@ impl Desk {
             && pointer
                 .zip(menu)
                 .is_some_and(|((x, y), menu)| menu.contains(&point(px(x as f32), px(y as f32))));
-        mac::pass_clicks(window, !(over_face || over_menu));
+        mac::pass_clicks(
+            window,
+            !(over_face || over_menu || self.screen_takes_clicks()),
+        );
         let face = &self.companion.face;
         BodyFrame {
             grains,
@@ -1060,6 +1087,17 @@ impl Body {
     /// composer does, when the composer says it can be sent.
     fn submit(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let text = self.ask.read(cx).value().to_string();
+        if let Some(url) = screen::address_typed(&text) {
+            // Setting the field does not report a change, so the driver's
+            // draft, which a remounted menu starts from, is cleared here.
+            self.ask.update(cx, |ask, cx| ask.set_value("", window, cx));
+            self.driver.update(cx, |driver, cx| {
+                driver.composer_intent(ComposerIntent::DraftChanged { text: String::new() }, cx)
+            });
+            self.desk
+                .update(cx, |desk, cx| desk.open_screen(Some(url), cx));
+            return;
+        }
         let driver = self.driver.clone();
         let composer = &driver.read(cx).projection().composer;
         if !composer.affordance(&text).is_send() {
@@ -1110,7 +1148,7 @@ impl Body {
             .clone()
             .or_else(|| desk.unheard.first().cloned());
         let glass = self.glass.get().and_then(Option::as_ref);
-        let mut actions = h_flex().w_full().gap_1();
+        let mut actions = h_flex().w_full().flex_wrap().gap_1();
         if state.unset {
             let driver = self.driver.clone();
             let ask = self.ask.clone();
@@ -1152,6 +1190,7 @@ impl Body {
                     .on_click(move |_, _, cx| desk.update(cx, |desk, cx| desk.stop(cx))),
             );
         }
+        let actions = screen::actions(actions, &self.desk, &desk.screen_menu());
         v_flex()
             .id("theo-menu")
             .w(px(MENU_WIDTH))
@@ -1215,12 +1254,10 @@ impl Body {
 impl Render for Body {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let menu_bounds = self.menu_bounds.get();
-        let (frame, words, open) = self.desk.update(cx, |desk, cx| {
-            (
-                desk.frame(window, menu_bounds, cx),
-                desk.words(),
-                desk.companion.composer_open(),
-            )
+        let (frame, words, open, screen) = self.desk.update(cx, |desk, cx| {
+            let frame = desk.frame(window, menu_bounds, cx);
+            let screen = desk.screen_view(&frame, window, cx);
+            (frame, desk.words(), desk.companion.composer_open(), screen)
         });
         self.sync_trail(window, cx);
         self.sync_menu(open, window, cx);
@@ -1318,6 +1355,7 @@ impl Render for Body {
                 body.desk.update(cx, |desk, cx| desk.close_composer(cx))
             }))
             .map(|column| match form {
+                _ if screen.is_some() => column.children(screen),
                 None => column.items_center().justify_center().child(face),
                 Some(form) if form.side == mac::Side::Below => column
                     .child(face)

@@ -353,15 +353,106 @@ reaches the rest of Platinum through `crate::theorem` (`TheoremDriver`) and
 
 The face's shape transformation (spec section 6: the eyes broaden into a
 content backing and the body stretches into a bezel, hosting Platinum's
-`Page`) is Stage E below, and is not started.
+`Page`) is Stage E, in the next section.
+
+## Stage E: the screen (2026-11-12, Mac session)
+
+The face opens into a small browser screen that holds a real Platinum `Page`,
+folds back into the face without losing it, and can be pinned, paused and
+played.
+
+### How it works
+
+- **Opening.** Typing an address into Ask Theo (`screen::address_typed`:
+  one whole http or https URL; a bare host such as `example.com` stays a
+  question for Theo) opens the screen instead of asking Theo. "Show Page" in the menu reopens a held page. The composer is put
+  away without handing the keyboard back (`Desk::put_composer_away`): handed
+  back first, macOS refuses Platinum taking it again for the screen.
+- **The morph** (`morph.rs`). `Morph` runs Face, Opening, Screen, Closing and
+  settles as Opened, Collapsed or Closed. The window grows frame by frame
+  through AppKit (`mac::after_update`), centred on the face and kept on the
+  visible frame. The body is a path between the face's plate and the screen's
+  bezel; the eyes broaden into the content backing; the page's last picture
+  shows once the backing is mostly there, and the live page once settled.
+  Reduced motion changes form at once.
+- **The page** (`screen.rs`, `src/page.rs`). `Session` holds the page through
+  collapse, hiding and form changes, and lets it go only on Close Page. A
+  collapsed page is rebound to the face's window with `Page::rebind`, which
+  moves it without reloading. Each page has a generation, so a playback report
+  about an earlier page is refused.
+- **Controls.** The bar has Back, the address, Keep on Top, Pause or Play while
+  the page has media, Back to Theo and Close Page. With the face collapsed,
+  the menu has Show Page, Pause or Play, and Close Page.
+- **Sound.** Servo's media session reports playback (`src/delegate.rs`,
+  `Playback`); Pause and Play go back through
+  `notify_media_session_action_event`. While the page plays, the face takes the
+  boombox. The level is measured where Platinum's sound leaves for the speakers
+  (`meter.rs`): a GStreamer sink ranked just above `osxaudiosink`, a bin of
+  `audioconvert ! level ! osxaudiosink`, with each measurement held until its
+  sound reaches the clock. No measurement means no level. Each start of
+  playback is a new run of the sound activity, because `Presence` never begins
+  a run that has ended.
+- **Resizing.** The settled screen is resizable from its edges. Collapsing
+  puts the face back at the same fraction of the screen it left from, so a
+  smaller screen never leaves it hanging outside.
+
+### Tested
+
+`script/media-env cargo test --locked --bin frame theo_desk`: 47
+passed, covering geometry, the morph's forms and reversal, the session's
+page and generation rules, sound runs through `Presence`, the level mapping
+and queue, the sink's `ts-offset`, and address parsing.
+
+### Observed in the running application
+
+These ran in an isolated copy (`dev.platinum.theo-stage-e`, its own HOME),
+driven by computer use on this Mac:
+
+- Typing `https://example.com` into Ask Theo opens the screen. The morph was
+  seen midway: the dark bezel growing, with two white backings broadening from
+  the eyes. It settles at 800x520, kept in the visible frame's bottom-right
+  corner.
+- The live page loads and scrolls, the bar's buttons are present with
+  accessibility labels, and Platinum stays frontmost after opening.
+- Keep on Top changes to Unpin and the screen floats above Platinum's own
+  window.
+- Back to Theo runs the morph backwards and the face comes back where it left.
+  Show Page reopens the same page, still scrolled and still pinned.
+- Dragging the left edge narrows the screen to its 360 pt minimum; the page
+  reflows, and collapsing puts the face at the same fraction across.
+- After a page has opened, the menu's field is empty and the action row wraps.
+- A local page playing a looping 440 Hz tone puts Pause in the bar, and
+  collapsing shows the boombox with sound waves, which appear only with a
+  measured level. Pause in the menu turns the face back to its eyes and the
+  button to Play. Pause then Play from the bar brings the boombox and its
+  waves back. With the measuring sink's `ts-offset`, GStreamer's warning
+  about it is gone from the log.
+- Hiding and showing Theo keeps the page and its playback; Close Page takes
+  the page actions out of the menu.
+
+### Not yet observed
+
+- Whether the sound stops on Close Page (nobody was listening). The page is
+  dropped with the session.
+- YouTube. Every Platinum window, not only the screen, fails youtube.com with
+  "client error (SendRequest)" in this build, while example.com loads and
+  curl reaches YouTube. It played in the build recorded in
+  `docs/plans/evidence/youtube-2026-10-25/`, so it is a regression or an
+  environment difference outside Stage E.
+
+### Open question for the owner
+
+What shape Theo takes while reading text aloud as opposed to playing music.
+The boombox fits music. For reading, a "reading" form whose eyes pulse with
+the voice's loudness is the suggestion; it needs authoring in the book.
 
 ## Later stages
 
 C (computer use: compare Cua Driver and agent-desktop on this Mac, then the
 observe, resolve, act, verify broker), D (Herdr attach, MCP and typed API),
-E (expandable local browser reusing `Page` and `Engine`), F (remote computers).
-None is started. C needs accessibility and screen-recording permission granted
-on the machine.
+E (expandable local browser reusing `Page` and `Engine`, now built: see
+Stage E above), F (remote computers). C needs accessibility and
+screen-recording permission granted on the machine.
 
 ## Standing rules that bit or nearly did
 

@@ -17,7 +17,8 @@ use std::rc::Rc;
 use dpi::PhysicalSize;
 use servo::{
     ConsoleLogLevel, CreateNewWebViewRequest, Cursor, EmbedderControl, EmbedderControlId,
-    InputEventId, InputEventResult, LoadStatus, NavigationRequest, WebView, WebViewDelegate,
+    InputEventId, InputEventResult, LoadStatus, MediaSessionEvent, MediaSessionPlaybackState,
+    NavigationRequest, WebView, WebViewDelegate,
 };
 use url::Url;
 
@@ -64,6 +65,16 @@ pub struct NewWebView {
     pub context: Rc<SceneRenderingContext>,
 }
 
+/// What the page's media session says it is doing.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Playback {
+    /// Nothing has said: no media, or a page that never reported.
+    #[default]
+    None,
+    Playing,
+    Paused,
+}
+
 #[derive(Default)]
 pub struct Delegate {
     events: RefCell<VecDeque<ServoEvent>>,
@@ -71,6 +82,7 @@ pub struct Delegate {
     pub(crate) navigation_starts: Cell<u64>,
     pub(crate) frames: Cell<u64>,
     hidden: Cell<bool>,
+    playback: Cell<Playback>,
 }
 
 impl Delegate {
@@ -93,6 +105,11 @@ impl Delegate {
 
     pub fn take_events(&self) -> VecDeque<ServoEvent> {
         std::mem::take(&mut *self.events.borrow_mut())
+    }
+
+    /// What the page's media last said it was doing.
+    pub fn playback(&self) -> Playback {
+        self.playback.get()
     }
 
     /// The link under the pointer, as the page last reported it.
@@ -223,6 +240,18 @@ impl WebViewDelegate for Delegate {
         self.push(ServoEvent::Closed);
     }
 
+    fn notify_media_session_event(&self, _: WebView, event: MediaSessionEvent) {
+        let MediaSessionEvent::PlaybackStateChange(state) = event else {
+            return;
+        };
+        self.playback.set(match state {
+            MediaSessionPlaybackState::Playing => Playback::Playing,
+            MediaSessionPlaybackState::Paused => Playback::Paused,
+            MediaSessionPlaybackState::None_ => Playback::None,
+        });
+        self.push(ServoEvent::Changed);
+    }
+
     fn show_console_message(&self, _: WebView, level: ConsoleLogLevel, message: String) {
         match level {
             ConsoleLogLevel::Error => log::error!(target: "page", "{message}"),
@@ -308,7 +337,10 @@ mod tests {
         delegate.present_if_visible(|| surface.set(3));
         assert_eq!(surface.get(), 3);
         assert_eq!(delegate.frames.get(), 2);
-        assert!(matches!(delegate.take_events().pop_front(), Some(ServoEvent::Frame)));
+        assert!(matches!(
+            delegate.take_events().pop_front(),
+            Some(ServoEvent::Frame)
+        ));
     }
 
     #[test]
