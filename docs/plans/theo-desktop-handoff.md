@@ -237,6 +237,13 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
   Theo sat over Platinum's own browser window. `run19` judges by the window
   beneath Theo instead (three tests over the beneath choice).
 
+- `run20`, with no key pressed and no menu item chosen: the window server
+  lists Theo's face (layer 101, 264 by 132) beside the browser window (layer
+  0) moments after launch, the face over the browser window. A first launch
+  started before the previous instance had exited showed no windows and an
+  empty log until relaunched; wait for the old process to go before starting
+  a new one.
+
 ### Not yet observed
 
 - **The beneath-window dismissal** (`run19`, built and launched): a click in
@@ -291,16 +298,19 @@ answer 403 `chat_scope_required`, and no token on this Mac carries the
   has the face, so sound shows over a run. It is a one-line change in
   `Presence::primary` if the other order is wanted.
 
-## Direction: Theo stands alone
+## Direction: Platinum is used through Theo
 
-The owner, 2026-11-12: Theo is slated to stand on its own and in time to
-replace or take in Platinum. So Theo's code treats Platinum as one more
-application it can sit over (the dismissal rule already does), and nothing
-new in `src/theo_desk` should reach into the browser. Today it reaches
-Platinum in two places only: `crate::theorem` (`TheoremDriver`, the
-connection to the local node) and `crate::install_menus` (the menu bar).
-Moving Theo into its own binary means lifting those two behind Theo's own
-seams; the `theo`, `presence` and `companion` crates already stand apart.
+The owner, 2026-11-12: Theo is not to be extracted from Platinum. It is to
+become the way Platinum is used. So Theo appears when Platinum opens
+(`theo_desk::init` defers `Desk::appear`), and its key and the menu bar's
+item still show and hide it. Theo's code treats Platinum's own windows as one
+more application it can sit over (the dismissal rule already does). Theo
+reaches the rest of Platinum through `crate::theorem` (`TheoremDriver`) and
+`crate::install_menus`; that is expected, not a seam to cut.
+
+The face's shape transformation (spec section 6: the eyes broaden into a
+content backing and the body stretches into a bezel, hosting Platinum's
+`Page`) is Stage E below, and is not started.
 
 ## Later stages
 

@@ -261,6 +261,8 @@ pub fn init(path: PathBuf, cx: &mut App) {
     cx.on_action(|_: &CallWithDoubleRightClick, cx| {
         with_desk(cx, |desk, cx| desk.set_double_right_click(cx))
     });
+    // Platinum is used through Theo, so Theo is there when Platinum opens.
+    cx.defer(|cx| with_desk(cx, |desk, cx| desk.appear(cx)));
 }
 
 fn with_desk(cx: &mut App, f: impl FnOnce(&mut Desk, &mut Context<Desk>)) {
@@ -608,10 +610,18 @@ impl Desk {
         if self.companion.visible() {
             self.hide(cx);
         } else {
-            let scope = self.capture(cx);
-            self.companion.show(scope);
-            self.mount(cx);
+            self.appear(cx);
         }
+    }
+
+    /// Shows the face over the application in front, if it is not showing.
+    fn appear(&mut self, cx: &mut Context<Self>) {
+        if self.companion.visible() {
+            return;
+        }
+        let scope = self.capture(cx);
+        self.companion.show(scope);
+        self.mount(cx);
     }
 
     fn talk(&mut self, cx: &mut Context<Self>) {
