@@ -15,6 +15,7 @@ members = [
     "crates/notes-fixtures",
     "crates/theo",
     "crates/presence",
+    "crates/companion",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",
@@ -44,6 +45,12 @@ rustyred-web = { path = "deps/theorem-search/rustyredcore_THG/crates/rustyred-we
 theoremweb-agent-runtime = { path = "deps/theorem-search/apps/theoremweb/crates/agent-runtime", default-features = false }
 # The documents that host projects and the intents the workbench hands it.
 theorem-surface-contracts = { path = "deps/theorem-search/rustyredcore_THG/crates/theorem-surface-contracts" }
+# The agent's authored manner on the wire, which Theo's face takes.
+agpui-contract = { path = "deps/theorem-search/rustyredcore_THG/crates/agpui-contract" }
+# Theo on the desktop (`src/theo_desk`): the face, its presence and the host-free companion.
+theo = { path = "crates/theo" }
+presence = { path = "crates/presence" }
+companion = { path = "crates/companion" }
 # The runtime's reqwest client needs Tokio's reactor wherever its futures are
 # polled, and GPUI polls them on the main thread.
 async-compat = "0.2.5"
@@ -161,10 +168,12 @@ objc2 = "0.6"
 objc2-app-kit = "0.3.2"
 objc2-core-foundation = "0.3.2"
 # Read left/right Command state without a global keyboard hook.
-objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGEventSource", "CGEventTypes", "CGRemoteOperation"] }
+objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGEvent", "CGEventSource", "CGEventTypes", "CGRemoteOperation", "CGWindow"] }
 # The share sheet's page address, and the window's view to show it from.
 objc2-foundation = "0.3.2"
 raw-window-handle = "0.6"
+# Keys that call Theo while another application is in front.
+global-hotkey = "0.8"
 # Wrapping Servo's IOSurface frames for `gpui::surface()`.
 objc2-core-video = { version = "0.3.2", default-features = false, features = ["std", "CVBuffer", "CVImageBuffer", "CVPixelBuffer", "CVPixelBufferIOSurface", "CVReturn", "objc2-io-surface"] }
 objc2-io-surface = "0.3.2"

@@ -1099,9 +1099,16 @@ fn part_view(
                 .child(text)
                 .into_any_element()
         }
+        // The thread's last accepted expression is the figure's manner, and
+        // Theo on the desktop takes its face's part while the turn runs
+        // (`theo_desk::activity::expression`). The transcript only says so.
         ThreadPart::Expression { .. } => note(
             Lucide::Sparkles,
-            "Theorem made a figure that Platinum can't draw yet.".to_owned(),
+            if cfg!(target_os = "macos") {
+                "Theorem set Theo's manner for this turn.".to_owned()
+            } else {
+                "Theorem made a figure that Platinum can't draw yet.".to_owned()
+            },
         )
         .into_any_element(),
         ThreadPart::ExpressionRefused { .. } => note(

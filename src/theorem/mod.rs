@@ -18,9 +18,7 @@ mod tests;
 mod transcript;
 mod workbench;
 
-pub use driver::DriverEvent;
-#[cfg(feature = "snapshot")]
-pub use driver::TheoremDriver;
+pub use driver::{Connection, DriverEvent, TheoremDriver};
 pub use saved::init;
 #[cfg(feature = "snapshot")]
 pub(crate) use models::open as open_models;
