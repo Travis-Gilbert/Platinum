@@ -12,6 +12,7 @@ this file says where the work stands against it.
 | --- | --- | --- |
 | `claude/theo-core-port` | #22, ready for review, base `main` | `crates/theo`, `crates/presence`, `script/test-theo`, `.github/workflows/theo.yml` |
 | `claude/theo-desktop-host` | #23, draft, base `claude/theo-core-port` | `crates/companion`, this file, the spec |
+| `claude/theo-stage-c-fe5831` | #26, draft, base `claude/theo-desktop-host` | `src/computer/` (Stage C broker), `script/fetch-cua-driver` |
 
 Work continues on `claude/theo-desktop-host`. If #22 merges first, rebase this
 branch onto `main`. The owner asked that the PRs be left alone while building:
@@ -324,6 +325,203 @@ show the same conversation. The Fly instance is not wired: its chat routes
 answer 403 `chat_scope_required`, and no token on this Mac carries the
 `tenant:read` scope they need.
 
+## Stage C: where it stands (2026-11-12, Mac session)
+
+Branch `claude/theo-stage-c-fe5831`, based on `claude/theo-desktop-host`. The
+broker is `src/computer/` in `frame` (macOS only). The driver is Cua Driver,
+run in process.
+
+### The driver comparison
+
+Cua Driver 0.47.23 (`cua-driver-rs`, C ABI 1.1, release tarball sha256
+`694b2dcf…d1d7`) against agent-desktop, both driven over MCP from the same
+probe on this Mac, three passes. These are the third pass's figures. Each
+driver used its own temporary Firefox profile, and neither touched the
+owner's windows.
+
+| Measure | Cua Driver | agent-desktop |
+| --- | --- | --- |
+| TextEdit snapshot | 192–1961 ms, mostly 200–450 ms; 15 elements | 400–3285 ms; 14 elements |
+| TextEdit type, verified by read-back | 627–788 ms | 203–554 ms |
+| Window move | 59–127 ms | 470–2064 ms |
+| Old element ref after a window move | works | works |
+| Old ref after a re-snapshot | refused as stale, explicitly | silently re-resolved and typed |
+| Focus of the person's front app | preserved | preserved |
+| Paced typing, 10 steps at 75 ms | `run_steps` 5810 ms, all landed | reported TIMEOUT, yet all 10 landed |
+| MCP `notifications/cancelled` at 1 s into 40 paced keys | run 1: all 40 landed, response suppressed; run 2: none landed | 48 landed, response suppressed |
+| Finder | 176 elements, 180–200 ms; AXOpen reported -25205 yet opened the folder; back worked | 111 elements, about 620 ms; double-click POLICY_DENIED; back TIMEOUT |
+| Preview | 40 elements, 51–80 ms | 41 elements, 400–545 ms |
+| A modal dialog from `osascript` | found by pid; Proceed pressed in 56 ms and verified | absent from the window inventory |
+| Firefox page, observe only | 16 → 27 elements, 19–27 ms | 33–34 elements, 330–500 ms |
+
+Preview was inconclusive for both. In Firefox neither driver reached the
+page's button or input, though both found the link.
+
+**Cua Driver was selected.** It refuses a stale reference instead of quietly
+re-aiming it, which is the spec's "bind targets to the observation". It
+reaches dialogs, observes several times faster, and moves windows an order
+of magnitude faster. It also ships a C ABI, so it runs inside Platinum with
+no daemon or second TCC identity. agent-desktop types faster, but it
+re-resolves stale references and misses dialogs, and neither of those can be
+worked around from outside the driver. Neither driver honours MCP
+cancellation of a paced sequence once it is under way, so the broker does
+not rely on the driver for interruption (below).
+
+The Cua SDK crate pins `zune-core = "=0.5.1"`, which conflicts with the
+locked `image`, so `src/computer/cua.rs` binds the ABI with `libloading`
+instead. `script/fetch-cua-driver` downloads the pinned tarball, checks its
+sha256, and extracts `libcua_driver_sdk.dylib`, its header and licence into
+`deps/cua-driver-rs-0.47.23/`. The library is found through
+`FRAME_CUA_DRIVER`, then the bundle's `Frameworks`, then that folder.
+
+### The broker
+
+- **Observe.** `Broker::observe(target, capture)` reads one window's
+  Accessibility tree (at most 400 elements in 5 s) with a capture of that
+  window alone, so Theo's own windows are excluded by construction. Each
+  observation has an id and keeps Cua's snapshot. If Cua refuses the
+  capture, the element tree alone makes the observation; `capture_missing`
+  says why when there is no picture.
+- **Resolve.** `contract::resolve(query, observation)` gives One, None or
+  Ambiguous. An action names an element by its index in a given observation,
+  never by pixels, so layout does not move its aim. There is one coordinate
+  transform, `Rect::in_capture`, from screen points to capture pixels.
+- **Act under a generation.** `take_control()` starts a generation and
+  records the HID input counters (key down, mouse buttons, scroll). The check
+  is made at the write: before sending, and polled while the Cua call is in
+  flight, which is then cancelled through the ABI. Any input from the person
+  revokes the generation, and Stop (`computer::stop()`, called first in
+  `Desk::stop`) revokes it outright. A dispatch for an old generation, an old
+  observation, or a missing element is refused before anything is sent.
+- **Verify.** After a dispatch the element is read back from a fresh
+  observation. Outcomes: `verified`, `delivered` (no read-back possible),
+  `refused` (revoked, stale, no element, executor, unavailable), or
+  `uncertain` (sent, but the application does not show it, or the call was
+  cut off).
+- **Receipts.** Every action appends one line to
+  `<profile>/computer/receipts.jsonl` and writes `a<action>.png`: the
+  capture it was aimed at, with the target outlined.
+- **Interruption and resume** (`task.rs`). Typing goes in pieces of up to
+  eight characters, each one atomic Accessibility insert. A revoked step
+  waits for the person to be idle, takes control again, and resumes from a
+  fresh observation. What is left to type is worked out from the field as it
+  now reads (`contract::remaining`), never from what was sent, so nothing is
+  typed twice. A press is never sent twice: a press whose outcome is
+  uncertain stops the task for a person to look at. `--theo-task <file>` runs
+  a task file, for verification only.
+
+### Findings that shaped it
+
+- **Cua trims values** (`get_window_state.rs`:
+  `value.map(str::trim).filter(|v| !v.is_empty())`). An empty field has no
+  value at all. Whitespace at the edges of what landed is therefore
+  invisible, so a piece never ends just before whitespace (an eight-letter
+  word takes its space along). Reconciliation takes the longest prefix of
+  the text that fits what landed: it may lose a space, but it never doubles
+  one. Measured: 3014 characters set, 3010 read back, no truncation at 3000.
+- **`type_text` inserts at the caret,** and TextEdit opens a document with
+  the caret at 0. So `remaining` finds what landed wherever the caret was,
+  not only at the end.
+- **Cua refuses every capture of the gate window** with "capture binding
+  failed: capture binding is invalid. Not dispatching click." The window is
+  on a display above the main one (negative y). The picture Cua wrote is
+  still correct, the window alone at 2x, so the broker keeps it and reads the
+  elements in a second call. The binding is what Cua's pixel-aimed clicks
+  would need, which the broker never uses.
+- **Cua's `is_on_screen` was false** for a window the window server listed
+  as on screen. A task therefore finds its window by title and uses
+  on-screen only to order the candidates.
+- **The HID counters are system-wide.** Any key, click or scroll in any
+  application revokes control, even input aimed elsewhere. A key event
+  posted at the HID tap (`CGEventPost`) counts as the person, which is how
+  the gate simulates one (`HID key-downs 456 -> 457`). Cua's Accessibility
+  typing does not count. A sample of every counter across each passing gate
+  run (90 s and 60 s, 22 typing actions each) changed once per run: the
+  injected key-down.
+- The boot disk filled up during the comparison (ENOSPC), then the Mac
+  rebooted and `/tmp` was wiped, raw comparison JSON included. The figures
+  above were recorded before that.
+
+### How to run it
+
+```bash
+script/fetch-cua-driver
+```
+
+```bash
+script/media-env cargo test --locked --bin frame computer
+```
+
+A task file names a window (`{"pid":…,"window":…}` or
+`{"app":"TextEdit","title":"…"}`) and steps (`find` a role and label, `act`
+with `press`, `type` or `set_value`, optional `until`). Run
+`frame --theo-task <file>` from a process that holds Accessibility (and
+Screen Recording, for captures and titles). The report goes to
+`<file>.report.json` and the journal to `<file>.journal.json`.
+
+### Tested (macOS, this session)
+
+- `script/media-env cargo test --locked --bin frame computer`: 14 passed.
+  Covered: resolution; outcomes; pieces; `remaining` with the caret not at
+  the end, with trimmed values, and with partial landing; never sending a
+  press twice; a padded value counted as set; resuming typing where it
+  stopped; divergence; task-file parsing; and the Cua reply parsers against
+  recorded shapes.
+- `script/media-env cargo build --locked`: builds.
+
+### Observed in the running application (the gate)
+
+Platinum debug build, its own profile (`HOME` set to a gate folder), run
+under an app holding Accessibility and Screen Recording, against a TextEdit
+document `theo-gate.txt`. The task: type "Theo typed this sentence into an
+existing TextEdit document in small pieces, was interrupted by the person,
+and resumed without typing anything twice." The interruption was
+**simulated**: an F19 key press posted at the HID tap, not a person's hand.
+The gate passed twice.
+
+- **Final run** (receipts with pictures). Actions 1–4 (generation 2) typed
+  "Theo ", "typed ", "this ", "sentence ", each verified by read-back. The
+  F19 was posted while action 4 was in flight (started …362925, posted
+  …363347, ended …363397, in ms). The broker logged "the person took over;
+  generation 2 revoked". The cancelled call's atomic insert had already
+  landed, and the read-back says so: action 4 is `verified`, not assumed.
+  About 3 s later (the task's idle wait) the task resumed from a fresh
+  observation under generation 4. It worked out the rest from the field as
+  it read, and typed actions 5–22 ("into an " … "twice."), all verified,
+  including a word split mid-way ("interrup", "ted by "). Report: finished,
+  1 takeover, 1 resume, the field holding the sentence exactly once. Each of
+  the 22 actions left `a<n>.png`, the window with the text area outlined.
+- **First passing run.** The same task and result, with the F19 landing
+  during action 5. That run's receipts had no pictures (the capture refusal
+  above, since fixed).
+- **An unplanned takeover.** A re-run of the task, which typed the sentence
+  a second time because a new run types its text again (the journal resumes
+  only within a run), was revoked once with no injection from this session.
+  Its source is unknown: the owner, or another session's input. It resumed
+  after the idle wait and doubled nothing.
+- **Before the fixes.** One run lost a space ("sentenceinto"), because a
+  piece stopped just before the space. The task stopped itself with "the
+  field changed under the step" instead of guessing. In that run the
+  System Events key press never arrived (AppleEvent timeout), hence the
+  HID-tap injection.
+
+### Not yet observed or not done
+
+- A person's own hand taking over. The gate's interruption was simulated.
+- Clicks and `set_value` under interruption. The gate typed; a press is
+  covered only by the rule that it is never sent twice.
+- Cua's own clicks against the HID counters. Its typing does not move them;
+  clicks were not measured in a quiet room.
+- Theo's own surfaces. The Stage D capability seam
+  (`theo_desk::capability`, branch `claude/theo-stage-d-6d67c9`) is not on
+  this branch. The adapter (`install_broker(Arc::new(adapter))` after
+  `computer::init`) is a follow-up for whichever branch merges second. Its
+  mapping is in the shared notes (`stage-c-broker-reply.md`,
+  `stage-d-reply-to-stage-c.md`).
+- An `Act::Key`, to place the caret before typing, and the agent cursor as a
+  live annotation, rather than receipts afterwards.
+- Bundling the dylib into the app's `Frameworks` in the release script.
+
 ## Open decisions for the owner
 
 - **Expression (decided in Stage B, revisit if wanted).** The face takes
@@ -337,6 +535,15 @@ answer 403 `chat_scope_required`, and no token on this Mac carries the
   numbers the next version from the last one present. Fixing it needs a stored
   highest-issued number, which departs from the web's saved format. This is the
   one review finding on #22 left unanswered.
+- **Takeover is system-wide (Stage C).** Any key, click or scroll anywhere
+  revokes Theo's control of the desktop, even when the person is typing in
+  another application. That is the safe reading of the spec. Scoping it to
+  the target application would need an event tap, and with it Input
+  Monitoring permission.
+- **Screen Recording (Stage C).** Without it the broker still acts through
+  Accessibility, but it has no captures and no window titles (it falls back
+  to the Accessibility title). Grant it to Platinum, or accept receipts
+  without pictures.
 - **Equal standing.** Among activities of the same standing the latest begun
   has the face, so sound shows over a run. It is a one-line change in
   `Presence::primary` if the other order is wanted.
@@ -357,11 +564,10 @@ content backing and the body stretches into a bezel, hosting Platinum's
 
 ## Later stages
 
-C (computer use: compare Cua Driver and agent-desktop on this Mac, then the
-observe, resolve, act, verify broker), D (Herdr attach, MCP and typed API),
-E (expandable local browser reusing `Page` and `Engine`), F (remote computers).
-None is started. C needs accessibility and screen-recording permission granted
-on the machine.
+C (computer use) is built, and its gate has been observed (see Stage C
+above). D (Herdr attach, MCP and typed API) and E (expandable local browser
+reusing `Page` and `Engine`) are being built on their own branches; see them
+for where they stand. F (remote computers) is not started.
 
 ## Standing rules that bit or nearly did
 

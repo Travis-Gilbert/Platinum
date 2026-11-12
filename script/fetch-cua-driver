@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Puts Cua Driver's in-process library where Platinum's computer-use broker
+# looks for it (src/computer/cua.rs): deps/cua-driver-rs-<version>/.
+#
+# The release is pinned and its archive checked against the digest recorded
+# when the broker was measured against it. Apple silicon only: Cua publishes
+# no x86_64 build of the library.
+#
+#   FRAME_DEPS_DIR  where deps/ points (default: ./deps itself)
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+version="0.47.23"
+tag="cua-driver-rs-v$version"
+archive="cua-driver-rs-$version-darwin-arm64.tar.gz"
+digest="694b2dcf78b7f3d875e7d1a1114e39d2edc2fab4c90f0cce33e2252883f8d1d7"
+url="https://github.com/trycua/cua/releases/download/$tag/$archive"
+
+deps_dir="${FRAME_DEPS_DIR:-$root/deps}"
+out="$deps_dir/cua-driver-rs-$version"
+if [[ -f "$out/libcua_driver_sdk.dylib" ]]; then
+  echo "$out/libcua_driver_sdk.dylib is in place"
+  exit 0
+fi
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+curl --fail --location --silent --show-error --output "$work/$archive" "$url"
+echo "$digest  $work/$archive" | shasum -a 256 --check --quiet
+mkdir -p "$work/x"
+tar -xzf "$work/$archive" -C "$work/x"
+library="$(find "$work/x" -name libcua_driver_sdk.dylib -type f | head -n 1)"
+if [[ -z "$library" ]]; then
+  echo "$archive holds no libcua_driver_sdk.dylib" >&2
+  exit 1
+fi
+mkdir -p "$out"
+cp "$library" "$out/"
+find "$work/x" \( -name LICENSE\* -o -name cua_driver_abi.h \) -type f -exec cp {} "$out/" \;
+echo "installed $out/libcua_driver_sdk.dylib"
