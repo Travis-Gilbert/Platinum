@@ -29,19 +29,23 @@ mod body;
 mod mac;
 
 use std::cell::{Cell, RefCell};
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::time::Instant;
 
 use companion::{Calling, Companion, Scope};
-use gpui_kit::component::input::{Escape, Input, InputEvent, InputState};
+use gpui_kit::component::input::{
+    Escape, InlineToken, Input, InputContent, InputEvent, InputState, InputToken, Textarea,
+    TextareaState,
+};
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
-use gpui_kit::component::{ActiveTheme as _, Root, v_flex};
+use gpui_kit::component::{ActiveTheme as _, IconName, Root, h_flex, v_flex};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
     AnyWindowHandle, App, AppContext as _, Bounds, Context, DismissEvent, Entity, FocusHandle,
     Focusable as _, Global, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _,
-    Pixels, Render, StatefulInteractiveElement as _, Styled as _, Subscription, Window,
+    Pixels, Render, Styled as _, Subscription, Window,
     WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions,
     canvas, div, point, px, size,
 };
@@ -73,13 +77,20 @@ actions!(
     ]
 );
 
-/// The menu's width, the room above Theo it may take, and the most of that
-/// a reply may fill before it scrolls, in points.
+/// The menu's width and the room beside Theo it may take, in points. The
+/// menu keeps its width; its reply grows with what Theorem says, from one
+/// line to `REPLY_ROWS`, and scrolls past that.
 const MENU_WIDTH: f32 = 320.0;
-const MENU_ROOM: f32 = 340.0;
-const REPLY_HEIGHT: f32 = 200.0;
+const MENU_ROOM: f32 = 440.0;
+const REPLY_ROWS: usize = 12;
 /// Clear space either side of the menu for its shadow, in points.
 const MENU_MARGIN: f32 = 12.0;
+/// Theo's window while the menu is open: the menu and its margins (wider
+/// than the face) by the face and the room beside it, in points.
+const OPEN_SIZE: (f64, f64) = (
+    MENU_WIDTH as f64 + 2.0 * MENU_MARGIN as f64,
+    MENU_ROOM as f64 + BODY_SIZE.1,
+);
 /// How far from the plate the pointer is still followed, in points.
 const FOLLOW_WITHIN: f64 = 480.0;
 /// The pointer at this distance turns the gaze all the way, in points.
@@ -133,6 +144,8 @@ const HOME: (f64, f64) = (0.98, 0.04);
 struct StageState {
     pointer: Option<(f64, f64)>,
     composer: bool,
+    /// The composer opened over the face rather than under it.
+    composer_above: bool,
     rest: Option<(f64, f64)>,
     go: Option<((f64, f64), bool)>,
     still: bool,
@@ -145,8 +158,11 @@ impl Stage for DeskStage {
         let state = self.0.borrow();
         match place {
             Place::Named("pointer") => state.pointer,
-            // The composer opens above the body.
-            Place::Named("composer") => state.composer.then_some((0.0, -0.8)),
+            // The composer opens under the body, or over it at the bottom
+            // of the screen.
+            Place::Named("composer") => state
+                .composer
+                .then_some((0.0, if state.composer_above { -0.8 } else { 0.8 })),
             Place::Named("home") => Some((0.0, 0.0)),
             _ => theo::engine::plain_gaze(place),
         }
@@ -176,6 +192,11 @@ pub struct Desk {
     settings: Settings,
     path: Option<PathBuf>,
     window: Option<(AnyWindowHandle, Entity<Body>)>,
+    /// How the window was laid out when it grew to hold the menu, once it
+    /// has; set where the window changes (see `mac::open_menu`).
+    menu_form: Rc<Cell<Option<mac::MenuForm>>>,
+    /// The window has been asked to grow for the menu and not yet to shrink.
+    menu_grown: bool,
     /// A window is being made for Theo, once the update asking for it ends.
     opening: bool,
     /// The application and window Theo was last called over.
@@ -274,23 +295,99 @@ fn gaze_of(pointer: (f64, f64)) -> Option<(f64, f64)> {
     })
 }
 
-/// Theorem's latest words in the conversation, as plain text.
-fn latest_answer(thread: &theorem_surface_contracts::thread::ThreadDocument) -> Option<String> {
-    let message = thread
-        .messages
-        .iter()
-        .rev()
-        .find(|message| message.actor == ThreadActor::Theorem)?;
-    let text = message
-        .parts
-        .iter()
-        .filter_map(|part| match part {
-            ThreadPart::Text { text, .. } => Some(text.as_str()),
-            _ => None,
-        })
+/// Theorem's latest message as the reply shows it: its words, with each
+/// citation, attachment and artifact as one inline token.
+fn reply_content(parts: &[ThreadPart]) -> Option<InputContent> {
+    let mut text = String::new();
+    let mut tokens: Vec<(Range<usize>, InlineToken)> = Vec::new();
+    let mut after_token = false;
+    for part in parts {
+        let (id, name) = match part {
+            ThreadPart::Text { text: words, .. } | ThreadPart::Code { source: words, .. } => {
+                if words.is_empty() {
+                    continue;
+                }
+                if !text.is_empty() && !text.ends_with('\n') && (after_token || !words.starts_with(char::is_whitespace)) {
+                    text.push('\n');
+                }
+                text.push_str(words);
+                after_token = false;
+                continue;
+            }
+            ThreadPart::Citation {
+                source_id, label, ..
+            } => (format!("citation:{source_id}"), label.clone()),
+            ThreadPart::Attachment { part_id, name, .. } => {
+                (format!("attachment:{part_id}"), name.clone())
+            }
+            ThreadPart::Artifact {
+                artifact_id,
+                artifact_kind,
+                fallback_text,
+                ..
+            } => (
+                format!("artifact:{artifact_id}"),
+                fallback_text
+                    .lines()
+                    .map(str::trim)
+                    .find(|line| !line.is_empty())
+                    .unwrap_or(artifact_kind)
+                    .to_owned(),
+            ),
+            _ => continue,
+        };
+        let name = token_text(&name, &id);
+        if !text.is_empty() && !text.ends_with(char::is_whitespace) {
+            text.push(' ');
+        }
+        let range = text.len()..text.len() + name.len();
+        text.push_str(&name);
+        tokens.push((range, InlineToken::new(id, name)));
+        after_token = true;
+    }
+    if text.trim().is_empty() {
+        return None;
+    }
+    let mut content = InputContent::new(text);
+    for (range, token) in tokens {
+        content = match content.clone().with_token(range, token) {
+            Ok(content) => content,
+            Err(error) => {
+                log::warn!("theo: a reply token was refused: {error:?}");
+                content
+            }
+        };
+    }
+    Some(content)
+}
+
+/// A token's text: one line with no control characters, never empty.
+fn token_text(name: &str, id: &str) -> String {
+    let words = name
+        .split(|c: char| c.is_whitespace() || c.is_control() || matches!(c, '\u{2028}' | '\u{2029}'))
+        .filter(|word| !word.is_empty())
         .collect::<Vec<_>>()
-        .join("\n");
-    (!text.trim().is_empty()).then_some(text)
+        .join(" ");
+    if !words.is_empty() {
+        return words;
+    }
+    match id.split_once(':').map(|(kind, _)| kind) {
+        Some("citation") => "Source",
+        Some("attachment") => "Attachment",
+        _ => "Artifact",
+    }
+    .to_owned()
+}
+
+/// The mark a reply token wears for what it refers to.
+fn token_icon(id: &str) -> IconName {
+    if id.starts_with("citation:") {
+        IconName::BookOpen
+    } else if id.starts_with("attachment:") {
+        IconName::File
+    } else {
+        IconName::Frame
+    }
 }
 
 impl Desk {
@@ -327,6 +424,8 @@ impl Desk {
             settings,
             path,
             window: None,
+            menu_form: Rc::new(Cell::new(None)),
+            menu_grown: false,
             opening: false,
             front: None,
             liveness: Liveness::Idle,
@@ -527,7 +626,7 @@ impl Desk {
         let had_keys = self.companion.composer_open();
         self.companion.hide();
         self.stage.borrow_mut().composer = false;
-        if let Some((handle, _)) = self.window.take() {
+        if let Some((handle, _)) = self.forget_window() {
             // Closed once this update has ended: closing a window runs the
             // app's window-closed callbacks, which read the desk.
             cx.defer(move |cx| {
@@ -540,6 +639,13 @@ impl Desk {
         cx.notify();
     }
 
+    /// Lets go of Theo's window, and of how it was laid out for the menu.
+    fn forget_window(&mut self) -> Option<(AnyWindowHandle, Entity<Body>)> {
+        self.menu_grown = false;
+        self.menu_form.set(None);
+        self.window.take()
+    }
+
     /// Hands the keyboard back to the application Theo was called over, if
     /// Platinum took it.
     fn give_back(&self) {
@@ -550,20 +656,8 @@ impl Desk {
         }
     }
 
-    fn window_size(&self) -> gpui_kit::Size<gpui_kit::Pixels> {
-        if self.companion.composer_open() {
-            size(
-                px((MENU_WIDTH + 2.0 * MENU_MARGIN).max(BODY_SIZE.0 as f32)),
-                px(MENU_ROOM + BODY_SIZE.1 as f32),
-            )
-        } else {
-            size(px(BODY_SIZE.0 as f32), px(BODY_SIZE.1 as f32))
-        }
-    }
-
-    /// Opens Theo's window, or fits the open one to what it shows now.
+    /// Mounts the face alone; the window grows around it for the menu.
     fn mount(&mut self, cx: &mut Context<Self>) {
-        let wanted = self.window_size();
         let keys = self.companion.composer_open();
         if let Some((handle, body)) = self.window.clone() {
             // Asked from inside Theo's own window (a right click, Escape, the
@@ -572,14 +666,19 @@ impl Desk {
             // is forgotten: taking a busy one for gone opened a second Theo.
             if cx.windows().contains(&handle) {
                 let rest = self.settings.spot.unwrap_or(HOME);
+                let grow = keys && !self.menu_grown;
+                let shrink = !keys && self.menu_grown;
+                self.menu_grown = keys;
+                let form = self.menu_form.clone();
                 cx.defer(move |cx| {
                     let _ = handle.update(cx, |_, window, cx| {
-                        mac::resize_at(
-                            window,
-                            (f64::from(wanted.width), f64::from(wanted.height)),
-                            rest,
-                            cx,
-                        );
+                        if grow {
+                            mac::open_menu(window, OPEN_SIZE, form, cx);
+                        } else if shrink {
+                            mac::close_menu(window, BODY_SIZE, form, cx);
+                        } else if !keys {
+                            mac::resize_at(window, BODY_SIZE, rest, cx);
+                        }
                         if keys {
                             window.activate_window();
                             body.update(cx, |body, cx| body.focus(window, cx));
@@ -589,7 +688,7 @@ impl Desk {
                 cx.notify();
                 return;
             }
-            self.window = None;
+            self.forget_window();
         }
         if self.opening {
             return;
@@ -675,35 +774,50 @@ impl Desk {
                 self.companion.set_still(still);
             }
         }
-        let pointer = mac::pointer_from(window);
-        let gaze = pointer.and_then(gaze_of);
-        self.stage.borrow_mut().pointer = gaze;
+        // The pointer in window points, and from the face's centre, wherever
+        // the face sits in the window.
+        let pointer = mac::pointer_in(window);
+        let form = self.menu_form.get();
+        let viewport = window.viewport_size();
+        let (width, height) = (f64::from(viewport.width), f64::from(viewport.height));
+        let centre = match form {
+            None => (width / 2.0, height / 2.0),
+            Some(form) => (
+                form.face_x + BODY_SIZE.0 / 2.0,
+                match form.side {
+                    mac::Side::Below => BODY_SIZE.1 / 2.0,
+                    mac::Side::Above => height - BODY_SIZE.1 / 2.0,
+                },
+            ),
+        };
+        let from_face = pointer.map(|(x, y)| (x - centre.0, y - centre.1));
+        let gaze = from_face.and_then(gaze_of);
+        {
+            let mut stage = self.stage.borrow_mut();
+            stage.pointer = gaze;
+            stage.composer_above = form.is_some_and(|form| form.side == mac::Side::Above);
+        }
         self.companion.face.follow_pointer(gaze);
         self.settle_liveness(now, cx);
         let grains = self.companion.frame(now).to_vec();
-        if let Some((spot, animate)) = self.stage.borrow_mut().go.take() {
+        // The open menu holds Theo where it is; a move waits for it to close.
+        let go = if form.is_none() {
+            self.stage.borrow_mut().go.take()
+        } else {
+            None
+        };
+        if let Some((spot, animate)) = go {
             mac::place(window, spot, animate, cx);
         }
         // Only the face and the menu take clicks: everywhere else on the
         // window lets them through to what is beneath.
         let open = self.companion.composer_open();
-        let over_face = pointer.is_some_and(|(x, y)| {
-            let centre_y = if open {
-                f64::from(MENU_ROOM) / 2.0
-            } else {
-                0.0
-            };
-            x.abs() <= body::VISOR_PX / 2.0 + 8.0 && (y - centre_y).abs() <= 48.0
-        });
+        let over_face = from_face
+            .is_some_and(|(x, y)| x.abs() <= body::VISOR_PX / 2.0 + 8.0 && y.abs() <= 48.0);
         let over_menu = open
-            && pointer.zip(menu).is_some_and(|((x, y), menu)| {
-                let size = window.viewport_size();
-                let at = point(
-                    px((x + f64::from(size.width) / 2.0) as f32),
-                    px((y + f64::from(size.height) / 2.0) as f32),
-                );
-                menu.contains(&at)
-            });
+            && pointer
+                .zip(menu)
+                .is_some_and(|((x, y), menu)| menu.contains(&point(px(x as f32), px(y as f32))));
         mac::pass_clicks(window, !(over_face || over_menu));
         let face = &self.companion.face;
         BodyFrame {
@@ -728,7 +842,8 @@ impl Desk {
 
     /// The person moved Theo: rest there from now on.
     fn rest_here(&mut self, window: &Window) {
-        if let Some(spot) = mac::spot_of(window) {
+        let form = self.menu_form.get().map(|form| (form, BODY_SIZE));
+        if let Some(spot) = mac::spot_of(window, form) {
             self.settings.spot = Some(spot);
             self.stage.borrow_mut().rest = Some(spot);
             self.save();
@@ -739,19 +854,19 @@ impl Desk {
 /// Opens Theo's window for what the desk shows now, unless it was hidden
 /// while waiting.
 fn open(desk: Entity<Desk>, cx: &mut App) {
-    let (wanted, keys, rest, draft) = {
+    let (keys, rest, draft) = {
         let shown = desk.read(cx);
         if !shown.companion.visible() || shown.window.is_some() {
             desk.update(cx, |desk, _| desk.opening = false);
             return;
         }
         (
-            shown.window_size(),
             shown.companion.composer_open(),
             shown.settings.spot.unwrap_or(HOME),
             shown.driver.read(cx).projection().composer.draft.clone(),
         )
     };
+    let wanted = size(px(BODY_SIZE.0 as f32), px(BODY_SIZE.1 as f32));
     let origin = cx
         .primary_display()
         .map_or(point(px(0.), px(0.)), |display| {
@@ -776,11 +891,14 @@ fn open(desk: Entity<Desk>, cx: &mut App) {
     let made = Rc::new(RefCell::new(None));
     let slot = made.clone();
     let owner = desk.clone();
+    let form = desk.read(cx).menu_form.clone();
     let opened = cx.open_window(options, |window, cx| {
         let body = cx.new(|cx| Body::new(owner, draft, window, cx));
         mac::unframe(window, cx);
         mac::place(window, rest, false, cx);
         if keys {
+            // Placed first, then grown around where the face was put.
+            mac::open_menu(window, OPEN_SIZE, form, cx);
             window.activate_window();
             body.update(cx, |body, cx| body.focus(window, cx));
         }
@@ -791,7 +909,10 @@ fn open(desk: Entity<Desk>, cx: &mut App) {
     desk.update(cx, |desk, cx| {
         desk.opening = false;
         match (opened, body) {
-            (Ok(handle), Some(body)) => desk.window = Some((handle.into(), body)),
+            (Ok(handle), Some(body)) => {
+                desk.window = Some((handle.into(), body));
+                desk.menu_grown = keys;
+            }
             (Ok(_), None) => log::error!("theo: its window opened without a body"),
             (Err(error), _) => log::error!("theo: could not open its window: {error:#}"),
         }
@@ -817,6 +938,7 @@ struct MenuParts {
     desk: Entity<Desk>,
     driver: Entity<TheoremDriver>,
     ask: Entity<InputState>,
+    reply: Entity<TextareaState>,
     /// The menu's dismissal is for an item that keeps it open, or for a
     /// right click that opens it again.
     keep_open: Rc<Cell<bool>>,
@@ -827,6 +949,10 @@ pub struct Body {
     desk: Entity<Desk>,
     driver: Entity<TheoremDriver>,
     ask: Entity<InputState>,
+    /// Theorem's reply, read-only, growing with what it says.
+    reply: Entity<TextareaState>,
+    /// What the reply was last given, so it is set only when that changes.
+    reply_shown: Option<InputContent>,
     focus_handle: FocusHandle,
     title: String,
     /// The open menu, what it was built from, and its dismissal.
@@ -852,6 +978,7 @@ impl Body {
             state.set_value(draft, window, cx);
             state
         });
+        let reply = cx.new(|cx| TextareaState::new(window, cx).auto_grow(1, REPLY_ROWS));
         let subscriptions = vec![
             cx.observe(&desk, |_, _, cx| cx.notify()),
             cx.subscribe_in(&ask, window, |body, _, event, window, cx| {
@@ -872,6 +999,8 @@ impl Body {
             driver: desk.read(cx).driver.clone(),
             desk,
             ask,
+            reply,
+            reply_shown: None,
             focus_handle: cx.focus_handle(),
             title: String::new(),
             menu: None,
@@ -949,6 +1078,7 @@ impl Body {
             desk: self.desk.clone(),
             driver: self.driver.clone(),
             ask: self.ask.clone(),
+            reply: self.reply.clone(),
             keep_open: self.keep_open.clone(),
         }
     }
@@ -982,6 +1112,32 @@ impl Body {
         self.focus(window, cx);
     }
 
+    /// Gives the reply Theorem's latest message, when that has changed.
+    fn sync_reply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let driver = self.driver.read(cx);
+        let thread = &driver.projection().thread;
+        let latest = thread
+            .messages
+            .iter()
+            .rev()
+            .find(|message| message.actor == ThreadActor::Theorem);
+        let content = latest
+            .and_then(|message| reply_content(&message.parts))
+            .unwrap_or_else(|| {
+                InputContent::new(if driver.connection() == Connection::NotConfigured {
+                    "Theorem isn't set up on this Mac."
+                } else {
+                    "Say what you need."
+                })
+            });
+        if self.reply_shown.as_ref() == Some(&content) {
+            return;
+        }
+        self.reply_shown = Some(content.clone());
+        self.reply
+            .update(cx, |reply, cx| reply.set_value(content, window, cx));
+    }
+
     fn dismissed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.keep_open.replace(false) {
             if self.menu.is_some() {
@@ -1003,9 +1159,21 @@ impl MenuParts {
             .max_w(px(MENU_WIDTH))
             .label(content.title.clone())
             .item(
+                // Disabled as a menu item, so selecting in the reply does
+                // not close the menu.
                 PopupMenuItem::element({
-                    let driver = driver.clone();
-                    move |_, cx| reply(&driver, cx)
+                    let reply = self.reply.clone();
+                    move |_, _| {
+                        div().flex_1().min_w_0().child(
+                            Textarea::new(&reply)
+                                .readonly(true)
+                                .bordered(false)
+                                .appearance(false)
+                                .token(|token, _, _| {
+                                    InputToken::new(token).icon(token_icon(token.token().id()))
+                                }),
+                        )
+                    }
                 })
                 .disabled(true),
             );
@@ -1029,8 +1197,18 @@ impl MenuParts {
             PopupMenuItem::element(move |_, _| div().flex_1().py_1().child(Input::new(&ask)))
                 .disabled(true),
         );
-        if content.live || content.not_configured {
-            menu = menu.separator();
+        menu = menu.separator();
+        if !content.not_configured {
+            // Theo shares the Agent place's selection, which may be any
+            // conversation in the account; a fresh one is always a click away.
+            let keep = self.keep_open.clone();
+            let driver = driver.clone();
+            menu = menu.item(PopupMenuItem::new("New Conversation").on_click(
+                move |_, _, cx| {
+                    keep.set(true);
+                    driver.update(cx, |driver, cx| driver.new_conversation(cx));
+                },
+            ));
         }
         if content.live {
             let desk = self.desk.clone();
@@ -1053,27 +1231,6 @@ impl MenuParts {
     }
 }
 
-/// Theorem's latest words in the conversation, read as the menu draws.
-fn reply(driver: &Entity<TheoremDriver>, cx: &App) -> gpui_kit::Stateful<gpui_kit::Div> {
-    let driver = driver.read(cx);
-    let text = latest_answer(&driver.projection().thread).unwrap_or_else(|| {
-        if driver.connection() == Connection::NotConfigured {
-            "Theorem isn't set up on this Mac.".to_owned()
-        } else {
-            "Say what you need.".to_owned()
-        }
-    });
-    div()
-        .id("theo-reply")
-        .flex_1()
-        .min_w_0()
-        .max_h(px(REPLY_HEIGHT))
-        .overflow_y_scroll()
-        .py_1()
-        .text_color(cx.theme().popover_foreground)
-        .child(text)
-}
-
 impl Render for Body {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let menu_bounds = self.menu_bounds.get();
@@ -1084,9 +1241,10 @@ impl Render for Body {
                 desk.companion.composer_open(),
             )
         });
+        self.sync_reply(window, cx);
         self.sync_menu(open, window, cx);
         // Assistive technology reads the window's title: what Theo is doing.
-        let title = format!("Theo is {words}");
+        let title = format!("Theo: {words}");
         if title != self.title {
             window.set_window_title(&title);
             self.title = title;
@@ -1098,27 +1256,27 @@ impl Render for Body {
             self.desk.update(cx, |desk, _| desk.rest_here(window));
         }
         let measured = self.menu_bounds.clone();
-        v_flex()
-            .id("theo")
-            .track_focus(&self.focus_handle)
-            .size_full()
-            .items_center()
-            .justify_end()
-            .on_action(cx.listener(|body, _: &Escape, _, cx| {
-                body.desk.update(cx, |desk, cx| desk.close_composer(cx))
-            }))
-            .when_some(self.menu.as_ref(), |column, (menu, _, _)| {
-                column.child(
-                    div().relative().child(menu.clone()).child(
-                        canvas(
-                            move |bounds, _, _| measured.set(Some(bounds)),
-                            |_, _, _, _| {},
-                        )
-                        .absolute()
-                        .size_full(),
-                    ),
-                )
-            })
+        // The menu shows once the window has grown to hold it, under the face
+        // or over it as the window was laid out; the face never moves.
+        let form = self.desk.read(cx).menu_form.get();
+        let menu = form.and(self.menu.as_ref()).map(|(menu, _, _)| {
+            h_flex().w_full().justify_center().child(
+                div().relative().child(menu.clone()).child(
+                    canvas(
+                        move |bounds, _, _| measured.set(Some(bounds)),
+                        |_, _, _, _| {},
+                    )
+                    // Pinned to the menu's corner: left at its static
+                    // place it would sit after the menu, a menu's height off.
+                    .absolute()
+                    .top_0()
+                    .left_0()
+                    .size_full(),
+                ),
+            )
+        });
+        let face = div()
+            .pl(px(form.map_or(0.0, |form| form.face_x.max(0.0)) as f32))
             .child(
                 div()
                     .id("theo-body")
@@ -1166,6 +1324,98 @@ impl Render for Body {
                             body.pressed = None;
                         }),
                     ),
-            )
+            );
+        v_flex()
+            .id("theo")
+            .track_focus(&self.focus_handle)
+            .size_full()
+            .on_action(cx.listener(|body, _: &Escape, _, cx| {
+                body.desk.update(cx, |desk, cx| desk.close_composer(cx))
+            }))
+            .map(|column| match form {
+                None => column.items_center().justify_center().child(face),
+                Some(form) if form.side == mac::Side::Below => column
+                    .child(face)
+                    .when_some(menu, |column, menu| column.child(menu.pt_1())),
+                Some(_) => column
+                    .justify_end()
+                    .when_some(menu, |column, menu| column.child(menu.pb_1()))
+                    .child(face),
+            })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn words(text: &str) -> ThreadPart {
+        ThreadPart::Text {
+            part_id: "p".to_owned(),
+            text: text.to_owned(),
+            status: Default::default(),
+        }
+    }
+
+    #[test]
+    fn a_reply_reads_its_words_and_tokens_in_order() {
+        let content = reply_content(&[
+            words("Two and two make four."),
+            ThreadPart::Citation {
+                part_id: "c".to_owned(),
+                source_id: "s1".to_owned(),
+                label: "Peano\narithmetic".to_owned(),
+            },
+            ThreadPart::Artifact {
+                part_id: "a".to_owned(),
+                artifact_id: "art".to_owned(),
+                artifact_revision: "1".to_owned(),
+                artifact_kind: "table".to_owned(),
+                renderer_id: "r".to_owned(),
+                fallback_text: "\n  Sums  \nrows".to_owned(),
+            },
+            words("That is all."),
+        ])
+        .expect("a reply");
+        assert_eq!(
+            content.text().as_ref(),
+            "Two and two make four. Peano arithmetic Sums\nThat is all."
+        );
+        let tokens = content
+            .tokens()
+            .iter()
+            .map(|span| {
+                (
+                    span.token().id().to_string(),
+                    content.text()[span.range()].to_owned(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            tokens,
+            [
+                ("citation:s1".to_owned(), "Peano arithmetic".to_owned()),
+                ("artifact:art".to_owned(), "Sums".to_owned()),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_token_without_a_name_is_still_named() {
+        let content = reply_content(&[ThreadPart::Attachment {
+            part_id: "f".to_owned(),
+            name: "\t".to_owned(),
+            media_type: "text/plain".to_owned(),
+            state: "ready".to_owned(),
+        }])
+        .expect("a reply");
+        assert_eq!(content.text().as_ref(), "Attachment");
+        assert_eq!(content.tokens().len(), 1);
+    }
+
+    #[test]
+    fn a_reply_with_nothing_to_read_is_none() {
+        assert!(reply_content(&[words("  ")]).is_none());
+        assert!(reply_content(&[]).is_none());
     }
 }

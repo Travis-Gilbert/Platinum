@@ -54,8 +54,9 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
    GPUI's non-activating panel bit, so the window is only what Theo paints
    and the menu can still take the keyboard.
 3. **Stage adapter.** `gaze_at` resolves against the real window and pointer
-   (`mac::pointer_from`); the window is placed by a fraction of the screen's
-   visible frame so a place survives resizing.
+   (`mac::pointer_in`, in window points from the top left, measured from the
+   face's centre wherever the face sits in the window); the window is placed
+   by a fraction of the screen's visible frame so a place survives resizing.
 4. **Clock and stillness.** GPUI's frame callback with an `Instant`-based
    millisecond clock; reduce-motion is read once a second and mapped to
    `set_still`.
@@ -74,14 +75,29 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
    - Keys (in `theo.json` in the profile folder): `control+alt+KeyT` shows and
      hides Theo, `control+alt+KeyC` opens the talk menu, from any application.
    - **Talking is a right-click menu, not a text box** (owner's redesign).
-     Right-clicking the face opens a gpui-component `PopupMenu` over it: the
-     conversation title, Theorem's latest reply (scrolls past 200 pt), an "Ask
-     Theo" `Input` focused at once, then Stop while a run goes on, or "Use the
-     Demo Authority" when native Theorem is not configured. Enter sends; the
-     reply arrives in the same menu. Stop and the demo keep the menu open.
-     Escape, a click outside, or Platinum losing activation close it and hand
+     Right-clicking the face opens a gpui-component `PopupMenu` below it, the
+     way a browser's context menu opens under the pointer: the face stays
+     where it is and the window grows around it to 344 by 572 (`OPEN_SIZE`).
+     Near the bottom of the screen the menu opens above the face instead
+     (`mac::menu_frame`, which also keeps the window on the screen beside an
+     edge). The menu is 320 pt wide and never changes width. It holds the
+     conversation title, Theorem's reply, an "Ask Theo" `Input` focused at
+     once, "New Conversation", then Stop while a run goes on, or "Use the Demo
+     Authority" when native Theorem is not configured.
+   - **The reply is a read-only auto-grow `Textarea`** (gpui-kit, rows 1 to
+     12, scrolling past 12) whose content is `InputContent` with inline
+     tokens: a citation reads as its label with a book icon, an attachment as
+     its name with a file icon, an artifact as the first line of its fallback
+     text with a frame icon (`reply_content`, `token_icon`). The menu's height
+     follows the reply; its width does not. The content is replaced only when
+     it changes, so a streaming reply resets the textarea's scroll as it
+     grows.
+   - Enter sends; the reply arrives in the same menu. Stop, New Conversation
+     and the demo keep the menu open. Escape, a click outside, or Platinum
+     losing activation close it, shrink the window back to the face, and hand
      the keyboard back to the application Theo was called over. A left click
-     on the face only drags it.
+     on the face only drags it. The window title is "Theo: " and the
+     conversation's first words.
    - Double right-click anywhere is an opt-in setting in the Theo menu of the
      menu bar. It uses a listen-only Core Graphics event tap, which needs
      **Input Monitoring** for Platinum and a relaunch; without it the menu says
@@ -118,6 +134,15 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
   update, as GPUI's own `resize` does.
 - Edition 2024 closures returning `impl IntoElement` capture lifetimes; the
   reply element returns a concrete `Stateful<Div>`.
+- Right-clicking Theo showed a caret in "Ask Theo" but typing did nothing.
+  `unframe` changes the style mask, and AppKit then made the window's content
+  view first responder in place of GPUI's input view, so keystrokes never
+  reached GPUI. `unframe` now restores the first responder it found (the log
+  says "restored: true").
+- Clicks on the menu fell through to the application beneath. The canvas that
+  measures the menu for the hit test was absolutely positioned with no inset,
+  so GPUI left it at its static place, after the menu: the measured bounds
+  were a menu's height too low. It is now pinned to the menu's top left.
 
 ### How to run it
 
@@ -135,9 +160,12 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
 ### Tested (macOS, this session)
 
 - `cargo test --locked -p theo -p presence -p companion`: 31 passed.
-- `cargo test --locked --bin frame theo_desk`: 7 passed (activity
+- `cargo test --locked --bin frame theo_desk`: 13 passed (activity
   generations, stale stops, snapshot, liveness, the Expression subset, the
-  plate's rounded corners and its outline).
+  plate's rounded corners and its outline; the menu opening under the face
+  without moving it, over the face at the bottom of the screen, and staying
+  on the screen beside an edge; a reply's words and tokens in order, a token
+  with no name still named, and an empty reply).
 
 ### Observed in the running application
 
@@ -156,18 +184,44 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
   is decided each frame from where the pointer is, and no frame had run yet.
   A real pointer moves there first, so this only bites synthetic clicks.
 
+- After the menu redesign (`run16`, native Theorem through the local node):
+  over TextEdit, `control+alt+KeyT` shows Theo and TextEdit stays frontmost.
+  Right-clicking the face, which sat near the bottom of the screen, opens the
+  menu above it with the face held in place. A long reply from an existing
+  conversation filled the textarea to 12 rows and scrolled. "New
+  Conversation" took the click, the menu read "New chat" and "Say what you
+  need.", the reply shrank to one row and the menu shortened from 374.5 to
+  154.5 pt with its edge by the face fixed, and the node listed a new "New
+  chat" thread. A click inside Theo's window above the menu went through to
+  TextEdit, which took the caret, and the menu closed.
+
 ### Not yet observed
 
-- Typing into the menu and the reply in it.
-- A demo conversation and Stop from the menu.
-- The draft kept across a remount; click-through around the face.
+- Typing into "Ask Theo" with real keys, and a sent question's reply. The
+  automated check cannot type here by design: Theo's panel takes the keyboard
+  without making Platinum frontmost, and the checking tool refuses to send
+  keys to an application that holds the keyboard behind another. It needs
+  the owner's hands.
+- Stop from the menu, and the draft kept across a hide and show (both need
+  typing first).
+- The menu opening below the face (the face was near the bottom edge in every
+  check; the geometry is tested).
 - The double right-click and its Input Monitoring prompt.
 - **The gate**: invoke over Firefox and an editor, converse with the selected
   agent, dismiss and remount without losing state or stealing focus. The
   automated check could not do it: Firefox is read-only to computer use, and
   the owner was using the machine. It needs the owner's hands.
-- Native Theorem: the authority is not configured on this Mac, so only the
-  demo authority can be conversed with here.
+
+### Native Theorem on this Mac
+
+Theo talks to the local Theorem node at `127.0.0.1:8390`, named by
+`THEOREMWEB_AUTHORITY_URL` in the worktree's `.env` (gitignored), with
+`THEOREMWEB_AUTH_TOKEN_FILE` pointing at
+`~/Library/Application Support/Platinum/theorem.token`, a file only the owner
+can read. Theo and the browser's Agent place share the one driver, so both
+show the same conversation. The Fly instance is not wired: its chat routes
+answer 403 `chat_scope_required`, and no token on this Mac carries the
+`tenant:read` scope they need.
 
 ## Open decisions for the owner
 

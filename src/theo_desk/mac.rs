@@ -7,8 +7,10 @@
 //! `objc2-core-graphics`; the listen-only event tap is Core Graphics' own
 //! `CGEventTapCreate`. Nothing here is a reimplementation of either.
 
+use std::cell::Cell;
 use std::ffi::c_void;
 use std::ptr::NonNull;
+use std::rc::Rc;
 use std::sync::OnceLock;
 
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender, unbounded};
@@ -26,7 +28,7 @@ use objc2_core_graphics::{
     CGRequestListenEventAccess, CGWindowListCopyWindowInfo, CGWindowListOption, kCGNullWindowID,
     kCGWindowLayer, kCGWindowNumber, kCGWindowOwnerPID,
 };
-use objc2_foundation::{NSArray, NSDictionary, NSNumber, NSPoint, NSRect, NSString};
+use objc2_foundation::{NSArray, NSDictionary, NSNumber, NSPoint, NSRect, NSSize, NSString};
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 /// The application in front when Theo was called, and its frontmost window.
@@ -154,15 +156,142 @@ fn after_update(window: &Window, cx: &App, change: impl FnOnce(&objc2_app_kit::N
     }
 }
 
-/// The pointer relative to the window's centre, in points, y down.
-pub fn pointer_from(window: &Window) -> Option<(f64, f64)> {
+/// The pointer in the window's own points, from its top left, y down.
+pub fn pointer_in(window: &Window) -> Option<(f64, f64)> {
     let frame = ns_window(window)?.frame();
     let at: NSPoint = NSEvent::mouseLocation();
-    let centre = (
-        frame.origin.x + frame.size.width / 2.0,
-        frame.origin.y + frame.size.height / 2.0,
-    );
-    Some((at.x - centre.0, centre.1 - at.y))
+    Some((
+        at.x - frame.origin.x,
+        frame.origin.y + frame.size.height - at.y,
+    ))
+}
+
+// The menu beside the face ---------------------------------------------------
+
+/// Which side of the face the menu opened on.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Side {
+    /// Under the face, as a context menu opens under the pointer.
+    #[default]
+    Below,
+    /// Over it, when the screen has no room underneath.
+    Above,
+}
+
+/// How the window holding the face and its open menu is laid out: the side
+/// the menu took and how far in from the window's left edge the face sits.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct MenuForm {
+    pub side: Side,
+    pub face_x: f64,
+}
+
+/// A rectangle in AppKit's screen coordinates, y up.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Rect {
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
+}
+
+impl From<NSRect> for Rect {
+    fn from(rect: NSRect) -> Self {
+        Self {
+            x: rect.origin.x,
+            y: rect.origin.y,
+            w: rect.size.width,
+            h: rect.size.height,
+        }
+    }
+}
+
+impl From<Rect> for NSRect {
+    fn from(rect: Rect) -> Self {
+        NSRect::new(NSPoint::new(rect.x, rect.y), NSSize::new(rect.w, rect.h))
+    }
+}
+
+/// The window that holds `face` and a menu, `size` in all, without moving
+/// the face: the menu goes under it when the screen has room there, over it
+/// otherwise, and is kept on the screen sideways.
+pub fn menu_frame(face: Rect, screen: Rect, size: (f64, f64)) -> (Rect, MenuForm) {
+    let extra = (size.1 - face.h).max(0.0);
+    let side = if face.y - screen.y >= extra {
+        Side::Below
+    } else {
+        Side::Above
+    };
+    let centred = face.x + face.w / 2.0 - size.0 / 2.0;
+    let x = centred.clamp(screen.x, (screen.x + screen.w - size.0).max(screen.x));
+    let y = match side {
+        Side::Below => face.y - extra,
+        Side::Above => face.y,
+    };
+    let frame = Rect {
+        x,
+        y,
+        w: size.0,
+        h: size.1,
+    };
+    (
+        frame,
+        MenuForm {
+            side,
+            face_x: face.x - x,
+        },
+    )
+}
+
+/// The face's own rectangle inside a window laid out as `form`.
+pub fn face_in(frame: Rect, form: MenuForm, face: (f64, f64)) -> Rect {
+    Rect {
+        x: frame.x + form.face_x,
+        y: match form.side {
+            Side::Below => frame.y + frame.h - face.1,
+            Side::Above => frame.y,
+        },
+        w: face.0,
+        h: face.1,
+    }
+}
+
+/// Grows the face's window to hold the menu, `size` in all, and records in
+/// `form` how it was laid out. Decided where the window changes, after the
+/// GPUI update asking for it, so it reads the face where it really is.
+pub fn open_menu(
+    window: &Window,
+    size: (f64, f64),
+    form: Rc<Cell<Option<MenuForm>>>,
+    cx: &App,
+) {
+    after_update(window, cx, move |ns| {
+        if form.get().is_some() {
+            return;
+        }
+        let Some(screen) = visible_frame(ns) else {
+            return;
+        };
+        let (frame, laid) = menu_frame(ns.frame().into(), screen.into(), size);
+        form.set(Some(laid));
+        ns.setFrame_display_animate(frame.into(), true, false);
+    });
+}
+
+/// Shrinks the window back to the face alone, where the face is now.
+pub fn close_menu(
+    window: &Window,
+    face: (f64, f64),
+    form: Rc<Cell<Option<MenuForm>>>,
+    cx: &App,
+) {
+    after_update(window, cx, move |ns| {
+        let Some(laid) = form.take() else {
+            return;
+        };
+        let rect = face_in(ns.frame().into(), laid, face);
+        ns.setFrame_display_animate(rect.into(), true, false);
+    });
 }
 
 /// The screen's visible frame the window is on, in AppKit's coordinates.
@@ -173,13 +302,17 @@ fn visible_frame(window: &objc2_app_kit::NSWindow) -> Option<NSRect> {
 /// Where the window's bottom-left corner sits as a fraction of its screen's
 /// visible frame (0..1 each way, from the bottom left), so a place survives
 /// the window growing taller.
-pub fn spot_of(window: &Window) -> Option<(f64, f64)> {
+/// While the menu is open (`form`), the spot is the face's, `face` in size.
+pub fn spot_of(window: &Window, form: Option<(MenuForm, (f64, f64))>) -> Option<(f64, f64)> {
     let window = ns_window(window)?;
     let screen = visible_frame(&window)?;
-    let frame = window.frame();
+    let frame: Rect = match form {
+        Some((form, face)) => face_in(window.frame().into(), form, face),
+        None => window.frame().into(),
+    };
     Some((
-        (frame.origin.x - screen.origin.x) / (screen.size.width - frame.size.width).max(1.0),
-        (frame.origin.y - screen.origin.y) / (screen.size.height - frame.size.height).max(1.0),
+        (frame.x - screen.origin.x) / (screen.size.width - frame.w).max(1.0),
+        (frame.y - screen.origin.y) / (screen.size.height - frame.h).max(1.0),
     ))
 }
 
@@ -329,4 +462,52 @@ pub fn pass_clicks(window: &Window, pass: bool) {
 /// Whether the left mouse button is held now, wherever the pointer is.
 pub fn left_button_down() -> bool {
     NSEvent::pressedMouseButtons() & 1 == 1
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SCREEN: Rect = Rect {
+        x: 0.0,
+        y: 0.0,
+        w: 1440.0,
+        h: 900.0,
+    };
+    const FACE: (f64, f64) = (264.0, 132.0);
+    const OPEN: (f64, f64) = (344.0, 572.0);
+
+    fn face_at(x: f64, y: f64) -> Rect {
+        Rect {
+            x,
+            y,
+            w: FACE.0,
+            h: FACE.1,
+        }
+    }
+
+    #[test]
+    fn the_menu_opens_under_the_face_without_moving_it() {
+        let face = face_at(600.0, 700.0);
+        let (frame, form) = menu_frame(face, SCREEN, OPEN);
+        assert_eq!(form.side, Side::Below);
+        assert_eq!(face_in(frame, form, FACE), face);
+        assert_eq!(frame.x + frame.w / 2.0, face.x + face.w / 2.0);
+    }
+
+    #[test]
+    fn the_menu_opens_over_the_face_at_the_bottom_of_the_screen() {
+        let face = face_at(600.0, 36.0);
+        let (frame, form) = menu_frame(face, SCREEN, OPEN);
+        assert_eq!(form.side, Side::Above);
+        assert_eq!(face_in(frame, form, FACE), face);
+    }
+
+    #[test]
+    fn the_menu_stays_on_the_screen_beside_an_edge() {
+        let face = face_at(SCREEN.w - FACE.0, 700.0);
+        let (frame, form) = menu_frame(face, SCREEN, OPEN);
+        assert_eq!(frame.x + frame.w, SCREEN.w);
+        assert_eq!(face_in(frame, form, FACE), face);
+    }
 }
