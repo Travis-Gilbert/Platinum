@@ -34,8 +34,10 @@
 //! active is GPUI's `Window::is_window_active`, and GPUI redraws the window
 //! when that changes.
 
+use std::cell::Cell;
+
 use gpui_kit::component::{ActiveTheme as _, Theme};
-use gpui_kit::{App, Global, Hsla, Window, WindowBackgroundAppearance};
+use gpui_kit::{App, Bounds, Global, Hsla, Pixels, Window, WindowBackgroundAppearance};
 
 /// How strongly the dark glass leans to the frame's color: enough that the
 /// theme's secondary text (`muted_foreground`) keeps 3:1 with a white window
@@ -61,7 +63,7 @@ impl Global for Glass {}
 /// Put glass under `window`, if this system has it and wants it.
 pub fn install(window: &mut Window, cx: &mut App) {
     #[cfg(target_os = "macos")]
-    if let Some(view) = macos::install(window) {
+    if let Some(view) = macos::install(window, true) {
         window.set_background_appearance(WindowBackgroundAppearance::Transparent);
         macos::style(&view, cx.theme());
         cx.set_global(Glass { view });
@@ -107,10 +109,89 @@ pub fn field(cx: &App) -> Hsla {
     }
 }
 
+/// Glass under one panel of a window rather than the whole of it: Theo's
+/// menu, which floats on a transparent window beside a face that stays
+/// clear. It is the same glass as the frame's, styled the same way, and is
+/// hidden until the panel is placed over it.
+pub struct PanelGlass {
+    #[cfg(target_os = "macos")]
+    view: objc2::rc::Retained<objc2_app_kit::NSGlassEffectView>,
+    /// The theme the glass was last styled for: whether it is dark, and its
+    /// frame color.
+    styled: Cell<Option<(bool, Hsla)>>,
+    /// Where the glass lies, in window points, while it shows.
+    placed: Cell<Option<(Bounds<Pixels>, Pixels)>>,
+}
+
+impl PanelGlass {
+    /// Glass for a panel of `window`, if this system has it and wants it.
+    pub fn install(window: &Window) -> Option<Self> {
+        #[cfg(target_os = "macos")]
+        {
+            let view = macos::install(window, false)?;
+            view.setHidden(true);
+            Some(Self {
+                view,
+                styled: Cell::new(None),
+                placed: Cell::new(None),
+            })
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = window;
+            None
+        }
+    }
+
+    /// Lay the glass under `bounds`, in window points, with corners of
+    /// `radius`, styled for the theme as it is now.
+    pub fn place(&self, bounds: Bounds<Pixels>, radius: Pixels, cx: &App) {
+        let theme = cx.theme();
+        let style = (theme.is_dark(), theme.title_bar);
+        if self.styled.get() != Some(style) {
+            self.styled.set(Some(style));
+            #[cfg(target_os = "macos")]
+            macos::style(&self.view, theme);
+        }
+        if self.placed.get() == Some((bounds, radius)) {
+            return;
+        }
+        self.placed.set(Some((bounds, radius)));
+        #[cfg(target_os = "macos")]
+        macos::place(&self.view, bounds, radius);
+    }
+
+    /// Take the glass away until the panel is placed again.
+    pub fn hide(&self) {
+        if self.placed.take().is_some() {
+            #[cfg(target_os = "macos")]
+            self.view.setHidden(true);
+        }
+    }
+}
+
+impl Drop for PanelGlass {
+    fn drop(&mut self) {
+        #[cfg(target_os = "macos")]
+        self.view.removeFromSuperview();
+    }
+}
+
+/// The fill of a panel over `glass`, as `frame` is the frame's: nothing over
+/// the glass while the window is active, and the theme's frame color while
+/// it is not or without the glass.
+pub fn panel(glass: Option<&PanelGlass>, window: &Window, cx: &App) -> Hsla {
+    if glass.is_some() && window.is_window_active() {
+        gpui_kit::transparent_black()
+    } else {
+        cx.theme().title_bar
+    }
+}
+
 #[cfg(target_os = "macos")]
 mod macos {
     use gpui_kit::component::Theme;
-    use gpui_kit::{Rgba, Window};
+    use gpui_kit::{Bounds, Pixels, Rgba, Window};
     use objc2::MainThreadMarker;
     use objc2::rc::Retained;
     use objc2::runtime::AnyClass;
@@ -119,11 +200,13 @@ mod macos {
         NSAppearanceNameDarkAqua, NSAutoresizingMaskOptions, NSColor, NSGlassEffectView,
         NSGlassEffectViewStyle, NSView, NSWindowOrderingMode, NSWorkspace,
     };
+    use objc2_foundation::{NSPoint, NSRect, NSSize};
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
-    /// Adds a glass view filling the window, under GPUI's view. None when
+    /// Adds a glass view under GPUI's view: filling the window and following
+    /// its size when `fill`, else at no size until `place` puts it. None when
     /// there is no glass to add.
-    pub fn install(window: &Window) -> Option<Retained<NSGlassEffectView>> {
+    pub fn install(window: &Window, fill: bool) -> Option<Retained<NSGlassEffectView>> {
         let mtm = MainThreadMarker::new()?;
         let workspace = NSWorkspace::sharedWorkspace();
         if AnyClass::get(c"NSGlassEffectView").is_none()
@@ -140,11 +223,14 @@ mod macos {
         // and this is the main thread, where AppKit's views are used.
         let view: &NSView = unsafe { handle.ns_view.cast().as_ref() };
         let content = unsafe { view.superview() }?;
-        let glass = NSGlassEffectView::initWithFrame(mtm.alloc(), content.bounds());
-        glass.setAutoresizingMask(
-            NSAutoresizingMaskOptions::ViewWidthSizable
-                | NSAutoresizingMaskOptions::ViewHeightSizable,
-        );
+        let frame = if fill { content.bounds() } else { NSRect::ZERO };
+        let glass = NSGlassEffectView::initWithFrame(mtm.alloc(), frame);
+        if fill {
+            glass.setAutoresizingMask(
+                NSAutoresizingMaskOptions::ViewWidthSizable
+                    | NSAutoresizingMaskOptions::ViewHeightSizable,
+            );
+        }
         // Only its content view is sure to be inside the glass; GPUI's view
         // stays above it, where AppKit keeps the window's own views.
         glass.setContentView(Some(&NSView::new(mtm)));
@@ -153,6 +239,25 @@ mod macos {
         glass.setCornerRadius(0.);
         content.addSubview_positioned_relativeTo(&glass, NSWindowOrderingMode::Below, Some(view));
         Some(glass)
+    }
+
+    /// Lay `glass` under `bounds`, given in GPUI's window points from the top
+    /// left, with corners of `radius`. AppKit measures from the bottom left
+    /// of the content view the glass lies in.
+    pub fn place(glass: &NSGlassEffectView, bounds: Bounds<Pixels>, radius: Pixels) {
+        // SAFETY: the glass was added to the content view, which outlives it.
+        let Some(content) = (unsafe { glass.superview() }) else {
+            return;
+        };
+        let height = content.bounds().size.height;
+        let (x, y) = (f64::from(bounds.origin.x), f64::from(bounds.origin.y));
+        let (w, h) = (f64::from(bounds.size.width), f64::from(bounds.size.height));
+        glass.setFrame(NSRect::new(
+            NSPoint::new(x, height - y - h),
+            NSSize::new(w, h),
+        ));
+        glass.setCornerRadius(f64::from(radius));
+        glass.setHidden(false);
     }
 
     /// Give the glass the theme's appearance and lean it to the frame's

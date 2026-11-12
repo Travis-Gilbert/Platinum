@@ -75,7 +75,7 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
    - Keys (in `theo.json` in the profile folder): `control+alt+KeyT` shows and
      hides Theo, `control+alt+KeyC` opens the talk menu, from any application.
    - **Talking is a right-click menu, not a text box** (owner's redesign).
-     Right-clicking the face opens a gpui-component `PopupMenu` below it, the
+     Right-clicking the face opens Theo's own panel below it, the
      way a browser's context menu opens under the pointer: the face stays
      where it is and the window grows around it to 344 by 572 (`OPEN_SIZE`).
      Near the bottom of the screen the menu opens above the face instead
@@ -172,6 +172,49 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
 - A second question replaced the first answer: the menu showed only the latest
   Theorem message. It now shows the whole conversation (the trail above).
 - A long question ran on in one line: "Ask Theo" was a single-line `Input`.
+- **Enter closed the menu, so the answer arrived in a menu nobody could see**
+  (owner, run20b). The menu was a gpui-kit `PopupMenu`. Kit's input calls
+  `cx.propagate()` on Enter before it emits `PressEnter`, so Enter also
+  reached the menu's own `enter` binding (`Confirm`), which dismisses on the
+  selected item. Selection follows the pointer and includes disabled element
+  items, so it was usually the field or the trail. A `PopupMenu` is a command
+  list that closes when something in it is chosen, the wrong component for a
+  conversation. The menu is now Theo's own panel: a column in the Kit
+  popover style holding the trail, the notice, the field and a row of small
+  ghost `Button`s. Nothing in it closes it. Only Escape does, or a click in
+  the application beneath Theo (`close_if_left_for`). The right-click
+  `keep_open` workaround went with the popup.
+- **The field and the trail read faint** (owner). They were disabled menu
+  items, which Kit dims. As plain children of the panel they take the theme's
+  foreground; the person's turns take `secondary_foreground` on `secondary`.
+- **The menu was a flat black** (owner: borrow Platinum's Liquid Glass, as
+  the frame shows with every tab closed, and leave Theo's colour alone). The
+  panel now lies on `glass::PanelGlass`. It is the frame's `NSGlassEffectView`
+  with the same style and tint, sized to the panel alone, so the face and
+  the clear margins stay clear. It is made on the menu's first paint, after
+  `unframe` has restyled the window, and is placed from the measuring
+  canvas's prepaint in AppKit's bottom-left coordinates. It is hidden when
+  the menu closes. While Theo's window is inactive, or without the glass,
+  the panel takes the theme's solid frame colour, as the frame does
+  (`glass::panel`).
+- **A refusal ran off the menu's edge.** The notice now wraps to the menu's
+  width.
+- **"chat revision conflict" on "what do you know about me" (not fixed
+  here).** The node holds the message (thread
+  `chatthread_sha256:85645c7ec0b527e8a719cf8b1`: created at revision 1, the
+  `message.append` receipt at revision 2, 20:27:08Z) and no run for it:
+  `MATCH (r:HarnessRun)` finds none for that thread, and the node log has no
+  "started durable Theorem chat run" then. So the run start was refused, or
+  the client never reached it. The likely cause: the node log shows a 57 s
+  tantivy commit and GC starting at 20:27:11Z, close to the client's 60 s
+  request timeout. If the append's answer did not return in time, the client
+  retries an indeterminate request once (`retry_indeterminate`), and a retry
+  racing a commit still in flight reads the thread one revision on. That has
+  not been confirmed: a refused operation leaves no receipt, and the node on
+  8390 is the mod node, built from Theorem on 2026-11-11, newer than this
+  repository's pin. Its source has no revision check before a run is created.
+  The full refusal text, which now wraps, will name the revisions the next
+  time it happens.
 
 ### How to run it
 

@@ -15,9 +15,12 @@
 //! Stop while a run goes on. There is no standing text box and no window
 //! around Theo: only the face, on a transparent window.
 //!
-//! The menu stays open while the person works in another application, and
-//! closes when they click away from it in the application Theo sits over
-//! (the one whose window is beneath it), or press Escape.
+//! The menu is Theo's own panel rather than a popup menu, which closes on
+//! Enter and on any click that picks an item: sending a question keeps it
+//! open, and the answer arrives in it. It lies on the same Liquid Glass as
+//! Platinum's frame. It stays open while the person works in another
+//! application, and closes when they click away from it in the application
+//! Theo sits over (the one whose window is beneath it), or press Escape.
 //!
 //! Focus: shown by a key or a double right click, Theo floats over the
 //! application in front without taking focus from it. Only the menu takes
@@ -25,7 +28,8 @@
 //! it was called over.
 //!
 //! SOURCING: `companion` and `theo` (this repository's port of web Theo);
-//! GPUI Kit's `Root`, `PopupMenu` and `Textarea`; `global-hotkey` for keys that
+//! GPUI Kit's `Root`, `Button`, `Textarea` and popover style; Platinum's
+//! `glass`; `global-hotkey` for keys that
 //! work while another application is in front; AppKit and Core Graphics in
 //! `mac.rs`.
 
@@ -34,21 +38,23 @@ mod body;
 mod mac;
 mod trail;
 
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, OnceCell, RefCell};
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use companion::{Calling, Companion, Scope};
+use gpui_kit::component::button::{Button, ButtonVariants as _};
 use gpui_kit::component::input::{
     Escape, InlineToken, InputContent, InputEvent, Textarea, TextareaState,
 };
-use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
-use gpui_kit::component::{ActiveTheme as _, IconName, Root, h_flex, v_flex};
+use gpui_kit::component::{
+    ActiveTheme as _, IconName, Root, Sizable as _, ThemeStyled as _, h_flex, v_flex,
+};
 use gpui_kit::prelude::FluentBuilder as _;
 use gpui_kit::{
-    AnyWindowHandle, App, AppContext as _, Bounds, Context, DismissEvent, Entity, FocusHandle,
+    AnyWindowHandle, App, AppContext as _, Bounds, Context, Entity, FocusHandle,
     Focusable as _, Global, InteractiveElement as _, IntoElement, MouseButton, ParentElement as _,
     Pixels, Render, Styled as _, Subscription, Window,
     WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions,
@@ -65,6 +71,7 @@ use theoremweb_agent_runtime::ChatHostPhase;
 use self::activity::{Runs, activity_id};
 use self::body::{BODY_SIZE, BodyFrame};
 use self::trail::{Trail, TrailState};
+use crate::glass::PanelGlass;
 use crate::theorem::{Connection, DriverEvent, TheoremDriver};
 
 actions!(
@@ -949,29 +956,6 @@ fn open(desk: Entity<Desk>, cx: &mut App) {
 
 // The window -----------------------------------------------------------------
 
-/// What the menu shows that changes its items. The trail is read as the
-/// menu draws, so a reply arriving word by word does not rebuild it.
-#[derive(Clone, Debug, PartialEq)]
-struct MenuContent {
-    /// The trail has something to show.
-    trail: bool,
-    live: bool,
-    not_configured: bool,
-    notice: Option<String>,
-}
-
-/// What the menu's items act on.
-#[derive(Clone)]
-struct MenuParts {
-    desk: Entity<Desk>,
-    driver: Entity<TheoremDriver>,
-    ask: Entity<TextareaState>,
-    trail: Entity<Trail>,
-    /// The menu's dismissal is for an item that keeps it open, or for a
-    /// right click that opens it again.
-    keep_open: Rc<Cell<bool>>,
-}
-
 /// Theo's window: the face, and the menu above it while it is open.
 pub struct Body {
     desk: Entity<Desk>,
@@ -983,12 +967,14 @@ pub struct Body {
     trail_stale: bool,
     focus_handle: FocusHandle,
     title: String,
-    /// The open menu, what it was built from, and its dismissal.
-    menu: Option<(Entity<PopupMenu>, MenuContent, Subscription)>,
+    /// The menu is open.
+    menu_open: bool,
     /// Where the menu was drawn last, in window points.
     menu_bounds: Rc<Cell<Option<Bounds<Pixels>>>>,
-    /// See `MenuParts::keep_open`.
-    keep_open: Rc<Cell<bool>>,
+    /// The glass under the menu, made the first time the menu is drawn:
+    /// by then Theo's window has its final style, which changing replaces
+    /// the views the glass is added among.
+    glass: Rc<OnceCell<Option<PanelGlass>>>,
     /// Whether the window was active while the menu was open.
     was_active: bool,
     /// When the open menu last gave up the keyboard, until it has it again.
@@ -1027,7 +1013,7 @@ impl Body {
                 if window.is_window_active() {
                     body.was_active = true;
                     body.left_at = None;
-                } else if body.was_active && body.menu.is_some() {
+                } else if body.was_active && body.menu_open {
                     body.left_at = Some(Instant::now());
                     cx.notify();
                 }
@@ -1041,9 +1027,9 @@ impl Body {
             trail_stale: true,
             focus_handle: cx.focus_handle(),
             title: String::new(),
-            menu: None,
+            menu_open: false,
             menu_bounds: Rc::new(Cell::new(None)),
-            keep_open: Rc::new(Cell::new(false)),
+            glass: Rc::new(OnceCell::new()),
             was_active: false,
             left_at: None,
             pressed: None,
@@ -1094,59 +1080,102 @@ impl Body {
         });
     }
 
-    fn menu_content(&self, cx: &App) -> MenuContent {
+    /// Follows the menu opening and closing: an open menu takes the
+    /// keyboard into its field, and a closed one takes its glass away.
+    fn sync_menu(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if open == self.menu_open {
+            return;
+        }
+        self.menu_open = open;
+        if open {
+            self.focus(window, cx);
+        } else {
+            self.menu_bounds.set(None);
+            if let Some(Some(glass)) = self.glass.get() {
+                glass.hide();
+            }
+        }
+    }
+
+    /// The menu: the conversation, a notice if there is one, the field, then
+    /// what can be done. Nothing in it closes it but Escape and leaving it.
+    fn menu(&self, window: &Window, cx: &App) -> impl IntoElement + use<> {
+        let theme = cx.theme();
         let desk = self.desk.read(cx);
         let driver = desk.driver.read(cx);
         let projection = driver.projection();
         let state = trail_state(driver);
-        MenuContent {
-            trail: Trail::shows(&projection.thread.messages, state),
-            live: state.working,
-            not_configured: state.unset,
-            notice: projection
-                .notice
-                .clone()
-                .or_else(|| desk.unheard.first().cloned()),
+        let notice = projection
+            .notice
+            .clone()
+            .or_else(|| desk.unheard.first().cloned());
+        let glass = self.glass.get().and_then(Option::as_ref);
+        let mut actions = h_flex().w_full().gap_1();
+        if state.unset {
+            let driver = self.driver.clone();
+            let ask = self.ask.clone();
+            actions = actions.child(
+                Button::new("theo-demo")
+                    .label("Use the Demo Authority")
+                    .ghost()
+                    .small()
+                    .on_click(move |_, window, cx| {
+                        driver.update(cx, |driver, cx| driver.use_demo(cx));
+                        window.focus(&ask.focus_handle(cx), cx);
+                    }),
+            );
+        } else {
+            // Theo shares the Agent place's selection, which may be any
+            // conversation in the account; a fresh one is always a click away.
+            let driver = self.driver.clone();
+            let ask = self.ask.clone();
+            actions = actions.child(
+                Button::new("theo-new")
+                    .label("New Conversation")
+                    .icon(IconName::Plus)
+                    .ghost()
+                    .small()
+                    .on_click(move |_, window, cx| {
+                        driver.update(cx, |driver, cx| driver.new_conversation(cx));
+                        window.focus(&ask.focus_handle(cx), cx);
+                    }),
+            );
         }
-    }
-
-    fn parts(&self) -> MenuParts {
-        MenuParts {
-            desk: self.desk.clone(),
-            driver: self.driver.clone(),
-            ask: self.ask.clone(),
-            trail: self.trail.clone(),
-            keep_open: self.keep_open.clone(),
+        if state.working {
+            let desk = self.desk.clone();
+            actions = actions.child(
+                Button::new("theo-stop")
+                    .label("Stop")
+                    .icon(IconName::Square)
+                    .ghost()
+                    .small()
+                    .on_click(move |_, _, cx| desk.update(cx, |desk, cx| desk.stop(cx))),
+            );
         }
-    }
-
-    /// Opens the menu, or builds it again when what it shows has changed.
-    fn sync_menu(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
-        if !open {
-            if self.menu.take().is_some() {
-                self.menu_bounds.set(None);
-            }
-            return;
-        }
-        let content = self.menu_content(cx);
-        let parts = self.parts();
-        if let Some((menu, built, _)) = &mut self.menu {
-            if *built != content {
-                *built = content.clone();
-                menu.update(cx, |menu, cx| {
-                    menu.rebuild(window, cx, |menu, _, _| parts.fill(menu, &content))
-                });
-            }
-            return;
-        }
-        let menu = PopupMenu::build(window, cx, |menu, _, _| parts.fill(menu, &content));
-        let dismissed = cx.subscribe_in(&menu, window, |_, _, _: &DismissEvent, window, cx| {
-            // Settled after the click that dismissed it: an item or a right
-            // click on the face may keep it open.
-            cx.defer_in(window, |body, window, cx| body.dismissed(window, cx));
-        });
-        self.menu = Some((menu, content, dismissed));
-        self.focus(window, cx);
+        v_flex()
+            .id("theo-menu")
+            .w(px(MENU_WIDTH))
+            .popover_style(cx)
+            .bg(crate::glass::panel(glass, window, cx))
+            .text_color(theme.foreground)
+            .occlude()
+            .p_2()
+            .gap_2()
+            .when(Trail::shows(&projection.thread.messages, state), |menu| {
+                menu.child(self.trail.clone())
+            })
+            .when_some(notice, |menu, notice| {
+                // Wrapped to the menu's width, so the whole refusal reads.
+                menu.child(
+                    div()
+                        .w_full()
+                        .text_xs()
+                        .text_color(theme.danger)
+                        .child(notice),
+                )
+            })
+            .child(Textarea::new(&self.ask))
+            .child(actions)
     }
 
     /// Lets the trail follow the conversation, when it has changed.
@@ -1168,7 +1197,7 @@ impl Body {
         let Some(left) = self.left_at else {
             return;
         };
-        if self.menu.is_none() || window.is_window_active() {
+        if !self.menu_open || window.is_window_active() {
             self.left_at = None;
             return;
         }
@@ -1180,90 +1209,6 @@ impl Body {
             self.was_active = false;
             self.desk.update(cx, |desk, cx| desk.close_composer(cx));
         }
-    }
-
-    fn dismissed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.keep_open.replace(false) {
-            if self.menu.is_some() {
-                self.focus(window, cx);
-            }
-            return;
-        }
-        self.desk.update(cx, |desk, cx| desk.close_composer(cx));
-    }
-}
-
-impl MenuParts {
-    /// The menu's items for `content`: the conversation, a notice if there
-    /// is one, the field, then what can be done.
-    fn fill(&self, menu: PopupMenu, content: &MenuContent) -> PopupMenu {
-        let driver = self.driver.clone();
-        let mut menu = menu.min_w(px(MENU_WIDTH)).max_w(px(MENU_WIDTH));
-        if content.trail {
-            // Disabled as a menu item, so selecting in the trail does not
-            // close the menu.
-            let trail = self.trail.clone();
-            menu = menu.item(
-                PopupMenuItem::element(move |_, _| div().flex_1().min_w_0().child(trail.clone()))
-                    .disabled(true),
-            );
-        }
-        if let Some(notice) = content.notice.clone() {
-            menu = menu.item(
-                PopupMenuItem::element(move |_, cx| {
-                    div()
-                        .flex_1()
-                        .min_w_0()
-                        .text_xs()
-                        .text_color(cx.theme().danger)
-                        .child(notice.clone())
-                })
-                .disabled(true),
-            );
-        }
-        let ask = self.ask.clone();
-        if content.trail || content.notice.is_some() {
-            menu = menu.separator();
-        }
-        menu = menu.item(
-            // Disabled as a menu item, so a click in the field does not
-            // close the menu; the field itself takes the keys.
-            PopupMenuItem::element(move |_, _| {
-                div().flex_1().min_w_0().py_1().child(Textarea::new(&ask))
-            })
-            .disabled(true),
-        );
-        menu = menu.separator();
-        if !content.not_configured {
-            // Theo shares the Agent place's selection, which may be any
-            // conversation in the account; a fresh one is always a click away.
-            let keep = self.keep_open.clone();
-            let driver = driver.clone();
-            menu = menu.item(PopupMenuItem::new("New Conversation").on_click(
-                move |_, _, cx| {
-                    keep.set(true);
-                    driver.update(cx, |driver, cx| driver.new_conversation(cx));
-                },
-            ));
-        }
-        if content.live {
-            let desk = self.desk.clone();
-            let keep = self.keep_open.clone();
-            menu = menu.item(PopupMenuItem::new("Stop").on_click(move |_, _, cx| {
-                keep.set(true);
-                desk.update(cx, |desk, cx| desk.stop(cx));
-            }));
-        }
-        if content.not_configured {
-            let keep = self.keep_open.clone();
-            menu = menu.item(PopupMenuItem::new("Use the Demo Authority").on_click(
-                move |_, _, cx| {
-                    keep.set(true);
-                    driver.update(cx, |driver, cx| driver.use_demo(cx));
-                },
-            ));
-        }
-        menu
     }
 }
 
@@ -1293,14 +1238,22 @@ impl Render for Body {
             self.desk.update(cx, |desk, _| desk.rest_here(window));
         }
         let measured = self.menu_bounds.clone();
+        let glass = self.glass.clone();
         // The menu shows once the window has grown to hold it, under the face
         // or over it as the window was laid out; the face never moves.
         let form = self.desk.read(cx).menu_form.get();
-        let menu = form.and(self.menu.as_ref()).map(|(menu, _, _)| {
+        let menu = form.filter(|_| self.menu_open).map(|_| {
             h_flex().w_full().justify_center().child(
-                div().relative().child(menu.clone()).child(
+                div().relative().child(self.menu(window, cx)).child(
                     canvas(
-                        move |bounds, _, _| measured.set(Some(bounds)),
+                        move |bounds, window, cx| {
+                            measured.set(Some(bounds));
+                            if let Some(glass) =
+                                glass.get_or_init(|| PanelGlass::install(window))
+                            {
+                                glass.place(bounds, cx.theme().radius, cx);
+                            }
+                        },
                         |_, _, _, _| {},
                     )
                     // Pinned to the menu's corner: left at its static
@@ -1324,11 +1277,6 @@ impl Render for Body {
                     .on_mouse_down(
                         MouseButton::Right,
                         cx.listener(|body, _: &gpui_kit::MouseDownEvent, _, cx| {
-                            // An open menu is dismissed by this very click
-                            // before it reaches the face: keep it open.
-                            if body.menu.is_some() {
-                                body.keep_open.set(true);
-                            }
                             body.desk.update(cx, |desk, cx| desk.talk(cx));
                         }),
                     )

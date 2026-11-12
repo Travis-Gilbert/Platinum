@@ -173,6 +173,7 @@ impl Render for Trail {
         let theme = cx.theme();
         let muted = theme.muted_foreground;
         let asked = theme.secondary;
+        let asked_ink = theme.secondary_foreground;
         let mut column = v_flex().w_full().gap_2().py_1();
         if self.state.unset {
             column = column.child(
@@ -192,6 +193,7 @@ impl Render for Trail {
                         .py_1()
                         .rounded_md()
                         .bg(asked)
+                        .text_color(asked_ink)
                         .text_sm()
                         .child(text.clone()),
                 ),
