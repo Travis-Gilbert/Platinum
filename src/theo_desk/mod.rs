@@ -665,9 +665,16 @@ impl Desk {
     }
 
     fn close_composer(&mut self, cx: &mut Context<Self>) {
+        self.give_back();
+        self.put_composer_away(cx);
+    }
+
+    /// Closes the composer and keeps the keyboard: the screen opening in its
+    /// place takes it, and handed back first, macOS would not let Platinum
+    /// take it again.
+    fn put_composer_away(&mut self, cx: &mut Context<Self>) {
         self.companion.close_composer();
         self.stage.borrow_mut().composer = false;
-        self.give_back();
         self.mount(cx);
     }
 
@@ -1081,7 +1088,12 @@ impl Body {
     fn submit(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let text = self.ask.read(cx).value().to_string();
         if let Some(url) = screen::address_typed(&text) {
+            // Setting the field does not report a change, so the driver's
+            // draft, which a remounted menu starts from, is cleared here.
             self.ask.update(cx, |ask, cx| ask.set_value("", window, cx));
+            self.driver.update(cx, |driver, cx| {
+                driver.composer_intent(ComposerIntent::DraftChanged { text: String::new() }, cx)
+            });
             self.desk
                 .update(cx, |desk, cx| desk.open_screen(Some(url), cx));
             return;
@@ -1136,7 +1148,7 @@ impl Body {
             .clone()
             .or_else(|| desk.unheard.first().cloned());
         let glass = self.glass.get().and_then(Option::as_ref);
-        let mut actions = h_flex().w_full().gap_1();
+        let mut actions = h_flex().w_full().flex_wrap().gap_1();
         if state.unset {
             let driver = self.driver.clone();
             let ask = self.ask.clone();

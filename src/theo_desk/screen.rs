@@ -142,7 +142,7 @@ impl Desk {
         self.screen.asked = false;
         self.screen.then_talk = false;
         if self.companion.composer_open() {
-            self.close_composer(cx);
+            self.put_composer_away(cx);
         }
         self.appear(cx);
         cx.notify();
