@@ -4240,6 +4240,7 @@ dependencies = [
  "gpui-pre-macos",
  "gpui-pre-reqwest-client",
  "gpui-whiteboard",
+ "gstreamer",
  "hf-hub",
  "hound",
  "html5ever 0.27.0",

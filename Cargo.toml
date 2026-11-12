@@ -51,6 +51,9 @@ agpui-contract = { path = "deps/theorem-search/rustyredcore_THG/crates/agpui-con
 theo = { path = "crates/theo" }
 presence = { path = "crates/presence" }
 companion = { path = "crates/companion" }
+# Theo's screen measures the sound it plays where it leaves for the speakers
+# (`src/theo_desk/meter.rs`). The version and features Servo's media already build.
+gstreamer = { version = "0.25", features = ["v1_18"] }
 # The runtime's reqwest client needs Tokio's reactor wherever its futures are
 # polled, and GPUI polls them on the main thread.
 async-compat = "0.2.5"

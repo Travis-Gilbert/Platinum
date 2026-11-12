@@ -175,7 +175,7 @@ pub fn reduce_motion() -> bool {
     NSWorkspace::sharedWorkspace().accessibilityDisplayShouldReduceMotion()
 }
 
-fn ns_window(window: &Window) -> Option<Retained<objc2_app_kit::NSWindow>> {
+pub(super) fn ns_window(window: &Window) -> Option<Retained<objc2_app_kit::NSWindow>> {
     MainThreadMarker::new()?;
     let handle = HasWindowHandle::window_handle(window).ok()?;
     let RawWindowHandle::AppKit(handle) = handle.as_raw() else {
@@ -215,7 +215,7 @@ pub fn unframe(window: &Window, cx: &App) {
 /// size while GPUI is still updating that window; GPUI cannot take it then,
 /// the size is lost, and the window goes on drawing at the old one. GPUI's
 /// own `resize` waits the same way, on the foreground executor.
-fn after_update(
+pub(super) fn after_update(
     window: &Window,
     cx: &App,
     change: impl FnOnce(&objc2_app_kit::NSWindow) + 'static,
@@ -366,7 +366,7 @@ pub fn close_menu(window: &Window, face: (f64, f64), form: Rc<Cell<Option<MenuFo
 }
 
 /// The screen's visible frame the window is on, in AppKit's coordinates.
-fn visible_frame(window: &objc2_app_kit::NSWindow) -> Option<NSRect> {
+pub(super) fn visible_frame(window: &objc2_app_kit::NSWindow) -> Option<NSRect> {
     Some(window.screen()?.visibleFrame())
 }
 

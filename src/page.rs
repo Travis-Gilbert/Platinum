@@ -34,14 +34,14 @@ use gpui_kit::{
 use servo::{
     ClipboardAction, CompositionEvent, CompositionState, ContextMenuAction, Cursor, DevicePoint,
     Image, ImeEvent, InputEvent, InputEventId, InputEventResult, InputMethodControl, JSValue,
-    KeyState, LoadStatus, MouseButton as ServoButton, MouseButtonAction, MouseButtonEvent,
-    MouseLeftViewportEvent, MouseMoveEvent as ServoMouseMove, PixelFormat, RenderingContext as _,
-    Theme, WebView, WebViewBuilder, WheelDelta, WheelEvent, WheelMode,
+    KeyState, LoadStatus, MediaSessionActionType, MouseButton as ServoButton, MouseButtonAction,
+    MouseButtonEvent, MouseLeftViewportEvent, MouseMoveEvent as ServoMouseMove, PixelFormat,
+    RenderingContext as _, Theme, WebView, WebViewBuilder, WheelDelta, WheelEvent, WheelMode,
 };
 use url::Url;
 
 use crate::controls::Controls;
-use crate::delegate::{Delegate, NewWebView, ServoEvent};
+use crate::delegate::{Delegate, NewWebView, Playback, ServoEvent};
 use crate::engine::Engine;
 use crate::keys;
 use crate::scene::SceneRenderingContext;
@@ -185,6 +185,8 @@ pub struct Page {
     /// The corners of the card the page sits in, which round its picture
     /// (`Browser::content`).
     pub(crate) corners: Corners<Pixels>,
+    /// Which window tie is current (`bind`).
+    binding: Rc<Cell<u64>>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -234,36 +236,14 @@ impl Page {
         cx.new(|cx: &mut Context<Self>| {
             let focus_handle = cx.focus_handle();
             let replaying = Rc::new(Cell::new(false));
-            let subscriptions = vec![
-                cx.on_focus(&focus_handle, window, |page, _, _| {
-                    crate::controls::control_trace("Page focus -> Servo true");
-                    page.webview.set_focused(true)
-                }),
-                cx.on_blur(&focus_handle, window, |page, window, cx| {
-                    let popup_focused =
-                        page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
-                    let panel_open = page.controls.owns_native_panel();
-                    crate::controls::control_trace(if popup_focused {
-                        "Page blur -> owned popup retains Servo focus"
-                    } else if panel_open {
-                        "Page blur -> owned panel retains Servo focus"
-                    } else {
-                        "Page blur -> Servo false"
-                    });
-                    page.release_buttons();
-                    if let Some(input) = &page.canvas_input {
-                        input.borrow_mut().cancel_space();
-                    }
-                    if !popup_focused && !panel_open {
-                        page.webview.set_focused(false);
-                    }
-                }),
-                cx.observe_global::<ChromeTheme>(|page, cx| {
-                    page.webview.notify_theme_change(servo_theme(cx));
-                }),
-                Self::intercept_keys(replaying.clone(), window, cx),
-            ];
-            Self::drain_after_spin(window, cx);
+            let binding = Rc::new(Cell::new(0));
+            let subscriptions = Self::bind(
+                &focus_handle,
+                replaying.clone(),
+                binding.clone(),
+                window,
+                cx,
+            );
             Self {
                 focus_handle,
                 scale: window.scale_factor(),
@@ -297,9 +277,73 @@ impl Page {
                 tint_task: None,
                 refresh_scheduled: false,
                 corners: Corners::default(),
+                binding,
                 _subscriptions: subscriptions,
             }
         })
+    }
+
+    /// The page's ties to the window it is shown in: focus, keys, and the
+    /// queue of Servo's events, which is drained with that window in hand.
+    /// `binding` is which tie this is; a page moved to another window
+    /// (`rebind`) lets the earlier one go.
+    fn bind(
+        focus_handle: &FocusHandle,
+        replaying: Rc<Cell<bool>>,
+        binding: Rc<Cell<u64>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Vec<Subscription> {
+        let subscriptions = vec![
+            cx.on_focus(focus_handle, window, |page, _, _| {
+                crate::controls::control_trace("Page focus -> Servo true");
+                page.webview.set_focused(true)
+            }),
+            cx.on_blur(focus_handle, window, |page, window, cx| {
+                let popup_focused =
+                    page.canvas_world.is_some() && page.controls.popup_has_focus(window, cx);
+                let panel_open = page.controls.owns_native_panel();
+                crate::controls::control_trace(if popup_focused {
+                    "Page blur -> owned popup retains Servo focus"
+                } else if panel_open {
+                    "Page blur -> owned panel retains Servo focus"
+                } else {
+                    "Page blur -> Servo false"
+                });
+                page.release_buttons();
+                if let Some(input) = &page.canvas_input {
+                    input.borrow_mut().cancel_space();
+                }
+                if !popup_focused && !panel_open {
+                    page.webview.set_focused(false);
+                }
+            }),
+            cx.observe_global::<ChromeTheme>(|page, cx| {
+                page.webview.notify_theme_change(servo_theme(cx));
+            }),
+            Self::intercept_keys(replaying, window, cx),
+        ];
+        Self::drain_after_spin(binding, window, cx);
+        subscriptions
+    }
+
+    /// Moves the page to another window, keeping everything it holds: its
+    /// address, history, scroll, media and profile. Theo's screen does this
+    /// when the window it was shown in closed and another was opened.
+    pub fn rebind(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.binding.set(self.binding.get() + 1);
+        self.release_buttons();
+        self.scale = window.scale_factor();
+        self.canvas_cap = window.viewport_size();
+        self.bounds = None;
+        self._subscriptions = Self::bind(
+            &self.focus_handle,
+            self.replaying.clone(),
+            self.binding.clone(),
+            window,
+            cx,
+        );
+        cx.notify();
     }
 
     // What the chrome shows.
@@ -394,6 +438,17 @@ impl Page {
             self.release_buttons();
             self.webview.hide();
         }
+    }
+
+    /// What the page's media last said it was doing.
+    pub fn playback(&self) -> Playback {
+        self.delegate.playback()
+    }
+
+    /// Asks the page's media to pause or play, through its media session:
+    /// the page's own handler when it set one, the playing element otherwise.
+    pub fn media(&self, action: MediaSessionActionType) {
+        self.webview.notify_media_session_action_event(action);
     }
 
     pub fn take_opened(&mut self) -> Vec<NewWebView> {
@@ -617,14 +672,18 @@ impl Page {
 
     /// Servo calls the delegate from inside `spin_event_loop`; the queued
     /// events are handled here, after it returns, with the window in hand.
-    fn drain_after_spin(window: &mut Window, cx: &mut Context<Self>) {
+    fn drain_after_spin(binding: Rc<Cell<u64>>, window: &mut Window, cx: &mut Context<Self>) {
         let page = cx.entity().downgrade();
         let window_handle = Window::window_handle(window);
+        let tie = binding.get();
         Engine::after_spin(
             move |cx| {
                 let Some(page) = page.upgrade() else {
                     return false;
                 };
+                if binding.get() != tie {
+                    return false;
+                }
                 let _ = window_handle.update(cx, |_, window, cx| {
                     page.update(cx, |page, cx| page.drain(window, cx));
                 });
