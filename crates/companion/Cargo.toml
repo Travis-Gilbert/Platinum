@@ -1,0 +1,10 @@
+[package]
+name = "companion"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Theo on the desktop, less the window: one face, the activities it stands for, and what the host's events mean to both."
+
+[dependencies]
+presence = { path = "../presence" }
+theo = { path = "../theo" }

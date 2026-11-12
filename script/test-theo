@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Tests the crates that depend on nothing (theo, presence) without the rest of
+# Tests the crates that depend on nothing (theo, presence, companion) without the rest of
 # the workspace.
 #
 # The root workspace needs the pinned checkouts under deps/ before cargo will
 # load it at all. These crates depend on nothing, so they are tested
 # here in a throwaway workspace that holds only them, with the repository's toolchain.
 # On a bootstrapped checkout, `script/media-env cargo test --locked -p theo`
-# (and `-p presence`) tests the same crates inside the real workspace.
+# (and `-p presence -p companion`) tests the same crates inside the real workspace.
 #
 # Usage: script/test-theo [arguments for `cargo test`]
 set -euo pipefail
@@ -26,7 +26,8 @@ mkdir -p "$work"
 cp "$root/rust-toolchain.toml" "$work/"
 ln -s "$root/crates/theo" "$work/theo"
 ln -s "$root/crates/presence" "$work/presence"
-printf '[workspace]\nmembers = ["theo", "presence"]\nresolver = "3"\n' >"$work/Cargo.toml"
+ln -s "$root/crates/companion" "$work/companion"
+printf '[workspace]\nmembers = ["theo", "presence", "companion"]\nresolver = "3"\n' >"$work/Cargo.toml"
 
 cd "$work"
-CARGO_TARGET_DIR="$target" cargo test -p theo -p presence "$@"
+CARGO_TARGET_DIR="$target" cargo test -p theo -p presence -p companion "$@"

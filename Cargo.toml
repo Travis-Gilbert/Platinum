@@ -15,6 +15,7 @@ members = [
     "crates/notes-fixtures",
     "crates/theo",
     "crates/presence",
+    "crates/companion",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",

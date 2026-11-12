@@ -1,7 +1,7 @@
 name: Theo core
 
-# Compiles and tests crates/theo and crates/presence, which need none of the
-# pinned checkouts, so they can be checked on every pull request that touches it.
+# Compiles and tests crates/theo, crates/presence and crates/companion, which need none of the
+# pinned checkouts, so they can be checked on every pull request that touches them.
 # It says nothing about the native application.
 
 on:
@@ -9,6 +9,7 @@ on:
     paths:
       - "crates/theo/**"
       - "crates/presence/**"
+      - "crates/companion/**"
       - "script/test-theo"
       - "rust-toolchain.toml"
       - ".github/workflows/theo.yml"
@@ -17,6 +18,7 @@ on:
     paths:
       - "crates/theo/**"
       - "crates/presence/**"
+      - "crates/companion/**"
       - "script/test-theo"
       - "rust-toolchain.toml"
       - ".github/workflows/theo.yml"
@@ -42,5 +44,5 @@ jobs:
       CARGO_INCREMENTAL: "0"
     steps:
       - uses: actions/checkout@v4
-      - name: Test crates/theo and crates/presence
+      - name: Test crates/theo, crates/presence and crates/companion
         run: script/test-theo
