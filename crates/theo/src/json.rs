@@ -306,15 +306,20 @@ impl Reader<'_> {
                         b't' => text.push('\t'),
                         b'u' => {
                             let first = self.hex4()?;
-                            let unit = if (0xd800..0xdc00).contains(&first)
+                            let mut unit = char::decode_utf16([first]).next();
+                            if (0xd800..0xdc00).contains(&first)
                                 && self.bytes[self.at..].starts_with(b"\\u")
                             {
+                                // The second half is taken only if it is one; anything else is read on its own.
+                                let back = self.at;
                                 self.at += 2;
                                 let second = self.hex4()?;
-                                char::decode_utf16([first, second]).next()
-                            } else {
-                                char::decode_utf16([first]).next()
-                            };
+                                if (0xdc00..0xe000).contains(&second) {
+                                    unit = char::decode_utf16([first, second]).next();
+                                } else {
+                                    self.at = back;
+                                }
+                            }
                             // A lone surrogate has no character; it reads as the replacement one.
                             text.push(unit.and_then(Result::ok).unwrap_or('\u{fffd}'));
                         }
@@ -407,6 +412,14 @@ impl fmt::Display for Json {
 #[cfg(test)]
 mod tests {
     use super::Json;
+
+    #[test]
+    fn a_first_half_without_its_second_loses_nothing_after_it() {
+        let read = |text: &str| Json::parse(text).unwrap().str().unwrap().to_owned();
+        assert_eq!(read(r#""\ud800\u0041""#), "\u{fffd}A");
+        assert_eq!(read(r#""\ud83d\ude00""#), "\u{1f600}");
+        assert_eq!(read(r#""\ud800""#), "\u{fffd}");
+    }
 
     #[test]
     fn keeps_the_order_and_the_numbers() {

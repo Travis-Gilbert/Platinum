@@ -298,3 +298,46 @@ fn on_the_desktop_sound_is_a_loudspeaker_and_never_a_mouth() {
     // The web's own choice is untouched: about one time in four it is a mouth.
     assert!((20..90).contains(&mouths), "{mouths}");
 }
+
+#[test]
+fn a_program_that_would_never_finish_laying_out_is_refused() {
+    // Ten repeats of twenty-four, one inside the next, around a wait of nothing: no cue, no time, and 24^10 steps.
+    let mut step = r#"{"op":"wait","ms":0}"#.to_owned();
+    for _ in 0..9 {
+        step = format!(r#"{{"op":"repeat","times":24,"step":{step}}}"#);
+    }
+    let mut theo = Face::new(FaceOptions::default());
+    let refused = theo
+        .perform(&json(&format!("[{step}]")), How::by("agent"))
+        .unwrap_err();
+    assert!(refused.reason.contains("steps"), "{}", refused.reason);
+    // One that only repeats a little is laid out as before.
+    let small = json(r#"[{"op":"repeat","times":24,"step":{"op":"wait","ms":0}}]"#);
+    assert!(theo.perform(&small, How::by("agent")).is_ok());
+}
+
+#[test]
+fn a_feature_that_goes_takes_only_its_own_channels() {
+    use theo::layers::Rig;
+    use theo::tables::{FeatureDef, Side, tables};
+    let mut rig = Rig::new(&tables().identity.features);
+    for id in ["brow", "brow.left"] {
+        let def = FeatureDef {
+            id: id.to_owned(),
+            side: Side::Left,
+            rest: Vec::new(),
+        };
+        rig.add_feature(&def).unwrap();
+    }
+    rig.settle();
+    let before = rig.read("brow.left.w");
+    assert_ne!(before, 0.0);
+    rig.retire_feature("brow");
+    for _ in 0..2_000 {
+        rig.begin_frame();
+        rig.step(0.008);
+    }
+    assert!(rig.channels.feature("brow").is_none());
+    assert!(rig.channels.feature("brow.left").is_some());
+    assert_eq!(rig.read("brow.left.w"), before);
+}

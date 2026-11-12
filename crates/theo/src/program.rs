@@ -159,6 +159,8 @@ pub mod limits {
     /// The most cues one may compile to.
     pub const CUES: usize = 600;
     pub const DEPTH: usize = 10;
+    /// The most steps one may lay out, counting those that leave no cue. The web has no such bound; without it a few nested repeats of an empty wait never finish.
+    pub const STEPS: usize = 20_000;
     pub const REPEAT: f64 = 24.0;
     pub const USES: usize = 4;
     /// The most characters of `text` a thing is searched for.
@@ -205,6 +207,7 @@ struct Run<'a> {
     cues: Vec<Cue>,
     notes: Vec<String>,
     adds: Vec<String>,
+    placed: usize,
     lookup: Option<&'a dyn Fn(&str) -> Option<Program>>,
     thing: Option<&'a dyn Fn(&Thing) -> Option<Vec<String>>>,
     strict: bool,
@@ -244,6 +247,7 @@ pub fn compile(input: &Json, context: &Context<'_>) -> Result<Score, Refusal> {
         cues: Vec::new(),
         notes: Vec::new(),
         adds: Vec::new(),
+        placed: 0,
         lookup: context.lookup,
         thing: context.thing,
         strict: context.strict,
@@ -620,6 +624,13 @@ fn place(step: &Json, path: &str, at: f64, run: &mut Run<'_>, frame: &Frame) -> 
     };
     if frame.depth > limits::DEPTH {
         return fail(path, "Steps are nested too deeply.");
+    }
+    run.placed += 1;
+    if run.placed > limits::STEPS {
+        return fail(
+            path,
+            format!("A performance has at most {} steps.", limits::STEPS),
+        );
     }
     let inner = Frame {
         depth: frame.depth + 1,

@@ -317,7 +317,11 @@ impl Rig {
             let gone: Vec<String> = self
                 .state
                 .keys()
-                .filter(|name| name.starts_with(&prefix))
+                // Only its own: `brow` going must not take `brow.left`'s with it.
+                .filter(|name| {
+                    name.strip_prefix(&prefix)
+                        .is_some_and(|param| !param.contains('.'))
+                })
                 .map(str::to_owned)
                 .collect();
             for name in gone {
