@@ -768,6 +768,8 @@ impl Desk {
     /// Asks the run's owner to stop the run Theo shows. Nothing is ended
     /// here, and a stop for a run that has since been replaced is refused.
     fn stop(&mut self, cx: &mut Context<Self>) {
+        // Stop ends Theo's hold on the desktop's input first, run or not.
+        crate::computer::stop();
         let thread = &self.driver.read(cx).projection().thread;
         if !thread.run_state.is_live() {
             return;

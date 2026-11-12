@@ -162,6 +162,8 @@ gpui-pre-macos = { version = "=0.3.9", features = ["test-support"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 # Only for the `snapshot` feature: the Mac window's side of rendering to an image.
 gpui-pre-macos = { version = "=0.3.9", optional = true }
+# Cua Driver's in-process C ABI (src/computer/cua.rs).
+libloading = "0.8"
 objc2 = "0.6"
 # AppKit's shared color panel for `<input type=color>`; GPUI Kit already
 # builds this crate with its default features.

@@ -4247,6 +4247,7 @@ dependencies = [
  "humansize",
  "image",
  "kmeans_colors",
+ "libloading 0.8.9",
  "log",
  "markup5ever_rcdom",
  "mime_guess",

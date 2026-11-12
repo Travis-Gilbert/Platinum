@@ -10,6 +10,8 @@ mod brand;
 mod browser;
 mod bump;
 mod canvas;
+#[cfg(target_os = "macos")]
+mod computer;
 mod controls;
 mod crm;
 mod delegate;
@@ -71,11 +73,19 @@ use crate::theorem::{NewConversation, NextConversation, PreviousConversation, St
 struct Cli {
     #[command(flatten)]
     notes: notes::open::Args,
+    /// Run a desktop task file through Theo's computer-use broker once
+    /// Platinum has started, writing `<file>.report.json` beside it.
+    #[cfg(target_os = "macos")]
+    #[arg(long, value_name = "FILE")]
+    theo_task: Option<std::path::PathBuf>,
 }
 
 fn main() -> anyhow::Result<()> {
     // Before anything starts, so a mistaken argument costs nothing.
-    let notes = Cli::parse().notes.launch()?;
+    let cli = Cli::parse();
+    #[cfg(target_os = "macos")]
+    let theo_task = cli.theo_task;
+    let notes = cli.notes.launch()?;
     #[cfg(feature = "snapshot")]
     if let Some(output) = std::env::var_os("FRAME_SPATIAL_CHECK") {
         return browser::spatial_check::run(output.into());
@@ -135,6 +145,20 @@ fn main() -> anyhow::Result<()> {
             theorem::init(Some(profile_dir.join("theorem.json")), cx);
             #[cfg(target_os = "macos")]
             theo_desk::init(profile_dir.join("theo.json"), cx);
+            #[cfg(target_os = "macos")]
+            computer::init(profile_dir.join("computer"));
+            #[cfg(target_os = "macos")]
+            if let (Some(task), Some(broker)) = (theo_task.clone(), computer::broker()) {
+                std::thread::spawn(move || match computer::task::run_file(&broker, &task) {
+                    Ok(report) => log::info!(
+                        "computer: task {} finished={} stopped={:?}",
+                        task.display(),
+                        report.finished,
+                        report.stopped
+                    ),
+                    Err(error) => log::error!("computer: task {}: {error:#}", task.display()),
+                });
+            }
             search::init(&search_dir, cx);
             session::init(&profile_dir, cx);
             session::open_imported_tabs(&profile, cx);
