@@ -394,6 +394,9 @@ pub struct Session<P> {
     playback: Playback,
     /// Whether the sound activity is going on the face.
     sounding: bool,
+    /// One for each time the sound began: each is a run of the sound
+    /// activity on the face, since a run that has ended cannot begin again.
+    run: u64,
 }
 
 impl<P> Default for Session<P> {
@@ -406,6 +409,7 @@ impl<P> Default for Session<P> {
             pinned: false,
             playback: Playback::None,
             sounding: false,
+            run: 0,
         }
     }
 }
@@ -465,8 +469,11 @@ impl<P> Session<P> {
         if !playing && !self.sounding {
             return None;
         }
+        if playing && !self.sounding {
+            self.run += 1;
+        }
         self.revision += 1;
-        let mut activity = Activity::new(SOUND_ACTIVITY, self.generation);
+        let mut activity = Activity::new(SOUND_ACTIVITY, self.run);
         activity.revision = self.revision;
         activity.environment = Some("desktop".to_owned());
         activity.surface = Some("theo-screen".to_owned());
@@ -780,5 +787,31 @@ mod tests {
         session.sound(None);
         session.end();
         assert_eq!(session.sound(None).map(|a| a.phase), Some(Phase::Completed));
+    }
+
+    #[test]
+    fn the_boombox_comes_back_when_a_paused_page_plays_again() {
+        let mut session: Session<u8> = Session::default();
+        let mut presence = presence::Presence::new();
+        let mut shown = |session: &mut Session<u8>, playback| {
+            session.report(session.generation(), playback);
+            let activity = session.sound(None).expect("a change");
+            assert!(matches!(
+                presence.apply(activity),
+                presence::Applied::Taken { .. }
+            ));
+            presence.primary().map(|shown| shown.form)
+        };
+        session.page_or(|| Some(1));
+        assert_eq!(
+            shown(&mut session, Playback::Playing).as_deref(),
+            Some("boombox")
+        );
+        assert_eq!(shown(&mut session, Playback::Paused), None);
+        // The same page, played again: a new run, which the face takes.
+        assert_eq!(
+            shown(&mut session, Playback::Playing).as_deref(),
+            Some("boombox")
+        );
     }
 }

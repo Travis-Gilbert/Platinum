@@ -124,6 +124,7 @@ mod imp {
     #[derive(Default)]
     pub struct LevelSink {
         level: OnceLock<gst::Element>,
+        sink: OnceLock<gst::Element>,
     }
 
     #[glib::object_subclass]
@@ -134,6 +135,34 @@ mod imp {
     }
 
     impl ObjectImpl for LevelSink {
+        /// `ts-offset`, as every GStreamer audio sink has: `autoaudiosink`
+        /// sets it on the sink it picks without asking. It is the inner
+        /// sink's, where it takes effect.
+        fn properties() -> &'static [glib::ParamSpec] {
+            static PROPERTIES: OnceLock<Vec<glib::ParamSpec>> = OnceLock::new();
+            PROPERTIES.get_or_init(|| {
+                vec![
+                    glib::ParamSpecInt64::builder("ts-offset")
+                        .nick("TS Offset")
+                        .blurb("Timestamp offset in nanoseconds, given to the audio sink")
+                        .build(),
+                ]
+            })
+        }
+
+        fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+            if let ("ts-offset", Some(sink)) = (pspec.name(), self.sink.get()) {
+                sink.set_property_from_value("ts-offset", value);
+            }
+        }
+
+        fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+            match self.sink.get() {
+                Some(sink) => sink.property_value(pspec.name()),
+                None => pspec.default_value().clone(),
+            }
+        }
+
         fn constructed(&self) {
             self.parent_constructed();
             let bin = self.obj();
@@ -157,6 +186,7 @@ mod imp {
                     .build();
                 bin.add_pad(&pad)?;
                 let _ = self.level.set(level);
+                let _ = self.sink.set(sink);
                 Ok(())
             })();
             if let Err(error) = made {
@@ -271,6 +301,18 @@ mod tests {
         levels.push(0.5, start);
         assert!(levels.at(start + INTERVAL).is_some());
         assert_eq!(levels.at(start + INTERVAL * 3), None);
+    }
+
+    #[test]
+    fn the_sink_takes_the_offset_autoaudiosink_gives_every_audio_sink() {
+        if gst::init().is_err() || gst::ElementFactory::find("osxaudiosink").is_none() {
+            eprintln!("skipped: no GStreamer audio output here");
+            return;
+        }
+        let sink: LevelSink = glib::Object::new();
+        assert!(sink.find_property("ts-offset").is_some());
+        sink.set_property("ts-offset", 20_000_000i64);
+        assert_eq!(sink.property::<i64>("ts-offset"), 20_000_000);
     }
 
     #[test]
