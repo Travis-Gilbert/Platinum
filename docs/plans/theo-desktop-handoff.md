@@ -12,7 +12,7 @@ this file says where the work stands against it.
 | --- | --- | --- |
 | `claude/theo-core-port` | #22, ready for review, base `main` | `crates/theo`, `crates/presence`, `script/test-theo`, `.github/workflows/theo.yml` |
 | `claude/theo-desktop-host` | #23, draft, base `claude/theo-core-port` | `crates/companion`, this file, the spec |
-| `claude/theo-stage-c-fe5831` | draft, base `claude/theo-desktop-host` | `src/computer/` (Stage C broker), `script/fetch-cua-driver` |
+| `claude/theo-stage-c-fe5831` | #26, draft, base `claude/theo-desktop-host` | `src/computer/` (Stage C broker), `script/fetch-cua-driver` |
 
 Work continues on `claude/theo-desktop-host`. If #22 merges first, rebase this
 branch onto `main`. The owner asked that the PRs be left alone while building:
