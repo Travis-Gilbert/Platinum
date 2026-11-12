@@ -1,23 +1,29 @@
 #!/usr/bin/env bash
-# Tests crates/theo on its own, without the rest of the workspace.
+# Tests the crates that depend on nothing (theo, presence) without the rest of
+# the workspace.
 #
 # The root workspace needs the pinned checkouts under deps/ before cargo will
-# load it at all. theo depends on nothing, so it is tested here in a
-# throwaway workspace that holds only it, with the repository's toolchain.
+# load it at all. These crates depend on nothing, so they are tested
+# here in a throwaway workspace that holds only them, with the repository's toolchain.
 # On a bootstrapped checkout, `script/media-env cargo test --locked -p theo`
-# tests the same crate inside the real workspace.
+# (and `-p presence`) tests the same crates inside the real workspace.
 #
 # Usage: script/test-theo [arguments for `cargo test`]
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
+target="${CARGO_TARGET_DIR:-$root/target/theo-alone}"
+# The workspace is at a fixed place: the tests find their fixtures by the
+# crate's path as it was when they were compiled, so a new path each run
+# would leave a cached test looking where nothing is any more.
+work="$target/workspace"
+rm -rf "$work"
+mkdir -p "$work"
 
 cp "$root/rust-toolchain.toml" "$work/"
 ln -s "$root/crates/theo" "$work/theo"
-printf '[workspace]\nmembers = ["theo"]\nresolver = "3"\n' >"$work/Cargo.toml"
+ln -s "$root/crates/presence" "$work/presence"
+printf '[workspace]\nmembers = ["theo", "presence"]\nresolver = "3"\n' >"$work/Cargo.toml"
 
 cd "$work"
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$root/target/theo-alone}" \
-    cargo test -p theo "$@"
+CARGO_TARGET_DIR="$target" cargo test -p theo -p presence "$@"
