@@ -96,6 +96,13 @@ pub fn return_to(pid: i32) {
     }
 }
 
+/// The process id of the application in front, this one included.
+pub fn frontmost_pid() -> Option<i32> {
+    NSWorkspace::sharedWorkspace()
+        .frontmostApplication()
+        .map(|app| app.processIdentifier())
+}
+
 /// Whether this process is the active application.
 pub fn we_are_active() -> bool {
     NSWorkspace::sharedWorkspace()

@@ -1,0 +1,28 @@
+--- a/apps/theoremweb/crates/agent-runtime/src/client/native.rs
++++ b/apps/theoremweb/crates/agent-runtime/src/client/native.rs
+@@ -1226,7 +1226,10 @@
+                     .deliver(decoder.push(&text), follower)
+                     .map_err(ClientError::new)?;
+             }
+-            if follower.abandoned() {
++            // The terminal event ends the follow. The authority may keep the
++            // connection open after it for bookkeeping events, so waiting for
++            // the close can leave a finished run looking live.
++            if follower.abandoned() || follow.terminal {
+                 return Ok(());
+             }
+         }
+--- a/apps/theoremweb/crates/agent-runtime/src/client/browser.rs
++++ b/apps/theoremweb/crates/agent-runtime/src/client/browser.rs
+@@ -1287,7 +1287,10 @@
+                     .deliver(decoder.push(&text), follower)
+                     .map_err(ClientError::new)?;
+             }
+-            if follower.abandoned() {
++            // The terminal event ends the follow. The authority may keep the
++            // connection open after it for bookkeeping events, so waiting for
++            // the close can leave a finished run looking live.
++            if follower.abandoned() || follow.terminal {
+                 return Ok(());
+             }
+         }

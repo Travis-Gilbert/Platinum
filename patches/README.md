@@ -145,3 +145,15 @@ already-applied states without discarding dependency changes.
 The root application's regression opens durable stores, searches a captured
 page, clears through the profile UI's operation, and verifies after reopening
 that history, Home recents and local results are empty while bookmarks survive.
+
+## Ending a run follow on its terminal event
+
+`theorem-run-terminal.patch` applies to Theorem
+`08495b15879a7bc2449d43c49530f549268d05fc` via `script/bootstrap`, after the
+two patches above. The agent runtime's `stream_run` (native and browser) noted
+the authority's terminal event (`RUN.CLOSED`, `RUN.CANCELLED`, `RUN.FAILED`)
+but only acted on it once the connection closed. The authority keeps sending
+bookkeeping events after `RUN.CLOSED` and need not close the tail promptly, so
+a finished run stayed live in the client: Theo kept working and offered Stop
+after the reply had arrived. The follow now returns as soon as the terminal
+event is delivered, and settlement reads the conversation as before.

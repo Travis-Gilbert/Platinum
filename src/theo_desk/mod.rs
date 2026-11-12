@@ -9,10 +9,15 @@
 //! face, the same run and the same draft. Hiding never touches the run; Stop
 //! is its own action, routed to the driver that owns the run.
 //!
-//! Talking: a right click on Theo, or the talk key, opens a menu over it
-//! with a field to type into straight away. The same menu then carries
-//! Theorem's reply, and Stop while a run goes on. There is no standing text
-//! box and no window around Theo: only the face, on a transparent window.
+//! Talking: a right click on Theo, or the talk key, opens a menu under it
+//! with a field to type into straight away. The same menu carries the
+//! conversation as a trail, what was asked and what Theorem answered, and
+//! Stop while a run goes on. There is no standing text box and no window
+//! around Theo: only the face, on a transparent window.
+//!
+//! The menu stays open while the person works in another application, and
+//! closes when they click away from it in the application Theo was called
+//! over, or press Escape.
 //!
 //! Focus: shown by a key or a double right click, Theo floats over the
 //! application in front without taking focus from it. Only the menu takes
@@ -20,24 +25,24 @@
 //! it was called over.
 //!
 //! SOURCING: `companion` and `theo` (this repository's port of web Theo);
-//! GPUI Kit's `Root`, `PopupMenu` and `Input`; `global-hotkey` for keys that
+//! GPUI Kit's `Root`, `PopupMenu` and `Textarea`; `global-hotkey` for keys that
 //! work while another application is in front; AppKit and Core Graphics in
 //! `mac.rs`.
 
 pub mod activity;
 mod body;
 mod mac;
+mod trail;
 
 use std::cell::{Cell, RefCell};
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use companion::{Calling, Companion, Scope};
 use gpui_kit::component::input::{
-    Escape, InlineToken, Input, InputContent, InputEvent, InputState, InputToken, Textarea,
-    TextareaState,
+    Escape, InlineToken, InputContent, InputEvent, Textarea, TextareaState,
 };
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
 use gpui_kit::component::{ActiveTheme as _, IconName, Root, h_flex, v_flex};
@@ -54,11 +59,12 @@ use theo::engine::{Expression, FaceOptions, Liveness};
 use theo::player::Stage;
 use theo::program::Place;
 use theorem_surface_contracts::intent::ComposerIntent;
-use theorem_surface_contracts::thread::{ThreadActor, ThreadPart};
+use theorem_surface_contracts::thread::ThreadPart;
 use theoremweb_agent_runtime::ChatHostPhase;
 
 use self::activity::{Runs, activity_id};
 use self::body::{BODY_SIZE, BodyFrame};
+use self::trail::{Trail, TrailState};
 use crate::theorem::{Connection, DriverEvent, TheoremDriver};
 
 actions!(
@@ -78,11 +84,11 @@ actions!(
 );
 
 /// The menu's width and the room beside Theo it may take, in points. The
-/// menu keeps its width; its reply grows with what Theorem says, from one
-/// line to `REPLY_ROWS`, and scrolls past that.
+/// menu keeps its width; its trail grows with the conversation and scrolls
+/// past its height, and the field grows to `ASK_ROWS` lines as it is typed in.
 const MENU_WIDTH: f32 = 320.0;
 const MENU_ROOM: f32 = 440.0;
-const REPLY_ROWS: usize = 12;
+const ASK_ROWS: usize = 6;
 /// Clear space either side of the menu for its shadow, in points.
 const MENU_MARGIN: f32 = 12.0;
 /// Theo's window while the menu is open: the menu and its margins (wider
@@ -95,6 +101,9 @@ const OPEN_SIZE: (f64, f64) = (
 const FOLLOW_WITHIN: f64 = 480.0;
 /// The pointer at this distance turns the gaze all the way, in points.
 const GAZE_REACH: f64 = 240.0;
+/// How long after the menu gives up the keyboard the application in front
+/// is read, so the switch macOS reports is the finished one.
+const SETTLE: Duration = Duration::from_millis(150);
 /// How often the reduce-motion setting is read again, in milliseconds.
 const STILL_EVERY_MS: f64 = 1_000.0;
 
@@ -295,8 +304,8 @@ fn gaze_of(pointer: (f64, f64)) -> Option<(f64, f64)> {
     })
 }
 
-/// Theorem's latest message as the reply shows it: its words, with each
-/// citation, attachment and artifact as one inline token.
+/// A Theorem message as the trail shows it: its words, with each citation,
+/// attachment and artifact as one inline token.
 fn reply_content(parts: &[ThreadPart]) -> Option<InputContent> {
     let mut text = String::new();
     let mut tokens: Vec<(Range<usize>, InlineToken)> = Vec::new();
@@ -387,6 +396,14 @@ fn token_icon(id: &str) -> IconName {
         IconName::File
     } else {
         IconName::Frame
+    }
+}
+
+/// What the trail shows besides the conversation, from the driver.
+fn trail_state(driver: &TheoremDriver) -> TrailState {
+    TrailState {
+        working: driver.projection().thread.run_state.is_live(),
+        unset: driver.connection() == Connection::NotConfigured,
     }
 }
 
@@ -922,11 +939,12 @@ fn open(desk: Entity<Desk>, cx: &mut App) {
 
 // The window -----------------------------------------------------------------
 
-/// What the menu shows that changes its items. The reply is read as the
+/// What the menu shows that changes its items. The trail is read as the
 /// menu draws, so a reply arriving word by word does not rebuild it.
 #[derive(Clone, Debug, PartialEq)]
 struct MenuContent {
-    title: String,
+    /// The trail has something to show.
+    trail: bool,
     live: bool,
     not_configured: bool,
     notice: Option<String>,
@@ -937,8 +955,8 @@ struct MenuContent {
 struct MenuParts {
     desk: Entity<Desk>,
     driver: Entity<TheoremDriver>,
-    ask: Entity<InputState>,
-    reply: Entity<TextareaState>,
+    ask: Entity<TextareaState>,
+    trail: Entity<Trail>,
     /// The menu's dismissal is for an item that keeps it open, or for a
     /// right click that opens it again.
     keep_open: Rc<Cell<bool>>,
@@ -948,11 +966,11 @@ struct MenuParts {
 pub struct Body {
     desk: Entity<Desk>,
     driver: Entity<TheoremDriver>,
-    ask: Entity<InputState>,
-    /// Theorem's reply, read-only, growing with what it says.
-    reply: Entity<TextareaState>,
-    /// What the reply was last given, so it is set only when that changes.
-    reply_shown: Option<InputContent>,
+    ask: Entity<TextareaState>,
+    /// The conversation, oldest first.
+    trail: Entity<Trail>,
+    /// The conversation changed since the trail last followed it.
+    trail_stale: bool,
     focus_handle: FocusHandle,
     title: String,
     /// The open menu, what it was built from, and its dismissal.
@@ -963,6 +981,8 @@ pub struct Body {
     keep_open: Rc<Cell<bool>>,
     /// Whether the window was active while the menu was open.
     was_active: bool,
+    /// When the open menu last gave up the keyboard, until it has it again.
+    left_at: Option<Instant>,
     /// Where a press on the face began, until it is a click or a drag.
     pressed: Option<gpui_kit::Point<gpui_kit::Pixels>>,
     /// The person is dragging Theo somewhere.
@@ -973,40 +993,49 @@ pub struct Body {
 impl Body {
     fn new(desk: Entity<Desk>, draft: String, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let ask = cx.new(|cx| {
-            let mut state = InputState::new(window, cx).placeholder("Ask Theo");
+            // Enter sends; Shift-Enter starts a new line.
+            let mut state = TextareaState::new(window, cx)
+                .auto_grow(1, ASK_ROWS)
+                .submit_on_enter(true)
+                .placeholder("Ask Theo");
             // A remounted menu starts from the draft the driver kept.
             state.set_value(draft, window, cx);
             state
         });
-        let reply = cx.new(|cx| TextareaState::new(window, cx).auto_grow(1, REPLY_ROWS));
+        let driver = desk.read(cx).driver.clone();
         let subscriptions = vec![
             cx.observe(&desk, |_, _, cx| cx.notify()),
+            cx.observe(&driver, |body, _, cx| {
+                body.trail_stale = true;
+                cx.notify();
+            }),
             cx.subscribe_in(&ask, window, |body, _, event, window, cx| {
                 body.ask_event(event, window, cx)
             }),
-            // Choosing another application closes the menu, as a menu does.
+            // Leaving the menu is settled as it draws: see `close_if_left_for`.
             cx.observe_window_activation(window, |body, window, cx| {
-                let active = window.is_window_active();
-                if active {
+                if window.is_window_active() {
                     body.was_active = true;
+                    body.left_at = None;
                 } else if body.was_active && body.menu.is_some() {
-                    body.was_active = false;
-                    body.desk.update(cx, |desk, cx| desk.close_composer(cx));
+                    body.left_at = Some(Instant::now());
+                    cx.notify();
                 }
             }),
         ];
         Self {
-            driver: desk.read(cx).driver.clone(),
+            driver,
             desk,
             ask,
-            reply,
-            reply_shown: None,
+            trail: cx.new(|_| Trail::new()),
+            trail_stale: true,
             focus_handle: cx.focus_handle(),
             title: String::new(),
             menu: None,
             menu_bounds: Rc::new(Cell::new(None)),
             keep_open: Rc::new(Cell::new(false)),
             was_active: false,
+            left_at: None,
             pressed: None,
             dragging: false,
             _subscriptions: subscriptions,
@@ -1059,13 +1088,11 @@ impl Body {
         let desk = self.desk.read(cx);
         let driver = desk.driver.read(cx);
         let projection = driver.projection();
+        let state = trail_state(driver);
         MenuContent {
-            title: match projection.thread.title.as_str() {
-                "" => "New conversation".to_owned(),
-                title => title.to_owned(),
-            },
-            live: projection.thread.run_state.is_live(),
-            not_configured: driver.connection() == Connection::NotConfigured,
+            trail: Trail::shows(&projection.thread.messages, state),
+            live: state.working,
+            not_configured: state.unset,
             notice: projection
                 .notice
                 .clone()
@@ -1078,7 +1105,7 @@ impl Body {
             desk: self.desk.clone(),
             driver: self.driver.clone(),
             ask: self.ask.clone(),
-            reply: self.reply.clone(),
+            trail: self.trail.clone(),
             keep_open: self.keep_open.clone(),
         }
     }
@@ -1112,30 +1139,37 @@ impl Body {
         self.focus(window, cx);
     }
 
-    /// Gives the reply Theorem's latest message, when that has changed.
-    fn sync_reply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let driver = self.driver.read(cx);
-        let thread = &driver.projection().thread;
-        let latest = thread
-            .messages
-            .iter()
-            .rev()
-            .find(|message| message.actor == ThreadActor::Theorem);
-        let content = latest
-            .and_then(|message| reply_content(&message.parts))
-            .unwrap_or_else(|| {
-                InputContent::new(if driver.connection() == Connection::NotConfigured {
-                    "Theorem isn't set up on this Mac."
-                } else {
-                    "Say what you need."
-                })
-            });
-        if self.reply_shown.as_ref() == Some(&content) {
+    /// Lets the trail follow the conversation, when it has changed.
+    fn sync_trail(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !std::mem::take(&mut self.trail_stale) {
             return;
         }
-        self.reply_shown = Some(content.clone());
-        self.reply
-            .update(cx, |reply, cx| reply.set_value(content, window, cx));
+        let driver = self.driver.read(cx);
+        let messages = driver.projection().thread.messages.clone();
+        let state = trail_state(driver);
+        self.trail
+            .update(cx, |trail, cx| trail.sync(&messages, state, window, cx));
+    }
+
+    /// Working in another application keeps the menu open; clicking in the
+    /// application Theo was called over, away from the menu, closes it.
+    fn close_if_left_for(&mut self, window: &Window, cx: &mut Context<Self>) {
+        let Some(left) = self.left_at else {
+            return;
+        };
+        if self.menu.is_none() || window.is_window_active() {
+            self.left_at = None;
+            return;
+        }
+        if left.elapsed() < SETTLE {
+            return;
+        }
+        let over = self.desk.read(cx).front.as_ref().map(|front| front.pid);
+        if over.is_some() && mac::frontmost_pid() == over {
+            self.left_at = None;
+            self.was_active = false;
+            self.desk.update(cx, |desk, cx| desk.close_composer(cx));
+        }
     }
 
     fn dismissed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -1150,33 +1184,20 @@ impl Body {
 }
 
 impl MenuParts {
-    /// The menu's items for `content`: the conversation, Theorem's reply,
-    /// a notice if there is one, the field, then what can be done.
+    /// The menu's items for `content`: the conversation, a notice if there
+    /// is one, the field, then what can be done.
     fn fill(&self, menu: PopupMenu, content: &MenuContent) -> PopupMenu {
         let driver = self.driver.clone();
-        let mut menu = menu
-            .min_w(px(MENU_WIDTH))
-            .max_w(px(MENU_WIDTH))
-            .label(content.title.clone())
-            .item(
-                // Disabled as a menu item, so selecting in the reply does
-                // not close the menu.
-                PopupMenuItem::element({
-                    let reply = self.reply.clone();
-                    move |_, _| {
-                        div().flex_1().min_w_0().child(
-                            Textarea::new(&reply)
-                                .readonly(true)
-                                .bordered(false)
-                                .appearance(false)
-                                .token(|token, _, _| {
-                                    InputToken::new(token).icon(token_icon(token.token().id()))
-                                }),
-                        )
-                    }
-                })
-                .disabled(true),
+        let mut menu = menu.min_w(px(MENU_WIDTH)).max_w(px(MENU_WIDTH));
+        if content.trail {
+            // Disabled as a menu item, so selecting in the trail does not
+            // close the menu.
+            let trail = self.trail.clone();
+            menu = menu.item(
+                PopupMenuItem::element(move |_, _| div().flex_1().min_w_0().child(trail.clone()))
+                    .disabled(true),
             );
+        }
         if let Some(notice) = content.notice.clone() {
             menu = menu.item(
                 PopupMenuItem::element(move |_, cx| {
@@ -1191,11 +1212,16 @@ impl MenuParts {
             );
         }
         let ask = self.ask.clone();
-        menu = menu.separator().item(
+        if content.trail || content.notice.is_some() {
+            menu = menu.separator();
+        }
+        menu = menu.item(
             // Disabled as a menu item, so a click in the field does not
             // close the menu; the field itself takes the keys.
-            PopupMenuItem::element(move |_, _| div().flex_1().py_1().child(Input::new(&ask)))
-                .disabled(true),
+            PopupMenuItem::element(move |_, _| {
+                div().flex_1().min_w_0().py_1().child(Textarea::new(&ask))
+            })
+            .disabled(true),
         );
         menu = menu.separator();
         if !content.not_configured {
@@ -1241,8 +1267,9 @@ impl Render for Body {
                 desk.companion.composer_open(),
             )
         });
-        self.sync_reply(window, cx);
+        self.sync_trail(window, cx);
         self.sync_menu(open, window, cx);
+        self.close_if_left_for(window, cx);
         // Assistive technology reads the window's title: what Theo is doing.
         let title = format!("Theo: {words}");
         if title != self.title {

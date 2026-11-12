@@ -51,7 +51,7 @@ fi
 # Platinum until their upstream revision is published. Never modify a shared or
 # dirty dependency: once an earlier patch is in place, its own changes are expected.
 kept=0
-for patch in theorem-model-routing.patch theorem-browser-clear-history.patch; do
+for patch in theorem-model-routing.patch theorem-browser-clear-history.patch theorem-run-terminal.patch; do
   patch="$root/patches/$patch"
   if git -C "$checkout" apply --reverse --check "$patch" >/dev/null 2>&1; then
     kept=1

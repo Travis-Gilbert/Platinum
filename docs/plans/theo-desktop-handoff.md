@@ -80,24 +80,35 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
      where it is and the window grows around it to 344 by 572 (`OPEN_SIZE`).
      Near the bottom of the screen the menu opens above the face instead
      (`mac::menu_frame`, which also keeps the window on the screen beside an
-     edge). The menu is 320 pt wide and never changes width. It holds the
-     conversation title, Theorem's reply, an "Ask Theo" `Input` focused at
-     once, "New Conversation", then Stop while a run goes on, or "Use the Demo
-     Authority" when native Theorem is not configured.
-   - **The reply is a read-only auto-grow `Textarea`** (gpui-kit, rows 1 to
-     12, scrolling past 12) whose content is `InputContent` with inline
-     tokens: a citation reads as its label with a book icon, an attachment as
-     its name with a file icon, an artifact as the first line of its fallback
-     text with a frame icon (`reply_content`, `token_icon`). The menu's height
-     follows the reply; its width does not. The content is replaced only when
-     it changes, so a streaming reply resets the textarea's scroll as it
-     grows.
-   - Enter sends; the reply arrives in the same menu. Stop, New Conversation
-     and the demo keep the menu open. Escape, a click outside, or Platinum
-     losing activation close it, shrink the window back to the face, and hand
-     the keyboard back to the application Theo was called over. A left click
-     on the face only drags it. The window title is "Theo: " and the
-     conversation's first words.
+     edge). The menu is 320 pt wide and never changes width. It has no title
+     row (the owner asked for that space to go to the conversation). It holds
+     the conversation as a trail, an "Ask Theo" field focused at once, "New
+     Conversation", then Stop while a run goes on, or "Use the Demo Authority"
+     when native Theorem is not configured.
+   - **The trail** (`trail.rs`) is every turn of the selected conversation,
+     oldest first, scrolled to the newest, at most 260 pt before it scrolls.
+     What the person asked sits to the right in a tinted block; each Theorem
+     answer is a read-only auto-grow `Textarea` (gpui-kit) whose content is
+     `InputContent` with inline tokens: a citation reads as its label with a
+     book icon, an attachment as its name with a file icon, an artifact as the
+     first line of its fallback text with a frame icon (`reply_content`,
+     `token_icon`). An answer's text box is kept by message id and its content
+     replaced only when it changes. Insight and system messages are not shown.
+     While a run is live the trail ends with "Theo is working on it.", which
+     goes when the run ends, as Stop does. The trail follows the driver only
+     when the driver changes, not every frame.
+   - **"Ask Theo" is an auto-grow `Textarea`** (1 to 6 rows) with
+     `submit_on_enter`: it wraps, Enter sends, Shift-Enter starts a new line.
+   - Stop, New Conversation and the demo keep the menu open. **Dismissal**
+     (owner's rule): working in another application keeps the menu open;
+     clicking in the application Theo was called over, away from the menu,
+     closes it (`Body::close_if_left_for`: once the menu has given up the
+     keyboard, the frontmost application is read after 150 ms, and the menu
+     closes when it is `Scope`'s application). Escape and a click on the
+     menu's own window outside the menu also close it. Closing shrinks the
+     window back to the face and hands the keyboard back to the application
+     Theo was called over. A left click on the face only drags it. The window
+     title is "Theo: " and the conversation's first words.
    - Double right-click anywhere is an opt-in setting in the Theo menu of the
      menu bar. It uses a listen-only Core Graphics event tap, which needs
      **Input Monitoring** for Platinum and a relaunch; without it the menu says
@@ -144,6 +155,19 @@ Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`,
   so GPUI left it at its static place, after the menu: the measured bounds
   were a menu's height too low. It is now pinned to the menu's top left.
 
+- **A finished run looked live for minutes** (the owner waited about four
+  minutes with the spinner and Stop showing after the reply was complete).
+  Replaying the node's stream showed `RUN.CLOSED` arriving; the client's
+  `stream_run` only checked for the terminal event after the connection
+  closed, and the node keeps it open after the terminal event. The client now
+  returns as soon as the terminal event is delivered. The fix is in the
+  Theorem dependency (`apps/theoremweb/crates/agent-runtime`, native and
+  browser clients) and is carried as `patches/theorem-run-terminal.patch`,
+  applied by `script/bootstrap` (see `patches/README.md`).
+- A second question replaced the first answer: the menu showed only the latest
+  Theorem message. It now shows the whole conversation (the trail above).
+- A long question ran on in one line: "Ask Theo" was a single-line `Input`.
+
 ### How to run it
 
 ```sh
@@ -160,12 +184,14 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
 ### Tested (macOS, this session)
 
 - `cargo test --locked -p theo -p presence -p companion`: 31 passed.
-- `cargo test --locked --bin frame theo_desk`: 13 passed (activity
+- `cargo test --locked --bin frame theo_desk`: 17 passed (activity
   generations, stale stops, snapshot, liveness, the Expression subset, the
   plate's rounded corners and its outline; the menu opening under the face
   without moving it, over the face at the bottom of the screen, and staying
   on the screen beside an edge; a reply's words and tokens in order, a token
-  with no name still named, and an empty reply).
+  with no name still named, and an empty reply; the trail reading the
+  person's words joined, Theorem's reply, leaving out empty turns, insights
+  and system messages, and showing only when it has a turn or a state).
 
 ### Observed in the running application
 
@@ -195,7 +221,18 @@ bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
   chat" thread. A click inside Theo's window above the menu went through to
   TextEdit, which took the caret, and the menu closed.
 
+- The owner, on the `run17` build: typing into "Ask Theo" works with real
+  keys and a question gets Theorem's reply in the menu. Their report is what
+  led to the trail, the wrapping field, the dismissal rule, the run-terminal
+  fix and the title's removal.
+
 ### Not yet observed
+
+- **This round's changes in the running application** (`run18`, built and
+  launched): the trail, the wrapping field, the dismissal rule, and a run
+  ending (Stop and "working" going, the eyes returning) when the reply is
+  done. The screen was locked when the check began, so nothing of it has been
+  seen. Wheel scrolling over an answer inside the trail is also unchecked.
 
 - Typing into "Ask Theo" with real keys, and a sent question's reply. The
   automated check cannot type here by design: Theo's panel takes the keyboard
