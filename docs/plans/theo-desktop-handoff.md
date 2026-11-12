@@ -1,7 +1,8 @@
 # Theo desktop: handoff to the Mac session
 
 Written 2026-11-12 at the end of a cloud session that could not build the
-application (`deps/` was absent, so the root workspace did not load). Read this,
+application (`deps/` was absent, so the root workspace did not load), and
+brought up to date the same day by the Mac session that built Stage B. Read this,
 then the spec at [theo-desktop.md](theo-desktop.md). The spec is the authority;
 this file says where the work stands against it.
 
@@ -32,69 +33,124 @@ do not babysit review bots unless asked.
   `Scope`, the optional double-right-click detector (`Calling`), and
   `frame(now_ms)` which feeds only fresh signals and returns the grains.
 
-## Evidence so far
+## Stage B: where it stands (2026-11-12, Mac session)
 
-- Test-verified on Linux x86-64: `script/test-theo`, 31 tests, at `b5e835f`.
-- Test-verified on macOS: CI ran `theo` and `presence` green at `5361cb2`.
-  `companion` has not run on macOS.
-- Not integrated: nothing in `frame` depends on any of the three crates.
-- Not observed: nothing has been seen in the running application.
+Stage B is implemented in `frame` under `src/theo_desk/` (commits `f5b5b37`
+and `202f503`). What each spec item became:
 
-## First on the Mac
+1. **Dependency.** `companion` is a path dependency and a workspace member.
+   `global-hotkey = "0.8"` supplies keys that work while another application
+   is in front. The hand-written `Cargo.lock` entries were accepted by
+   `--locked`.
+2. **Renderer.** `body.rs` paints the grains as discs and the side arcs with
+   GPUI's `canvas`, `paint_quad` and `PathBuilder`, at web Theo's measures
+   (visor 120 pt, radius 21.6 pt, grains at 55% alpha, three arcs a side).
+   **No plate:** at the owner's asking the dark plate, ring and shadow are
+   gone; the face stands on a transparent window, and grains outside the
+   visor's rounded box are dropped by their centre.
+3. **Stage adapter.** `gaze_at` resolves against the real window and pointer
+   (`mac::pointer_from`); the window is placed by a fraction of the screen's
+   visible frame so a place survives resizing.
+4. **Clock and stillness.** GPUI's frame callback with an `Instant`-based
+   millisecond clock; reduce-motion is read once a second and mapped to
+   `set_still`.
+5. **Activity.** `activity.rs` turns the driver's `ThreadDocument` run state
+   into `presence::Activity` updates (one generation per run, a stop for an
+   older generation refused) and into liveness following web Theo's
+   `livenessOf` (ask, work, a 1.5 s done hold, attend, idle). A new view
+   restores from `Runs::snapshot`. Theo and the browser's Agent place share
+   one `TheoremDriver`, so both show the same conversation and run.
+6. **Expression.** Decided as a subset map, the same subset web Theo takes:
+   energy, breath, tilt, gaze and hue from the wire expression, only while the
+   turn runs. Chroma, density, size, calm, tightness, churn, lattice, pose and
+   frame belong to the sprite or the field and are dropped. The transcript now
+   says "Theorem set Theo's manner for this turn." on macOS.
+7. **Invocation.**
+   - Keys (in `theo.json` in the profile folder): `control+alt+KeyT` shows and
+     hides Theo, `control+alt+KeyC` opens the talk menu, from any application.
+   - **Talking is a right-click menu, not a text box** (owner's redesign).
+     Right-clicking the face opens a gpui-component `PopupMenu` over it: the
+     conversation title, Theorem's latest reply (scrolls past 200 pt), an "Ask
+     Theo" `Input` focused at once, then Stop while a run goes on, or "Use the
+     Demo Authority" when native Theorem is not configured. Enter sends; the
+     reply arrives in the same menu. Stop and the demo keep the menu open.
+     Escape, a click outside, or Platinum losing activation close it and hand
+     the keyboard back to the application Theo was called over. A left click
+     on the face only drags it.
+   - Double right-click anywhere is an opt-in setting in the Theo menu of the
+     menu bar. It uses a listen-only Core Graphics event tap, which needs
+     **Input Monitoring** for Platinum and a relaunch; without it the menu says
+     so and nothing else changes.
+   - `Scope` (frontmost app's pid, bundle, name and frontmost window number)
+     is captured at invocation, before Theo shows.
+   - Outside the face and the open menu the window ignores the mouse, so clicks
+     reach whatever is beneath.
+8. **Stop.** `Companion::stop()`'s `StopRequest` goes to the driver that owns
+   the run, and only when `Runs::is_current` says that generation is the one
+   going. Hiding never ends a run.
+
+### Bugs found running it, and their fixes
+
+- `servo_media` exited silently: each new target directory needs
+  `script/setup-media` once.
+- Opening, closing or resizing windows and rebuilding the menu bar from inside
+  an entity update panicked on GPUI re-entrancy. Those now go through
+  `cx.defer` (`open`, `remove_window`, `install_menus`).
+- Theo did not appear: resizing first could carry the window onto a
+  neighbouring screen before it was placed. `mac::resize_at` sizes and places
+  in one `setFrame` on the screen it is on.
+- Edition 2024 closures returning `impl IntoElement` capture lifetimes; the
+  reply element returns a concrete `Stateful<Div>`.
+
+### How to run it
 
 ```sh
-script/media-env cargo test --locked -p theo -p presence -p companion
+export CARGO_TARGET_DIR=/path/to/target   # one per worktree
+script/setup-media                         # once per target dir
 script/media-env cargo build --locked
 ```
 
-The `Cargo.lock` entries for `theo`, `presence` and `companion` were written by
-hand. If `--locked` rejects them, run the build once without `--locked`, check
-that only those three entries changed, and commit the lockfile.
+computer-use cannot find a bare binary, so the check run used a throwaway
+bundle wrapper (`PlatinumDev.app`, bundle id `dev.platinum.theo-check`) whose
+`Contents/MacOS/frame` is the built binary, launched through
+`script/media-env`.
 
-## Stage B, what is left
+### Tested (macOS, this session)
 
-All of it is in `frame` (do not rename the package).
+- `cargo test --locked -p theo -p presence -p companion`: 31 passed.
+- `cargo test --locked --bin frame theo_desk`: 6 passed (activity
+  generations, stale stops, snapshot, liveness, the Expression subset, the
+  visor's rounded corners).
 
-1. **Add the dependency.** `companion = { path = "crates/companion" }` in the
-   root `Cargo.toml`.
-2. **Renderer.** A GPUI element that draws `Companion::frame(now_ms)`. The
-   buffer is `GRAIN_STRIDE` (8) `f32` per grain: x, y, radius, phase, then
-   premultiplied r, g, b, a (`crates/theo/src/particles.rs`). `Face::head()`
-   gives tilt, scale, offset and squash for the visor; `shapes_now()` the
-   shapes; `emitting()` what leaves the sides. GPUI source is vendored under
-   `vendor/gpui-pre` and `vendor/gpui-component`; `src/canvas/` and
-   `src/scene.rs` are the nearest existing drawing code. The `gpui` skill
-   covers custom elements.
-3. **Stage adapter.** Implement `theo::player::Stage` (`gaze_at`, `go`,
-   `burst`, optionally `knows_things` and `thing`) over the real window and
-   pass it to `face.attach`. `PlainStage` in `engine.rs` is the reference.
-4. **Clock and stillness.** Drive `frame` from GPUI's frame callback with a
-   monotonic millisecond clock. Map the system reduced-motion setting to
-   `set_still`; it changes interpolation only.
-5. **Activity source.** Turn Theorem thread and run state (`src/theorem/driver.rs`)
-   into `presence::Activity` updates and `set_liveness`. Send a snapshot on
-   connect (`Companion::restore`), then ordered updates.
-6. **Expression.** `src/theorem/transcript.rs:1102` still shows the fallback
-   note for `ThreadPart::Expression`. See the open decision below before
-   wiring it.
-7. **Invocation.** A keyboard action for show, hide and composer; the pointer
-   path through `Companion::right_click` with a setting for `Calling`. Capture
-   `Scope` at the moment of invocation.
-8. **Stop.** Route `Companion::stop()` to the owner of the run. The companion
-   never ends work itself, and `Face::ending` is not proof that work finished.
+### Observed in the running application
 
-Then run the application and say what was observed, separately from what was
-tested.
+- Before the redesign: Theo appeared over TextEdit and TextEdit stayed
+  frontmost; hide and show repeated without a crash; after a remount, typing
+  went to TextEdit; the old composer drew.
+- After the redesign: the face shows on the desktop with no plate (asleep,
+  two eyes on a dark desktop).
+
+### Not yet observed
+
+- The right-click menu opening, typing into it, and the reply in it.
+- A demo conversation and Stop from the menu.
+- Escape and the focus give-back from the menu; the draft kept across a
+  remount; deactivation closing the menu; click-through around the face.
+- The grains' legibility on a light desktop with no plate (if faint, raise the
+  55% alpha for the desktop profile).
+- The double right-click and its Input Monitoring prompt.
+- **The gate**: invoke over Firefox and an editor, converse with the selected
+  agent, dismiss and remount without losing state or stealing focus. The
+  automated check could not do it: Firefox is read-only to computer use, and
+  the owner was using the machine. It needs the owner's hands.
+- Native Theorem: the authority is not configured on this Mac, so only the
+  demo authority can be conversed with here.
 
 ## Open decisions for the owner
 
-- **The two `Expression` types differ.** The wire type is
-  `agpui_contract::field::expression::Expression` (hue, chroma, density, size,
-  calm, tightness, churn, frame, lattice, pose, energy and more). The port's
-  `theo::engine::Expression` is the web face's (energy, breath, tilt, gaze,
-  hue). Only hue and energy line up by name. Either map the subset and say what
-  is dropped, or extend the port; check how web Theo consumes the same part
-  before choosing.
+- **Expression (decided in Stage B, revisit if wanted).** The face takes
+  the web's subset of the wire expression and drops the rest (see item 6).
+  Extending the port to the field's terms would be a separate piece of work.
 - **`camera` and `record-player` forms do not exist.** The book has orb,
   boombox and the expressive performances. An activity that prefers a missing
   form is recorded as refused and the face shows nothing for it. They need
