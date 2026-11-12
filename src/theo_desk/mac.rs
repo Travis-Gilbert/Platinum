@@ -126,8 +126,18 @@ pub fn unframe(window: &Window, cx: &App) {
     use objc2_app_kit::NSWindowStyleMask;
     after_update(window, cx, |ns| {
         let panel = ns.styleMask() & NSWindowStyleMask::NonactivatingPanel;
+        // Changing the style swaps AppKit's frame view, which can leave the
+        // window itself as first responder: keys would then stop at the
+        // window and never reach GPUI's view, though a field still shows its
+        // caret. Give the responder back.
+        let responder = ns.firstResponder();
         ns.setStyleMask(NSWindowStyleMask::Borderless | panel);
         ns.setHasShadow(false);
+        let kept = ns.firstResponder() == responder;
+        if !kept {
+            let restored = ns.makeFirstResponder(responder.as_deref());
+            log::info!("theo: unframe moved the first responder; restored: {restored}");
+        }
     });
 }
 
