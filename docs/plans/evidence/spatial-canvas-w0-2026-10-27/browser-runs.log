@@ -1,0 +1,8 @@
+LAUNCH gpui-pre firefox
+gpui-pre-firefox-1793116604891970000.json {'webgl2': 'pass', '200_elements': 'pass', 'pointer_pan': 'pass', 'ten_second_pan': 'pass', 'zoom': 'pass', 'select': 'pass', 'drag': 'pass', 'click_into_text': 'pass', 'typing': 'pass', 'synthetic_composition': 'pass', 'synthetic_escape_to_board': 'pass', 'click_back_to_board': 'pass', 'synthetic_tab_into_text': 'fail', 'synthetic_tab_back_to_board': 'fail'} []
+LAUNCH gpui-pre arc
+gpui-pre-arc-1793116623948022000.json {'webgl2': 'pass', '200_elements': 'pass', 'pointer_pan': 'pass', 'ten_second_pan': 'pass', 'zoom': 'pass', 'select': 'pass', 'drag': 'pass', 'click_into_text': 'pass', 'typing': 'pass', 'synthetic_composition': 'pass', 'synthetic_escape_to_board': 'pass', 'click_back_to_board': 'pass', 'synthetic_tab_into_text': 'fail', 'synthetic_tab_back_to_board': 'fail'} []
+LAUNCH zed firefox
+zed-firefox-1793116643492473000.json {'webgl2': 'pass', '200_elements': 'pass', 'pointer_pan': 'pass', 'ten_second_pan': 'pass', 'zoom': 'pass', 'select': 'pass', 'drag': 'pass', 'click_into_text': 'pass', 'typing': 'pass', 'synthetic_composition': 'pass', 'synthetic_escape_to_board': 'pass', 'click_back_to_board': 'pass', 'synthetic_tab_into_text': 'fail', 'synthetic_tab_back_to_board': 'fail'} []
+LAUNCH zed arc
+zed-arc-1793116662597785000.json {'webgl2': 'pass', '200_elements': 'pass', 'pointer_pan': 'pass', 'ten_second_pan': 'pass', 'zoom': 'pass', 'select': 'pass', 'drag': 'pass', 'click_into_text': 'pass', 'typing': 'pass', 'synthetic_composition': 'pass', 'synthetic_escape_to_board': 'pass', 'click_back_to_board': 'pass', 'synthetic_tab_into_text': 'fail', 'synthetic_tab_back_to_board': 'fail'} []

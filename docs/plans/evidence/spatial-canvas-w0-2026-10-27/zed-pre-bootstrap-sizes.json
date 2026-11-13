@@ -1,0 +1,10 @@
+{
+  "stack": "zed",
+  "compiler_wasm_bytes": 13885508,
+  "raw_bindgen_wasm_bytes": 11930917,
+  "wasm_opt_bytes": 8895915,
+  "gzip_wasm_bytes": 3467780,
+  "js_bytes": 150988,
+  "gzip_js_bytes": 23497,
+  "gzip_bundle_bytes": 3491277
+}

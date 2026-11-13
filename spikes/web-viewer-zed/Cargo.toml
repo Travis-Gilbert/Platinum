@@ -1,0 +1,28 @@
+[package]
+name = "frame-web-viewer-zed-spike"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+# Exactly the same fixture and readback, compiled against the fallback GPUI.
+path = "../web-viewer/src/lib.rs"
+
+[dependencies]
+gpui = { git = "https://github.com/Travis-Gilbert/zed", rev = "6d4d90754f7dde3e62afb6fe74a632c0b4660396", version = "=0.2.2", default-features = false }
+gpui_web = { git = "https://github.com/Travis-Gilbert/zed", rev = "6d4d90754f7dde3e62afb6fe74a632c0b4660396", default-features = false }
+gpui-whiteboard = { path = "whiteboard" }
+serde_json = "1"
+wasm-bindgen = "=0.2.127"
+
+[patch.crates-io]
+gpui = { git = "https://github.com/Travis-Gilbert/zed", rev = "6d4d90754f7dde3e62afb6fe74a632c0b4660396", version = "=0.2.2" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = "debuginfo"

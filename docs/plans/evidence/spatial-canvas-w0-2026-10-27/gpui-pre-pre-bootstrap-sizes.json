@@ -1,0 +1,10 @@
+{
+  "stack": "gpui-pre",
+  "compiler_wasm_bytes": 13934581,
+  "raw_bindgen_wasm_bytes": 11998138,
+  "wasm_opt_bytes": 8900844,
+  "gzip_wasm_bytes": 3468715,
+  "js_bytes": 149447,
+  "gzip_js_bytes": 23614,
+  "gzip_bundle_bytes": 3492329
+}
