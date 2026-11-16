@@ -27,6 +27,7 @@
 pub mod activity;
 mod body;
 mod mac;
+mod summon;
 
 use std::cell::{Cell, RefCell};
 use std::path::{Path, PathBuf};
@@ -55,6 +56,7 @@ use theoremweb_agent_runtime::ChatHostPhase;
 
 use self::activity::{Runs, activity_id};
 use self::body::{BODY_SIZE, BodyFrame};
+pub use self::summon::{KeepRunning, SummonTheo};
 use crate::theorem::{Connection, DriverEvent, TheoremDriver};
 
 actions!(
@@ -96,6 +98,13 @@ struct Settings {
     /// Opens the composer from any application.
     #[serde(default = "Settings::default_talk")]
     talk: String,
+    /// Shows or hides the launcher from any application. Never Command-Space:
+    /// that is Spotlight's, and macOS would not give it up.
+    #[serde(default = "Settings::default_summon")]
+    summon: String,
+    /// Platinum stays running, for Theo, once its window is closed.
+    #[serde(default = "Settings::default_resident")]
+    resident: bool,
     #[serde(default)]
     double_right_click: bool,
     /// Where on its screen Theo rests, as `mac::spot_of` measures it.
@@ -110,6 +119,12 @@ impl Settings {
     fn default_talk() -> String {
         "control+alt+KeyC".to_owned()
     }
+    fn default_summon() -> String {
+        "alt+Space".to_owned()
+    }
+    fn default_resident() -> bool {
+        true
+    }
 }
 
 impl Default for Settings {
@@ -117,6 +132,8 @@ impl Default for Settings {
         Self {
             toggle: Self::default_toggle(),
             talk: Self::default_talk(),
+            summon: Self::default_summon(),
+            resident: Self::default_resident(),
             double_right_click: false,
             spot: None,
         }
@@ -185,8 +202,12 @@ pub struct Desk {
     phase: ChatHostPhase,
     stage: Rc<RefCell<StageState>>,
     still_read_at: f64,
-    /// The keys that call Theo from anywhere, and their ids.
-    hotkeys: Option<(global_hotkey::GlobalHotKeyManager, u32, u32)>,
+    /// The keys that call Theo from anywhere, and their ids: show or hide,
+    /// talk, and the launcher.
+    hotkeys: Option<(global_hotkey::GlobalHotKeyManager, u32, u32, u32)>,
+    /// The launcher: its window while it is open, and what it keeps between
+    /// showings (`summon.rs`).
+    summoned: summon::Summoned,
     /// Why a key or the double right click cannot call Theo, when one cannot.
     unheard: Vec<String>,
     right_clicks: bool,
@@ -213,11 +234,20 @@ pub fn driver(cx: &mut App) -> Entity<TheoremDriver> {
     desk(cx).read(cx).driver.clone()
 }
 
-/// Whether `window` is Theo's, which does not keep Platinum open alone.
+/// Whether `window` is Theo's (the face or the launcher), which does not
+/// keep Platinum open alone.
 pub fn is_theo(window: AnyWindowHandle, cx: &App) -> bool {
+    cx.try_global::<DeskGlobal>().is_some_and(|desk| {
+        let desk = desk.0.read(cx);
+        desk.window.as_ref().map(|(shown, _)| *shown) == Some(window)
+            || desk.summoned.window() == Some(window)
+    })
+}
+
+/// Whether Platinum stays running, for Theo, once its window is closed.
+pub fn resident(cx: &App) -> bool {
     cx.try_global::<DeskGlobal>()
-        .and_then(|desk| desk.0.read(cx).window.as_ref().map(|(shown, _)| *shown))
-        == Some(window)
+        .is_some_and(|desk| desk.0.read(cx).settings.resident)
 }
 
 /// Makes the desk with the settings at `path`, and registers its actions.
@@ -231,6 +261,9 @@ pub fn init(path: PathBuf, cx: &mut App) {
     cx.on_action(|_: &CallWithDoubleRightClick, cx| {
         with_desk(cx, |desk, cx| desk.set_double_right_click(cx))
     });
+    launcher_view::init(cx);
+    cx.on_action(|_: &SummonTheo, cx| with_desk(cx, |desk, cx| desk.summon(cx)));
+    cx.on_action(|_: &KeepRunning, cx| with_desk(cx, |desk, cx| desk.set_keep_running(cx)));
 }
 
 fn with_desk(cx: &mut App, f: impl FnOnce(&mut Desk, &mut Context<Desk>)) {
@@ -238,13 +271,14 @@ fn with_desk(cx: &mut App, f: impl FnOnce(&mut Desk, &mut Context<Desk>)) {
     desk.update(cx, f);
 }
 
-/// The Theo menu's items, with the double right click's check as it stands.
+/// The Theo menu's items, with the checks as they stand.
 pub fn menu(cx: &App) -> gpui_kit::Menu {
     use gpui_kit::MenuItem;
     let double = cx
         .try_global::<DeskGlobal>()
         .is_some_and(|desk| desk.0.read(cx).settings.double_right_click);
     gpui_kit::Menu::new("Theo").items([
+        MenuItem::action("Show or Hide Theo's Launcher", SummonTheo),
         MenuItem::action("Show or Hide Theo", ToggleTheo),
         MenuItem::action("Talk to Theo", TalkToTheo),
         MenuItem::action("Stop Theo's Run", StopTheo),
@@ -254,6 +288,7 @@ pub fn menu(cx: &App) -> gpui_kit::Menu {
             CallWithDoubleRightClick,
         )
         .checked(double),
+        MenuItem::action("Keep Platinum Running for Theo", KeepRunning).checked(resident(cx)),
     ])
 }
 
@@ -335,6 +370,7 @@ impl Desk {
             stage,
             still_read_at: f64::NEG_INFINITY,
             hotkeys: None,
+            summoned: summon::Summoned::default(),
             unheard: Vec::new(),
             right_clicks: false,
             _subscriptions: subscriptions,
@@ -392,24 +428,27 @@ impl Desk {
         };
         let toggle = register(&self.settings.toggle.clone()).unwrap_or(0);
         let talk = register(&self.settings.talk.clone()).unwrap_or(0);
+        let summon = register(&self.settings.summon.clone()).unwrap_or(0);
         let (sender, mut receiver) = futures::channel::mpsc::unbounded();
         GlobalHotKeyEvent::set_event_handler(Some(move |event: GlobalHotKeyEvent| {
             if event.state() == HotKeyState::Pressed {
                 let _ = sender.unbounded_send(event.id());
             }
         }));
-        self.hotkeys = Some((manager, toggle, talk));
+        self.hotkeys = Some((manager, toggle, talk, summon));
         cx.spawn(async move |desk, cx| {
             use futures::StreamExt as _;
             while let Some(id) = receiver.next().await {
                 let alive = desk.update(cx, |desk, cx| {
-                    let Some((_, toggle, talk)) = desk.hotkeys else {
+                    let Some((_, toggle, talk, summon)) = desk.hotkeys else {
                         return;
                     };
                     if id == toggle {
                         desk.toggle(cx);
                     } else if id == talk {
                         desk.talk(cx);
+                    } else if id == summon {
+                        desk.summon(cx);
                     }
                 });
                 if alive.is_err() {
@@ -625,6 +664,8 @@ impl Desk {
             self.expression = expression;
         }
         self.settle_liveness(now, cx);
+        // The launcher shows the same conversation, and the list it is in.
+        self.feed(cx);
         cx.notify();
     }
 

@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Tests Theo's launcher (crates/launcher, crates/launcher-view) without the
+# rest of the workspace.
+#
+# The root workspace needs the pinned checkouts under deps/ before cargo will
+# load it at all. The launcher's model depends on nothing and its view only on
+# GPUI Kit, so they are tested here in a throwaway workspace that holds only
+# them, with the repository's toolchain, its patched GPUI crates (vendor/) and
+# the versions its Cargo.lock names. On a bootstrapped checkout,
+# `script/media-env cargo test --locked -p launcher -p launcher-view` tests
+# the same crates inside the real workspace.
+#
+# The view's tests draw nothing on a screen, but GPUI still has to build: on
+# Linux that needs its system libraries (xkbcommon, Wayland, X11, fontconfig).
+# `--model-only` tests the model alone, which needs nothing.
+#
+# Usage: script/test-launcher [--model-only] [arguments for `cargo test`]
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+packages=(-p launcher -p launcher-view)
+members='"launcher", "launcher-view"'
+if [[ "${1:-}" == "--model-only" ]]; then
+    shift
+    packages=(-p launcher)
+    members='"launcher"'
+fi
+
+target="${CARGO_TARGET_DIR:-$root/target/launcher-alone}"
+# Made absolute: cargo runs from the workspace below, not from here.
+mkdir -p "$target"
+target="$(cd "$target" && pwd)"
+# At a fixed place, so a cached build is still the build of these paths.
+work="$target/workspace"
+rm -rf "$work"
+mkdir -p "$work"
+
+cp "$root/rust-toolchain.toml" "$work/"
+# The versions the application builds with. Cargo drops the entries this
+# small workspace does not use, so this is not run with --locked.
+cp "$root/Cargo.lock" "$work/"
+ln -s "$root/crates/launcher" "$work/launcher"
+ln -s "$root/crates/launcher-view" "$work/launcher-view"
+cat >"$work/Cargo.toml" <<TOML
+[workspace]
+members = [$members]
+resolver = "3"
+
+[patch.crates-io]
+zed-font-kit = { path = "$root/vendor/zed-font-kit" }
+gpui-pre = { path = "$root/vendor/gpui-pre" }
+gpui-pre-apple = { path = "$root/vendor/gpui-pre-apple" }
+gpui-component = { path = "$root/vendor/gpui-component" }
+TOML
+
+cd "$work"
+CARGO_TARGET_DIR="$target" cargo test "${packages[@]}" "$@"

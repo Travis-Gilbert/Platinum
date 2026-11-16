@@ -73,6 +73,16 @@ pub struct OpenPlace {
     pub place: Place,
 }
 
+/// Open what was typed elsewhere (Theo's launcher) in a new tab: an address
+/// if it reads as one, a search if it does not.
+#[derive(Clone, Debug, PartialEq, Action)]
+#[action(namespace = frame, no_json)]
+pub struct OpenTyped {
+    pub text: String,
+    /// Search for it even if it reads as an address.
+    pub search: bool,
+}
+
 #[derive(Clone, Debug, PartialEq, Action)]
 #[action(namespace = frame, no_json)]
 pub struct ChooseVoice {

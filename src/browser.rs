@@ -82,9 +82,9 @@ use url::Url;
 use self::dock::{DRAG_PREVIEW, FrameDock, Group, TabPanel, TabPreview};
 use crate::actions::{
     ActivateTab, BookmarkPage, CloseTab, FillForm, FillPassword, FocusAddressBar, GoBack,
-    GoForward, ImportBrowserData, LeavePlace, NewTab, NextTab, OpenPalette, OpenPlace, PinTab,
-    PreviousTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks, ShowConsole,
-    ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces,
+    GoForward, ImportBrowserData, LeavePlace, NewTab, NextTab, OpenPalette, OpenPlace, OpenTyped,
+    PinTab, PreviousTab, Quit, Reload, SavePassword, SetAppearance, SharePage, ShowBookmarks,
+    ShowConsole, ShowDownloads, ShowHistory, ShowProfiles, ToggleAsk, ToggleCompact, TogglePlaces,
     ToggleSidebar,
 };
 use crate::address::{Suggestion, SuggestionAction, Target, append_library, classify};
@@ -2002,6 +2002,26 @@ impl Browser {
         }
     }
 
+    /// Opens what was typed somewhere other than the address bar (Theo's
+    /// launcher) in a new tab, read the way the address bar reads it.
+    fn open_typed(
+        &mut self,
+        text: &str,
+        search: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        match classify(text) {
+            None => {}
+            Some(Target::Go(url)) if !search => {
+                self.go(url, Some(Origin::Root), true, window, cx);
+            }
+            Some(Target::Go(_)) | Some(Target::Search(_)) => {
+                self.search(text.trim().to_owned(), SerpMode::Search, true, window, cx);
+            }
+        }
+    }
+
     fn submit(&mut self, new_tab: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.dismiss_suggestions();
         let text = self.omnibox.read(cx).value().to_string();
@@ -3802,6 +3822,9 @@ impl Render for Browser {
             }))
             .on_action(cx.listener(|browser, action: &OpenPlace, window, cx| {
                 browser.open_place(action.place, window, cx)
+            }))
+            .on_action(cx.listener(|browser, action: &OpenTyped, window, cx| {
+                browser.open_typed(&action.text, action.search, window, cx)
             }))
             .on_action(
                 cx.listener(|browser, _: &LeavePlace, window, cx| browser.exit_place(window, cx)),

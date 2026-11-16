@@ -16,6 +16,8 @@ members = [
     "crates/theo",
     "crates/presence",
     "crates/companion",
+    "crates/launcher",
+    "crates/launcher-view",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",
@@ -174,6 +176,10 @@ objc2-foundation = "0.3.2"
 raw-window-handle = "0.6"
 # Keys that call Theo while another application is in front.
 global-hotkey = "0.8"
+# Theo's launcher (`src/theo_desk/summon.rs`): what was typed, found and
+# selected, and the window's view of it. Neither names the Mac or Theorem.
+launcher = { path = "crates/launcher" }
+launcher-view = { path = "crates/launcher-view" }
 # Wrapping Servo's IOSurface frames for `gpui::surface()`.
 objc2-core-video = { version = "0.3.2", default-features = false, features = ["std", "CVBuffer", "CVImageBuffer", "CVPixelBuffer", "CVPixelBufferIOSurface", "CVReturn", "objc2-io-surface"] }
 objc2-io-surface = "0.3.2"

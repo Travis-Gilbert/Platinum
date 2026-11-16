@@ -131,6 +131,18 @@ pub fn unframe(window: &Window, cx: &App) {
     });
 }
 
+/// `unframe` for a window that is a panel on the desktop (the launcher): the
+/// rim goes, the shadow stays, so the panel reads as above what is under it.
+/// macOS shapes that shadow from what the window paints.
+pub fn unframe_keeping_shadow(window: &Window, cx: &App) {
+    use objc2_app_kit::NSWindowStyleMask;
+    after_update(window, cx, |ns| {
+        let panel = ns.styleMask() & NSWindowStyleMask::NonactivatingPanel;
+        ns.setStyleMask(NSWindowStyleMask::Borderless | panel);
+        ns.setHasShadow(true);
+    });
+}
+
 /// Changes the native window once the GPUI update asking for it has ended.
 /// AppKit answers a new frame or style at once, telling GPUI the window's new
 /// size while GPUI is still updating that window; GPUI cannot take it then,

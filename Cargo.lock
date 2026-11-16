@@ -4247,6 +4247,8 @@ dependencies = [
  "humansize",
  "image",
  "kmeans_colors",
+ "launcher",
+ "launcher-view",
  "log",
  "markup5ever_rcdom",
  "mime_guess",
@@ -7623,6 +7625,19 @@ dependencies = [
  "polycool",
  "serde",
  "smallvec",
+]
+
+[[package]]
+name = "launcher"
+version = "0.1.0"
+
+[[package]]
+name = "launcher-view"
+version = "0.1.0"
+dependencies = [
+ "gpui-kit",
+ "gpui-pre",
+ "launcher",
 ]
 
 [[package]]

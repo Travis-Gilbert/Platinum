@@ -1,0 +1,16 @@
+[package]
+name = "launcher-view"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Theo's launcher as a GPUI view: the field, the rows, the preview and the conversation, drawn over the launcher model."
+
+[dependencies]
+gpui-kit = { version = "=0.8.0" }
+launcher = { path = "../launcher" }
+
+[dev-dependencies]
+# GPUI's own test support, as the root package takes it: gpui-kit's
+# `test-support` feature names `gpui-fast?/...`, which conflicts with Servo's
+# graph.
+gpui-pre = { version = "=0.3.9", features = ["test-support"] }
