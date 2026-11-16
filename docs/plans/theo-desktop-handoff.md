@@ -32,6 +32,12 @@ do not babysit review bots unless asked.
   a `StopRequest { activity, generation }` for the host to route, the invoking
   `Scope`, the optional double-right-click detector (`Calling`), and
   `frame(now_ms)` which feeds only fresh signals and returns the grains.
+- **The launcher** (`crates/launcher`, `crates/launcher-view`,
+  `src/theo_desk/summon.rs`), added 2026-11-16: one window called with
+  `alt+Space` to find, act and ask, on the same driver and conversation as
+  the face. It also keeps Platinum running once its window is closed. Its own
+  record, with what is tested and what is unbuilt, is
+  [theo-launcher.md](theo-launcher.md).
 
 ## Stage B: where it stands (2026-11-12, Mac session)
 

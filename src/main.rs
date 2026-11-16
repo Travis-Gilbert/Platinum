@@ -109,53 +109,68 @@ fn main() -> anyhow::Result<()> {
 
     // The whole Lucide catalog, not just the components' default icons:
     // Theorem's workbench draws icons the default bundle leaves out.
-    gpui_kit::application()
-        .with_assets(gpui_kit::assets::AllAssets)
-        .run(move |cx| {
-            gpui_kit::init(cx);
-            theme::init(cx);
-            brand::install();
-            install_commands(cx);
-            // The `frame-notes:` pages are registered only when the notes app
-            // is asked for. Servo takes its URL schemes when it starts, so
-            // they cannot be added later, and until the browser itself shows
-            // notes, an ordinary launch keeps its engine exactly as it was.
-            if notes.is_some() {
-                notes::start(&profile_dir, cx);
-            } else {
-                Engine::start(&profile_dir, cx);
-            }
-            // GPUI's images load from a URL through this, a result's favicon
-            // among them: with Servo's user agent, and without cookies.
-            match reqwest_client::ReqwestClient::user_agent(&Engine::user_agent()) {
-                Ok(client) => cx.set_http_client(std::sync::Arc::new(client)),
-                Err(error) => log::error!("http client: {error:#}"),
-            }
-            recents::init(Some(profile_dir.join("recents.json")), cx);
-            theorem::init(Some(profile_dir.join("theorem.json")), cx);
-            #[cfg(target_os = "macos")]
-            theo_desk::init(profile_dir.join("theo.json"), cx);
-            search::init(&search_dir, cx);
-            session::init(&profile_dir, cx);
-            session::open_imported_tabs(&profile, cx);
-            cx.set_global(profile_ui::ActiveProfile(profile));
-            let opened = match notes {
-                Some(launch) => notes::open::open_window(launch, cx),
-                None => open_window(cx),
-            };
-            if let Err(error) = opened {
-                log::error!("{error:#}");
-                cx.quit();
-                return;
-            }
-            // One browser window for now: closing it quits, Theo or not.
-            quit_with_last_window(cx);
-        });
+    let app = gpui_kit::application().with_assets(gpui_kit::assets::AllAssets);
+    // Clicking Platinum in the Dock while it is running without its window
+    // (kept running for Theo) opens the window again.
+    #[cfg(target_os = "macos")]
+    app.on_reopen(|cx| {
+        ask_workspace(None, cx);
+    });
+    app.run(move |cx| {
+        gpui_kit::init(cx);
+        theme::init(cx);
+        brand::install();
+        install_commands(cx);
+        // The `frame-notes:` pages are registered only when the notes app
+        // is asked for. Servo takes its URL schemes when it starts, so
+        // they cannot be added later, and until the browser itself shows
+        // notes, an ordinary launch keeps its engine exactly as it was.
+        if notes.is_some() {
+            notes::start(&profile_dir, cx);
+        } else {
+            Engine::start(&profile_dir, cx);
+        }
+        // GPUI's images load from a URL through this, a result's favicon
+        // among them: with Servo's user agent, and without cookies.
+        match reqwest_client::ReqwestClient::user_agent(&Engine::user_agent()) {
+            Ok(client) => cx.set_http_client(std::sync::Arc::new(client)),
+            Err(error) => log::error!("http client: {error:#}"),
+        }
+        recents::init(Some(profile_dir.join("recents.json")), cx);
+        theorem::init(Some(profile_dir.join("theorem.json")), cx);
+        #[cfg(target_os = "macos")]
+        theo_desk::init(profile_dir.join("theo.json"), cx);
+        search::init(&search_dir, cx);
+        session::init(&profile_dir, cx);
+        session::open_imported_tabs(&profile, cx);
+        cx.set_global(profile_ui::ActiveProfile(profile));
+        let opened = match notes {
+            Some(launch) => notes::open::open_window(launch, cx),
+            None => open_window(cx),
+        };
+        if let Err(error) = opened {
+            log::error!("{error:#}");
+            cx.quit();
+            return;
+        }
+        // One browser window for now. Closing it quits, unless Platinum
+        // is kept running for Theo.
+        quit_with_last_window(cx);
+    });
     Ok(())
 }
 
 fn install_commands(cx: &mut App) {
     cx.on_action(|_: &Quit, cx| cx.quit());
+    // Reached only when no window took New Tab: Platinum is running without
+    // its window, or one of Theo's is in front. A closed window is opened
+    // again; an open one is left alone, having been asked already.
+    #[cfg(target_os = "macos")]
+    cx.on_action(|_: &NewTab, cx| {
+        if workspace_window(cx).is_none() {
+            ask_workspace(None, cx);
+        }
+    });
     // The appearance is the app's: every window follows it, and the menu
     // bar's check moves with it.
     cx.on_action(|action: &SetAppearance, cx| {
@@ -284,6 +299,71 @@ pub(crate) fn install_menus(cx: &mut App) {
     ]);
 }
 
+/// The browser's window, for what is asked of it from outside it: Theo's
+/// launcher, the Dock, the menu bar while it is closed. Set by a browser
+/// launch only: the notes app has no browser to ask.
+#[cfg(target_os = "macos")]
+struct Workspace {
+    window: gpui_kit::AnyWindowHandle,
+    browser: gpui_kit::WeakEntity<Browser>,
+}
+
+#[cfg(target_os = "macos")]
+impl gpui_kit::Global for Workspace {}
+
+/// Whether this launch is the browser's, open or not.
+#[cfg(target_os = "macos")]
+pub(crate) fn has_workspace(cx: &App) -> bool {
+    cx.has_global::<Workspace>()
+}
+
+/// The browser's window and view, while the window is open.
+#[cfg(target_os = "macos")]
+fn workspace_window(cx: &App) -> Option<(gpui_kit::AnyWindowHandle, gpui_kit::Entity<Browser>)> {
+    let workspace = cx.try_global::<Workspace>()?;
+    if !cx.windows().contains(&workspace.window) {
+        return None;
+    }
+    Some((workspace.window, workspace.browser.upgrade()?))
+}
+
+/// Brings the browser's window forward, opening it again if it was closed,
+/// and hands it `action` as a key or the menu bar would. False when this
+/// launch has no browser, or its window could not be opened.
+///
+/// Call it from outside any update: it opens and updates a window.
+#[cfg(target_os = "macos")]
+pub(crate) fn ask_workspace(action: Option<Box<dyn gpui_kit::Action>>, cx: &mut App) -> bool {
+    if !has_workspace(cx) {
+        return false;
+    }
+    if workspace_window(cx).is_none()
+        && let Err(error) = open_window(cx)
+    {
+        log::error!("{error:#}");
+        return false;
+    }
+    let Some((window, browser)) = workspace_window(cx) else {
+        return false;
+    };
+    cx.activate(true);
+    window
+        .update(cx, |_, window, cx| {
+            window.activate_window();
+            // An action goes to whatever has the keyboard and up from there.
+            // With nothing focused it would stop at the window's root, below
+            // the browser, so the browser takes the keyboard first.
+            if window.focused(cx).is_none() {
+                let focus = gpui_kit::Focusable::focus_handle(browser.read(cx), cx);
+                window.focus(&focus, cx);
+            }
+            if let Some(action) = action {
+                window.dispatch_action(action, cx);
+            }
+        })
+        .is_ok()
+}
+
 fn open_window(cx: &mut App) -> anyhow::Result<()> {
     let mut options = WindowOptions {
         window_bounds: Some(WindowBounds::centered(size(px(1280.), px(820.)), cx)),
@@ -294,12 +374,24 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
     if let Some(titlebar) = options.titlebar.as_mut() {
         titlebar.traffic_light_position = Some(point(px(9.), px(10.)));
     }
+    let made = std::rc::Rc::new(std::cell::Cell::new(None));
+    let slot = made.clone();
     let _window = cx.open_window(options, |window, cx| {
         glass::install(window, cx);
         let browser = cx.new(|cx| Browser::new(window, cx));
+        slot.set(Some(browser.downgrade()));
         // The browser paints the frame; the root leaves the glass under it.
         cx.new(|cx| Root::new(browser, window, cx).bg(transparent_black()))
     })?;
+    #[cfg(target_os = "macos")]
+    if let Some(browser) = made.take() {
+        cx.set_global(Workspace {
+            window: _window.into(),
+            browser,
+        });
+    }
+    #[cfg(not(target_os = "macos"))]
+    drop(made);
     #[cfg(feature = "snapshot")]
     keep_snapshots(_window.into(), cx);
     Ok(())
@@ -307,6 +399,14 @@ fn open_window(cx: &mut App) -> anyhow::Result<()> {
 
 fn quit_with_last_window(cx: &mut App) {
     cx.on_window_closed(|cx, _| {
+        // Kept running for Theo: the launcher and the face answer from any
+        // application, a run goes on, and the Dock or New Tab opens the
+        // window again. The notes app has no window to open again, so it
+        // quits as before. Quit (and the launcher's own command) still quits.
+        #[cfg(target_os = "macos")]
+        if has_workspace(cx) && theo_desk::resident(cx) {
+            return;
+        }
         #[cfg(target_os = "macos")]
         let left = cx
             .windows()

@@ -1001,25 +1001,21 @@ impl TheoremDriver {
                         return;
                     }
                 };
-                // One file at a time bounds the bytes waiting to enter the entity.
-                for path in selected {
-                    let source = cx
-                        .background_spawn(async move { read_native_attachment(path) })
-                        .await;
-                    let accepted = this.update(cx, |this, cx| {
-                        if !Rc::ptr_eq(&this.transport, &transport) {
-                            return false;
-                        }
-                        match source {
-                            Ok(source) => this.admit_attachment_bytes(source, cx),
-                            Err(reason) => this.report_notice(reason, cx),
-                        }
-                        true
-                    });
-                    if !matches!(accepted, Ok(true)) {
-                        break;
-                    }
-                }
+                admit_paths(this, transport, selected, cx).await;
+            },
+        )
+        .detach();
+    }
+
+    /// Attaches files the person already chose somewhere else (a row in
+    /// Theo's launcher) to the message being written, as picking them in the
+    /// attachment prompt does: the same reader, the same limits, the same
+    /// upload.
+    pub fn attach_paths(&mut self, paths: Vec<PathBuf>, cx: &mut Context<Self>) {
+        let transport = Rc::clone(&self.transport);
+        cx.spawn(
+            async move |this: WeakEntity<TheoremDriver>, cx: &mut AsyncApp| {
+                admit_paths(this, transport, paths, cx).await;
             },
         )
         .detach();
@@ -1136,6 +1132,35 @@ fn native_configured() -> bool {
     ["THEOREMWEB_AUTHORITY_URL", "THEOREMWEB_AUTH_TOKEN_FILE"]
         .iter()
         .all(|name| std::env::var(name).is_ok_and(|value| !value.trim().is_empty()))
+}
+
+/// Reads each file off the main thread and admits it to the composer, while
+/// the authority it was chosen for is still the one in use.
+async fn admit_paths(
+    this: WeakEntity<TheoremDriver>,
+    transport: Rc<dyn ChatTransport>,
+    paths: Vec<PathBuf>,
+    cx: &mut AsyncApp,
+) {
+    // One file at a time bounds the bytes waiting to enter the entity.
+    for path in paths {
+        let source = cx
+            .background_spawn(async move { read_native_attachment(path) })
+            .await;
+        let accepted = this.update(cx, |this, cx| {
+            if !Rc::ptr_eq(&this.transport, &transport) {
+                return false;
+            }
+            match source {
+                Ok(source) => this.admit_attachment_bytes(source, cx),
+                Err(reason) => this.report_notice(reason, cx),
+            }
+            true
+        });
+        if !matches!(accepted, Ok(true)) {
+            break;
+        }
+    }
 }
 
 fn read_native_attachment(path: PathBuf) -> Result<AttachmentSource, String> {

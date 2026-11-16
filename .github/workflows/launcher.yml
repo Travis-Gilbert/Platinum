@@ -1,0 +1,67 @@
+name: Theo launcher
+
+# Compiles and tests crates/launcher and crates/launcher-view, which need none
+# of the pinned checkouts, so they can be checked on every pull request that
+# touches them. The model is tested on Linux and macOS; the view, which builds
+# GPUI, on macOS, where it ships. It says nothing about the native
+# application: the window, the shortcut and what a chosen row does are
+# `src/theo_desk/summon.rs`, which only the application's own build compiles.
+
+on:
+  pull_request:
+    paths:
+      - "crates/launcher/**"
+      - "crates/launcher-view/**"
+      - "vendor/gpui-pre/**"
+      - "vendor/gpui-pre-apple/**"
+      - "vendor/gpui-component/**"
+      - "vendor/zed-font-kit/**"
+      - "script/test-launcher"
+      - "rust-toolchain.toml"
+      - ".github/workflows/launcher.yml"
+  push:
+    branches: [main]
+    paths:
+      - "crates/launcher/**"
+      - "crates/launcher-view/**"
+      - "vendor/gpui-pre/**"
+      - "vendor/gpui-pre-apple/**"
+      - "vendor/gpui-component/**"
+      - "vendor/zed-font-kit/**"
+      - "script/test-launcher"
+      - "rust-toolchain.toml"
+      - ".github/workflows/launcher.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: launcher-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  model:
+    name: Model (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test crates/launcher
+        run: script/test-launcher --model-only
+
+  view:
+    name: View (macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test crates/launcher and crates/launcher-view
+        run: script/test-launcher
