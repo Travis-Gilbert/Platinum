@@ -4,7 +4,8 @@ name: Theo (Rune)
 # Cargo workspace with its own lockfile and toolchain (apps/theo-rune/rust-toolchain.toml).
 # It needs none of the pinned checkouts under deps/, and it must never depend
 # on GPUI, Servo or GStreamer: the boundary step fails the job if it does.
-# Headless runtime tests only; a native window is observed live, not here.
+# Headless runtime tests, and one person's journey through the release build
+# on Rune's virtual desktop; a native window is observed live, not here.
 
 on:
   pull_request:
@@ -60,3 +61,5 @@ jobs:
         run: cargo build --locked --all-targets
       - name: Test
         run: cargo test --locked
+      - name: Journey on the virtual desktop
+        run: script/journey

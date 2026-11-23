@@ -22,6 +22,27 @@ CARGO_TARGET_DIR="/Volumes/SSD Samsung/cargo-targets/theo-rune" cargo test --loc
 CARGO_TARGET_DIR="/Volumes/SSD Samsung/cargo-targets/theo-rune" cargo run --release
 ```
 
+`script/install` builds the release binary and installs it as
+`~/Applications/Theo.app` with Rune's own installer (`scripts/mac-app` at the
+pinned Rune revision), which signs it, swaps a running copy for the new
+build, and checks its ready receipt. `ctrl+alt+t` summons and dismisses it.
+
+`script/journey` drives the release build through one person's journey on
+Rune's virtual desktop and checks the window at each step: the presence at
+its home, a tap opening the workspace, typing kept as a draft, Escape back to
+the presence, the shortcut hiding and showing Theo, and the draft still there
+when the workspace reopens. Each step runs under its own `RUNE_DIRS_ROOT`,
+which isolates both the preferences and the behaviors folder, so the
+installed app's saved state never reaches it. CI runs it too.
+
+```bash
+CARGO_TARGET_DIR="/Volumes/SSD Samsung/cargo-targets/theo-rune" script/install
+CARGO_TARGET_DIR="/Volumes/SSD Samsung/cargo-targets/theo-rune" script/journey
+```
+
+The home corner and the first workspace keep clear of the menu bar and Dock:
+on macOS they are placed in the primary screen's `visibleFrame`.
+
 To take a headless snapshot of one named state, use `--snap out.png --scene <name> --at <seconds>`.
 The scenes are:
 
@@ -138,5 +159,11 @@ depends on how fast the machine is.
 | 3. Real conversation and note | Not started. It needs the chat controller and transport, authentication, and the `crates/notes` document authority, which pulls the pinned Theorem checkout. |
 | 4. to 7. | Not started. |
 
-Not observed yet: real macOS window behavior (placement, focus, global
-summon) with a person at the machine.
+Observed on this Mac's window server, with no person at the machine: the
+installed app restores its saved form at the saved frame, in one visible
+window. The window settles only while a display is awake; with every display
+asleep, AppKit's ordering animation stops partway, at about 98% of the
+window's size. A second Theo window of the same size stays ordered out, never
+on screen; what it is has not been traced. Not observed yet: focus and the
+global summon with a person at the machine, and a picture of the real screen
+(the shell taking it has no screen-recording permission).

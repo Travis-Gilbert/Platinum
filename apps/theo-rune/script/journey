@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Drives the release build through one person's journey on Rune's virtual
+# desktop and checks the window at each step: the presence at its home, a
+# tap opening the workspace, typing kept as a draft, Escape back to the
+# presence, the global shortcut hiding and showing Theo, and the draft still
+# there in the reopened workspace. Each step is a fresh run under its own
+# RUNE_DIRS_ROOT, so neither the installed app's saved state nor an earlier
+# step's reaches it. Pass --no-build to check the binary already built.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+[[ "${1:-}" == --no-build ]] || cargo build --release --locked
+target="$(cargo metadata --format-version 1 --locked --no-deps |
+  python3 -c 'import json, sys; print(json.load(sys.stdin)["target_directory"])')"
+bin="$target/release/theo-desktop"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+# A plain grey backdrop the size of the scripted display.
+python3 - "$work/backdrop.png" <<'PY'
+import struct, sys, zlib
+w, h = 1600, 1000
+row = b"\0" + b"\x80\x80\x80" * w
+chunk = lambda kind, data: struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+png += chunk(b"IDAT", zlib.compress(row * h)) + chunk(b"IEND", b"")
+open(sys.argv[1], "wb").write(png)
+PY
+# step SECONDS EXPECTATION: the window at SECONDS into the journey.
+step() {
+  local at="$1" root="$work/at-$1"
+  mkdir -p "$root"
+  RUNE_DIRS_ROOT="$root" "$bin" --desktop "$work/backdrop.png" --script script/journey.json \
+    --tree "$root/tree.json" --at "$at" >"$root/log" 2>&1 || { cat "$root/log"; exit 1; }
+  python3 - "$root/tree.json" "$at" "$2" <<'PY'
+import json, sys
+tree, at, want = json.load(open(sys.argv[1])), sys.argv[2], sys.argv[3]
+(window,) = tree["windows"]
+x, y, w, h = window["frame"]
+home = [1312, 844, 264, 132]  # bottom right of 1600x1000, 24 in
+drafted = "half a thought" in json.dumps(tree)
+checks = {
+    "presence": window["visible"] and [x, y, w, h] == home,
+    "workspace": window["visible"] and (w, h) == (1120, 720)
+                 and 0 <= x <= 1600 - w and 0 <= y <= 1000 - h,
+    "hidden": not window["visible"],
+}
+ok = checks[want.split("+")[0]] and ("+draft" not in want or drafted)
+print(f"{'ok  ' if ok else 'FAIL'} {at:>4}s {want:<16} frame {window['frame']} visible {window['visible']}")
+sys.exit(0 if ok else 1)
+PY
+}
+step 0.4 presence
+step 2.6 workspace+draft
+step 3.8 presence
+step 4.8 hidden
+step 5.4 presence
+step 7.0 workspace+draft

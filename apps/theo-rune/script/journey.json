@@ -1,0 +1,10 @@
+{"displays":[{"id":1,"frame":[0,0,1600,1000],"scale":2,"primary":true}],
+ "events":[
+  {"t":0.6,"type":"tap","key":"theo.face"},
+  {"t":1.8,"type":"type","text":"half a thought"},
+  {"t":3.0,"type":"key","name":"Escape"},
+  {"t":4.2,"type":"shortcut","chord":"ctrl+alt+t"},
+  {"t":5.0,"type":"shortcut","chord":"ctrl+alt+t"},
+  {"t":5.8,"type":"tap","key":"theo.face"},
+  {"t":7.2,"type":"mark","name":"end"}
+ ]}
