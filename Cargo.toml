@@ -16,6 +16,8 @@ members = [
     "crates/theo",
     "crates/presence",
     "crates/companion",
+    "crates/theo-body",
+    "crates/launcher",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",
