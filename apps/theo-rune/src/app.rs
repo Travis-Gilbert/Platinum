@@ -10,7 +10,7 @@ use std::cell::Cell;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use rune::{TextEdit, Tx, WindowHandle};
+use rune::{AppHandle, TextEdit, Tx, WindowHandle};
 
 use crate::behavior::store::Library;
 use crate::face::FaceFrame;
@@ -38,7 +38,14 @@ pub struct Theo {
     /// What the view last read from the system, for the poll.
     pub dark: Cell<bool>,
     pub still: Cell<bool>,
+    /// The application's own handle: shows, hides, focuses and moves the
+    /// window on every host, before the native window exists and headless.
+    app: Option<AppHandle<Theo>>,
+    /// The native window, once made: only its level and its frame read back
+    /// need it.
     window: Arc<OnceLock<WindowHandle>>,
+    /// A level decided before the native window existed.
+    float: Option<bool>,
     writer: Option<Writer>,
     /// Where behaviors are kept and authored from.
     library: Option<Library>,
@@ -46,7 +53,8 @@ pub struct Theo {
     returns_to: Option<i32>,
     placement_read_at: f64,
     drafts_offered_at: f64,
-    /// Effects decided before the window existed.
+    /// Effects decided before the first poll, or with no application to
+    /// apply them to (tests and named scenes).
     pending: Vec<Effect>,
     /// Edits aimed at a surface that has since closed land here.
     scratch: TextEdit,
@@ -57,6 +65,7 @@ pub struct Theo {
 impl Theo {
     pub fn new(
         mut session: AppSession,
+        app: Option<AppHandle<Theo>>,
         window: Arc<OnceLock<WindowHandle>>,
         writer: Option<Writer>,
         library: Option<Library>,
@@ -71,7 +80,9 @@ impl Theo {
             face,
             dark: Cell::new(true),
             still: Cell::new(false),
+            app,
             window,
+            float: None,
             writer,
             library,
             returns_to: None,
@@ -88,6 +99,7 @@ impl Theo {
     pub fn headless() -> Self {
         Self::new(
             AppSession::headless(),
+            None,
             Arc::new(OnceLock::new()),
             None,
             None,
@@ -109,10 +121,6 @@ impl Theo {
         self.begin(request);
         self.pending.extend(self.session.tick(self.now));
         self.session.still = still;
-    }
-
-    fn window(&self) -> Option<&WindowHandle> {
-        self.window.get()
     }
 
     /// Asks the session for another presentation on the person's behalf.
@@ -156,8 +164,8 @@ impl Theo {
 
     /// Carries out the presentation's effects, in order.
     pub fn apply(&mut self, effects: Vec<Effect>, tx: &mut Tx) {
-        let Some(window) = self.window().cloned() else {
-            // Focus needs no window handle; the rest waits for one.
+        let Some(app) = self.app.clone() else {
+            // Focus needs no window; the rest waits for an application.
             for effect in &effects {
                 if let Effect::Focus(form) = effect {
                     focus(*form, tx);
@@ -168,15 +176,21 @@ impl Theo {
         };
         for effect in effects {
             match effect {
-                Effect::Place(frame) => place(&window, frame),
-                Effect::Float(on) => window.set_always_on_top(on),
+                Effect::Place(frame) => {
+                    tx.resize_window_instant((frame.w, frame.h));
+                    app.set_position((frame.x, frame.y));
+                }
+                Effect::Float(on) => {
+                    self.float = Some(on);
+                    self.keep_level();
+                }
                 Effect::Show { activate } => {
-                    window.show();
+                    app.show();
                     if activate {
-                        window.focus();
+                        app.focus();
                     }
                 }
-                Effect::Hide => window.hide(),
+                Effect::Hide => app.hide(),
                 Effect::Focus(form) => focus(form, tx),
                 Effect::ReturnFocus => {
                     if let Some(pid) = self.returns_to.take() {
@@ -185,6 +199,15 @@ impl Theo {
                 }
                 Effect::Persist => self.persist(),
             }
+        }
+    }
+
+    /// Gives the native window the level last decided, once it exists.
+    fn keep_level(&mut self) {
+        if let Some(window) = self.window.get()
+            && let Some(on) = self.float.take()
+        {
+            window.set_always_on_top(on);
         }
     }
 
@@ -199,10 +222,11 @@ impl Theo {
     pub fn poll(&mut self, t: f64, tx: &mut Tx) -> bool {
         self.now = t * 1000.0;
         self.session.still = self.still.get();
-        if self.window().is_some() && !self.pending.is_empty() {
+        if self.app.is_some() && !self.pending.is_empty() {
             let pending = std::mem::take(&mut self.pending);
             self.apply(pending, tx);
         }
+        self.keep_level();
         let settled = self.session.tick(self.now);
         if !settled.is_empty() {
             self.apply(settled, tx);
@@ -260,7 +284,7 @@ impl Theo {
             return;
         }
         self.placement_read_at = self.now;
-        let Some(placement) = self.window().and_then(WindowHandle::placement) else {
+        let Some(placement) = self.window.get().and_then(WindowHandle::placement) else {
             return;
         };
         let scale = placement.scale.max(1.0);
@@ -279,11 +303,6 @@ impl Theo {
             .request(Request::Moved(frame), Cause::User, self.now);
         self.persist();
     }
-}
-
-fn place(window: &WindowHandle, frame: Frame) {
-    window.resize_instant((frame.w, frame.h));
-    window.set_position((frame.x, frame.y));
 }
 
 fn focus(form: Form, tx: &mut Tx) {

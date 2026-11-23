@@ -95,10 +95,13 @@ pub fn run() {
             ],
             ..AppSpec::new("Theo", (first.w, first.h), Theo::headless, views::view)
         };
-        let app = App::new(spec)
+        let app = App::new(spec);
+        let app_handle = app.handle();
+        let app = app
             .init(move || {
                 Theo::new(
                     session,
+                    Some(app_handle),
                     handle,
                     Some(Writer::spawn(prefs)),
                     Some(Library::open(behaviors)),
