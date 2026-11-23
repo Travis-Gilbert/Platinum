@@ -4278,6 +4278,7 @@ dependencies = [
  "surfman",
  "tempfile",
  "theo",
+ "theo-activity",
  "theorem-browser-substrate",
  "theorem-surface-contracts",
  "theoremweb-agent-runtime",
@@ -15800,6 +15801,16 @@ dependencies = [
 [[package]]
 name = "theo"
 version = "0.1.0"
+
+[[package]]
+name = "theo-activity"
+version = "0.1.0"
+dependencies = [
+ "agpui-contract",
+ "presence",
+ "theo",
+ "theorem-surface-contracts",
+]
 
 [[package]]
 name = "theo-body"

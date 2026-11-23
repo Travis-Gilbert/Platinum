@@ -1,0 +1,14 @@
+[package]
+name = "theo-activity"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "A Theorem conversation's runs as Theo's activities, its liveness and the manner the agent wrote: the mapping every Theo host shares."
+
+[dependencies]
+presence = { path = "../presence" }
+theo = { path = "../theo" }
+theorem-surface-contracts = { path = "../../deps/theorem-search/rustyredcore_THG/crates/theorem-surface-contracts" }
+
+[dev-dependencies]
+agpui-contract = { path = "../../deps/theorem-search/rustyredcore_THG/crates/agpui-contract" }
