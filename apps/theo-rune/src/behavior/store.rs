@@ -13,11 +13,14 @@
 //! same. Another thread watches the inbox and hands back what changed.
 
 use std::collections::HashMap;
+use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 use std::time::{Duration, SystemTime};
+
+use rune::dirs::AppDirs;
 
 use super::{Catalog, Name, Revision};
 
@@ -25,19 +28,21 @@ const MANIFEST: &str = "revisions.json";
 /// How often the inbox is looked at.
 const INBOX_EVERY: Duration = Duration::from_millis(500);
 
-/// The behaviors folder: `THEO_BEHAVIORS_DIR`, else the application's
-/// support folder.
+/// The behaviors folder: `THEO_BEHAVIORS_DIR`, else `behaviors` in the
+/// application's data folder, which `RUNE_DIRS_ROOT` moves along with its
+/// preferences for an isolated run.
 pub fn default_dir() -> PathBuf {
-    if let Some(dir) = std::env::var_os("THEO_BEHAVIORS_DIR") {
+    dir_from(|k| std::env::var_os(k))
+}
+
+fn dir_from(var: impl Fn(&str) -> Option<OsString>) -> PathBuf {
+    if let Some(dir) = var("THEO_BEHAVIORS_DIR") {
         return PathBuf::from(dir);
     }
-    let home = std::env::var_os("HOME").map_or_else(|| PathBuf::from("."), PathBuf::from);
-    let base = if cfg!(target_os = "macos") {
-        home.join("Library/Application Support")
-    } else {
-        std::env::var_os("XDG_DATA_HOME").map_or_else(|| home.join(".local/share"), PathBuf::from)
-    };
-    base.join(crate::preferences::APP_ID).join("behaviors")
+    AppDirs::from_env(crate::preferences::APP_ID, var).map_or_else(
+        || PathBuf::from("behaviors"),
+        |dirs| dirs.data().join("behaviors"),
+    )
 }
 
 /// Reads every behavior's history. A behavior folder that cannot be read is
@@ -218,6 +223,36 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn an_isolated_run_keeps_its_behaviors_under_its_own_root() {
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |k: &str| {
+                pairs
+                    .iter()
+                    .find(|(name, _)| *name == k)
+                    .map(|(_, v)| std::ffi::OsString::from(v))
+            }
+        };
+        assert!(
+            dir_from(env(&[("HOME", "/Users/someone")])).ends_with("com.theorem.theo/behaviors")
+        );
+        assert_eq!(
+            dir_from(env(&[
+                ("HOME", "/Users/someone"),
+                ("RUNE_DIRS_ROOT", "/run")
+            ])),
+            PathBuf::from("/run/data/com.theorem.theo/behaviors"),
+            "the root that isolates Rune's preferences isolates the behaviors too"
+        );
+        assert_eq!(
+            dir_from(env(&[
+                ("RUNE_DIRS_ROOT", "/run"),
+                ("THEO_BEHAVIORS_DIR", "/b")
+            ])),
+            PathBuf::from("/b")
+        );
     }
 
     #[test]
