@@ -38,7 +38,12 @@ pub fn view(s: &Theo, cx: &mut Cx<Theo>) -> El {
 fn presence(s: &Theo) -> El {
     let frame = s.session.presentation.presence_frame();
     let centre = (f64::from(frame.w) / 2.0, f64::from(frame.h) / 2.0);
-    let drawing = face::face(Shape::new(), &s.face, centre, 1.0);
+    let drawing = authored(
+        face::face(Shape::new(), &s.face, centre, 1.0),
+        s,
+        centre,
+        1.0,
+    );
     let (half_w, half_h) = s.face.plate_half();
     let plate = el()
         .key(FACE_KEY)
@@ -71,6 +76,16 @@ fn presence_key(s: &mut Theo, event: &KeyEvent, tx: &mut Tx) -> bool {
         _ => return false,
     }
     true
+}
+
+/// What running behaviors draw, about the face's centre.
+fn authored(shape: Shape, s: &Theo, centre: (f64, f64), alpha: f32) -> Shape {
+    s.session
+        .behaviors
+        .drawings()
+        .fold(shape, |shape, (_, drawing)| {
+            drawing.paint(shape, centre, alpha)
+        })
 }
 
 /// What the face is doing, in words, so it does not have to be read.
@@ -111,6 +126,7 @@ fn shell(s: &Theo, cx: &mut Cx<Theo>) -> El {
             }
             (Fill::Face, _) => {
                 body = face::face(body, &s.face, part.area.centre(), alpha);
+                body = authored(body, s, part.area.centre(), alpha);
             }
             (Fill::Still, STILL) => layers.push(placed(workspace(s, cx), part).opacity(alpha)),
             (Fill::Controls(_), BAR) => layers.push(placed(bar(s, theme), part).opacity(alpha)),

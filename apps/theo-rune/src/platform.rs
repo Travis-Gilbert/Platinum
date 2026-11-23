@@ -16,6 +16,7 @@ use rune::{
 };
 
 use crate::app::Theo;
+use crate::behavior::store::{self, Library};
 use crate::preferences::{self, APP_ID, Writer};
 use crate::presentation::{Frame, PRESENCE_SIZE, presence_home, workspace_around};
 use crate::session::AppSession;
@@ -64,7 +65,16 @@ pub fn run() {
         );
         let home = presence_home(display, scale);
         let workspace = workspace_around(saved.presence.unwrap_or(home), display, scale);
-        let session = AppSession::new(saved, home, workspace, 0.0);
+        let behaviors = store::default_dir();
+        let catalog = store::load(&behaviors);
+        let session = AppSession::new(
+            saved,
+            home,
+            workspace,
+            0.0,
+            AppSession::fresh_seed(),
+            catalog,
+        );
         let first = session.presentation.frame();
         let floats = !session.presentation.shows_workspace();
 
@@ -80,11 +90,20 @@ pub fn run() {
                     s.settle_in(crate::presentation::Request::Expand)
                 }),
                 ("opening", |s| s.begin(crate::presentation::Request::Expand)),
+                // The presence with every behavior in the behaviors folder running.
+                ("authored", |s| s.author_folder()),
             ],
             ..AppSpec::new("Theo", (first.w, first.h), Theo::headless, views::view)
         };
         let app = App::new(spec)
-            .init(move || Theo::new(session, handle, Some(Writer::spawn(prefs))))
+            .init(move || {
+                Theo::new(
+                    session,
+                    handle,
+                    Some(Writer::spawn(prefs)),
+                    Some(Library::open(behaviors)),
+                )
+            })
             .keep_running()
             .global_shortcut(TOGGLE, Theo::toggle)
             .on_window(move |window| {

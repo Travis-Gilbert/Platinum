@@ -21,6 +21,9 @@ path = "src/main.rs"
 # Rune at a pinned `dev` revision, as Rune asks apps to pin it. `tooling`
 # keeps the headless snapshot and script flags in release builds.
 rune = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d", features = ["tooling"] }
+# Authored behaviors run in sandboxed Luau VMs (time and memory limits, no
+# network or files); Luau is C++, built with the system toolchain.
+rune-luau = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d", features = ["serde"] }
 # Theo's renderer-neutral core, shared with the GPUI desk.
 theo = { path = "../../crates/theo" }
 presence = { path = "../../crates/presence" }

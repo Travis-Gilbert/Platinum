@@ -12,6 +12,7 @@ use std::time::Duration;
 
 use rune::{TextEdit, Tx, WindowHandle};
 
+use crate::behavior::store::Library;
 use crate::face::FaceFrame;
 use crate::platform;
 use crate::preferences::Writer;
@@ -39,6 +40,8 @@ pub struct Theo {
     pub still: Cell<bool>,
     window: Arc<OnceLock<WindowHandle>>,
     writer: Option<Writer>,
+    /// Where behaviors are kept and authored from.
+    library: Option<Library>,
     /// The application in front when Theo was summoned, to give focus back to.
     returns_to: Option<i32>,
     placement_read_at: f64,
@@ -56,6 +59,7 @@ impl Theo {
         mut session: AppSession,
         window: Arc<OnceLock<WindowHandle>>,
         writer: Option<Writer>,
+        library: Option<Library>,
     ) -> Self {
         let pending = session
             .request(Request::Summon, Cause::Restore, 0.0)
@@ -69,6 +73,7 @@ impl Theo {
             still: Cell::new(false),
             window,
             writer,
+            library,
             returns_to: None,
             placement_read_at: 0.0,
             drafts_offered_at: 0.0,
@@ -81,7 +86,12 @@ impl Theo {
     /// A Theo with no native window or preferences file, for tests and
     /// headless snapshots.
     pub fn headless() -> Self {
-        Self::new(AppSession::headless(), Arc::new(OnceLock::new()), None)
+        Self::new(
+            AppSession::headless(),
+            Arc::new(OnceLock::new()),
+            None,
+            None,
+        )
     }
 
     /// Starts a change of form on the person's behalf with no window to
@@ -197,6 +207,9 @@ impl Theo {
         if !settled.is_empty() {
             self.apply(settled, tx);
         }
+        self.author_from_inbox();
+        self.session.behave(self.now, tx);
+        self.keep_behaviors();
         self.face = self.session.face(self.now, self.dark.get());
         self.read_placement();
         if self.now - self.drafts_offered_at >= DRAFTS_EVERY_MS {
@@ -207,6 +220,38 @@ impl Theo {
             tx.wake_after(Duration::ZERO);
         }
         true
+    }
+
+    /// Defines or revises what authors left in the behaviors folder.
+    fn author_from_inbox(&mut self) {
+        let Some(library) = &self.library else { return };
+        let authored: Vec<_> = library.inbox.try_iter().collect();
+        for a in authored {
+            if let Err(reason) = self.session.author(&a.name, &a.source, &a.by) {
+                self.status = format!("{} did not start: {reason}", a.name.as_str());
+            }
+        }
+    }
+
+    /// Authors everything in the behaviors folder at once, for the
+    /// `authored` scene: a headless run shows what a folder holds.
+    pub fn author_folder(&mut self) {
+        let dir = crate::behavior::store::default_dir();
+        for a in crate::behavior::store::scan(&dir, &mut Default::default()) {
+            if let Err(reason) = self.session.author(&a.name, &a.source, &a.by) {
+                eprintln!("theo: {} did not start: {reason}", a.name.as_str());
+            }
+        }
+    }
+
+    /// Hands every behavior whose record changed to the folder's writer.
+    fn keep_behaviors(&mut self) {
+        let changed = self.session.behaviors.take_changed();
+        if let Some(library) = &self.library {
+            for name in changed {
+                library.writer.store(&name, &self.session.behaviors.catalog);
+            }
+        }
     }
 
     /// Keeps a settled form's frame where the person moved or resized it.

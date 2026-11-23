@@ -10,14 +10,27 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use companion::Companion;
+use rune::Tx;
 use theo::engine::FaceOptions;
 
+use crate::behavior::run::Behaviors;
+use crate::behavior::{Catalog, Name};
 use crate::face::FaceFrame;
 use crate::preferences::Saved;
 use crate::presentation::{
     Cause, Effect, Form, Frame, Outcome, PRESENCE_SIZE, Presentation, Request, WORKSPACE_SIZE,
 };
+use crate::signals::{Owner, Registry};
 use crate::surfaces::{SurfaceRef, Surfaces};
+
+/// How fast the person is writing in the composer, in characters a second,
+/// measured while the workspace shows and absent otherwise.
+pub const TYPING: &str = "composer.typing";
+/// How far the body has changed toward the workspace, 0 to 1.
+pub const FORM: &str = "theo.form";
+const TYPING_LIFETIME_MS: f64 = 1_500.0;
+/// How quickly the typing rate follows what was just typed.
+const TYPING_EASE: f64 = 0.15;
 
 /// The session's identity, fixed when it begins. Views and windows come and
 /// go; this does not change until the application ends.
@@ -45,14 +58,46 @@ pub struct AppSession {
     pub surfaces: Surfaces,
     /// Reduced motion, as the system last reported it.
     pub still: bool,
+    /// Authored behaviors, running for as long as the session.
+    pub behaviors: Behaviors,
+    /// What capabilities measure for behaviors.
+    pub signals: Registry,
+    face_seed: u32,
+    typing: Typing,
+}
+
+/// The composer's length and rate as the last frame saw them.
+#[derive(Default)]
+struct Typing {
+    length: usize,
+    rate: f64,
+    at: f64,
+}
+
+fn composer() -> Owner {
+    Owner("composer".into())
+}
+
+fn theo_owner() -> Owner {
+    Owner("theo".into())
 }
 
 impl AppSession {
     /// A session restored from what was saved. `home` is the presence's
     /// frame when none was saved, `workspace` likewise.
-    pub fn new(saved: Saved, home: Frame, workspace: Frame, now: f64) -> Self {
+    /// `seed` gives the face and the behaviors their variation; `catalog`
+    /// is every behavior kept so far, whose active ones start again.
+    pub fn new(
+        saved: Saved,
+        home: Frame,
+        workspace: Frame,
+        now: f64,
+        seed: u32,
+        catalog: Catalog,
+    ) -> Self {
         let mut companion = Companion::new(FaceOptions {
             now,
+            seed,
             ..FaceOptions::default()
         });
         companion.show(companion::Scope::default());
@@ -71,13 +116,27 @@ impl AppSession {
             surfaces.recover(draft);
         }
         surfaces.bring_to_front(&new_conversation());
+        let mut signals = Registry::default();
+        // Both names are namespaced and owned here; neither can be taken.
+        let _ = signals.register(TYPING, &composer(), TYPING_LIFETIME_MS);
+        let _ = signals.register(FORM, &theo_owner(), f64::INFINITY);
         Self {
             id: SessionId::fresh(),
             companion,
             presentation,
             surfaces,
             still: false,
+            behaviors: Behaviors::new(seed, catalog),
+            signals,
+            face_seed: seed,
+            typing: Typing::default(),
         }
+    }
+
+    /// A seed of its own for a new session, so each run varies.
+    pub fn fresh_seed() -> u32 {
+        let id = SessionId::fresh().0;
+        (id ^ (id >> 32)) as u32
     }
 
     /// A session at default frames, for tests and headless runs.
@@ -94,7 +153,14 @@ impl AppSession {
             w: WORKSPACE_SIZE.0,
             h: WORKSPACE_SIZE.1,
         };
-        Self::new(Saved::default(), home, workspace, 0.0)
+        Self::new(
+            Saved::default(),
+            home,
+            workspace,
+            0.0,
+            1,
+            Catalog::default(),
+        )
     }
 
     pub fn id(&self) -> SessionId {
@@ -109,6 +175,58 @@ impl AppSession {
     /// Moves time on: the body's change between forms.
     pub fn tick(&mut self, now: f64) -> Vec<Effect> {
         self.presentation.tick(now)
+    }
+
+    /// Defines or revises an authored behavior. The route every author
+    /// takes: the agent, the person, a file in the behaviors folder.
+    pub fn author(&mut self, name: &Name, source: &str, by: &str) -> Result<u32, String> {
+        self.behaviors.author(name, source, by)
+    }
+
+    pub fn stop_behavior(&mut self, name: &Name) {
+        self.behaviors.stop(name, &mut self.companion);
+    }
+
+    /// Records from here on, for replay.
+    pub fn start_capture(&mut self, now: f64) {
+        self.behaviors.start_capture(now, self.face_seed);
+    }
+
+    /// One frame of authored behavior: the session's own measurements
+    /// taken, then every behavior run against the signals as they stand.
+    pub fn behave(&mut self, now: f64, tx: &mut Tx) {
+        self.measure(now);
+        let signals = self.signals.current(now);
+        self.behaviors
+            .frame(now, signals, &mut self.companion, &mut self.surfaces, tx);
+    }
+
+    fn measure(&mut self, now: f64) {
+        let form = if self.presentation.shows_workspace() {
+            self.presentation.progress(now)
+        } else {
+            0.0
+        };
+        let _ = self.signals.set(FORM, &theo_owner(), form, now);
+        if !self.presentation.workspace_interactive() {
+            // No composer to measure: the reading goes stale on its own.
+            self.typing = Typing::default();
+            return;
+        }
+        let length = self
+            .surfaces
+            .front()
+            .map_or(0, |front| front.edit.text.chars().count());
+        let seconds = ((now - self.typing.at) / 1000.0).max(1e-3);
+        let typed = if self.typing.at > 0.0 {
+            length.abs_diff(self.typing.length) as f64 / seconds
+        } else {
+            0.0
+        };
+        self.typing.rate += (typed - self.typing.rate) * TYPING_EASE;
+        self.typing.length = length;
+        self.typing.at = now;
+        let _ = self.signals.set(TYPING, &composer(), self.typing.rate, now);
     }
 
     /// The face as it is at `now`.
@@ -188,9 +306,41 @@ mod tests {
         );
         let home = saved.presence.unwrap();
         let ws = saved.workspace.unwrap();
-        let restored = AppSession::new(saved, home, ws, 0.0);
+        let restored = AppSession::new(saved, home, ws, 0.0, 1, Catalog::default());
         assert!(restored.presentation.workspace_interactive());
         assert_eq!(restored.surfaces.front().unwrap().edit.text, "unsent");
         assert_ne!(restored.id(), session.id(), "a new run is a new session");
+    }
+
+    #[test]
+    fn typing_is_measured_only_while_the_composer_can_take_it() {
+        let mut session = AppSession::headless();
+        let mut tx = Tx::default();
+        session.request(Request::Summon, Cause::User, 0.0).unwrap();
+        session.behave(16.0, &mut tx);
+        assert_eq!(
+            session.signals.read(TYPING, 16.0),
+            None,
+            "no composer in the presence"
+        );
+        assert_eq!(session.signals.read(FORM, 16.0), Some(0.0));
+
+        session.still = true;
+        session.request(Request::Expand, Cause::User, 20.0).unwrap();
+        session.tick(20.0);
+        session.behave(32.0, &mut tx);
+        session
+            .surfaces
+            .front_mut()
+            .unwrap()
+            .edit
+            .insert("hello there");
+        session.behave(132.0, &mut tx);
+        let rate = session.signals.read(TYPING, 132.0).unwrap();
+        assert!(
+            rate > 1.0,
+            "eleven characters in a tenth of a second reads as typing: {rate}"
+        );
+        assert_eq!(session.signals.read(FORM, 132.0), Some(1.0));
     }
 }
