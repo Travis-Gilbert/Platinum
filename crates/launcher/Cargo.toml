@@ -1,0 +1,8 @@
+[package]
+name = "launcher"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Theo's launcher, less the window: what was typed, what was found, what is selected and what Enter will do."
+
+[dependencies]

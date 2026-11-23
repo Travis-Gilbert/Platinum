@@ -16,12 +16,15 @@ members = [
     "crates/theo",
     "crates/presence",
     "crates/companion",
+    "crates/theo-body",
+    "crates/theo-activity",
+    "crates/launcher",
     "vendor/zorite-editor",
     "vendor/zorite-markdown",
     "vendor/gpui-bidi",
     "vendor/gpui-whiteboard",
 ]
-exclude = ["deps"]
+exclude = ["deps", "apps"]
 
 [dependencies]
 gpui-kit = { version = "=0.8.0", features = ["speech"] }
@@ -51,6 +54,7 @@ agpui-contract = { path = "deps/theorem-search/rustyredcore_THG/crates/agpui-con
 theo = { path = "crates/theo" }
 presence = { path = "crates/presence" }
 companion = { path = "crates/companion" }
+theo-activity = { path = "crates/theo-activity" }
 # The runtime's reqwest client needs Tokio's reactor wherever its futures are
 # polled, and GPUI polls them on the main thread.
 async-compat = "0.2.5"

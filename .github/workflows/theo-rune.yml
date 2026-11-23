@@ -1,0 +1,65 @@
+name: Theo (Rune)
+
+# Builds and tests apps/theo-rune, the Rune desktop application, as its own
+# Cargo workspace with its own lockfile and toolchain (apps/theo-rune/rust-toolchain.toml).
+# It needs none of the pinned checkouts under deps/, and it must never depend
+# on GPUI, Servo or GStreamer: the boundary step fails the job if it does.
+# Headless runtime tests, and one person's journey through the release build
+# on Rune's virtual desktop; a native window is observed live, not here.
+
+on:
+  pull_request:
+    paths:
+      - "apps/theo-rune/**"
+      - "crates/theo/**"
+      - "crates/presence/**"
+      - "crates/companion/**"
+      - "crates/theo-body/**"
+      - ".github/workflows/theo-rune.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/theo-rune/**"
+      - "crates/theo/**"
+      - "crates/presence/**"
+      - "crates/companion/**"
+      - "crates/theo-body/**"
+      - ".github/workflows/theo-rune.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: theo-rune-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/theo-rune
+    env:
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: rustup toolchain install
+      - name: Format
+        run: cargo fmt --check
+      - name: Boundary (no GPUI, Servo or GStreamer)
+        run: |
+          forbidden=$(cargo tree --locked --prefix none -e normal | grep -i -E '^(gpui|servo|gstreamer|gst-|webrender|mozjs)' | sort -u || true)
+          if [ -n "$forbidden" ]; then
+            echo "apps/theo-rune depends on crates it must not:"
+            echo "$forbidden"
+            exit 1
+          fi
+      - name: Build
+        run: cargo build --locked --all-targets
+      - name: Test
+        run: cargo test --locked
+      - name: Journey on the virtual desktop
+        run: script/journey

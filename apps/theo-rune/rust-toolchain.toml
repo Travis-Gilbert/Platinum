@@ -1,0 +1,5 @@
+# Rune's own toolchain (anomalyco/rune rust-toolchain.toml at the pinned rev).
+# Platinum's GPUI build keeps 1.97.1; this workspace builds apart from it.
+[toolchain]
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]

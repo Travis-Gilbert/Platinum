@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Builds Theo and installs it as ~/Applications/Theo.app, or swaps a running
+# copy for the new build, with Rune's own installer (scripts/mac-app at the
+# Rune revision this workspace pins), so the bundle has an identity, a
+# signature and a checked ready receipt. Arguments after `--` go to Theo.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+cargo build --release --locked
+metadata="$(cargo metadata --format-version 1 --locked)"
+IFS=$'\t' read -r target rune < <(python3 -c '
+import json, os, sys
+m = json.load(sys.stdin)
+rune = next(p for p in m["packages"] if p["name"] == "rune")
+print(m["target_directory"], os.path.dirname(os.path.dirname(os.path.dirname(rune["manifest_path"]))), sep="\t")
+' <<<"$metadata")
+
+exec "$rune/scripts/mac-app" --name Theo --id com.theorem.theo --exe theo-desktop \
+  --bin "$target/release/theo-desktop" "$@"

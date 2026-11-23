@@ -1,0 +1,51 @@
+[package]
+name = "theo-desktop"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Theo in Rune: one application from the persistent desktop presence to the full workspace."
+
+# Its own workspace, lockfile and toolchain: the Rune build must not need
+# the GPUI application, Servo or GStreamer.
+[workspace]
+
+[lib]
+name = "theo_desktop"
+path = "src/lib.rs"
+
+[[bin]]
+name = "theo-desktop"
+path = "src/main.rs"
+
+[dependencies]
+# Rune at a pinned `dev` revision, as Rune asks apps to pin it. `tooling`
+# keeps the headless snapshot and script flags in release builds.
+rune = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d", features = ["tooling"] }
+# Authored behaviors run in sandboxed Luau VMs (time and memory limits, no
+# network or files); Luau is C++, built with the system toolchain.
+rune-luau = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d", features = ["serde"] }
+# Theo's renderer-neutral core, shared with the GPUI desk.
+theo = { path = "../../crates/theo" }
+presence = { path = "../../crates/presence" }
+companion = { path = "../../crates/companion" }
+theo-body = { path = "../../crates/theo-body" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Giving the keyboard back to the application Theo was summoned over, as the
+# GPUI desk does, and reading where the menu bar and Dock are, which Rune's
+# `Display` does not carry; the same objc2 line Rune itself is built on.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSScreen", "NSWorkspace"] }
+
+# A dependency's [patch] does not reach the workspace that depends on it, so
+# Rune's own patches are repeated here from the same revision (Rune's root
+# Cargo.toml explains each). winit and sctk-adwaita must come together.
+[patch.crates-io]
+winit = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d" }
+sctk-adwaita = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d" }
+parley_engine = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d" }
+wgpu-hal = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d" }
+accesskit_windows = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d" }
+accesskit_macos = { git = "https://github.com/anomalyco/rune", rev = "63ad0209edc9a3a7d2208b7f6c66f9e353da315d" }

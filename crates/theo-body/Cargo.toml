@@ -1,0 +1,9 @@
+[package]
+name = "theo-body"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Theo's body without a renderer: shapes of named parts, the change between them, the face-to-screen morph and the life of a surface it opens."
+
+[dependencies]
+presence = { path = "../presence" }

@@ -24,7 +24,7 @@
 //! work while another application is in front; AppKit and Core Graphics in
 //! `mac.rs`.
 
-pub mod activity;
+pub use theo_activity as activity;
 mod body;
 mod mac;
 
