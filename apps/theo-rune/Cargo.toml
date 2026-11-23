@@ -33,9 +33,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # Giving the keyboard back to the application Theo was summoned over, as the
-# GPUI desk does; the same objc2 line Rune itself is built on.
+# GPUI desk does, and reading where the menu bar and Dock are, which Rune's
+# `Display` does not carry; the same objc2 line Rune itself is built on.
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSWorkspace"] }
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSScreen", "NSWorkspace"] }
 
 # A dependency's [patch] does not reach the workspace that depends on it, so
 # Rune's own patches are repeated here from the same revision (Rune's root

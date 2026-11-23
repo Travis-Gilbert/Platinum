@@ -283,6 +283,27 @@ pub fn presence_in_workspace(presence: Frame, workspace: Frame, scale: f64) -> (
     )
 }
 
+/// What the system keeps for itself along a display's edges, in points:
+/// on macOS the menu bar and the Dock.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Insets {
+    pub top: f32,
+    pub left: f32,
+    pub bottom: f32,
+    pub right: f32,
+}
+
+/// The part of `display` Theo may cover: the display less its insets.
+pub fn work_area(display: Frame, insets: Insets, scale: f64) -> Frame {
+    let px = |points: f32| (points as f64 * scale).round() as i32;
+    Frame {
+        x: display.x + px(insets.left),
+        y: display.y + px(insets.top),
+        w: (display.w - insets.left - insets.right).max(0.0),
+        h: (display.h - insets.top - insets.bottom).max(0.0),
+    }
+}
+
 /// A workspace frame centred on the presence and kept on the display, for a
 /// first expansion with no frame the person chose.
 pub fn workspace_around(presence: Frame, display: Frame, scale: f64) -> Frame {
@@ -519,5 +540,38 @@ mod tests {
         let ws = workspace_around(home, display, 2.0);
         assert_eq!(ws.x + (ws.w as i32 * 2), 3024, "kept on the right edge");
         assert_eq!(ws.y + (ws.h as i32 * 2), 1890, "and the bottom");
+    }
+
+    #[test]
+    fn the_home_and_first_workspace_keep_clear_of_the_menu_bar_and_dock() {
+        let display = Frame {
+            x: 0,
+            y: 0,
+            w: 1512.0,
+            h: 982.0,
+        };
+        // What macOS reports as this display's visible frame, (0, 0, 1455, 948):
+        // the menu bar along the top and the Dock on the right.
+        let insets = Insets {
+            top: 34.0,
+            right: 57.0,
+            ..Insets::default()
+        };
+        let area = work_area(display, insets, 2.0);
+        assert_eq!(
+            area,
+            Frame {
+                x: 0,
+                y: 68,
+                w: 1455.0,
+                h: 948.0
+            }
+        );
+        let home = presence_home(area, 2.0);
+        assert_eq!(home.x + 528 + 48, 2910, "a margin in from the Dock");
+        assert_eq!(home.y + 264 + 48, 68 + 1896, "and from the bottom");
+        let ws = workspace_around(home, area, 2.0);
+        assert!(ws.y >= 68, "below the menu bar: {ws:?}");
+        assert!(ws.x + ws.w as i32 * 2 <= 2910, "left of the Dock: {ws:?}");
     }
 }

@@ -18,7 +18,9 @@ use rune::{
 use crate::app::Theo;
 use crate::behavior::store::{self, Library};
 use crate::preferences::{self, APP_ID, Writer};
-use crate::presentation::{Frame, PRESENCE_SIZE, presence_home, workspace_around};
+use crate::presentation::{
+    Frame, Insets, PRESENCE_SIZE, presence_home, work_area, workspace_around,
+};
 use crate::session::AppSession;
 use crate::views;
 
@@ -29,7 +31,8 @@ pub const TOGGLE: &str = "ctrl+alt+t";
 /// NSWindowCollectionBehavior: on every Space, and beside full-screen apps.
 const ALL_SPACES: usize = (1 << 0) | (1 << 8);
 
-/// The display's frame, as presentation frames are measured.
+/// The part of the primary display Theo may cover, as presentation frames
+/// are measured: the display less the menu bar and the Dock.
 fn display_frame(display: &Display) -> (Frame, f64) {
     let scale = display.scale.max(1.0);
     let frame = Frame {
@@ -38,7 +41,10 @@ fn display_frame(display: &Display) -> (Frame, f64) {
         w: (f64::from(display.size.0) / scale) as f32,
         h: (f64::from(display.size.1) / scale) as f32,
     };
-    (frame, scale)
+    (
+        work_area(frame, primary_insets((frame.w, frame.h)), scale),
+        scale,
+    )
 }
 
 /// Starts Theo and runs until it quits.
@@ -135,7 +141,35 @@ pub fn run() {
 
 #[cfg(target_os = "macos")]
 mod mac {
-    use objc2_app_kit::{NSApplicationActivationOptions, NSRunningApplication, NSWorkspace};
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::{
+        NSApplicationActivationOptions, NSRunningApplication, NSScreen, NSWorkspace,
+    };
+
+    use crate::presentation::Insets;
+
+    /// The menu bar and Dock on the primary display: the first screen, which
+    /// AppKit measures from its bottom-left, so each edge is the gap between
+    /// its whole frame and its visible frame. None unless that screen is
+    /// `size` in points, so a virtual display is never given this Mac's Dock.
+    pub fn primary_insets(size: (f32, f32)) -> Option<Insets> {
+        let screen = NSScreen::screens(MainThreadMarker::new()?).firstObject()?;
+        let (whole, visible) = (screen.frame(), screen.visibleFrame());
+        if (whole.size.width as f32, whole.size.height as f32) != size {
+            return None;
+        }
+        let edge = |gap: f64| gap.max(0.0) as f32;
+        Some(Insets {
+            left: edge(visible.origin.x - whole.origin.x),
+            bottom: edge(visible.origin.y - whole.origin.y),
+            right: edge(
+                (whole.origin.x + whole.size.width) - (visible.origin.x + visible.size.width),
+            ),
+            top: edge(
+                (whole.origin.y + whole.size.height) - (visible.origin.y + visible.size.height),
+            ),
+        })
+    }
 
     pub fn frontmost_other() -> Option<i32> {
         let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
@@ -147,6 +181,18 @@ mod mac {
         if let Some(app) = NSRunningApplication::runningApplicationWithProcessIdentifier(pid) {
             app.activateWithOptions(NSApplicationActivationOptions::empty());
         }
+    }
+}
+
+/// What the system keeps along the edges of the primary display, `size` in
+/// points; none where it cannot be read.
+fn primary_insets(size: (f32, f32)) -> Insets {
+    #[cfg(target_os = "macos")]
+    return mac::primary_insets(size).unwrap_or_default();
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = size;
+        Insets::default()
     }
 }
 
